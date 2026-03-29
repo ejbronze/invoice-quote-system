@@ -2,12 +2,13 @@ const state = {
     currentStep: 1,
     currentDocType: "quote",
     itemCounter: 0,
-    documents: JSON.parse(localStorage.getItem("rgLogisticsDocuments") || "[]"),
+    documents: [],
     clients: [],
     editingDocumentId: null,
     convertingFromQuoteId: null,
     activeFilter: "all",
-    searchQuery: ""
+    searchQuery: "",
+    isBootstrapping: false
 };
 
 const DOP_PER_USD = 59;
@@ -118,10 +119,7 @@ function init() {
         return;
     }
 
-    loadClients();
-    renderClientOptions();
-    prepareNewDocument("quote");
-    renderDocuments();
+    bootstrapAppData();
 }
 
 function hasAdminAccess() {
@@ -145,10 +143,7 @@ function applyAccessState(isUnlocked) {
 function unlockAdminAccess() {
     sessionStorage.setItem(ADMIN_ACCESS_STORAGE_KEY, "true");
     applyAccessState(true);
-    loadClients();
-    renderClientOptions();
-    prepareNewDocument("quote");
-    renderDocuments();
+    bootstrapAppData();
 }
 
 function handleAccessSubmit(event) {
@@ -164,6 +159,110 @@ function handleAccessSubmit(event) {
     }
 
     unlockAdminAccess();
+}
+
+async function requestJSON(url, options = {}) {
+    const response = await fetch(url, {
+        headers: {
+            "Content-Type": "application/json"
+        },
+        ...options
+    });
+
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        throw new Error(payload.error || "Request failed.");
+    }
+
+    return payload;
+}
+
+function normalizeDocuments(documents) {
+    return Array.isArray(documents) ? documents : [];
+}
+
+function normalizeClients(clients) {
+    const validClients = (Array.isArray(clients) ? clients : [])
+        .map(client => ({
+            id: client?.id || `client-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            name: client?.name || "",
+            address: client?.address || ""
+        }))
+        .filter(client => client.name && client.address);
+
+    const hasDefaultClient = validClients.some(client =>
+        client.id === "ccxpress" || client.name === "CCXpress S.A | Chatelain Cargo Services"
+    );
+
+    return hasDefaultClient
+        ? validClients
+        : [
+            {
+                id: "ccxpress",
+                name: "CCXpress S.A | Chatelain Cargo Services",
+                address: "42 Airport Road, Port Au Prince, Haiti"
+            },
+            ...validClients
+        ];
+}
+
+function renderDocumentsMessage(message) {
+    elements.documentsGrid.innerHTML = `
+        <div class="empty-state">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p>${escapeHtml(message)}</p>
+        </div>
+    `;
+}
+
+async function bootstrapAppData() {
+    if (state.isBootstrapping) {
+        return;
+    }
+
+    state.isBootstrapping = true;
+    renderDocumentsMessage("Loading saved quotes and invoices...");
+
+    try {
+        const [documentsResponse, clientsResponse] = await Promise.all([
+            requestJSON("/api/documents"),
+            requestJSON("/api/clients")
+        ]);
+
+        state.documents = normalizeDocuments(documentsResponse.documents);
+        state.clients = normalizeClients(clientsResponse.clients);
+        renderClientOptions();
+        prepareNewDocument("quote");
+        renderDocuments();
+    } catch (error) {
+        state.documents = [];
+        state.clients = normalizeClients([]);
+        renderClientOptions();
+        prepareNewDocument("quote");
+        renderDocumentsMessage(`Unable to load server data: ${error.message}`);
+    } finally {
+        state.isBootstrapping = false;
+    }
+}
+
+async function saveDocumentsToServer(documents) {
+    const payload = await requestJSON("/api/documents", {
+        method: "POST",
+        body: JSON.stringify({ documents })
+    });
+
+    state.documents = normalizeDocuments(payload.documents);
+}
+
+async function saveClientsToServer(clients) {
+    const payload = await requestJSON("/api/clients", {
+        method: "POST",
+        body: JSON.stringify({ clients })
+    });
+
+    state.clients = normalizeClients(payload.clients);
 }
 
 function setToday() {
@@ -1035,7 +1134,7 @@ function openPrintWindow(doc) {
     printWindow.document.close();
 }
 
-function saveDocument() {
+async function saveDocument() {
     const isEditing = state.editingDocumentId !== null;
     const doc = {
         id: state.editingDocumentId ?? Date.now(),
@@ -1081,27 +1180,35 @@ function saveDocument() {
     doc.subtotal = calculateTotals();
     doc.total = doc.subtotal;
 
+    let nextDocuments;
+
     if (isEditing) {
-        state.documents = state.documents.map(entry => entry.id === state.editingDocumentId ? doc : entry);
+        nextDocuments = state.documents.map(entry => entry.id === state.editingDocumentId ? doc : entry);
     } else {
         if (state.convertingFromQuoteId !== null) {
             doc.sourceQuoteId = state.convertingFromQuoteId;
-            state.documents = state.documents.map(entry => entry.id === state.convertingFromQuoteId
+            nextDocuments = state.documents.map(entry => entry.id === state.convertingFromQuoteId
                 ? {
                     ...entry,
                     lockedAfterConversion: true,
                     convertedDocumentId: doc.id
                 }
                 : entry);
+            nextDocuments.unshift(doc);
+        } else {
+            nextDocuments = [doc, ...state.documents];
         }
-        state.documents.unshift(doc);
     }
 
-    localStorage.setItem("rgLogisticsDocuments", JSON.stringify(state.documents));
-    openPrintWindow(doc);
-
-    closeModal();
-    renderDocuments();
+    try {
+        await saveDocumentsToServer(nextDocuments);
+        openPrintWindow(doc);
+        closeModal();
+        renderDocuments();
+    } catch (error) {
+        alert(`Unable to save this ${doc.type} to the server.\n\n${error.message}`);
+        return;
+    }
 
     const actionLabel = isEditing ? "updated" : "saved";
     alert(`${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.\n\nThe print dialog has opened so you can save it as a PDF.`);
@@ -1206,31 +1313,6 @@ function setActiveFilter(filter) {
     renderDocuments();
 }
 
-function loadClients() {
-    const saved = localStorage.getItem("rgLogisticsClients");
-    state.clients = saved ? JSON.parse(saved) : [];
-
-    state.clients = state.clients.map(client => ({
-        id: client.id || (`client-${Date.now()}-${Math.random().toString(36).slice(2)}`),
-        name: client.name || "",
-        address: client.address || ""
-    })).filter(client => client.name && client.address);
-
-    const ccxpress = state.clients.find(client =>
-        client.id === "ccxpress" || client.name === "CCXpress S.A | Chatelain Cargo Services"
-    );
-
-    if (!ccxpress) {
-        state.clients.unshift({
-            id: "ccxpress",
-            name: "CCXpress S.A | Chatelain Cargo Services",
-            address: "42 Airport Road, Port Au Prince, Haiti"
-        });
-    }
-
-    localStorage.setItem("rgLogisticsClients", JSON.stringify(state.clients));
-}
-
 function renderClientOptions() {
     elements.clientSelect.innerHTML = '<option value="">-- Choose or Add Client --</option><option value="other">Other (manual entry)</option>';
     state.clients.forEach(client => {
@@ -1257,7 +1339,7 @@ function onClientSelectChange() {
     updateEditorSummary();
 }
 
-function saveClient() {
+async function saveClient() {
     const name = elements.clientName.value.trim();
     const address = elements.clientAddress.value.trim();
 
@@ -1266,21 +1348,27 @@ function saveClient() {
         return;
     }
 
-    const existing = state.clients.find(client => client.name.toLowerCase() === name.toLowerCase());
+    const nextClients = [...state.clients];
+    const existing = nextClients.find(client => client.name.toLowerCase() === name.toLowerCase());
 
     if (existing) {
         existing.address = address;
-        alert("Client already exists; address updated.");
     } else {
-        state.clients.push({
+        nextClients.push({
             id: `client-${Date.now()}`,
             name,
             address
         });
-        alert("Client saved for future use.");
     }
 
-    localStorage.setItem("rgLogisticsClients", JSON.stringify(state.clients));
+    try {
+        await saveClientsToServer(nextClients);
+    } catch (error) {
+        alert(`Unable to save this client to the server.\n\n${error.message}`);
+        return;
+    }
+
+    alert(existing ? "Client already exists; address updated." : "Client saved for future use.");
     renderClientOptions();
 
     const selectedClient = state.clients.find(client => client.name === name);
@@ -1363,7 +1451,7 @@ function editDocument(id) {
     updateEditorSummary();
 }
 
-function deleteDocument(id) {
+async function deleteDocument(id) {
     const doc = state.documents.find(entry => entry.id === id);
     if (!doc) {
         return;
@@ -1379,9 +1467,14 @@ function deleteDocument(id) {
         return;
     }
 
-    state.documents = state.documents.filter(entry => entry.id !== id);
-    localStorage.setItem("rgLogisticsDocuments", JSON.stringify(state.documents));
-    renderDocuments();
+    const nextDocuments = state.documents.filter(entry => entry.id !== id);
+
+    try {
+        await saveDocumentsToServer(nextDocuments);
+        renderDocuments();
+    } catch (error) {
+        alert(`Unable to delete this ${docLabel} from the server.\n\n${error.message}`);
+    }
 }
 
 function convertQuoteToInvoice(id) {

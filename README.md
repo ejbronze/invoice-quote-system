@@ -15,6 +15,11 @@ Static web app for creating quotes and invoices, storing them in the browser, an
 ├── index.html
 ├── js/
 │   └── app.js
+├── api/
+│   ├── _storage.js
+│   ├── clients.js
+│   └── documents.js
+├── package.json
 └── README.md
 ```
 
@@ -22,7 +27,11 @@ Static web app for creating quotes and invoices, storing them in the browser, an
 
 - `index.html`: Main app markup, admin access gate, dashboard, modal editor, and preview containers.
 - `css/styles.css`: App UI, modal layout, document preview, and print/export styling.
-- `js/app.js`: State management, step flow, local storage, line-item logic, preview rendering, and print export.
+- `js/app.js`: State management, step flow, server sync, line-item logic, preview rendering, and print export.
+- `api/documents.js`: Vercel serverless endpoint for loading and saving quotes and invoices.
+- `api/clients.js`: Vercel serverless endpoint for loading and saving saved clients.
+- `api/_storage.js`: Shared Vercel Blob storage helpers used by the API routes.
+- `package.json`: Runtime dependency declaration for Vercel Blob storage.
 - `assets/rg-letterhead.png`: Letterhead used in quote and invoice output.
 - `assets/rg-footer-wave.png`: Footer wave image used in document output.
 - `assets/david-forman-signature.png`: Signature image used when signature export is enabled.
@@ -43,12 +52,13 @@ Static web app for creating quotes and invoices, storing them in the browser, an
 
 ## Features
 
-- Create, edit, delete, and save quotes and invoices in `localStorage`.
+- Create, edit, delete, and save quotes and invoices on the server.
 - Convert a saved quote into a new invoice while keeping the source quote in history.
 - Lock converted source quotes so they remain visible in quote history but can no longer be edited or deleted.
 - Search documents by reference number, date, client, type, or tags.
 - Add tags to documents for filtering and later lookup.
 - Save reusable client records locally in the browser.
+- Save reusable client records on the server so they remain available across browsers and devices.
 - Use a compact line-item editor where each item collapses into a summary row and expands when selected.
 - Enter line-item totals in USD by default.
 - Optionally enter a line-item total in DOP and convert it automatically to USD using `RD$59 = US$1`.
@@ -77,15 +87,17 @@ Static web app for creating quotes and invoices, storing them in the browser, an
 
 ## Storage Notes
 
-- Documents are stored in browser `localStorage` under the app's current origin.
-- Saved clients are also stored locally in the browser.
-- Because storage is browser-local, documents and clients do not sync between browsers or devices.
+- Documents and saved clients are loaded and saved through the Vercel `/api` routes.
+- The API routes persist data in Vercel Blob storage as JSON snapshots.
+- Because the data is stored server-side, quotes, invoices, and saved clients can be shared across browsers and devices.
+- This setup requires `BLOB_READ_WRITE_TOKEN` to be configured in Vercel for the deployed project.
 
 ## Git / Deployment Notes
 
 - This project has been initialized as a local git repository with a `main` branch.
 - The intended public repository URL is `https://github.com/ejbronze/invoice-quote-system`.
 - The app is now structured for straightforward Vercel static hosting with `index.html` at the site root.
+- The deployed app now also depends on Vercel serverless functions in `api/` plus Vercel Blob storage for persistence.
 - Because this is a static HTML/CSS/JS app, it remains compatible with other simple static hosting workflows too.
 
 ## Print Notes
