@@ -45,7 +45,7 @@ async function loadBlobSdk() {
 async function readDataset(name, fallbackValue) {
     ensureBlobToken();
 
-    const { list } = await loadBlobSdk();
+    const { get, list } = await loadBlobSdk();
     const { blobs } = await list({
         token: getBlobToken(),
         prefix: `todos-logistics/${name}/`
@@ -59,13 +59,17 @@ async function readDataset(name, fallbackValue) {
         return new Date(right.uploadedAt).getTime() - new Date(left.uploadedAt).getTime();
     })[0];
 
-    const response = await fetch(latestBlob.url, { cache: "no-store" });
-    if (!response.ok) {
+    const blobResponse = await get(latestBlob.url, {
+        token: getBlobToken()
+    });
+
+    if (!blobResponse || !blobResponse.body) {
         const error = new Error(`Unable to read ${name} dataset.`);
         error.statusCode = 500;
         throw error;
     }
 
+    const response = new Response(blobResponse.body);
     return response.json();
 }
 
@@ -75,7 +79,7 @@ async function writeDataset(name, value) {
     const { put } = await loadBlobSdk();
     return put(`todos-logistics/${name}/${Date.now()}.json`, JSON.stringify(value, null, 2), {
         token: getBlobToken(),
-        access: "public",
+        access: "private",
         contentType: "application/json",
         addRandomSuffix: false
     });
