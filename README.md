@@ -12,15 +12,15 @@ Static web app for creating quotes and invoices, storing them in the browser, an
 │   └── rg-letterhead.png
 ├── css/
 │   └── styles.css
+├── index.html
 ├── js/
 │   └── app.js
-├── logistics-app.html
 └── README.md
 ```
 
 ## Files
 
-- `logistics-app.html`: Main app markup, dashboard, modal editor, and preview containers.
+- `index.html`: Main app markup, admin access gate, dashboard, modal editor, and preview containers.
 - `css/styles.css`: App UI, modal layout, document preview, and print/export styling.
 - `js/app.js`: State management, step flow, local storage, line-item logic, preview rendering, and print export.
 - `assets/rg-letterhead.png`: Letterhead used in quote and invoice output.
@@ -29,16 +29,17 @@ Static web app for creating quotes and invoices, storing them in the browser, an
 
 ## Current Workflow
 
-1. Open `logistics-app.html` in a browser.
-2. Create a new quote or invoice from the dashboard.
-3. Move through the five editor steps:
+1. Open `index.html` in a browser.
+2. Enter the admin access code `Todos123`.
+3. Create a new quote or invoice from the dashboard.
+4. Move through the five editor steps:
    - `Type & Info`
    - `Client Details`
    - `Line Items`
    - `Items Preview`
    - `Review`
-4. Click any step in the step indicator to jump directly to that part of the modal. Forward jumps still respect validation rules.
-5. On the last step, inspect the final print preview and export with `Save & Export PDF`.
+5. Click any step in the step indicator to jump directly to that part of the modal. Forward jumps still respect validation rules.
+6. On the last step, inspect the final print preview and export with `Save & Export PDF`.
 
 ## Features
 
@@ -84,8 +85,7 @@ Static web app for creating quotes and invoices, storing them in the browser, an
 
 - This project has been initialized as a local git repository with a `main` branch.
 - The intended public repository URL is `https://github.com/ejbronze/invoice-quote-system`.
-- The app is now set up to work cleanly on Vercel static hosting.
-- `vercel.json` rewrites the site root `/` to `logistics-app.html`, so the deployed URL can open the app directly without exposing the filename.
+- The app is now structured for straightforward Vercel static hosting with `index.html` at the site root.
 - Because this is a static HTML/CSS/JS app, it remains compatible with other simple static hosting workflows too.
 
 ## Print Notes

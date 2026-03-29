@@ -11,6 +11,8 @@ const state = {
 };
 
 const DOP_PER_USD = 59;
+const ADMIN_ACCESS_CODE = "Todos123";
+const ADMIN_ACCESS_STORAGE_KEY = "todosAdminVerified";
 
 const elements = {};
 
@@ -21,6 +23,11 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function cacheElements() {
+    elements.accessGate = document.getElementById("accessGate");
+    elements.adminAppShell = document.getElementById("adminAppShell");
+    elements.accessForm = document.getElementById("accessForm");
+    elements.accessCode = document.getElementById("accessCode");
+    elements.accessError = document.getElementById("accessError");
     elements.documentModal = document.getElementById("documentModal");
     elements.stepIndicator = document.querySelector(".step-indicator");
     elements.modalTitle = document.getElementById("modalTitle");
@@ -67,6 +74,7 @@ function cacheElements() {
 }
 
 function bindEvents() {
+    elements.accessForm.addEventListener("submit", handleAccessSubmit);
     elements.newQuoteBtn.addEventListener("click", () => {
         prepareNewDocument("quote");
         openModal("quote");
@@ -105,10 +113,57 @@ function bindEvents() {
 }
 
 function init() {
+    applyAccessState(hasAdminAccess());
+    if (!hasAdminAccess()) {
+        return;
+    }
+
     loadClients();
     renderClientOptions();
     prepareNewDocument("quote");
     renderDocuments();
+}
+
+function hasAdminAccess() {
+    return sessionStorage.getItem(ADMIN_ACCESS_STORAGE_KEY) === "true";
+}
+
+function applyAccessState(isUnlocked) {
+    elements.accessGate.classList.toggle("hidden", isUnlocked);
+    elements.adminAppShell.classList.toggle("app-shell-locked", !isUnlocked);
+    elements.accessGate.hidden = isUnlocked;
+    elements.adminAppShell.hidden = !isUnlocked;
+    elements.adminAppShell.setAttribute("aria-hidden", String(!isUnlocked));
+
+    if (!isUnlocked) {
+        elements.accessForm.reset();
+        elements.accessError.hidden = true;
+        elements.accessCode.focus();
+    }
+}
+
+function unlockAdminAccess() {
+    sessionStorage.setItem(ADMIN_ACCESS_STORAGE_KEY, "true");
+    applyAccessState(true);
+    loadClients();
+    renderClientOptions();
+    prepareNewDocument("quote");
+    renderDocuments();
+}
+
+function handleAccessSubmit(event) {
+    event.preventDefault();
+
+    const submittedCode = elements.accessCode.value.trim();
+    const isValid = submittedCode === ADMIN_ACCESS_CODE;
+    elements.accessError.hidden = isValid;
+
+    if (!isValid) {
+        elements.accessCode.select();
+        return;
+    }
+
+    unlockAdminAccess();
 }
 
 function setToday() {
