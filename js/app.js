@@ -1364,7 +1364,13 @@ function formatDisplayDate(dateValue) {
         return "";
     }
 
-    return new Date(dateValue).toLocaleDateString("en-US", {
+    const normalizedValue = String(dateValue).trim();
+    const dateOnlyMatch = normalizedValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const parsedDate = dateOnlyMatch
+        ? new Date(Number(dateOnlyMatch[1]), Number(dateOnlyMatch[2]) - 1, Number(dateOnlyMatch[3]))
+        : new Date(normalizedValue);
+
+    return parsedDate.toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
         day: "numeric"
@@ -1916,11 +1922,7 @@ function renderDocuments() {
     }
 
     elements.documentsGrid.innerHTML = visibleDocuments.map(doc => {
-        const date = new Date(doc.date).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric"
-        });
+        const date = formatDisplayDate(doc.date);
         const tags = Array.isArray(doc.tags) ? doc.tags : [];
         const isLockedSourceQuote = Boolean(doc.lockedAfterConversion);
         const cardViewId = isLockedSourceQuote ? "" : ` data-view-id="${doc.id}"`;
