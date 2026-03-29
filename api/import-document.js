@@ -11,8 +11,13 @@ function getOpenAIClient() {
     return new OpenAI({ apiKey });
 }
 
-function stripDataUrlPrefix(dataUrl) {
-    return String(dataUrl || "").replace(/^data:[^;]+;base64,/, "");
+function ensurePdfDataUrl(dataUrl, mimeType) {
+    const value = String(dataUrl || "");
+    if (value.startsWith("data:")) {
+        return value;
+    }
+
+    return `data:${mimeType};base64,${value}`;
 }
 
 function buildSchema() {
@@ -113,7 +118,6 @@ function buildSchema() {
 
 async function extractDocumentFromFile({ filename, mimeType, fileData }) {
     const openai = getOpenAIClient();
-    const base64Data = stripDataUrlPrefix(fileData);
 
     const content = [
         {
@@ -133,7 +137,7 @@ async function extractDocumentFromFile({ filename, mimeType, fileData }) {
         content.push({
             type: "input_file",
             filename,
-            file_data: base64Data
+            file_data: ensurePdfDataUrl(fileData, mimeType)
         });
     } else {
         content.push({
