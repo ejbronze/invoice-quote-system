@@ -58,6 +58,8 @@ function cacheElements() {
     elements.newInvoiceBtn = document.getElementById("newInvoiceBtn");
     elements.uploadLegacyPdfBtn = document.getElementById("uploadLegacyPdfBtn");
     elements.uploadLegacyPdfInput = document.getElementById("uploadLegacyPdfInput");
+    elements.exportCsvTemplateBtn = document.getElementById("exportCsvTemplateBtn");
+    elements.importCsvBtn = document.getElementById("importCsvBtn");
     elements.exportBackupBtn = document.getElementById("exportBackupBtn");
     elements.importBackupBtn = document.getElementById("importBackupBtn");
     elements.importBackupInput = document.getElementById("importBackupInput");
@@ -101,6 +103,8 @@ function bindEvents() {
     });
     elements.openSettingsBtn.addEventListener("click", openSettingsModal);
     elements.closeSettingsBtn.addEventListener("click", closeSettingsModal);
+    elements.exportCsvTemplateBtn.addEventListener("click", exportCsvTemplate);
+    elements.importCsvBtn.addEventListener("click", openCsvImportPicker);
     elements.exportBackupBtn.addEventListener("click", exportSystemBackup);
     elements.importBackupBtn.addEventListener("click", () => {
         elements.importBackupInput.click();
@@ -316,6 +320,18 @@ async function saveClientsToServer(clients) {
     state.clients = normalizeClients(payload.clients);
 }
 
+function downloadTextFile(filename, content, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+}
+
 function downloadJSONFile(filename, data) {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -338,6 +354,219 @@ function exportSystemBackup() {
     });
     closeSettingsModal();
     setImportStatus("Backup exported. Keep the JSON file somewhere safe.");
+}
+
+function exportCsvTemplate() {
+    const headers = [
+        "type",
+        "refNumber",
+        "date",
+        "clientName",
+        "clientAddress",
+        "poNumber",
+        "tags",
+        "notes",
+        "paymentTerms",
+        "itemDescription",
+        "itemQuantity",
+        "itemUnitPrice",
+        "itemTotalPrice",
+        "total"
+    ];
+
+    const exampleRow = [
+        "quote",
+        "TL-2026-0329-01",
+        "2026-03-29",
+        "CCXpress S.A | Chatelain Cargo Services",
+        "\"42 Airport Road, Port Au Prince, Haiti\"",
+        "PO-1001",
+        "\"Priority, Port-au-Prince\"",
+        "\"Legacy bulk import example\"",
+        "Payment Upon Receipt",
+        "Freight coordination services",
+        "1",
+        "850.00",
+        "850.00",
+        "850.00"
+    ];
+
+    closeSettingsModal();
+    downloadTextFile("invoice-quote-template.csv", `${headers.join(",")}\n${exampleRow.join(",")}\n`, "text/csv;charset=utf-8");
+    setImportStatus("CSV template exported. Fill in one row per quote or invoice, then import it.");
+}
+
+function openCsvImportPicker() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".csv,text/csv";
+    input.addEventListener("change", handleCsvImportSelect, { once: true });
+    input.click();
+}
+
+function parseCsv(content) {
+    const rows = [];
+    let current = "";
+    let row = [];
+    let inQuotes = false;
+
+    for (let index = 0; index < content.length; index += 1) {
+        const char = content[index];
+        const next = content[index + 1];
+
+        if (char === "\"") {
+            if (inQuotes && next === "\"") {
+                current += "\"";
+                index += 1;
+            } else {
+                inQuotes = !inQuotes;
+            }
+            continue;
+        }
+
+        if (char === "," && !inQuotes) {
+            row.push(current);
+            current = "";
+            continue;
+        }
+
+        if ((char === "\n" || char === "\r") && !inQuotes) {
+            if (char === "\r" && next === "\n") {
+                index += 1;
+            }
+            row.push(current);
+            current = "";
+            if (row.some(cell => String(cell).trim() !== "")) {
+                rows.push(row);
+            }
+            row = [];
+            continue;
+        }
+
+        current += char;
+    }
+
+    row.push(current);
+    if (row.some(cell => String(cell).trim() !== "")) {
+        rows.push(row);
+    }
+
+    return rows;
+}
+
+function csvValue(row, indexMap, key) {
+    return String(row[indexMap[key]] || "").trim();
+}
+
+function numberOrZero(value) {
+    const parsed = Number.parseFloat(String(value || "").replace(/,/g, ""));
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function buildDocumentFromCsvRow(row, indexMap) {
+    const type = csvValue(row, indexMap, "type").toLowerCase() === "invoice" ? "invoice" : "quote";
+    const itemQuantity = numberOrZero(csvValue(row, indexMap, "itemQuantity")) || 1;
+    const itemUnitPrice = numberOrZero(csvValue(row, indexMap, "itemUnitPrice"));
+    const itemTotalPrice = numberOrZero(csvValue(row, indexMap, "itemTotalPrice")) || (itemQuantity * itemUnitPrice);
+    const total = numberOrZero(csvValue(row, indexMap, "total")) || itemTotalPrice;
+    const itemDescription = csvValue(row, indexMap, "itemDescription") || "Imported line item";
+    const date = csvValue(row, indexMap, "date") || new Date().toISOString().split("T")[0];
+    const clientName = csvValue(row, indexMap, "clientName") || "Imported Client";
+    const clientAddress = csvValue(row, indexMap, "clientAddress");
+    const refNumber = csvValue(row, indexMap, "refNumber") || `${getRefPrefix()}-${getNextRefSequence()}`;
+
+    return {
+        id: Date.now() + Math.floor(Math.random() * 100000),
+        type,
+        refNumber,
+        date,
+        clientName,
+        clientAddress,
+        poNumber: csvValue(row, indexMap, "poNumber"),
+        tags: parseTags(csvValue(row, indexMap, "tags")),
+        notes: csvValue(row, indexMap, "notes"),
+        paymentTerms: csvValue(row, indexMap, "paymentTerms") || "Payment Upon Receipt",
+        includeSignature: false,
+        printedAt: new Date().toISOString(),
+        subtotal: total,
+        total,
+        items: [
+            {
+                description: itemDescription,
+                quantity: itemQuantity,
+                price: itemUnitPrice,
+                unitPrice: itemUnitPrice,
+                totalPrice: itemTotalPrice,
+                totalPriceDop: 0,
+                internalCost: 0,
+                upchargePercent: 0,
+                usesDopTotal: false,
+                manualUnitPrice: false
+            }
+        ]
+    };
+}
+
+async function handleCsvImportSelect(event) {
+    const [file] = event.target.files || [];
+    if (!file) {
+        return;
+    }
+
+    try {
+        const text = await file.text();
+        const rows = parseCsv(text);
+        if (rows.length < 2) {
+            throw new Error("The CSV needs a header row and at least one data row.");
+        }
+
+        const headers = rows[0].map(value => String(value || "").trim());
+        const requiredHeaders = ["type", "clientName"];
+        for (const header of requiredHeaders) {
+            if (!headers.includes(header)) {
+                throw new Error(`Missing required CSV column: ${header}`);
+            }
+        }
+
+        const indexMap = Object.fromEntries(headers.map((header, index) => [header, index]));
+        const importedDocuments = rows.slice(1)
+            .filter(row => row.some(cell => String(cell || "").trim() !== ""))
+            .map(row => buildDocumentFromCsvRow(row, indexMap));
+
+        if (!importedDocuments.length) {
+            throw new Error("No valid document rows were found in the CSV.");
+        }
+
+        const mergedClients = [...state.clients];
+        importedDocuments.forEach(doc => {
+            if (!doc.clientName || !doc.clientAddress) {
+                return;
+            }
+
+            const existing = mergedClients.find(client => client.name.toLowerCase() === doc.clientName.toLowerCase());
+            if (existing) {
+                existing.address = doc.clientAddress;
+            } else {
+                mergedClients.push({
+                    id: `client-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                    name: doc.clientName,
+                    address: doc.clientAddress
+                });
+            }
+        });
+
+        await Promise.all([
+            saveDocumentsToServer([...importedDocuments, ...state.documents]),
+            saveClientsToServer(mergedClients)
+        ]);
+
+        closeSettingsModal();
+        renderClientOptions();
+        renderDocuments();
+        setImportStatus(`Imported ${importedDocuments.length} documents from CSV. Review and edit any details as needed.`);
+    } catch (error) {
+        setImportStatus(`CSV import failed: ${error.message}`, true);
+    }
 }
 
 function exportSingleDocument(doc) {

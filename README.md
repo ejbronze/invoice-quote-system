@@ -53,6 +53,7 @@ Static web app for creating quotes and invoices, storing them on the server, and
 ## Features
 
 - Create, edit, delete, and save quotes and invoices on the server.
+- Export a CSV template and bulk-import rows to create multiple quote or invoice cards at once.
 - Upload legacy invoice/quote PDFs so they are archived in the database even before their details are fully entered.
 - Convert a saved quote into a new invoice while keeping the source quote in history.
 - Lock converted source quotes so they remain visible in quote history but can no longer be edited or deleted.
@@ -89,6 +90,7 @@ Static web app for creating quotes and invoices, storing them on the server, and
 
 - Documents and saved clients are loaded and saved through the Vercel `/api` routes.
 - The API routes persist data in Vercel Blob storage as JSON snapshots.
+- CSV import is handled in the browser and then saved to the same server-backed document store.
 - Legacy PDF uploads are stored in Vercel Blob and linked to saved document records.
 - Blob access defaults to `public`; if your Vercel Blob store is private, set `BLOB_ACCESS_MODE=private`.
 - Private-store legacy PDFs are opened through the `/api/legacy-pdf` proxy route so they can still be viewed in the app.
