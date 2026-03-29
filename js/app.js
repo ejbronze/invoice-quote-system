@@ -235,6 +235,7 @@ function setImportStatus(message, isError = false) {
 function setImportingState(isImporting) {
     state.isImportingDocument = isImporting;
     elements.importDocumentBtn.disabled = isImporting;
+    elements.importDocumentBtn.classList.toggle("is-loading", isImporting);
     elements.importDocumentBtn.textContent = isImporting ? "Scanning Document..." : "Import Quote / Invoice";
 }
 

@@ -322,6 +322,36 @@ body::after {
     transform: none;
 }
 
+.btn.is-loading {
+    position: relative;
+    padding-left: 2.75rem;
+}
+
+.btn.is-loading::before {
+    content: "";
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    width: 0.95rem;
+    height: 0.95rem;
+    margin-top: -0.475rem;
+    border-radius: 50%;
+    border: 2px solid rgba(66, 99, 235, 0.2);
+    border-top-color: var(--blue);
+    border-right-color: var(--mint);
+    animation: import-spin 0.75s linear infinite;
+}
+
+@keyframes import-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .overview-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
