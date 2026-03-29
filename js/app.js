@@ -8,7 +8,8 @@ const state = {
     convertingFromQuoteId: null,
     activeFilter: "all",
     searchQuery: "",
-    isBootstrapping: false
+    isBootstrapping: false,
+    isUploadingLegacyPdf: false
 };
 
 const DOP_PER_USD = 59;
@@ -52,6 +53,8 @@ function cacheElements() {
     elements.saveBtn = document.getElementById("saveBtn");
     elements.newQuoteBtn = document.getElementById("newQuoteBtn");
     elements.newInvoiceBtn = document.getElementById("newInvoiceBtn");
+    elements.uploadLegacyPdfBtn = document.getElementById("uploadLegacyPdfBtn");
+    elements.uploadLegacyPdfInput = document.getElementById("uploadLegacyPdfInput");
     elements.exportBackupBtn = document.getElementById("exportBackupBtn");
     elements.importBackupBtn = document.getElementById("importBackupBtn");
     elements.importBackupInput = document.getElementById("importBackupInput");
@@ -88,10 +91,16 @@ function bindEvents() {
         prepareNewDocument("invoice");
         openModal("invoice");
     });
+    elements.uploadLegacyPdfBtn.addEventListener("click", () => {
+        if (!state.isUploadingLegacyPdf) {
+            elements.uploadLegacyPdfInput.click();
+        }
+    });
     elements.exportBackupBtn.addEventListener("click", exportSystemBackup);
     elements.importBackupBtn.addEventListener("click", () => {
         elements.importBackupInput.click();
     });
+    elements.uploadLegacyPdfInput.addEventListener("change", handleLegacyPdfUploadSelect);
     elements.importBackupInput.addEventListener("change", handleBackupImportSelect);
     elements.closeModalBtn.addEventListener("click", closeModal);
     elements.docType.addEventListener("change", updateModalTitle);
@@ -231,6 +240,13 @@ function setImportStatus(message, isError = false) {
     elements.importDocumentStatus.classList.toggle("hero-helper-error", isError);
 }
 
+function setLegacyUploadState(isUploading) {
+    state.isUploadingLegacyPdf = isUploading;
+    elements.uploadLegacyPdfBtn.disabled = isUploading;
+    elements.uploadLegacyPdfBtn.classList.toggle("is-loading", isUploading);
+    elements.uploadLegacyPdfBtn.textContent = isUploading ? "Uploading Legacy PDF..." : "Upload Legacy PDF";
+}
+
 async function bootstrapAppData() {
     if (state.isBootstrapping) {
         return;
@@ -309,6 +325,120 @@ function exportSingleDocument(doc) {
         version: 1,
         document: doc
     });
+}
+
+function inferLegacyType(filename) {
+    if (/invoice/i.test(filename)) {
+        return "invoice";
+    }
+
+    return "quote";
+}
+
+function createLegacyDocumentRecord({ fileUrl, filename, type }) {
+    const today = new Date().toISOString().split("T")[0];
+    const placeholderLabel = type === "invoice" ? "Legacy invoice PDF attached" : "Legacy quote PDF attached";
+
+    return {
+        id: Date.now(),
+        type,
+        refNumber: `${getRefPrefix()}-${getNextRefSequence()}`,
+        date: today,
+        clientName: "Legacy Upload",
+        clientAddress: "",
+        poNumber: "",
+        tags: ["Legacy PDF"],
+        notes: `Original file archived as ${filename}.`,
+        paymentTerms: "Payment Upon Receipt",
+        includeSignature: false,
+        printedAt: new Date().toISOString(),
+        subtotal: 0,
+        total: 0,
+        items: [
+            {
+                description: placeholderLabel,
+                quantity: 1,
+                price: 0,
+                unitPrice: 0,
+                totalPrice: 0,
+                totalPriceDop: 0,
+                internalCost: 0,
+                upchargePercent: 0,
+                usesDopTotal: false,
+                manualUnitPrice: false
+            }
+        ],
+        legacyPdfUrl: fileUrl,
+        legacyPdfFilename: filename
+    };
+}
+
+async function handleLegacyPdfUploadSelect(event) {
+    const [file] = event.target.files || [];
+    event.target.value = "";
+
+    if (!file) {
+        return;
+    }
+
+    if (file.type !== "application/pdf") {
+        setImportStatus("Please upload a PDF file.", true);
+        return;
+    }
+
+    if (file.size > 15 * 1024 * 1024) {
+        setImportStatus("Please keep legacy PDF uploads under 15 MB.", true);
+        return;
+    }
+
+    const inferredType = inferLegacyType(file.name);
+    const enteredType = window.prompt("Save this legacy PDF as `quote` or `invoice`?", inferredType);
+    if (!enteredType) {
+        setImportStatus("Legacy PDF upload canceled.");
+        return;
+    }
+
+    const normalizedType = enteredType.trim().toLowerCase();
+    if (!["quote", "invoice"].includes(normalizedType)) {
+        setImportStatus("Please enter either `quote` or `invoice` when uploading a legacy PDF.", true);
+        return;
+    }
+
+    try {
+        setLegacyUploadState(true);
+        setImportStatus(`Uploading ${file.name}...`);
+
+        const fileData = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result));
+            reader.onerror = () => reject(new Error("Unable to read the selected file."));
+            reader.readAsDataURL(file);
+        });
+
+        const uploadResponse = await requestJSON("/api/upload-legacy-pdf", {
+            method: "POST",
+            body: JSON.stringify({
+                filename: file.name,
+                mimeType: file.type,
+                fileData
+            })
+        });
+
+        const legacyDocument = createLegacyDocumentRecord({
+            fileUrl: uploadResponse.fileUrl,
+            filename: uploadResponse.filename || file.name,
+            type: normalizedType
+        });
+
+        await saveDocumentsToServer([legacyDocument, ...state.documents]);
+        renderDocuments();
+        setImportStatus(`Legacy PDF saved. You can edit ${legacyDocument.refNumber} and keep the original PDF attached.`);
+        editDocument(legacyDocument.id);
+    } catch (error) {
+        setImportStatus(`Legacy PDF upload failed: ${error.message}`, true);
+    } finally {
+        setLegacyUploadState(false);
+    }
 }
 
 async function handleBackupImportSelect(event) {
@@ -1217,7 +1347,9 @@ function openPrintWindow(doc) {
 
 async function saveDocument() {
     const isEditing = state.editingDocumentId !== null;
+    const existingDocument = isEditing ? state.documents.find(entry => entry.id === state.editingDocumentId) : null;
     const doc = {
+        ...(existingDocument || {}),
         id: state.editingDocumentId ?? Date.now(),
         type: elements.docType.value,
         refNumber: elements.refNumber.value,
@@ -1359,6 +1491,9 @@ function renderDocuments() {
         const statusBadge = isLockedSourceQuote
             ? '<span class="doc-lock-badge">Converted Source</span>'
             : "";
+        const legacyBadge = doc.legacyPdfUrl
+            ? '<span class="doc-lock-badge">Legacy PDF Attached</span>'
+            : "";
 
         return `
             <div class="document-card${isLockedSourceQuote ? " document-card-locked" : ""}"${cardViewId}>
@@ -1369,10 +1504,12 @@ function renderDocuments() {
                 <div class="doc-ref">${doc.refNumber}</div>
                 <div class="doc-client">${escapeHtml(doc.clientName)}</div>
                 ${statusBadge}
+                ${legacyBadge}
                 ${tags.length ? `<div class="doc-tags">${tags.map(tag => `<span class="doc-tag">${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
                 <div class="doc-total">${formatCurrency(doc.total || 0)}</div>
                 <div class="doc-actions">
                     ${isLockedSourceQuote ? '<span class="doc-lock-note">Locked after conversion</span>' : `<button type="button" class="doc-action-btn" data-action="edit" data-id="${doc.id}">Edit</button>`}
+                    ${doc.legacyPdfUrl ? `<button type="button" class="doc-action-btn" data-action="view-pdf" data-id="${doc.id}">View PDF</button>` : ""}
                     <button type="button" class="doc-action-btn" data-action="export-json" data-id="${doc.id}">Export JSON</button>
                     ${doc.type === "quote" && !isLockedSourceQuote ? `<button type="button" class="doc-action-btn" data-action="convert" data-id="${doc.id}">Convert to Invoice</button>` : ""}
                     ${isLockedSourceQuote ? "" : `<button type="button" class="doc-action-btn doc-action-btn-danger" data-action="delete" data-id="${doc.id}">Delete</button>`}
@@ -1470,6 +1607,11 @@ function handleDocumentCardClick(event) {
             deleteDocument(docId);
         } else if (action === "convert") {
             convertQuoteToInvoice(docId);
+        } else if (action === "view-pdf") {
+            const doc = state.documents.find(entry => entry.id === docId);
+            if (doc?.legacyPdfUrl) {
+                window.open(doc.legacyPdfUrl, "_blank", "noopener,noreferrer");
+            }
         } else if (action === "export-json") {
             const doc = state.documents.find(entry => entry.id === docId);
             if (doc) {
