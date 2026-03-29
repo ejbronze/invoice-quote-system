@@ -8,6 +8,7 @@ const state = {
     convertingFromQuoteId: null,
     activeFilter: "all",
     searchQuery: "",
+    sortOrder: "created_desc",
     isBootstrapping: false,
     isUploadingLegacyPdf: false
 };
@@ -72,6 +73,7 @@ function cacheElements() {
     elements.invoiceCountStat = document.getElementById("invoiceCountStat");
     elements.totalValueStat = document.getElementById("totalValueStat");
     elements.documentSearch = document.getElementById("documentSearch");
+    elements.documentSort = document.getElementById("documentSort");
     elements.filterButtons = Array.from(document.querySelectorAll("[data-filter]"));
     elements.stepIntroTitle = document.getElementById("stepIntroTitle");
     elements.stepIntroText = document.getElementById("stepIntroText");
@@ -126,6 +128,7 @@ function bindEvents() {
     elements.itemsContainer.addEventListener("input", handleItemsChange);
     elements.itemsContainer.addEventListener("change", handleItemsChange);
     elements.documentSearch.addEventListener("input", handleSearchInput);
+    elements.documentSort.addEventListener("change", handleSortChange);
     elements.filterButtons.forEach(button => {
         button.addEventListener("click", () => setActiveFilter(button.dataset.filter));
     });
@@ -1747,7 +1750,37 @@ function getFilteredDocuments() {
         const haystack = `${doc.refNumber} ${doc.clientName} ${doc.type} ${rawDate} ${formattedDate} ${tags}`.toLowerCase();
         const matchesSearch = !state.searchQuery || haystack.includes(state.searchQuery);
         return matchesType && matchesSearch;
-    });
+    }).sort((left, right) => compareDocumentsByCreatedAt(left, right, state.sortOrder));
+}
+
+function compareDocumentsByCreatedAt(left, right, sortOrder) {
+    const leftCreatedAt = getDocumentCreatedAt(left);
+    const rightCreatedAt = getDocumentCreatedAt(right);
+    const direction = sortOrder === "created_asc" ? 1 : -1;
+
+    if (leftCreatedAt !== rightCreatedAt) {
+        return (leftCreatedAt - rightCreatedAt) * direction;
+    }
+
+    return String(left.refNumber || left.id || "").localeCompare(String(right.refNumber || right.id || ""));
+}
+
+function getDocumentCreatedAt(doc) {
+    const candidates = [doc.printedAt, doc.createdAt, doc.date];
+
+    for (const value of candidates) {
+        const parsed = Date.parse(value);
+        if (!Number.isNaN(parsed)) {
+            return parsed;
+        }
+    }
+
+    const numericId = Number(doc.id);
+    if (Number.isFinite(numericId)) {
+        return numericId;
+    }
+
+    return 0;
 }
 
 function renderDocuments() {
@@ -1821,6 +1854,11 @@ function renderDocuments() {
 
 function handleSearchInput(event) {
     state.searchQuery = event.target.value.trim().toLowerCase();
+    renderDocuments();
+}
+
+function handleSortChange(event) {
+    state.sortOrder = event.target.value || "created_desc";
     renderDocuments();
 }
 

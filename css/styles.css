@@ -459,6 +459,13 @@ body::after {
     min-width: 250px;
 }
 
+.sort-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 185px;
+}
+
 .search-label {
     color: var(--text-faint);
     font-size: 0.7rem;
@@ -477,7 +484,33 @@ body::after {
     font-size: 0.9rem;
 }
 
+.sort-field select {
+    width: 100%;
+    padding: 0.8rem 2.6rem 0.8rem 0.95rem;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: rgba(248, 250, 255, 0.88);
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--text);
+    appearance: none;
+    background-image:
+        linear-gradient(45deg, transparent 50%, rgba(63, 74, 113, 0.72) 50%),
+        linear-gradient(135deg, rgba(63, 74, 113, 0.72) 50%, transparent 50%);
+    background-position:
+        calc(100% - 18px) calc(50% - 2px),
+        calc(100% - 12px) calc(50% - 2px);
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+}
+
 .search-field input:focus {
+    outline: none;
+    border-color: rgba(66, 99, 235, 0.4);
+    box-shadow: 0 0 0 4px rgba(66, 99, 235, 0.12);
+}
+
+.sort-field select:focus {
     outline: none;
     border-color: rgba(66, 99, 235, 0.4);
     box-shadow: 0 0 0 4px rgba(66, 99, 235, 0.12);
@@ -1846,6 +1879,11 @@ body.print-window {
     }
 
     .search-field {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .sort-field {
         min-width: 0;
         width: 100%;
     }
