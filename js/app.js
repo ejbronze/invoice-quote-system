@@ -1074,7 +1074,7 @@ function addItem() {
                     <label>Quantity</label>
                     <input type="number" class="item-quantity" value="1" min="0" step="1">
                 </div>
-                <div class="form-group">
+                <div class="form-group item-total-price-usd-group">
                     <label>Total Price (USD)</label>
                     <input type="number" class="item-total-price" value="0" min="0" step="0.01">
                 </div>
@@ -1093,12 +1093,12 @@ function addItem() {
             <div class="form-group item-currency-mode">
                 <label class="checkbox-row">
                     <input type="checkbox" class="item-dop-toggle">
-                    <span>Enter total price in DOP</span>
+                    <span>Use DOP amount box</span>
                 </label>
-                <small class="field-help">If enabled, the app converts the DOP total to USD using RD$${DOP_PER_USD} per US$1.</small>
+                <small class="field-help">Toggle this on to enter the price in pesos. The app converts it back to USD at RD$${DOP_PER_USD} = US$1.</small>
             </div>
             <div class="form-row item-dop-row" style="display: none;">
-                <div class="form-group">
+                <div class="form-group item-total-price-dop-group">
                     <label>Total Price (DOP)</label>
                     <input type="number" class="item-total-price-dop" value="0" min="0" step="0.01">
                 </div>
@@ -1171,6 +1171,7 @@ function handleItemsChange() {
 function updateItemPricing(row) {
     const quantity = parseFloat(row.querySelector(".item-quantity").value) || 0;
     const totalPriceInput = row.querySelector(".item-total-price");
+    const totalPriceUsdGroup = row.querySelector(".item-total-price-usd-group");
     const unitPriceInput = row.querySelector(".item-unit-price");
     const dopToggle = row.querySelector(".item-dop-toggle");
     const dopRow = row.querySelector(".item-dop-row");
@@ -1187,6 +1188,9 @@ function updateItemPricing(row) {
 
     const isUsingDopTotal = dopToggle.checked;
     dopRow.style.display = isUsingDopTotal ? "grid" : "none";
+    if (totalPriceUsdGroup) {
+        totalPriceUsdGroup.style.display = isUsingDopTotal ? "none" : "block";
+    }
     unitPriceInput.readOnly = !isManual;
     totalPriceInput.readOnly = isUsingDopTotal;
 
