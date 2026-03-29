@@ -47,7 +47,6 @@ function cacheElements() {
     elements.docType = document.getElementById("docType");
     elements.refNumber = document.getElementById("refNumber");
     elements.docDate = document.getElementById("docDate");
-    elements.exportDate = document.getElementById("exportDate");
     elements.poNumber = document.getElementById("poNumber");
     elements.docTags = document.getElementById("docTags");
     elements.clientSelect = document.getElementById("clientSelect");
@@ -983,20 +982,6 @@ async function handleBackupImportSelect(event) {
 function setToday() {
     const today = new Date().toISOString().split("T")[0];
     elements.docDate.value = today;
-    elements.exportDate.value = today;
-}
-
-function getStoredExportTimestamp(dateValue, existingValue = "") {
-    const safeDate = String(dateValue || "").trim();
-    if (!safeDate) {
-        return existingValue || new Date().toISOString();
-    }
-
-    const timePart = String(existingValue || "").includes("T")
-        ? String(existingValue).split("T")[1]
-        : "12:00:00.000Z";
-
-    return `${safeDate}T${timePart}`;
 }
 
 function formatCurrency(amount) {
@@ -1578,7 +1563,7 @@ function buildDocumentData() {
         notes: elements.notes.value,
         paymentTerms: elements.paymentTerms.value,
         includeSignature: elements.includeSignature.checked,
-        printedAt: getStoredExportTimestamp(elements.exportDate.value),
+        printedAt: elements.docDate.value ? `${elements.docDate.value}T12:00:00.000Z` : new Date().toISOString(),
         subtotal,
         total: subtotal,
         items
@@ -1883,7 +1868,7 @@ async function saveDocument() {
         notes: elements.notes.value,
         paymentTerms: elements.paymentTerms.value,
         includeSignature: elements.includeSignature.checked,
-        printedAt: getStoredExportTimestamp(elements.exportDate.value, existingDocument?.printedAt),
+        printedAt: elements.docDate.value ? `${elements.docDate.value}T12:00:00.000Z` : (existingDocument?.printedAt || new Date().toISOString()),
         items: [],
         subtotal: 0,
         total: 0
@@ -2244,7 +2229,6 @@ function populateFormFromDocument(doc) {
     elements.docType.value = doc.type;
     elements.refNumber.value = doc.refNumber;
     elements.docDate.value = doc.date;
-    elements.exportDate.value = String(doc.printedAt || doc.createdAt || doc.date || "").split("T")[0];
     elements.clientName.value = doc.clientName;
     elements.clientAddress.value = doc.clientAddress;
     elements.poNumber.value = doc.poNumber || "";
