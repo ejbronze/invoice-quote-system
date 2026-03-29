@@ -10,6 +10,11 @@ const state = {
     searchQuery: "",
     sortOrder: "date_desc",
     valueView: "pipeline",
+    calculatorExpression: "0",
+    isCalculatorOpen: false,
+    isDraggingCalculator: false,
+    calculatorDragOffsetX: 0,
+    calculatorDragOffsetY: 0,
     isBootstrapping: false,
     isUploadingLegacyPdf: false
 };
@@ -91,6 +96,13 @@ function cacheElements() {
     elements.summaryTotal = document.getElementById("summaryTotal");
     elements.summaryTags = document.getElementById("summaryTags");
     elements.sidebarTip = document.getElementById("sidebarTip");
+    elements.calculatorLauncher = document.getElementById("calculatorLauncher");
+    elements.calculatorWidget = document.getElementById("calculatorWidget");
+    elements.calculatorDragHandle = document.getElementById("calculatorDragHandle");
+    elements.calculatorMinimizeBtn = document.getElementById("calculatorMinimizeBtn");
+    elements.calculatorCloseBtn = document.getElementById("calculatorCloseBtn");
+    elements.calculatorDisplay = document.getElementById("calculatorDisplay");
+    elements.calculatorGrid = document.getElementById("calculatorGrid");
 }
 
 function bindEvents() {
@@ -136,6 +148,13 @@ function bindEvents() {
     elements.documentSearch.addEventListener("input", handleSearchInput);
     elements.documentSort.addEventListener("change", handleSortChange);
     elements.documentsGrid.addEventListener("keydown", handleDocumentCardKeydown);
+    elements.calculatorLauncher.addEventListener("click", toggleCalculator);
+    elements.calculatorMinimizeBtn.addEventListener("click", hideCalculator);
+    elements.calculatorCloseBtn.addEventListener("click", hideCalculator);
+    elements.calculatorGrid.addEventListener("click", handleCalculatorButtonClick);
+    elements.calculatorDragHandle.addEventListener("pointerdown", startCalculatorDrag);
+    window.addEventListener("pointermove", handleCalculatorDrag);
+    window.addEventListener("pointerup", stopCalculatorDrag);
     elements.filterButtons.forEach(button => {
         button.addEventListener("click", () => setActiveFilter(button.dataset.filter));
     });
@@ -158,11 +177,190 @@ function bindEvents() {
 
 function init() {
     applyAccessState(hasAdminAccess());
+    updateCalculatorDisplay();
     if (!hasAdminAccess()) {
         return;
     }
 
     bootstrapAppData();
+}
+
+function toggleCalculator() {
+    if (state.isCalculatorOpen) {
+        hideCalculator();
+    } else {
+        showCalculator();
+    }
+}
+
+function showCalculator() {
+    state.isCalculatorOpen = true;
+    elements.calculatorWidget.hidden = false;
+    elements.calculatorWidget.classList.remove("hidden");
+    elements.calculatorWidget.classList.add("is-visible");
+    elements.calculatorLauncher.setAttribute("aria-expanded", "true");
+
+    if (!elements.calculatorWidget.style.left) {
+        elements.calculatorWidget.style.left = `${Math.max(window.innerWidth - 360, 16)}px`;
+        elements.calculatorWidget.style.top = "112px";
+    }
+}
+
+function hideCalculator() {
+    state.isCalculatorOpen = false;
+    state.isDraggingCalculator = false;
+    elements.calculatorWidget.classList.add("hidden");
+    elements.calculatorWidget.classList.remove("is-visible");
+    elements.calculatorWidget.hidden = true;
+    elements.calculatorLauncher.setAttribute("aria-expanded", "false");
+}
+
+function handleCalculatorButtonClick(event) {
+    const button = event.target.closest("button");
+    if (!button) {
+        return;
+    }
+
+    const value = button.dataset.calcValue;
+    const action = button.dataset.calcAction;
+
+    if (value) {
+        appendCalculatorValue(value);
+        return;
+    }
+
+    if (action === "clear") {
+        state.calculatorExpression = "0";
+    } else if (action === "sign") {
+        toggleCalculatorSign();
+    } else if (action === "percent") {
+        applyCalculatorPercent();
+    } else if (action === "equals") {
+        evaluateCalculatorExpression();
+    }
+
+    updateCalculatorDisplay();
+}
+
+function appendCalculatorValue(value) {
+    const current = state.calculatorExpression === "Error" ? "0" : state.calculatorExpression;
+    const operators = ["+", "-", "*", "/"];
+    const lastCharacter = current.slice(-1);
+
+    if (value === "." && /(^|[+\-*/])\d*\.\d*$/.test(current)) {
+        return;
+    }
+
+    if (operators.includes(value)) {
+        if (operators.includes(lastCharacter)) {
+            state.calculatorExpression = `${current.slice(0, -1)}${value}`;
+        } else {
+            state.calculatorExpression = `${current}${value}`;
+        }
+        updateCalculatorDisplay();
+        return;
+    }
+
+    if (current === "0" && value !== ".") {
+        state.calculatorExpression = value;
+    } else {
+        state.calculatorExpression = `${current}${value}`;
+    }
+
+    updateCalculatorDisplay();
+}
+
+function toggleCalculatorSign() {
+    const match = state.calculatorExpression.match(/(-?\d*\.?\d+)$/);
+    if (!match) {
+        return;
+    }
+
+    const currentNumber = match[0];
+    const replacement = currentNumber.startsWith("-")
+        ? currentNumber.slice(1)
+        : `-${currentNumber}`;
+
+    state.calculatorExpression = `${state.calculatorExpression.slice(0, -currentNumber.length)}${replacement}`;
+}
+
+function applyCalculatorPercent() {
+    const match = state.calculatorExpression.match(/(-?\d*\.?\d+)$/);
+    if (!match) {
+        return;
+    }
+
+    const currentNumber = Number(match[0]);
+    const percentValue = String(currentNumber / 100);
+    state.calculatorExpression = `${state.calculatorExpression.slice(0, -match[0].length)}${percentValue}`;
+}
+
+function evaluateCalculatorExpression() {
+    try {
+        const sanitized = state.calculatorExpression.replace(/x/g, "*");
+        if (!/^[0-9+\-*/.() ]+$/.test(sanitized)) {
+            throw new Error("Invalid expression");
+        }
+
+        const result = Function(`"use strict"; return (${sanitized});`)();
+        if (!Number.isFinite(result)) {
+            throw new Error("Invalid result");
+        }
+        state.calculatorExpression = String(Number(result.toFixed(6)));
+    } catch (error) {
+        state.calculatorExpression = "Error";
+    }
+}
+
+function updateCalculatorDisplay() {
+    elements.calculatorDisplay.value = state.calculatorExpression;
+}
+
+function startCalculatorDrag(event) {
+    if (!state.isCalculatorOpen) {
+        return;
+    }
+
+    if (event.target.closest("button")) {
+        return;
+    }
+
+    const rect = elements.calculatorWidget.getBoundingClientRect();
+    state.isDraggingCalculator = true;
+    state.calculatorDragOffsetX = event.clientX - rect.left;
+    state.calculatorDragOffsetY = event.clientY - rect.top;
+    elements.calculatorWidget.classList.add("is-dragging");
+    elements.calculatorDragHandle.setPointerCapture(event.pointerId);
+}
+
+function handleCalculatorDrag(event) {
+    if (!state.isDraggingCalculator) {
+        return;
+    }
+
+    const nextLeft = Math.min(
+        Math.max(12, event.clientX - state.calculatorDragOffsetX),
+        window.innerWidth - elements.calculatorWidget.offsetWidth - 12
+    );
+    const nextTop = Math.min(
+        Math.max(12, event.clientY - state.calculatorDragOffsetY),
+        window.innerHeight - elements.calculatorWidget.offsetHeight - 12
+    );
+
+    elements.calculatorWidget.style.left = `${nextLeft}px`;
+    elements.calculatorWidget.style.top = `${nextTop}px`;
+}
+
+function stopCalculatorDrag(event) {
+    if (!state.isDraggingCalculator) {
+        return;
+    }
+
+    state.isDraggingCalculator = false;
+    elements.calculatorWidget.classList.remove("is-dragging");
+    if (event && elements.calculatorDragHandle.hasPointerCapture?.(event.pointerId)) {
+        elements.calculatorDragHandle.releasePointerCapture(event.pointerId);
+    }
 }
 
 function hasAdminAccess() {
