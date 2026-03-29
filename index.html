@@ -7,7 +7,21 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <main class="container">
+    <div class="access-gate" id="accessGate">
+        <div class="access-card">
+            <span class="eyebrow">Admin Verification</span>
+            <h1>Admin Dashboard Access</h1>
+            <p>Enter the admin verification code to open the invoice and quote dashboard.</p>
+            <form class="access-form" id="accessForm">
+                <label for="accessCode">Verification Code</label>
+                <input type="password" id="accessCode" autocomplete="current-password" placeholder="Enter access code" required>
+                <p class="access-error" id="accessError" role="alert" hidden>That code is incorrect. Try again.</p>
+                <button class="btn btn-primary" type="submit">Open Dashboard</button>
+            </form>
+        </div>
+    </div>
+
+    <main class="container app-shell app-shell-locked" id="adminAppShell" aria-hidden="true">
         <section class="hero-panel">
             <div class="hero-copy">
                 <span class="eyebrow">Document Workspace</span>
@@ -40,7 +54,7 @@
         </section>
 
         <section class="dashboard">
-                <div class="dashboard-topbar">
+            <div class="dashboard-topbar">
                 <div>
                     <h2>Documents</h2>
                     <p class="dashboard-subtitle">Search, edit, convert, and export your saved quotes and invoices.</p>
