@@ -30,6 +30,9 @@ function cacheElements() {
     elements.accessForm = document.getElementById("accessForm");
     elements.accessCode = document.getElementById("accessCode");
     elements.accessError = document.getElementById("accessError");
+    elements.settingsModal = document.getElementById("settingsModal");
+    elements.openSettingsBtn = document.getElementById("openSettingsBtn");
+    elements.closeSettingsBtn = document.getElementById("closeSettingsBtn");
     elements.documentModal = document.getElementById("documentModal");
     elements.stepIndicator = document.querySelector(".step-indicator");
     elements.modalTitle = document.getElementById("modalTitle");
@@ -96,6 +99,8 @@ function bindEvents() {
             elements.uploadLegacyPdfInput.click();
         }
     });
+    elements.openSettingsBtn.addEventListener("click", openSettingsModal);
+    elements.closeSettingsBtn.addEventListener("click", closeSettingsModal);
     elements.exportBackupBtn.addEventListener("click", exportSystemBackup);
     elements.importBackupBtn.addEventListener("click", () => {
         elements.importBackupInput.click();
@@ -124,6 +129,12 @@ function bindEvents() {
     elements.documentModal.addEventListener("click", event => {
         if (event.target === elements.documentModal) {
             closeModal();
+        }
+    });
+
+    elements.settingsModal.addEventListener("click", event => {
+        if (event.target === elements.settingsModal) {
+            closeSettingsModal();
         }
     });
 
@@ -162,6 +173,16 @@ function unlockAdminAccess() {
     sessionStorage.setItem(ADMIN_ACCESS_STORAGE_KEY, "true");
     applyAccessState(true);
     bootstrapAppData();
+}
+
+function openSettingsModal() {
+    elements.settingsModal.classList.add("active");
+    elements.settingsModal.setAttribute("aria-hidden", "false");
+}
+
+function closeSettingsModal() {
+    elements.settingsModal.classList.remove("active");
+    elements.settingsModal.setAttribute("aria-hidden", "true");
 }
 
 function handleAccessSubmit(event) {
@@ -315,6 +336,7 @@ function exportSystemBackup() {
         documents: state.documents,
         clients: state.clients
     });
+    closeSettingsModal();
     setImportStatus("Backup exported. Keep the JSON file somewhere safe.");
 }
 
@@ -468,6 +490,7 @@ async function handleBackupImportSelect(event) {
             saveClientsToServer(nextClients)
         ]);
 
+        closeSettingsModal();
         renderClientOptions();
         renderDocuments();
         setImportStatus("Backup imported successfully.");
@@ -1610,7 +1633,7 @@ function handleDocumentCardClick(event) {
         } else if (action === "view-pdf") {
             const doc = state.documents.find(entry => entry.id === docId);
             if (doc?.legacyPdfUrl) {
-                window.open(doc.legacyPdfUrl, "_blank", "noopener,noreferrer");
+                window.open(`/api/legacy-pdf?documentId=${encodeURIComponent(String(doc.id))}`, "_blank", "noopener,noreferrer");
             }
         } else if (action === "export-json") {
             const doc = state.documents.find(entry => entry.id === docId);

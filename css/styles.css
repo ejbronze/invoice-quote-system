@@ -413,6 +413,33 @@ body::after {
     margin-bottom: 0.95rem;
 }
 
+.settings-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: rgba(248, 250, 255, 0.92);
+    color: var(--text);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.settings-trigger:hover {
+    transform: translateY(-2px) rotate(12deg);
+    border-color: rgba(66, 99, 235, 0.24);
+    box-shadow: var(--shadow-md);
+}
+
+.settings-trigger svg {
+    width: 1.15rem;
+    height: 1.15rem;
+    fill: currentColor;
+}
+
 .dashboard h2 {
     margin-bottom: 0.2rem;
     color: var(--text);
@@ -692,6 +719,29 @@ body::after {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.settings-modal-content {
+    max-width: 440px;
+    height: auto;
+    max-height: none;
+}
+
+.settings-modal-body {
+    padding-top: 1.15rem;
+    padding-bottom: 1.15rem;
+}
+
+.settings-copy {
+    color: var(--text-soft);
+    font-size: 0.92rem;
+    line-height: 1.55;
+}
+
+.settings-actions {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 1rem;
 }
 
 .modal-content {
