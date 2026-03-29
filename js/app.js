@@ -705,7 +705,7 @@ function buildDocumentFromCsvRow(row, indexMap) {
     const itemTotalPrice = numberOrZero(csvValue(row, indexMap, "itemTotalPrice")) || (itemQuantity * itemUnitPrice);
     const total = numberOrZero(csvValue(row, indexMap, "total")) || itemTotalPrice;
     const itemDescription = csvValue(row, indexMap, "itemDescription") || "Imported line item";
-    const date = csvValue(row, indexMap, "date") || new Date().toISOString().split("T")[0];
+    const date = csvValue(row, indexMap, "date") || getLocalDateInputValue();
     const clientName = csvValue(row, indexMap, "clientName") || "Imported Client";
     const clientAddress = csvValue(row, indexMap, "clientAddress");
     const refNumber = csvValue(row, indexMap, "refNumber") || `${getRefPrefix()}-${getNextRefSequence()}`;
@@ -850,8 +850,15 @@ async function handleBackupImportSelect(event) {
 }
 
 function setToday() {
-    const today = new Date().toISOString().split("T")[0];
-    elements.docDate.value = today;
+    elements.docDate.value = getLocalDateInputValue();
+}
+
+function getLocalDateInputValue(dateValue = new Date()) {
+    const date = new Date(dateValue);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
 }
 
 function formatCurrency(amount) {
@@ -2188,7 +2195,7 @@ function convertQuoteToInvoice(id) {
     state.editingDocumentId = null;
     state.convertingFromQuoteId = id;
     openModal("invoice");
-    populateFormFromDocument({ ...doc, type: "invoice", date: new Date().toISOString().split("T")[0] });
+    populateFormFromDocument({ ...doc, type: "invoice", date: getLocalDateInputValue() });
     elements.docType.value = "invoice";
     setToday();
     generateRefNumber();
