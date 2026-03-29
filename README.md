@@ -1,6 +1,6 @@
 # Invoice & Quote System
 
-Static web app for creating quotes and invoices, storing them in the browser, and exporting branded PDF-ready documents that match the RG Logistics layout.
+Static web app for creating quotes and invoices, storing them on the server, and exporting branded PDF-ready documents that match the RG Logistics layout.
 
 ## Project Structure
 
@@ -53,11 +53,11 @@ Static web app for creating quotes and invoices, storing them in the browser, an
 ## Features
 
 - Create, edit, delete, and save quotes and invoices on the server.
+- Import a PDF or image quote/invoice and let the app extract the key fields into a saved document automatically.
 - Convert a saved quote into a new invoice while keeping the source quote in history.
 - Lock converted source quotes so they remain visible in quote history but can no longer be edited or deleted.
 - Search documents by reference number, date, client, type, or tags.
 - Add tags to documents for filtering and later lookup.
-- Save reusable client records locally in the browser.
 - Save reusable client records on the server so they remain available across browsers and devices.
 - Use a compact line-item editor where each item collapses into a summary row and expands when selected.
 - Enter line-item totals in USD by default.
@@ -89,8 +89,10 @@ Static web app for creating quotes and invoices, storing them in the browser, an
 
 - Documents and saved clients are loaded and saved through the Vercel `/api` routes.
 - The API routes persist data in Vercel Blob storage as JSON snapshots.
+- Document import uses the OpenAI API on the server to extract fields from uploaded PDF or image files.
 - Because the data is stored server-side, quotes, invoices, and saved clients can be shared across browsers and devices.
 - This setup requires `BLOB_READ_WRITE_TOKEN` to be configured in Vercel for the deployed project.
+- AI-powered import also requires `OPENAI_API_KEY` to be configured in Vercel.
 
 ## Git / Deployment Notes
 

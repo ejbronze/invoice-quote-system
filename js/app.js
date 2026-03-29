@@ -8,7 +8,8 @@ const state = {
     convertingFromQuoteId: null,
     activeFilter: "all",
     searchQuery: "",
-    isBootstrapping: false
+    isBootstrapping: false,
+    isImportingDocument: false
 };
 
 const DOP_PER_USD = 59;
@@ -52,6 +53,9 @@ function cacheElements() {
     elements.saveBtn = document.getElementById("saveBtn");
     elements.newQuoteBtn = document.getElementById("newQuoteBtn");
     elements.newInvoiceBtn = document.getElementById("newInvoiceBtn");
+    elements.importDocumentBtn = document.getElementById("importDocumentBtn");
+    elements.importDocumentInput = document.getElementById("importDocumentInput");
+    elements.importDocumentStatus = document.getElementById("importDocumentStatus");
     elements.closeModalBtn = document.getElementById("closeModalBtn");
     elements.saveClientBtn = document.getElementById("saveClientBtn");
     elements.addItemBtn = document.getElementById("addItemBtn");
@@ -84,6 +88,12 @@ function bindEvents() {
         prepareNewDocument("invoice");
         openModal("invoice");
     });
+    elements.importDocumentBtn.addEventListener("click", () => {
+        if (!state.isImportingDocument) {
+            elements.importDocumentInput.click();
+        }
+    });
+    elements.importDocumentInput.addEventListener("change", handleImportDocumentSelect);
     elements.closeModalBtn.addEventListener("click", closeModal);
     elements.docType.addEventListener("change", updateModalTitle);
     elements.refNumber.addEventListener("input", handleRefNumberInput);
@@ -217,6 +227,17 @@ function renderDocumentsMessage(message) {
     `;
 }
 
+function setImportStatus(message, isError = false) {
+    elements.importDocumentStatus.textContent = message;
+    elements.importDocumentStatus.classList.toggle("hero-helper-error", isError);
+}
+
+function setImportingState(isImporting) {
+    state.isImportingDocument = isImporting;
+    elements.importDocumentBtn.disabled = isImporting;
+    elements.importDocumentBtn.textContent = isImporting ? "Scanning Document..." : "Import Quote / Invoice";
+}
+
 async function bootstrapAppData() {
     if (state.isBootstrapping) {
         return;
@@ -254,6 +275,138 @@ async function saveDocumentsToServer(documents) {
     });
 
     state.documents = normalizeDocuments(payload.documents);
+}
+
+function createImportedDocument(extracted) {
+    const items = Array.isArray(extracted.items) && extracted.items.length
+        ? extracted.items.map(item => {
+            const quantity = Number(item.quantity || 0);
+            const totalPrice = Number(item.totalPrice || 0);
+            const unitPrice = Number(item.unitPrice || (quantity > 0 ? totalPrice / quantity : 0));
+            return {
+                description: item.description || "",
+                quantity,
+                price: unitPrice,
+                unitPrice,
+                totalPrice,
+                totalPriceDop: Number(item.totalPriceDop || 0),
+                internalCost: 0,
+                upchargePercent: 0,
+                usesDopTotal: Boolean(item.usesDopTotal),
+                manualUnitPrice: false
+            };
+        })
+        : [{
+            description: extracted.notes || "Imported document",
+            quantity: 1,
+            price: Number(extracted.total || 0),
+            unitPrice: Number(extracted.total || 0),
+            totalPrice: Number(extracted.total || 0),
+            totalPriceDop: 0,
+            internalCost: 0,
+            upchargePercent: 0,
+            usesDopTotal: false,
+            manualUnitPrice: false
+        }];
+
+    const subtotal = items.reduce((sum, item) => sum + Number(item.totalPrice || 0), 0);
+    const today = new Date().toISOString().split("T")[0];
+
+    return {
+        id: Date.now(),
+        type: extracted.type === "invoice" ? "invoice" : "quote",
+        refNumber: extracted.refNumber || `${getRefPrefix()}-${getNextRefSequence()}`,
+        date: extracted.date || today,
+        clientName: extracted.clientName || "Imported Client",
+        clientAddress: extracted.clientAddress || "",
+        poNumber: extracted.poNumber || "",
+        tags: parseTags((Array.isArray(extracted.tags) ? extracted.tags : ["Imported"]).join(", ")),
+        notes: extracted.notes || "",
+        paymentTerms: extracted.paymentTerms || "Payment Upon Receipt",
+        includeSignature: false,
+        printedAt: new Date().toISOString(),
+        items,
+        subtotal,
+        total: Number(extracted.total || subtotal || 0)
+    };
+}
+
+function ensureImportedClient(doc) {
+    const name = String(doc.clientName || "").trim();
+    const address = String(doc.clientAddress || "").trim();
+    if (!name || !address) {
+        return;
+    }
+
+    const existing = state.clients.find(client => client.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+        existing.address = address;
+        return;
+    }
+
+    state.clients.push({
+        id: `client-${Date.now()}`,
+        name,
+        address
+    });
+}
+
+async function handleImportDocumentSelect(event) {
+    const [file] = event.target.files || [];
+    event.target.value = "";
+
+    if (!file) {
+        return;
+    }
+
+    if (!["application/pdf", "image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+        setImportStatus("Please upload a PDF, PNG, JPG, or WEBP document.", true);
+        return;
+    }
+
+    if (file.size > 3 * 1024 * 1024) {
+        setImportStatus("Please keep uploads under 3 MB so Vercel can process them safely.", true);
+        return;
+    }
+
+    try {
+        setImportingState(true);
+        setImportStatus(`Scanning ${file.name}...`);
+
+        const fileData = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result));
+            reader.onerror = () => reject(new Error("Unable to read the selected file."));
+            reader.readAsDataURL(file);
+        });
+
+        const importResponse = await requestJSON("/api/import-document", {
+            method: "POST",
+            body: JSON.stringify({
+                filename: file.name,
+                mimeType: file.type,
+                fileData
+            })
+        });
+
+        const importedDocument = createImportedDocument(importResponse.document || {});
+        const nextDocuments = [importedDocument, ...state.documents];
+        ensureImportedClient(importedDocument);
+
+        await Promise.all([
+            saveDocumentsToServer(nextDocuments),
+            saveClientsToServer(state.clients)
+        ]);
+
+        renderClientOptions();
+        renderDocuments();
+        setImportStatus(`Imported ${importedDocument.type === "invoice" ? "invoice" : "quote"} ${importedDocument.refNumber}.`);
+        editDocument(importedDocument.id);
+    } catch (error) {
+        setImportStatus(`Import failed: ${error.message}`, true);
+    } finally {
+        setImportingState(false);
+    }
 }
 
 async function saveClientsToServer(clients) {
