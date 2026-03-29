@@ -92,6 +92,7 @@ Static web app for creating quotes and invoices, storing them on the server, and
 - Legacy PDF uploads are stored in Vercel Blob and linked to saved document records.
 - Blob access defaults to `public`; if your Vercel Blob store is private, set `BLOB_ACCESS_MODE=private`.
 - Private-store legacy PDFs are opened through the `/api/legacy-pdf` proxy route so they can still be viewed in the app.
+- If you need to verify the deployed Blob configuration, you can temporarily check `/api/debug-blob` to confirm the active access mode and that a token is present.
 - Because the data is stored server-side, quotes, invoices, and saved clients can be shared across browsers and devices.
 - This setup requires `BLOB_READ_WRITE_TOKEN` to be configured in Vercel for the deployed project.
 
