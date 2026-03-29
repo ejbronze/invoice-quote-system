@@ -26,7 +26,7 @@
             <div class="workspace-intro">
                 <div class="hero-copy">
                     <span class="eyebrow">Document Workspace</span>
-                    <h1>Invoices and quotes, all in one place.</h1>
+                    <h1>Invoices and Quotes, all in one place.</h1>
                     <p>Create polished documents, convert quotes into invoices, and keep your history organized without the extra clutter.</p>
                 </div>
                 <div class="hero-actions" aria-label="Primary actions">
@@ -72,7 +72,7 @@
             <div class="dashboard-topbar">
                 <div>
                     <h2>Documents</h2>
-                    <p class="dashboard-subtitle">Search, edit, convert, and export your saved quotes and invoices.</p>
+                    <p class="dashboard-subtitle">Click any row to open it, then sort, filter, and manage your quotes and invoices.</p>
                 </div>
                 <button class="settings-trigger" id="openSettingsBtn" type="button" aria-label="Open settings">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -83,8 +83,10 @@
                 <label class="sort-field">
                     <span class="search-label">Sort</span>
                     <select id="documentSort">
-                        <option value="created_desc">Newest Created</option>
-                        <option value="created_asc">Oldest Created</option>
+                        <option value="date_desc">Date: Newest First</option>
+                        <option value="date_asc">Date: Oldest First</option>
+                        <option value="created_desc">Created: Newest First</option>
+                        <option value="created_asc">Created: Oldest First</option>
                     </select>
                 </label>
                 <label class="search-field">
@@ -189,6 +191,11 @@
                                 <div class="form-group">
                                     <label for="docDate">Date</label>
                                     <input type="date" id="docDate">
+                                </div>
+                                <div class="form-group">
+                                    <label for="exportDate">Export Date</label>
+                                    <input type="date" id="exportDate">
+                                    <small class="field-help">This controls the saved export date used for created/exported sorting.</small>
                                 </div>
                             </div>
                             <div class="form-group">

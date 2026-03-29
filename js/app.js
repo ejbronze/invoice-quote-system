@@ -8,7 +8,7 @@ const state = {
     convertingFromQuoteId: null,
     activeFilter: "all",
     searchQuery: "",
-    sortOrder: "created_desc",
+    sortOrder: "date_desc",
     valueView: "pipeline",
     isBootstrapping: false,
     isUploadingLegacyPdf: false
@@ -42,6 +42,7 @@ function cacheElements() {
     elements.docType = document.getElementById("docType");
     elements.refNumber = document.getElementById("refNumber");
     elements.docDate = document.getElementById("docDate");
+    elements.exportDate = document.getElementById("exportDate");
     elements.poNumber = document.getElementById("poNumber");
     elements.docTags = document.getElementById("docTags");
     elements.clientSelect = document.getElementById("clientSelect");
@@ -134,6 +135,7 @@ function bindEvents() {
     elements.itemsContainer.addEventListener("change", handleItemsChange);
     elements.documentSearch.addEventListener("input", handleSearchInput);
     elements.documentSort.addEventListener("change", handleSortChange);
+    elements.documentsGrid.addEventListener("keydown", handleDocumentCardKeydown);
     elements.filterButtons.forEach(button => {
         button.addEventListener("click", () => setActiveFilter(button.dataset.filter));
     });
@@ -783,6 +785,20 @@ async function handleBackupImportSelect(event) {
 function setToday() {
     const today = new Date().toISOString().split("T")[0];
     elements.docDate.value = today;
+    elements.exportDate.value = today;
+}
+
+function getStoredExportTimestamp(dateValue, existingValue = "") {
+    const safeDate = String(dateValue || "").trim();
+    if (!safeDate) {
+        return existingValue || new Date().toISOString();
+    }
+
+    const timePart = String(existingValue || "").includes("T")
+        ? String(existingValue).split("T")[1]
+        : "12:00:00.000Z";
+
+    return `${safeDate}T${timePart}`;
 }
 
 function formatCurrency(amount) {
@@ -1364,7 +1380,7 @@ function buildDocumentData() {
         notes: elements.notes.value,
         paymentTerms: elements.paymentTerms.value,
         includeSignature: elements.includeSignature.checked,
-        printedAt: new Date().toISOString(),
+        printedAt: getStoredExportTimestamp(elements.exportDate.value),
         subtotal,
         total: subtotal,
         items
@@ -1669,7 +1685,7 @@ async function saveDocument() {
         notes: elements.notes.value,
         paymentTerms: elements.paymentTerms.value,
         includeSignature: elements.includeSignature.checked,
-        printedAt: new Date().toISOString(),
+        printedAt: getStoredExportTimestamp(elements.exportDate.value, existingDocument?.printedAt),
         items: [],
         subtotal: 0,
         total: 0
@@ -1774,19 +1790,29 @@ function getFilteredDocuments() {
         const haystack = `${doc.refNumber} ${doc.clientName} ${doc.type} ${rawDate} ${formattedDate} ${tags}`.toLowerCase();
         const matchesSearch = !state.searchQuery || haystack.includes(state.searchQuery);
         return matchesType && matchesSearch;
-    }).sort((left, right) => compareDocumentsByCreatedAt(left, right, state.sortOrder));
+    }).sort((left, right) => compareDocuments(left, right, state.sortOrder));
 }
 
-function compareDocumentsByCreatedAt(left, right, sortOrder) {
-    const leftCreatedAt = getDocumentCreatedAt(left);
-    const rightCreatedAt = getDocumentCreatedAt(right);
-    const direction = sortOrder === "created_asc" ? 1 : -1;
+function compareDocuments(left, right, sortOrder) {
+    const isDateSort = sortOrder.startsWith("date_");
+    const leftTimestamp = isDateSort ? getDocumentDateAt(left) : getDocumentCreatedAt(left);
+    const rightTimestamp = isDateSort ? getDocumentDateAt(right) : getDocumentCreatedAt(right);
+    const direction = sortOrder.endsWith("_asc") ? 1 : -1;
 
-    if (leftCreatedAt !== rightCreatedAt) {
-        return (leftCreatedAt - rightCreatedAt) * direction;
+    if (leftTimestamp !== rightTimestamp) {
+        return (leftTimestamp - rightTimestamp) * direction;
     }
 
     return String(left.refNumber || left.id || "").localeCompare(String(right.refNumber || right.id || ""));
+}
+
+function getDocumentDateAt(doc) {
+    const parsed = Date.parse(doc.date);
+    if (!Number.isNaN(parsed)) {
+        return parsed;
+    }
+
+    return getDocumentCreatedAt(doc);
 }
 
 function getDocumentCreatedAt(doc) {
@@ -1851,19 +1877,29 @@ function renderDocuments() {
         const legacyBadge = doc.legacyPdfUrl
             ? '<span class="doc-lock-badge">Legacy PDF Attached</span>'
             : "";
+        const rowAriaLabel = `${doc.type} ${doc.refNumber || "document"} for ${doc.clientName || "unknown client"}`;
 
         return `
-            <div class="document-card${isLockedSourceQuote ? " document-card-locked" : ""}"${cardViewId}>
-                <div class="doc-header">
-                    <span class="doc-type ${doc.type}">${doc.type}</span>
-                    <div class="doc-date">${date}</div>
+            <div class="document-row${isLockedSourceQuote ? " document-row-locked" : ""}"${cardViewId}${isLockedSourceQuote ? "" : ' tabindex="0" role="button"'} aria-label="${escapeHtml(rowAriaLabel)}">
+                <div class="doc-row-main">
+                    <div class="doc-row-primary">
+                        <span class="doc-type ${doc.type}">${doc.type}</span>
+                        <div class="doc-ref">${doc.refNumber}</div>
+                    </div>
+                    <div class="doc-row-secondary">
+                        <div class="doc-client">${escapeHtml(doc.clientName)}</div>
+                        <div class="doc-date">Date ${date}</div>
+                    </div>
                 </div>
-                <div class="doc-ref">${doc.refNumber}</div>
-                <div class="doc-client">${escapeHtml(doc.clientName)}</div>
-                ${statusBadge}
-                ${legacyBadge}
-                ${tags.length ? `<div class="doc-tags">${tags.map(tag => `<span class="doc-tag">${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
-                <div class="doc-total">${formatCurrency(doc.total || 0)}</div>
+                <div class="doc-row-badges">
+                    ${statusBadge}
+                    ${legacyBadge}
+                    ${tags.length ? `<div class="doc-tags">${tags.map(tag => `<span class="doc-tag">${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
+                </div>
+                <div class="doc-row-total">
+                    <span class="doc-total-label">Total</span>
+                    <div class="doc-total">${formatCurrency(doc.total || 0)}</div>
+                </div>
                 <div class="doc-actions">
                     ${isLockedSourceQuote ? '<span class="doc-lock-note">Locked after conversion</span>' : `<button type="button" class="doc-action-btn" data-action="edit" data-id="${doc.id}">Edit</button>`}
                     ${doc.legacyPdfUrl ? `<button type="button" class="doc-action-btn" data-action="view-pdf" data-id="${doc.id}">View PDF</button>` : ""}
@@ -1882,7 +1918,7 @@ function handleSearchInput(event) {
 }
 
 function handleSortChange(event) {
-    state.sortOrder = event.target.value || "created_desc";
+    state.sortOrder = event.target.value || "date_desc";
     renderDocuments();
 }
 
@@ -1992,10 +2028,25 @@ function handleDocumentCardClick(event) {
     editDocument(Number(card.dataset.viewId));
 }
 
+function handleDocumentCardKeydown(event) {
+    if (event.key !== "Enter" && event.key !== " ") {
+        return;
+    }
+
+    const row = event.target.closest("[data-view-id]");
+    if (!row || event.target.closest("[data-action]")) {
+        return;
+    }
+
+    event.preventDefault();
+    editDocument(Number(row.dataset.viewId));
+}
+
 function populateFormFromDocument(doc) {
     elements.docType.value = doc.type;
     elements.refNumber.value = doc.refNumber;
     elements.docDate.value = doc.date;
+    elements.exportDate.value = String(doc.printedAt || doc.createdAt || doc.date || "").split("T")[0];
     elements.clientName.value = doc.clientName;
     elements.clientAddress.value = doc.clientAddress;
     elements.poNumber.value = doc.poNumber || "";
