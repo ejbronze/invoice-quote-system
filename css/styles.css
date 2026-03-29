@@ -272,8 +272,9 @@ body::after {
     gap: 0.6rem;
 }
 
-.hero-action-grid .btn:last-child {
-    grid-column: 1 / -1;
+.hero-action-grid .btn {
+    width: 100%;
+    justify-content: center;
 }
 
 .hero-helper-error {

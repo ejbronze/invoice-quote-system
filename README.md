@@ -18,6 +18,8 @@ Static web app for creating quotes and invoices, storing them on the server, and
 ├── api/
 │   ├── _storage.js
 │   ├── clients.js
+│   ├── debug-blob-write.js
+│   ├── debug-blob.js
 │   └── documents.js
 ├── package.json
 └── README.md
@@ -31,6 +33,8 @@ Static web app for creating quotes and invoices, storing them on the server, and
 - `api/documents.js`: Vercel serverless endpoint for loading and saving quotes and invoices.
 - `api/clients.js`: Vercel serverless endpoint for loading and saving saved clients.
 - `api/_storage.js`: Shared Vercel Blob storage helpers used by the API routes.
+- `api/debug-blob.js`: Optional debug endpoint for confirming deployed Blob mode and token presence.
+- `api/debug-blob-write.js`: Optional debug endpoint for testing a live Blob write with the current deployment config.
 - `package.json`: Runtime dependency declaration for Vercel Blob storage.
 - `assets/rg-letterhead.png`: Letterhead used in quote and invoice output.
 - `assets/rg-footer-wave.png`: Footer wave image used in document output.
@@ -38,7 +42,7 @@ Static web app for creating quotes and invoices, storing them on the server, and
 
 ## Current Workflow
 
-1. Open `index.html` in a browser.
+1. Open the app through Vercel or another local web server.
 2. Enter the admin access code `Todos123`.
 3. Create a new quote or invoice from the dashboard.
 4. Move through the five editor steps:
@@ -49,15 +53,18 @@ Static web app for creating quotes and invoices, storing them on the server, and
    - `Review`
 5. Click any step in the step indicator to jump directly to that part of the modal. Forward jumps still respect validation rules.
 6. On the last step, inspect the final print preview and export with `Save & Export PDF`.
+7. Use the floating `Calculator` button any time you want a draggable quick-calculation tool without blocking the page.
 
 ## Features
 
 - Create, edit, delete, and save quotes and invoices on the server.
 - Export a CSV template and bulk-import rows to create multiple quote or invoice cards at once.
-- Upload legacy invoice/quote PDFs so they are archived in the database even before their details are fully entered.
+- Export and import full JSON backups from the settings modal.
 - Convert a saved quote into a new invoice while keeping the source quote in history.
 - Lock converted source quotes so they remain visible in quote history but can no longer be edited or deleted.
 - Search documents by reference number, date, client, type, or tags.
+- Sort documents by document date or created/exported date, ascending or descending.
+- View saved documents in compact interactive rows and click a row to open it for editing.
 - Add tags to documents for filtering and later lookup.
 - Save reusable client records on the server so they remain available across browsers and devices.
 - Use a compact line-item editor where each item collapses into a summary row and expands when selected.
@@ -65,9 +72,12 @@ Static web app for creating quotes and invoices, storing them on the server, and
 - Optionally enter a line-item total in DOP and convert it automatically to USD using `RD$59 = US$1`.
 - Optionally make the unit price field manually editable instead of deriving it from quantity and total.
 - Track an internal-only line-item cost and automatically calculate the upcharge percentage.
+- Toggle the value summary card between `Pipeline Value` and `Amount Invoiced`.
 - Toggle the signature on or off before export.
+- Keep the saved/exported timestamp aligned to the Step 1 document date.
 - Continue quote/invoice numbering from the highest saved document sequence already in the system.
 - Adjust the trailing digits of the generated reference number manually when needed.
+- Open a draggable floating calculator without blocking the rest of the workspace.
 - Export through the browser print dialog using the branded quote/invoice layout.
 
 ## Document Output Notes
@@ -91,9 +101,7 @@ Static web app for creating quotes and invoices, storing them on the server, and
 - Documents and saved clients are loaded and saved through the Vercel `/api` routes.
 - The API routes persist data in Vercel Blob storage as JSON snapshots.
 - CSV import is handled in the browser and then saved to the same server-backed document store.
-- Legacy PDF uploads are stored in Vercel Blob and linked to saved document records.
 - Blob access defaults to `public`; if your Vercel Blob store is private, set `BLOB_ACCESS_MODE=private`.
-- Private-store legacy PDFs are opened through the `/api/legacy-pdf` proxy route so they can still be viewed in the app.
 - If you need to verify the deployed Blob configuration, you can temporarily check `/api/debug-blob` to confirm the active access mode and that a token is present.
 - If you need to verify live Blob write behavior, you can temporarily check `/api/debug-blob-write` to test a tiny write with the deployment's current access mode.
 - Because the data is stored server-side, quotes, invoices, and saved clients can be shared across browsers and devices.
