@@ -221,7 +221,51 @@ async function requestJSON(url, options = {}) {
 }
 
 function normalizeDocuments(documents) {
-    return Array.isArray(documents) ? documents : [];
+    const normalized = Array.isArray(documents) ? documents : [];
+    const consolidated = [];
+    const tlIndexByKey = new Map();
+
+    normalized.forEach(document => {
+        const doc = document && typeof document === "object" ? { ...document } : null;
+        if (!doc) {
+            return;
+        }
+
+        const refNumber = String(doc.refNumber || "").trim().toUpperCase();
+        const isTlReference = /^TL-\d{4}-\d{4}-\d+$/i.test(refNumber);
+
+        if (!isTlReference) {
+            consolidated.push(doc);
+            return;
+        }
+
+        const key = `${String(doc.type || "quote").toLowerCase()}::${refNumber}`;
+        const existingIndex = tlIndexByKey.get(key);
+
+        if (existingIndex === undefined) {
+            tlIndexByKey.set(key, consolidated.length);
+            consolidated.push(doc);
+            return;
+        }
+
+        const existingDoc = consolidated[existingIndex];
+        consolidated[existingIndex] = {
+            ...doc,
+            legacyPdfUrl: doc.legacyPdfUrl || existingDoc.legacyPdfUrl,
+            legacyPdfFilename: doc.legacyPdfFilename || existingDoc.legacyPdfFilename,
+            tags: Array.isArray(doc.tags) && doc.tags.length ? doc.tags : existingDoc.tags,
+            items: Array.isArray(doc.items) && doc.items.length ? doc.items : existingDoc.items,
+            notes: doc.notes || existingDoc.notes,
+            clientName: doc.clientName || existingDoc.clientName,
+            clientAddress: doc.clientAddress || existingDoc.clientAddress,
+            poNumber: doc.poNumber || existingDoc.poNumber,
+            paymentTerms: doc.paymentTerms || existingDoc.paymentTerms,
+            total: Number(doc.total || existingDoc.total || 0),
+            subtotal: Number(doc.subtotal || existingDoc.subtotal || 0)
+        };
+    });
+
+    return consolidated;
 }
 
 function normalizeClients(clients) {
