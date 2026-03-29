@@ -89,6 +89,7 @@ Static web app for creating quotes and invoices, storing them on the server, and
 
 - Documents and saved clients are loaded and saved through the Vercel `/api` routes.
 - The API routes persist data in Vercel Blob storage as JSON snapshots.
+- Blob access defaults to `public`; if your Vercel Blob store is private, set `BLOB_ACCESS_MODE=private`.
 - Document import uses server-side PDF text extraction plus field-matching heuristics.
 - Because the data is stored server-side, quotes, invoices, and saved clients can be shared across browsers and devices.
 - This setup requires `BLOB_READ_WRITE_TOKEN` to be configured in Vercel for the deployed project.
