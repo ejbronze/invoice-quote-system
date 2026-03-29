@@ -52,8 +52,9 @@ Static web app for creating quotes and invoices, storing them on the server, and
    - `Items Preview`
    - `Review`
 5. Click any step in the step indicator to jump directly to that part of the modal. Forward jumps still respect validation rules.
-6. On the last step, inspect the final print preview and export with `Save & Export PDF`.
-7. Use the floating `Calculator` button any time you want a draggable quick-calculation tool without blocking the page.
+6. On the last step, inspect the final print preview.
+7. Use `Save` to store the quote or invoice without printing, or `Export PDF` to save first and then open the browser print dialog.
+8. Use the floating `Calculator` button any time you want a draggable quick-calculation tool without blocking the page.
 
 ## Features
 
@@ -74,11 +75,11 @@ Static web app for creating quotes and invoices, storing them on the server, and
 - Track an internal-only line-item cost and automatically calculate the upcharge percentage.
 - Toggle the value summary card between `Pipeline Value` and `Amount Invoiced`.
 - Toggle the signature on or off before export.
-- Keep the saved/exported timestamp aligned to the Step 1 document date.
+- Keep the saved/exported timestamp aligned to the Step 1 document date, using the same local date shown in the editor.
 - Continue quote/invoice numbering from the highest saved document sequence already in the system.
 - Adjust the trailing digits of the generated reference number manually when needed.
 - Open a draggable floating calculator without blocking the rest of the workspace.
-- Export through the browser print dialog using the branded quote/invoice layout.
+- Save from Step 5 without exporting, or export through the browser print dialog using the branded quote/invoice layout.
 
 ## Document Output Notes
 

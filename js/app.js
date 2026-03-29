@@ -60,6 +60,7 @@ function cacheElements() {
     elements.prevBtn = document.getElementById("prevBtn");
     elements.nextBtn = document.getElementById("nextBtn");
     elements.saveBtn = document.getElementById("saveBtn");
+    elements.exportPdfBtn = document.getElementById("exportPdfBtn");
     elements.newQuoteBtn = document.getElementById("newQuoteBtn");
     elements.newInvoiceBtn = document.getElementById("newInvoiceBtn");
     elements.exportCsvTemplateBtn = document.getElementById("exportCsvTemplateBtn");
@@ -129,7 +130,8 @@ function bindEvents() {
     elements.addItemBtn.addEventListener("click", addItem);
     elements.prevBtn.addEventListener("click", prevStep);
     elements.nextBtn.addEventListener("click", nextStep);
-    elements.saveBtn.addEventListener("click", saveDocument);
+    elements.saveBtn.addEventListener("click", saveDocumentOnly);
+    elements.exportPdfBtn.addEventListener("click", saveAndExportDocument);
     elements.stepIndicator.addEventListener("click", handleStepIndicatorClick);
     elements.documentsGrid.addEventListener("click", handleDocumentCardClick);
     elements.itemsContainer.addEventListener("click", handleItemContainerClick);
@@ -1011,7 +1013,8 @@ function updateModalTitle() {
         elements.modalTitle.textContent = `New ${docLabel}`;
     }
 
-    elements.saveBtn.textContent = state.editingDocumentId !== null ? "Update & Export PDF" : "Save & Export PDF";
+    elements.saveBtn.textContent = state.editingDocumentId !== null ? "Update" : "Save";
+    elements.exportPdfBtn.textContent = state.editingDocumentId !== null ? "Update & Export PDF" : "Save & Export PDF";
     generateRefNumber();
 }
 
@@ -1075,6 +1078,7 @@ function goToStep(step) {
     elements.prevBtn.style.display = step > 1 ? "block" : "none";
     elements.nextBtn.style.display = step < 5 ? "block" : "none";
     elements.saveBtn.style.display = step === 5 ? "block" : "none";
+    elements.exportPdfBtn.style.display = step === 5 ? "block" : "none";
 
     if (step >= 4) {
         generatePreviews();
@@ -1735,7 +1739,8 @@ function openPrintWindow(doc) {
     printWindow.document.close();
 }
 
-async function saveDocument() {
+async function persistDocument(options = {}) {
+    const { exportAfterSave = false } = options;
     const isEditing = state.editingDocumentId !== null;
     const existingDocument = isEditing ? state.documents.find(entry => entry.id === state.editingDocumentId) : null;
     const doc = {
@@ -1805,7 +1810,6 @@ async function saveDocument() {
 
     try {
         await saveDocumentsToServer(nextDocuments);
-        openPrintWindow(doc);
         closeModal();
         renderDocuments();
     } catch (error) {
@@ -1814,7 +1818,21 @@ async function saveDocument() {
     }
 
     const actionLabel = isEditing ? "updated" : "saved";
-    alert(`${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.\n\nThe print dialog has opened so you can save it as a PDF.`);
+    if (exportAfterSave) {
+        openPrintWindow(doc);
+        alert(`${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.\n\nThe print dialog has opened so you can save it as a PDF.`);
+        return;
+    }
+
+    alert(`${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.`);
+}
+
+async function saveDocumentOnly() {
+    await persistDocument({ exportAfterSave: false });
+}
+
+async function saveAndExportDocument() {
+    await persistDocument({ exportAfterSave: true });
 }
 
 function updateOverviewStats() {
