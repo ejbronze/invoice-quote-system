@@ -31,9 +31,10 @@
             <div class="hero-actions" aria-label="Primary actions">
                 <button class="btn btn-primary" id="newQuoteBtn" type="button">New Quote</button>
                 <button class="btn btn-success" id="newInvoiceBtn" type="button">New Invoice</button>
-                <button class="btn btn-secondary" id="importDocumentBtn" type="button">Import Quote / Invoice</button>
-                <input id="importDocumentInput" type="file" accept=".pdf,application/pdf" hidden>
-                <p class="hero-helper" id="importDocumentStatus">Upload a text-based PDF and the app will pull out the main quote or invoice details for you.</p>
+                <button class="btn btn-secondary" id="exportBackupBtn" type="button">Export Backup</button>
+                <button class="btn btn-secondary" id="importBackupBtn" type="button">Import Backup</button>
+                <input id="importBackupInput" type="file" accept=".json,application/json" hidden>
+                <p class="hero-helper" id="importDocumentStatus">Export a JSON backup to keep everything safe, or import one to restore deleted records.</p>
             </div>
         </section>
 

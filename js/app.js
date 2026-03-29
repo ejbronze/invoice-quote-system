@@ -8,8 +8,7 @@ const state = {
     convertingFromQuoteId: null,
     activeFilter: "all",
     searchQuery: "",
-    isBootstrapping: false,
-    isImportingDocument: false
+    isBootstrapping: false
 };
 
 const DOP_PER_USD = 59;
@@ -53,8 +52,9 @@ function cacheElements() {
     elements.saveBtn = document.getElementById("saveBtn");
     elements.newQuoteBtn = document.getElementById("newQuoteBtn");
     elements.newInvoiceBtn = document.getElementById("newInvoiceBtn");
-    elements.importDocumentBtn = document.getElementById("importDocumentBtn");
-    elements.importDocumentInput = document.getElementById("importDocumentInput");
+    elements.exportBackupBtn = document.getElementById("exportBackupBtn");
+    elements.importBackupBtn = document.getElementById("importBackupBtn");
+    elements.importBackupInput = document.getElementById("importBackupInput");
     elements.importDocumentStatus = document.getElementById("importDocumentStatus");
     elements.closeModalBtn = document.getElementById("closeModalBtn");
     elements.saveClientBtn = document.getElementById("saveClientBtn");
@@ -88,12 +88,11 @@ function bindEvents() {
         prepareNewDocument("invoice");
         openModal("invoice");
     });
-    elements.importDocumentBtn.addEventListener("click", () => {
-        if (!state.isImportingDocument) {
-            elements.importDocumentInput.click();
-        }
+    elements.exportBackupBtn.addEventListener("click", exportSystemBackup);
+    elements.importBackupBtn.addEventListener("click", () => {
+        elements.importBackupInput.click();
     });
-    elements.importDocumentInput.addEventListener("change", handleImportDocumentSelect);
+    elements.importBackupInput.addEventListener("change", handleBackupImportSelect);
     elements.closeModalBtn.addEventListener("click", closeModal);
     elements.docType.addEventListener("change", updateModalTitle);
     elements.refNumber.addEventListener("input", handleRefNumberInput);
@@ -232,13 +231,6 @@ function setImportStatus(message, isError = false) {
     elements.importDocumentStatus.classList.toggle("hero-helper-error", isError);
 }
 
-function setImportingState(isImporting) {
-    state.isImportingDocument = isImporting;
-    elements.importDocumentBtn.disabled = isImporting;
-    elements.importDocumentBtn.classList.toggle("is-loading", isImporting);
-    elements.importDocumentBtn.textContent = isImporting ? "Scanning Document..." : "Import Quote / Invoice";
-}
-
 async function bootstrapAppData() {
     if (state.isBootstrapping) {
         return;
@@ -278,138 +270,6 @@ async function saveDocumentsToServer(documents) {
     state.documents = normalizeDocuments(payload.documents);
 }
 
-function createImportedDocument(extracted) {
-    const items = Array.isArray(extracted.items) && extracted.items.length
-        ? extracted.items.map(item => {
-            const quantity = Number(item.quantity || 0);
-            const totalPrice = Number(item.totalPrice || 0);
-            const unitPrice = Number(item.unitPrice || (quantity > 0 ? totalPrice / quantity : 0));
-            return {
-                description: item.description || "",
-                quantity,
-                price: unitPrice,
-                unitPrice,
-                totalPrice,
-                totalPriceDop: Number(item.totalPriceDop || 0),
-                internalCost: 0,
-                upchargePercent: 0,
-                usesDopTotal: Boolean(item.usesDopTotal),
-                manualUnitPrice: false
-            };
-        })
-        : [{
-            description: extracted.notes || "Imported document",
-            quantity: 1,
-            price: Number(extracted.total || 0),
-            unitPrice: Number(extracted.total || 0),
-            totalPrice: Number(extracted.total || 0),
-            totalPriceDop: 0,
-            internalCost: 0,
-            upchargePercent: 0,
-            usesDopTotal: false,
-            manualUnitPrice: false
-        }];
-
-    const subtotal = items.reduce((sum, item) => sum + Number(item.totalPrice || 0), 0);
-    const today = new Date().toISOString().split("T")[0];
-
-    return {
-        id: Date.now(),
-        type: extracted.type === "invoice" ? "invoice" : "quote",
-        refNumber: extracted.refNumber || `${getRefPrefix()}-${getNextRefSequence()}`,
-        date: extracted.date || today,
-        clientName: extracted.clientName || "Imported Client",
-        clientAddress: extracted.clientAddress || "",
-        poNumber: extracted.poNumber || "",
-        tags: parseTags((Array.isArray(extracted.tags) ? extracted.tags : ["Imported"]).join(", ")),
-        notes: extracted.notes || "",
-        paymentTerms: extracted.paymentTerms || "Payment Upon Receipt",
-        includeSignature: false,
-        printedAt: new Date().toISOString(),
-        items,
-        subtotal,
-        total: Number(extracted.total || subtotal || 0)
-    };
-}
-
-function ensureImportedClient(doc) {
-    const name = String(doc.clientName || "").trim();
-    const address = String(doc.clientAddress || "").trim();
-    if (!name || !address) {
-        return;
-    }
-
-    const existing = state.clients.find(client => client.name.toLowerCase() === name.toLowerCase());
-    if (existing) {
-        existing.address = address;
-        return;
-    }
-
-    state.clients.push({
-        id: `client-${Date.now()}`,
-        name,
-        address
-    });
-}
-
-async function handleImportDocumentSelect(event) {
-    const [file] = event.target.files || [];
-    event.target.value = "";
-
-    if (!file) {
-        return;
-    }
-
-    if (file.type !== "application/pdf") {
-        setImportStatus("Please upload a text-based PDF document.", true);
-        return;
-    }
-
-    if (file.size > 3 * 1024 * 1024) {
-        setImportStatus("Please keep uploads under 3 MB so Vercel can process them safely.", true);
-        return;
-    }
-
-    try {
-        setImportingState(true);
-        setImportStatus(`Reading ${file.name}...`);
-
-        const fileData = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result));
-            reader.onerror = () => reject(new Error("Unable to read the selected file."));
-            reader.readAsDataURL(file);
-        });
-
-        const importResponse = await requestJSON("/api/import-document", {
-            method: "POST",
-            body: JSON.stringify({
-                filename: file.name,
-                mimeType: file.type,
-                fileData
-            })
-        });
-
-        const importedDocument = createImportedDocument(importResponse.document || {});
-        const nextDocuments = [importedDocument, ...state.documents];
-        ensureImportedClient(importedDocument);
-
-        await Promise.all([
-            saveDocumentsToServer(nextDocuments),
-            saveClientsToServer(state.clients)
-        ]);
-
-        renderClientOptions();
-        renderDocuments();
-        setImportStatus(`Imported ${importedDocument.type === "invoice" ? "invoice" : "quote"} ${importedDocument.refNumber}.`);
-        editDocument(importedDocument.id);
-    } catch (error) {
-        setImportStatus(`Import failed: ${error.message}`, true);
-    } finally {
-        setImportingState(false);
-    }
-}
-
 async function saveClientsToServer(clients) {
     const payload = await requestJSON("/api/clients", {
         method: "POST",
@@ -417,6 +277,73 @@ async function saveClientsToServer(clients) {
     });
 
     state.clients = normalizeClients(payload.clients);
+}
+
+function downloadJSONFile(filename, data) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+}
+
+function exportSystemBackup() {
+    const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+    downloadJSONFile(`invoice-quote-backup-${stamp}.json`, {
+        exportedAt: new Date().toISOString(),
+        version: 1,
+        documents: state.documents,
+        clients: state.clients
+    });
+    setImportStatus("Backup exported. Keep the JSON file somewhere safe.");
+}
+
+function exportSingleDocument(doc) {
+    const safeRef = String(doc.refNumber || "document").replace(/[^a-z0-9-_]+/gi, "-");
+    downloadJSONFile(`${safeRef}.json`, {
+        exportedAt: new Date().toISOString(),
+        version: 1,
+        document: doc
+    });
+}
+
+async function handleBackupImportSelect(event) {
+    const [file] = event.target.files || [];
+    event.target.value = "";
+
+    if (!file) {
+        return;
+    }
+
+    try {
+        const text = await file.text();
+        const payload = JSON.parse(text);
+        const nextDocuments = normalizeDocuments(payload.documents || (payload.document ? [payload.document] : []));
+        const nextClients = normalizeClients(payload.clients || state.clients);
+
+        if (!nextDocuments.length && !payload.document) {
+            throw new Error("This backup file does not contain any documents.");
+        }
+
+        const mergedDocuments = nextDocuments.length === 1 && payload.document
+            ? [payload.document, ...state.documents.filter(entry => entry.id !== payload.document.id)]
+            : nextDocuments;
+
+        await Promise.all([
+            saveDocumentsToServer(mergedDocuments),
+            saveClientsToServer(nextClients)
+        ]);
+
+        renderClientOptions();
+        renderDocuments();
+        setImportStatus("Backup imported successfully.");
+    } catch (error) {
+        setImportStatus(`Backup import failed: ${error.message}`, true);
+    }
 }
 
 function setToday() {
@@ -1446,6 +1373,7 @@ function renderDocuments() {
                 <div class="doc-total">${formatCurrency(doc.total || 0)}</div>
                 <div class="doc-actions">
                     ${isLockedSourceQuote ? '<span class="doc-lock-note">Locked after conversion</span>' : `<button type="button" class="doc-action-btn" data-action="edit" data-id="${doc.id}">Edit</button>`}
+                    <button type="button" class="doc-action-btn" data-action="export-json" data-id="${doc.id}">Export JSON</button>
                     ${doc.type === "quote" && !isLockedSourceQuote ? `<button type="button" class="doc-action-btn" data-action="convert" data-id="${doc.id}">Convert to Invoice</button>` : ""}
                     ${isLockedSourceQuote ? "" : `<button type="button" class="doc-action-btn doc-action-btn-danger" data-action="delete" data-id="${doc.id}">Delete</button>`}
                 </div>
@@ -1542,6 +1470,12 @@ function handleDocumentCardClick(event) {
             deleteDocument(docId);
         } else if (action === "convert") {
             convertQuoteToInvoice(docId);
+        } else if (action === "export-json") {
+            const doc = state.documents.find(entry => entry.id === docId);
+            if (doc) {
+                exportSingleDocument(doc);
+                setImportStatus(`Exported ${doc.refNumber || "document"} as JSON.`);
+            }
         }
         return;
     }
