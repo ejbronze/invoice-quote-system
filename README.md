@@ -84,8 +84,9 @@ Static web app for creating quotes and invoices, storing them in the browser, an
 
 - This project has been initialized as a local git repository with a `main` branch.
 - The intended public repository URL is `https://github.com/ejbronze/invoice-quote-system`.
-- Once the empty GitHub repository exists, the local project can be pushed and used as the basis for GitHub Pages hosting.
-- Because this is a static HTML/CSS/JS app, it is compatible with simple static hosting workflows.
+- The app is now set up to work cleanly on Vercel static hosting.
+- `vercel.json` rewrites the site root `/` to `logistics-app.html`, so the deployed URL can open the app directly without exposing the filename.
+- Because this is a static HTML/CSS/JS app, it remains compatible with other simple static hosting workflows too.
 
 ## Print Notes
 
