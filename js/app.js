@@ -9,6 +9,7 @@ const state = {
     activeFilter: "all",
     searchQuery: "",
     sortOrder: "created_desc",
+    valueView: "pipeline",
     isBootstrapping: false,
     isUploadingLegacyPdf: false
 };
@@ -72,6 +73,9 @@ function cacheElements() {
     elements.quoteCountStat = document.getElementById("quoteCountStat");
     elements.invoiceCountStat = document.getElementById("invoiceCountStat");
     elements.totalValueStat = document.getElementById("totalValueStat");
+    elements.totalValueLabel = document.getElementById("totalValueLabel");
+    elements.totalValueHint = document.getElementById("totalValueHint");
+    elements.valueToggleCard = document.getElementById("valueToggleCard");
     elements.documentSearch = document.getElementById("documentSearch");
     elements.documentSort = document.getElementById("documentSort");
     elements.filterButtons = Array.from(document.querySelectorAll("[data-filter]"));
@@ -108,6 +112,7 @@ function bindEvents() {
     elements.exportCsvTemplateBtn.addEventListener("click", exportCsvTemplate);
     elements.importCsvBtn.addEventListener("click", openCsvImportPicker);
     elements.exportBackupBtn.addEventListener("click", exportSystemBackup);
+    elements.valueToggleCard.addEventListener("click", toggleValueView);
     elements.importBackupBtn.addEventListener("click", () => {
         elements.importBackupInput.click();
     });
@@ -1733,12 +1738,31 @@ async function saveDocument() {
 function updateOverviewStats() {
     const quoteCount = state.documents.filter(doc => doc.type === "quote").length;
     const invoiceCount = state.documents.filter(doc => doc.type === "invoice").length;
-    const totalValue = state.documents.reduce((sum, doc) => sum + Number(doc.total || 0), 0);
+    const pipelineValue = state.documents
+        .filter(doc => doc.type === "quote")
+        .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
+    const invoicedValue = state.documents
+        .filter(doc => doc.type === "invoice")
+        .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
+    const showingInvoiced = state.valueView === "invoiced";
+    const totalValue = showingInvoiced ? invoicedValue : pipelineValue;
 
     elements.totalDocumentsStat.textContent = String(state.documents.length);
     elements.quoteCountStat.textContent = String(quoteCount);
     elements.invoiceCountStat.textContent = String(invoiceCount);
     elements.totalValueStat.textContent = formatCurrency(totalValue);
+    elements.totalValueLabel.textContent = showingInvoiced ? "Amount Invoiced" : "Pipeline Value";
+    elements.totalValueHint.textContent = showingInvoiced ? "Tap to view pipeline value" : "Tap to view invoiced amount";
+    elements.valueToggleCard.setAttribute("aria-pressed", String(showingInvoiced));
+    elements.valueToggleCard.classList.toggle("is-invoiced", showingInvoiced);
+}
+
+function toggleValueView() {
+    state.valueView = state.valueView === "pipeline" ? "invoiced" : "pipeline";
+    updateOverviewStats();
+    elements.valueToggleCard.classList.remove("is-pulsing");
+    void elements.valueToggleCard.offsetWidth;
+    elements.valueToggleCard.classList.add("is-pulsing");
 }
 
 function getFilteredDocuments() {

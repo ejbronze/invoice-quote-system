@@ -22,39 +22,50 @@
     </div>
 
     <main class="container app-shell app-shell-locked" id="adminAppShell" aria-hidden="true" hidden>
-        <section class="hero-panel">
-            <div class="hero-copy">
-                <span class="eyebrow">Document Workspace</span>
-                <h1>Invoice & Quote System</h1>
-                <p>Create polished quotes, convert them into invoices, and manage your document history from one place.</p>
+        <section class="workspace-shell">
+            <div class="workspace-intro">
+                <div class="hero-copy">
+                    <span class="eyebrow">Document Workspace</span>
+                    <h1>Invoices and quotes, all in one place.</h1>
+                    <p>Create polished documents, convert quotes into invoices, and keep your history organized without the extra clutter.</p>
+                </div>
+                <div class="hero-actions" aria-label="Primary actions">
+                    <div class="hero-action-grid">
+                        <button class="btn btn-primary" id="newQuoteBtn" type="button">New Quote</button>
+                        <button class="btn btn-success" id="newInvoiceBtn" type="button">New Invoice</button>
+                        <button class="btn btn-secondary" id="uploadLegacyPdfBtn" type="button">Upload Legacy PDF</button>
+                    </div>
+                    <input id="uploadLegacyPdfInput" type="file" accept=".pdf,application/pdf" hidden>
+                    <input id="importBackupInput" type="file" accept=".json,application/json" hidden>
+                    <p class="hero-helper" id="importDocumentStatus">Upload legacy PDFs to archive them in the database, or use JSON backup tools to restore deleted records.</p>
+                </div>
             </div>
-            <div class="hero-actions" aria-label="Primary actions">
-                <button class="btn btn-primary" id="newQuoteBtn" type="button">New Quote</button>
-                <button class="btn btn-success" id="newInvoiceBtn" type="button">New Invoice</button>
-                <button class="btn btn-secondary" id="uploadLegacyPdfBtn" type="button">Upload Legacy PDF</button>
-                <input id="uploadLegacyPdfInput" type="file" accept=".pdf,application/pdf" hidden>
-                <input id="importBackupInput" type="file" accept=".json,application/json" hidden>
-                <p class="hero-helper" id="importDocumentStatus">Upload legacy PDFs to archive them in the database, or use JSON backup tools to restore deleted records.</p>
-            </div>
-        </section>
 
-        <section class="overview-grid">
-            <article class="stat-card">
-                <span class="stat-label">Total Documents</span>
-                <strong class="stat-value" id="totalDocumentsStat">0</strong>
-            </article>
-            <article class="stat-card">
-                <span class="stat-label">Quotes</span>
-                <strong class="stat-value" id="quoteCountStat">0</strong>
-            </article>
-            <article class="stat-card">
-                <span class="stat-label">Invoices</span>
-                <strong class="stat-value" id="invoiceCountStat">0</strong>
-            </article>
-            <article class="stat-card">
-                <span class="stat-label">Pipeline Value</span>
-                <strong class="stat-value" id="totalValueStat">$0.00</strong>
-            </article>
+            <aside class="overview-panel" aria-label="Workspace snapshot">
+                <div class="overview-panel-head">
+                    <span class="overview-kicker">Workspace Snapshot</span>
+                    <p>Quick counts and value totals, tucked into one neat panel.</p>
+                </div>
+                <div class="overview-grid">
+                    <article class="stat-card stat-card-mini">
+                        <span class="stat-label">Total Documents</span>
+                        <strong class="stat-value" id="totalDocumentsStat">0</strong>
+                    </article>
+                    <article class="stat-card stat-card-mini">
+                        <span class="stat-label">Quotes</span>
+                        <strong class="stat-value" id="quoteCountStat">0</strong>
+                    </article>
+                    <article class="stat-card stat-card-mini">
+                        <span class="stat-label">Invoices</span>
+                        <strong class="stat-value" id="invoiceCountStat">0</strong>
+                    </article>
+                    <button class="stat-card stat-card-toggle" id="valueToggleCard" type="button" aria-pressed="false">
+                        <span class="stat-label" id="totalValueLabel">Pipeline Value</span>
+                        <strong class="stat-value" id="totalValueStat">$0.00</strong>
+                        <span class="stat-meta" id="totalValueHint">Tap to view invoiced amount</span>
+                    </button>
+                </div>
+            </aside>
         </section>
 
         <section class="dashboard">
