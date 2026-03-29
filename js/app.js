@@ -359,8 +359,8 @@ async function handleImportDocumentSelect(event) {
         return;
     }
 
-    if (!["application/pdf", "image/png", "image/jpeg", "image/webp"].includes(file.type)) {
-        setImportStatus("Please upload a PDF, PNG, JPG, or WEBP document.", true);
+    if (file.type !== "application/pdf") {
+        setImportStatus("Please upload a text-based PDF document.", true);
         return;
     }
 
@@ -371,7 +371,7 @@ async function handleImportDocumentSelect(event) {
 
     try {
         setImportingState(true);
-        setImportStatus(`Scanning ${file.name}...`);
+        setImportStatus(`Reading ${file.name}...`);
 
         const fileData = await new Promise((resolve, reject) => {
             const reader = new FileReader();
