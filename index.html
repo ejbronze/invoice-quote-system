@@ -39,8 +39,16 @@
             <div class="app-topbar-copy">
                 <span class="app-topbar-kicker">Workspace</span>
                 <strong>Invoice & Quote Dashboard</strong>
+                <span class="session-identity" id="sessionBadge" hidden></span>
             </div>
             <div class="app-topbar-actions">
+                <button class="mailbox-trigger" id="openInboxBtn" type="button" aria-label="Open issue inbox" hidden>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                        <path d="M5 8l6.1 5a1.5 1.5 0 0 0 1.8 0L19 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="mailbox-count" id="inboxCountBadge" hidden>0</span>
+                </button>
                 <label class="language-picker">
                     <span class="visually-hidden" id="languagePickerLabel">Language</span>
                     <select id="languageSelect" aria-labelledby="languagePickerLabel">
@@ -49,10 +57,17 @@
                         <option value="fr">🥐 FRN</option>
                     </select>
                 </label>
-                <div class="session-badge" id="sessionBadge" hidden></div>
-                <button class="session-trigger" id="endSessionBtn" type="button">
-                    End Session
-                </button>
+                <div class="topbar-menu-wrap">
+                    <button class="menu-trigger" id="navMenuBtn" type="button" aria-expanded="false" aria-controls="topbarMenu" aria-label="Open navigation menu">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M5 7h14M5 12h14M5 17h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    <div class="topbar-menu" id="topbarMenu" hidden>
+                        <button class="topbar-menu-item" id="topbarSettingsBtn" type="button">Settings</button>
+                        <button class="topbar-menu-item" id="topbarSignOutBtn" type="button">Sign out</button>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -94,26 +109,6 @@
                                 <div class="hero-action-grid">
                                     <button class="btn btn-primary" id="newQuoteBtn" type="button">New Quote</button>
                                     <button class="btn btn-success" id="newInvoiceBtn" type="button">New Invoice</button>
-                                    <button class="btn btn-secondary calculator-launcher-btn" id="calculatorLauncher" type="button" aria-controls="calculatorWidget" aria-expanded="false" aria-label="Open calculator" title="Open calculator">
-                                        <svg viewBox="0 0 64 64" aria-hidden="true">
-                                            <path d="M15 4h27l8 8v40H15c-2.2 0-4-1.8-4-4V8c0-2.2 1.8-4 4-4z" fill="#ffd79b"/>
-                                            <path d="M42 4v7c0 2.2 1.8 4 4 4h4z" fill="#ffb857"/>
-                                            <rect x="18" y="16" width="20" height="3" rx="1.5" fill="#5a9c20"/>
-                                            <rect x="40" y="16" width="5" height="3" rx="1.5" fill="#5a9c20"/>
-                                            <rect x="18" y="22" width="7" height="3" rx="1.5" fill="#5a9c20"/>
-                                            <rect x="27" y="22" width="18" height="3" rx="1.5" fill="#5a9c20"/>
-                                            <circle cx="22" cy="34" r="5" fill="none" stroke="#4d971e" stroke-width="2.5"/>
-                                            <path d="M22 29v10m3-7.5c-.6-.9-1.8-1.5-3-1.5-1.8 0-3.2 1-3.2 2.4s1.1 2.1 3.2 2.6c2.1.5 3.2 1.2 3.2 2.6S23.8 40 22 40c-1.4 0-2.6-.5-3.3-1.5" fill="none" stroke="#4d971e" stroke-width="2" stroke-linecap="round"/>
-                                            <rect x="31" y="26" width="25" height="30" rx="6" fill="#7acb8a"/>
-                                            <rect x="35" y="30" width="17" height="7" rx="3.5" fill="#4697d8"/>
-                                            <rect x="36" y="41" width="5" height="5" rx="1.2" fill="#2f7f40"/>
-                                            <rect x="44" y="41" width="5" height="5" rx="1.2" fill="#2f7f40"/>
-                                            <rect x="52" y="41" width="4" height="5" rx="1.2" fill="#ff9b18"/>
-                                            <rect x="36" y="48" width="5" height="5" rx="1.2" fill="#2f7f40"/>
-                                            <rect x="44" y="48" width="5" height="5" rx="1.2" fill="#2f7f40"/>
-                                            <rect x="52" y="47" width="4" height="11" rx="2" fill="#ff9b18"/>
-                                        </svg>
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -130,12 +125,6 @@
                     <h2>Documents</h2>
                     <p class="dashboard-subtitle">Click any row to open it, then sort, filter, and manage your quotes and invoices.</p>
                 </div>
-                <button class="settings-trigger" id="openSettingsBtn" type="button" aria-label="Open settings">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M10.325 4.317a1.724 1.724 0 0 1 3.35 0 1.724 1.724 0 0 0 2.573 1.066 1.724 1.724 0 0 1 2.898 1.675 1.724 1.724 0 0 0 .707 2.706 1.724 1.724 0 0 1 0 3.472 1.724 1.724 0 0 0-.707 2.706 1.724 1.724 0 0 1-2.898 1.675 1.724 1.724 0 0 0-2.573 1.066 1.724 1.724 0 0 1-3.35 0 1.724 1.724 0 0 0-2.573-1.066 1.724 1.724 0 0 1-2.898-1.675 1.724 1.724 0 0 0-.707-2.706 1.724 1.724 0 0 1 0-3.472 1.724 1.724 0 0 0 .707-2.706 1.724 1.724 0 0 1 2.898-1.675 1.724 1.724 0 0 0 2.573-1.066Z"></path>
-                        <path d="M12 15.25A3.25 3.25 0 1 0 12 8.75a3.25 3.25 0 0 0 0 6.5Z"></path>
-                    </svg>
-                </button>
                 <label class="sort-field">
                     <span class="search-label">Sort</span>
                     <select id="documentSort">
@@ -166,6 +155,14 @@
                 </div>
             </div>
         </section>
+
+        <footer class="app-footer">
+            <div class="app-footer-copy">
+                <strong>Palmchat Innovations Lab - Edwin Jaquez</strong>
+                <span>Developed under Palmchat Innovations LLC NYC.</span>
+            </div>
+            <button class="footer-report-btn" id="openIssueReportBtn" type="button">Submit / Report Issues</button>
+        </footer>
     </main>
 
     <div class="modal settings-modal" id="settingsModal" aria-hidden="true">
@@ -287,6 +284,52 @@
                 </div>
                 <div class="settings-actions">
                     <button class="btn btn-secondary" id="exportSelectedJsonBtn" type="button">Download Selected JSON</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal settings-modal" id="issueReportModal" aria-hidden="true">
+        <div class="modal-content settings-modal-content report-modal-content">
+            <div class="modal-header">
+                <h3 id="issueReportTitle">Report an Issue</h3>
+                <button class="close-btn" id="closeIssueReportModalBtn" type="button" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body settings-modal-body">
+                <p class="settings-copy" id="issueReportCopy">Share a bug, broken workflow, or visual issue and attach a screenshot if it helps explain the problem.</p>
+                <div class="settings-grid report-grid">
+                    <label class="form-group report-field-wide">
+                        <span id="issueSummaryLabel">Issue Summary</span>
+                        <input type="text" id="issueSummaryInput" placeholder="What went wrong?">
+                    </label>
+                    <label class="form-group report-field-wide">
+                        <span id="issueDetailsLabel">Details</span>
+                        <textarea id="issueDetailsInput" rows="5" placeholder="Tell us what you were doing, what you expected, and what happened instead."></textarea>
+                    </label>
+                    <label class="form-group report-field-wide">
+                        <span id="issueScreenshotLabel">Attach Screenshot</span>
+                        <input type="file" id="issueScreenshotInput" accept="image/*">
+                        <small class="field-help" id="issueScreenshotHint">Optional. A screenshot can make layout and bug reports much easier to review.</small>
+                    </label>
+                </div>
+                <p class="report-status" id="issueReportStatus" hidden></p>
+                <div class="settings-actions">
+                    <button class="btn btn-secondary" id="submitIssueReportBtn" type="button">Submit Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal settings-modal" id="issueInboxModal" aria-hidden="true">
+        <div class="modal-content settings-modal-content inbox-modal-content">
+            <div class="modal-header">
+                <h3 id="issueInboxTitle">Issue Inbox</h3>
+                <button class="close-btn" id="closeIssueInboxModalBtn" type="button" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body settings-modal-body">
+                <p class="settings-copy" id="issueInboxCopy">Bug reports from the footer form appear here for admins to review.</p>
+                <div class="issue-inbox-list" id="issueInboxList">
+                    <p class="export-empty">No reports yet.</p>
                 </div>
             </div>
         </div>

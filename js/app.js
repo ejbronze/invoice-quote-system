@@ -22,7 +22,8 @@ const state = {
     currentUser: null,
     userAccounts: [],
     showInternalPricing: false,
-    dataMode: "server"
+    dataMode: "server",
+    issueReports: []
 };
 
 const DOP_PER_USD = 59;
@@ -37,6 +38,7 @@ const DEFAULT_ADMIN_USER = Object.freeze({
 });
 const USER_ACCOUNTS_STORAGE_KEY = "todosUserAccounts";
 const CURRENT_SESSION_STORAGE_KEY = "todosCurrentSession";
+const ISSUE_REPORTS_STORAGE_KEY = "todosIssueReports";
 const DEFAULT_ACCESS_ERROR_MESSAGE = "That username or password is incorrect. Try again.";
 const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
 const LOCAL_DOCUMENTS_STORAGE_KEY = "todosLocalDocuments";
@@ -71,6 +73,25 @@ const TRANSLATIONS = {
         workspace: "Workspace",
         dashboard_title_top: "Invoice & Quote Dashboard",
         end_session: "End Session",
+        sign_out: "Sign out",
+        settings: "Settings",
+        issue_inbox: "Issue Inbox",
+        report_issue: "Report an Issue",
+        issue_report_copy: "Share a bug, broken workflow, or visual issue and attach a screenshot if it helps explain the problem.",
+        issue_summary: "Issue Summary",
+        issue_summary_placeholder: "What went wrong?",
+        issue_details: "Details",
+        issue_details_placeholder: "Tell us what you were doing, what you expected, and what happened instead.",
+        attach_screenshot: "Attach Screenshot",
+        attach_screenshot_help: "Optional. A screenshot can make layout and bug reports much easier to review.",
+        submit_report: "Submit Report",
+        issue_inbox_copy: "Bug reports from the footer form appear here for admins to review.",
+        no_issue_reports: "No reports yet.",
+        submitted_by: "Submitted by",
+        screenshot: "Screenshot",
+        footer_credit_line: "Developed under Palmchat Innovations LLC NYC.",
+        footer_report_cta: "Submit / Report Issues",
+        menu: "Menu",
         language: "Language",
         hero_kicker: "Document Workspace",
         hero_title: "Quotes and invoices without the clutter.",
@@ -200,6 +221,25 @@ const TRANSLATIONS = {
         workspace: "Espacio",
         dashboard_title_top: "Panel de Cotizaciones y Facturas",
         end_session: "Cerrar sesión",
+        sign_out: "Cerrar sesión",
+        settings: "Configuración",
+        issue_inbox: "Bandeja de Incidencias",
+        report_issue: "Reportar un Problema",
+        issue_report_copy: "Comparte un error, una falla del flujo o un problema visual y adjunta una captura si ayuda a explicar lo ocurrido.",
+        issue_summary: "Resumen del Problema",
+        issue_summary_placeholder: "¿Qué salió mal?",
+        issue_details: "Detalles",
+        issue_details_placeholder: "Cuéntanos qué estabas haciendo, qué esperabas y qué pasó en su lugar.",
+        attach_screenshot: "Adjuntar Captura",
+        attach_screenshot_help: "Opcional. Una captura puede facilitar mucho la revisión del problema.",
+        submit_report: "Enviar Reporte",
+        issue_inbox_copy: "Los reportes enviados desde el pie de página aparecen aquí para que los administradores los revisen.",
+        no_issue_reports: "Aún no hay reportes.",
+        submitted_by: "Enviado por",
+        screenshot: "Captura",
+        footer_credit_line: "Desarrollado bajo Palmchat Innovations LLC NYC.",
+        footer_report_cta: "Enviar / Reportar Problemas",
+        menu: "Menú",
         language: "Idioma",
         hero_kicker: "Espacio de Documentos",
         hero_title: "Cotizaciones y facturas sin desorden.",
@@ -329,6 +369,25 @@ const TRANSLATIONS = {
         workspace: "Espace",
         dashboard_title_top: "Tableau Devis & Factures",
         end_session: "Fermer la session",
+        sign_out: "Se déconnecter",
+        settings: "Paramètres",
+        issue_inbox: "Boîte des Incidents",
+        report_issue: "Signaler un Problème",
+        issue_report_copy: "Partagez un bug, un flux cassé ou un problème visuel et joignez une capture si cela aide à expliquer le souci.",
+        issue_summary: "Résumé du Problème",
+        issue_summary_placeholder: "Quel est le problème ?",
+        issue_details: "Détails",
+        issue_details_placeholder: "Dites-nous ce que vous faisiez, ce que vous attendiez et ce qui s’est passé à la place.",
+        attach_screenshot: "Joindre une Capture",
+        attach_screenshot_help: "Optionnel. Une capture peut rendre les rapports bien plus faciles à examiner.",
+        submit_report: "Envoyer le Rapport",
+        issue_inbox_copy: "Les rapports envoyés depuis le pied de page apparaissent ici pour examen par les administrateurs.",
+        no_issue_reports: "Aucun rapport pour le moment.",
+        submitted_by: "Envoyé par",
+        screenshot: "Capture",
+        footer_credit_line: "Développé sous Palmchat Innovations LLC NYC.",
+        footer_report_cta: "Soumettre / Signaler un Problème",
+        menu: "Menu",
         language: "Langue",
         hero_kicker: "Espace Documents",
         hero_title: "Devis et factures sans encombrement.",
@@ -495,8 +554,12 @@ function applyTranslations() {
     elements.sessionLoaderMessage.textContent = t("session_loader_message");
     setElementText(".app-topbar-kicker", t("workspace"));
     setElementText(".app-topbar-copy strong", t("dashboard_title_top"));
-    elements.endSessionBtn.textContent = t("end_session");
     document.getElementById("languagePickerLabel").textContent = t("language");
+    elements.openInboxBtn.setAttribute("aria-label", t("issue_inbox"));
+    elements.openInboxBtn.setAttribute("title", t("issue_inbox"));
+    elements.navMenuBtn.setAttribute("aria-label", t("menu"));
+    elements.topbarSettingsBtn.textContent = t("settings");
+    elements.topbarSignOutBtn.textContent = t("sign_out");
     elements.languageSelect.options[0].textContent = "🍔 ENG";
     elements.languageSelect.options[1].textContent = "🪇 ESP";
     elements.languageSelect.options[2].textContent = "🥐 FRN";
@@ -573,11 +636,26 @@ function applyTranslations() {
     setElementText("#exportModal .settings-copy", t("export_json_copy"));
     setElementText("#selectAllExportsToggle + span", t("select_all_documents"));
     elements.exportSelectedJsonBtn.textContent = t("download_selected_json");
+    setElementText("#issueReportTitle", t("report_issue"));
+    setElementText("#issueReportCopy", t("issue_report_copy"));
+    setElementText("#issueSummaryLabel", t("issue_summary"));
+    elements.issueSummaryInput.placeholder = t("issue_summary_placeholder");
+    setElementText("#issueDetailsLabel", t("issue_details"));
+    elements.issueDetailsInput.placeholder = t("issue_details_placeholder");
+    setElementText("#issueScreenshotLabel", t("attach_screenshot"));
+    setElementText("#issueScreenshotHint", t("attach_screenshot_help"));
+    elements.submitIssueReportBtn.textContent = t("submit_report");
+    setElementText("#issueInboxTitle", t("issue_inbox"));
+    setElementText("#issueInboxCopy", t("issue_inbox_copy"));
+    setElementText(".app-footer-copy span", t("footer_credit_line"));
+    elements.openIssueReportBtn.textContent = t("footer_report_cta");
 
     updateStaticEditorTranslations();
     updateEditorSummary();
     renderUserManagementList();
     renderClientManagementList();
+    renderIssueInbox();
+    updateInboxBadge();
     renderExportSelectionList();
     renderDocuments();
 }
@@ -627,8 +705,13 @@ function cacheElements() {
     elements.sessionLoader = document.getElementById("sessionLoader");
     elements.sessionLoaderMessage = document.getElementById("sessionLoaderMessage");
     elements.settingsModal = document.getElementById("settingsModal");
-    elements.endSessionBtn = document.getElementById("endSessionBtn");
     elements.sessionBadge = document.getElementById("sessionBadge");
+    elements.openInboxBtn = document.getElementById("openInboxBtn");
+    elements.inboxCountBadge = document.getElementById("inboxCountBadge");
+    elements.navMenuBtn = document.getElementById("navMenuBtn");
+    elements.topbarMenu = document.getElementById("topbarMenu");
+    elements.topbarSettingsBtn = document.getElementById("topbarSettingsBtn");
+    elements.topbarSignOutBtn = document.getElementById("topbarSignOutBtn");
     elements.languageSelect = document.getElementById("languageSelect");
     elements.openSettingsBtn = document.getElementById("openSettingsBtn");
     elements.closeSettingsBtn = document.getElementById("closeSettingsBtn");
@@ -638,6 +721,17 @@ function cacheElements() {
     elements.selectAllExportsToggle = document.getElementById("selectAllExportsToggle");
     elements.exportSelectionList = document.getElementById("exportSelectionList");
     elements.exportSelectedJsonBtn = document.getElementById("exportSelectedJsonBtn");
+    elements.issueReportModal = document.getElementById("issueReportModal");
+    elements.openIssueReportBtn = document.getElementById("openIssueReportBtn");
+    elements.closeIssueReportModalBtn = document.getElementById("closeIssueReportModalBtn");
+    elements.issueSummaryInput = document.getElementById("issueSummaryInput");
+    elements.issueDetailsInput = document.getElementById("issueDetailsInput");
+    elements.issueScreenshotInput = document.getElementById("issueScreenshotInput");
+    elements.issueReportStatus = document.getElementById("issueReportStatus");
+    elements.submitIssueReportBtn = document.getElementById("submitIssueReportBtn");
+    elements.issueInboxModal = document.getElementById("issueInboxModal");
+    elements.closeIssueInboxModalBtn = document.getElementById("closeIssueInboxModalBtn");
+    elements.issueInboxList = document.getElementById("issueInboxList");
     elements.showInternalPricingToggle = document.getElementById("showInternalPricingToggle");
     elements.newUserDisplayName = document.getElementById("newUserDisplayName");
     elements.newUserUsername = document.getElementById("newUserUsername");
@@ -705,7 +799,6 @@ function cacheElements() {
     elements.summaryTags = document.getElementById("summaryTags");
     elements.tagSuggestions = document.getElementById("tagSuggestions");
     elements.sidebarTip = document.getElementById("sidebarTip");
-    elements.calculatorLauncher = document.getElementById("calculatorLauncher");
     elements.calculatorWidget = document.getElementById("calculatorWidget");
     elements.calculatorDragHandle = document.getElementById("calculatorDragHandle");
     elements.calculatorMinimizeBtn = document.getElementById("calculatorMinimizeBtn");
@@ -724,9 +817,12 @@ function bindEvents() {
         prepareNewDocument("invoice");
         openModal("invoice");
     });
-    elements.endSessionBtn.addEventListener("click", handleEndSessionClick);
     elements.languageSelect.addEventListener("change", handleLanguageChange);
-    elements.openSettingsBtn.addEventListener("click", openSettingsModal);
+    elements.openInboxBtn.addEventListener("click", openIssueInboxModal);
+    elements.navMenuBtn.addEventListener("click", toggleTopbarMenu);
+    elements.topbarSettingsBtn.addEventListener("click", handleTopbarSettingsClick);
+    elements.topbarSignOutBtn.addEventListener("click", handleEndSessionClick);
+    elements.openSettingsBtn?.addEventListener("click", openSettingsModal);
     elements.closeSettingsBtn.addEventListener("click", closeSettingsModal);
     elements.exportCsvTemplateBtn.addEventListener("click", exportCsvTemplate);
     elements.importCsvBtn.addEventListener("click", openCsvImportPicker);
@@ -735,6 +831,11 @@ function bindEvents() {
     elements.closeExportModalBtn.addEventListener("click", closeExportModal);
     elements.selectAllExportsToggle.addEventListener("change", handleSelectAllExportsToggle);
     elements.exportSelectedJsonBtn.addEventListener("click", exportSelectedDocuments);
+    elements.openIssueReportBtn.addEventListener("click", openIssueReportModal);
+    elements.closeIssueReportModalBtn.addEventListener("click", closeIssueReportModal);
+    elements.issueScreenshotInput.addEventListener("change", handleIssueScreenshotChange);
+    elements.submitIssueReportBtn.addEventListener("click", submitIssueReport);
+    elements.closeIssueInboxModalBtn.addEventListener("click", closeIssueInboxModal);
     elements.clearLocalTestDataBtn.addEventListener("click", clearLocalTestData);
     elements.addUserBtn.addEventListener("click", handleAddUser);
     elements.userManagementList.addEventListener("click", handleUserManagementClick);
@@ -765,7 +866,6 @@ function bindEvents() {
     elements.documentSort.addEventListener("change", handleSortChange);
     elements.documentsGrid.addEventListener("keydown", handleDocumentCardKeydown);
     elements.tagSuggestions.addEventListener("click", handleKeywordSuggestionClick);
-    elements.calculatorLauncher.addEventListener("click", toggleCalculator);
     elements.calculatorLauncherModal.addEventListener("click", toggleCalculator);
     elements.calculatorMinimizeBtn.addEventListener("click", hideCalculator);
     elements.calculatorCloseBtn.addEventListener("click", hideCalculator);
@@ -795,8 +895,21 @@ function bindEvents() {
         }
     });
 
+    elements.issueReportModal.addEventListener("click", event => {
+        if (event.target === elements.issueReportModal) {
+            closeIssueReportModal();
+        }
+    });
+
+    elements.issueInboxModal.addEventListener("click", event => {
+        if (event.target === elements.issueInboxModal) {
+            closeIssueInboxModal();
+        }
+    });
+
     elements.documentModal.addEventListener("input", updateEditorSummary);
     elements.documentModal.addEventListener("change", updateEditorSummary);
+    document.addEventListener("click", handleGlobalClick);
     document.addEventListener("pointerdown", handleSessionActivity);
     document.addEventListener("keydown", handleSessionActivity);
     document.addEventListener("input", handleSessionActivity);
@@ -806,6 +919,7 @@ function bindEvents() {
 
 function init() {
     state.userAccounts = loadUserAccounts();
+    state.issueReports = loadIssueReports();
     state.currentUser = getStoredSessionUser();
     state.currentLanguage = state.currentUser?.language || "en";
     applyRoleAccess();
@@ -835,7 +949,6 @@ function showCalculator() {
     elements.calculatorWidget.hidden = false;
     elements.calculatorWidget.classList.remove("hidden");
     elements.calculatorWidget.classList.add("is-visible");
-    elements.calculatorLauncher.setAttribute("aria-expanded", "true");
     elements.calculatorLauncherModal.setAttribute("aria-expanded", "true");
 
     if (!elements.calculatorWidget.style.left) {
@@ -850,7 +963,6 @@ function hideCalculator() {
     elements.calculatorWidget.classList.add("hidden");
     elements.calculatorWidget.classList.remove("is-visible");
     elements.calculatorWidget.hidden = true;
-    elements.calculatorLauncher.setAttribute("aria-expanded", "false");
     elements.calculatorLauncherModal.setAttribute("aria-expanded", "false");
 }
 
@@ -1055,6 +1167,41 @@ function saveUserAccounts(users) {
     renderUserManagementList();
 }
 
+function normalizeIssueReports(reports) {
+    return Array.isArray(reports)
+        ? reports
+            .filter(report => report && typeof report === "object")
+            .map(report => ({
+                id: String(report.id || `issue-${Date.now()}-${Math.random().toString(36).slice(2)}`),
+                subject: String(report.subject || "").trim(),
+                details: String(report.details || "").trim(),
+                screenshotName: String(report.screenshotName || "").trim(),
+                screenshotDataUrl: typeof report.screenshotDataUrl === "string" ? report.screenshotDataUrl : "",
+                createdAt: report.createdAt || new Date().toISOString(),
+                unread: report.unread !== false,
+                createdBy: {
+                    userId: String(report.createdBy?.userId || ""),
+                    username: String(report.createdBy?.username || ""),
+                    displayName: String(report.createdBy?.displayName || report.createdBy?.username || "Unknown")
+                }
+            }))
+            .filter(report => report.subject && report.details)
+        : [];
+}
+
+function loadIssueReports() {
+    const reports = normalizeIssueReports(readLocalDataset(ISSUE_REPORTS_STORAGE_KEY, []));
+    writeLocalDataset(ISSUE_REPORTS_STORAGE_KEY, reports);
+    return reports;
+}
+
+function saveIssueReports(reports) {
+    state.issueReports = normalizeIssueReports(reports);
+    writeLocalDataset(ISSUE_REPORTS_STORAGE_KEY, state.issueReports);
+    renderIssueInbox();
+    updateInboxBadge();
+}
+
 function getStoredSessionUser() {
     try {
         const rawValue = sessionStorage.getItem(CURRENT_SESSION_STORAGE_KEY);
@@ -1114,20 +1261,28 @@ function applyRoleAccess() {
     const isAdmin = isAdminSession();
     const hasSession = hasActiveSession();
 
-    elements.openSettingsBtn.hidden = !isAdmin;
-    elements.openSettingsBtn.setAttribute("aria-hidden", String(!isAdmin));
-    elements.openSettingsBtn.tabIndex = isAdmin ? 0 : -1;
+    if (elements.openSettingsBtn) {
+        elements.openSettingsBtn.hidden = !isAdmin;
+        elements.openSettingsBtn.setAttribute("aria-hidden", String(!isAdmin));
+        elements.openSettingsBtn.tabIndex = isAdmin ? 0 : -1;
+    }
     elements.sessionBadge.hidden = !hasSession;
     elements.sessionBadge.textContent = hasSession
-        ? `${state.currentUser.displayName} · ${isAdmin ? t("role_admin") : t("role_user")}`
+        ? state.currentUser.displayName
         : "";
+    elements.openInboxBtn.hidden = !isAdmin;
+    elements.topbarSettingsBtn.hidden = !isAdmin;
+    elements.topbarSettingsBtn.setAttribute("aria-hidden", String(!isAdmin));
+    updateInboxBadge();
 
     if (!isAdmin) {
         closeSettingsModal();
+        closeIssueInboxModal();
     }
 
     renderUserManagementList();
     renderClientManagementList();
+    renderIssueInbox();
 }
 
 function applyAccessState(isUnlocked) {
@@ -1146,6 +1301,7 @@ function applyAccessState(isUnlocked) {
         elements.accessError.hidden = true;
         setAccessLoading(false);
         setSessionLoader(false);
+        closeTopbarMenu();
         elements.accessUsername.focus();
     }
 }
@@ -1203,6 +1359,9 @@ function endSession(message = "", { showMessage = false } = {}) {
     closeModal();
     closeSettingsModal();
     closeExportModal();
+    closeIssueReportModal();
+    closeIssueInboxModal();
+    closeTopbarMenu();
     hideCalculator();
     applyAccessState(false);
 
@@ -1224,6 +1383,28 @@ function handleEndSessionClick() {
     });
 }
 
+function toggleTopbarMenu() {
+    const isOpen = !elements.topbarMenu.hidden;
+    elements.topbarMenu.hidden = isOpen;
+    elements.navMenuBtn.setAttribute("aria-expanded", String(!isOpen));
+}
+
+function closeTopbarMenu() {
+    elements.topbarMenu.hidden = true;
+    elements.navMenuBtn.setAttribute("aria-expanded", "false");
+}
+
+function handleTopbarSettingsClick() {
+    closeTopbarMenu();
+    openSettingsModal();
+}
+
+function handleGlobalClick(event) {
+    if (!event.target.closest(".topbar-menu-wrap")) {
+        closeTopbarMenu();
+    }
+}
+
 function openSettingsModal() {
     if (!isAdminSession()) {
         setImportStatus("Only admin accounts can open workspace tools.", true);
@@ -1240,6 +1421,34 @@ function openSettingsModal() {
 function closeSettingsModal() {
     elements.settingsModal.classList.remove("active");
     elements.settingsModal.setAttribute("aria-hidden", "true");
+}
+
+function openIssueReportModal() {
+    elements.issueReportStatus.hidden = true;
+    elements.issueReportStatus.textContent = "";
+    elements.issueReportStatus.classList.remove("hero-helper-error");
+    elements.issueReportModal.classList.add("active");
+    elements.issueReportModal.setAttribute("aria-hidden", "false");
+}
+
+function closeIssueReportModal() {
+    elements.issueReportModal.classList.remove("active");
+    elements.issueReportModal.setAttribute("aria-hidden", "true");
+}
+
+function openIssueInboxModal() {
+    if (!isAdminSession()) {
+        return;
+    }
+
+    saveIssueReports(state.issueReports.map(report => ({ ...report, unread: false })));
+    elements.issueInboxModal.classList.add("active");
+    elements.issueInboxModal.setAttribute("aria-hidden", "false");
+}
+
+function closeIssueInboxModal() {
+    elements.issueInboxModal.classList.remove("active");
+    elements.issueInboxModal.setAttribute("aria-hidden", "true");
 }
 
 function renderUserManagementList() {
@@ -1511,6 +1720,125 @@ function openExportModal() {
 function closeExportModal() {
     elements.exportModal.classList.remove("active");
     elements.exportModal.setAttribute("aria-hidden", "true");
+}
+
+function updateInboxBadge() {
+    const unreadCount = isAdminSession() ? state.issueReports.filter(report => report.unread).length : 0;
+    elements.inboxCountBadge.hidden = unreadCount === 0;
+    elements.inboxCountBadge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
+}
+
+function renderIssueInbox() {
+    if (!elements.issueInboxList) {
+        return;
+    }
+
+    if (!isAdminSession()) {
+        elements.issueInboxList.innerHTML = "";
+        return;
+    }
+
+    if (!state.issueReports.length) {
+        elements.issueInboxList.innerHTML = `<p class="export-empty">${escapeHtml(t("no_issue_reports"))}</p>`;
+        return;
+    }
+
+    const reports = [...state.issueReports].sort((left, right) => Date.parse(right.createdAt || 0) - Date.parse(left.createdAt || 0));
+    elements.issueInboxList.innerHTML = reports.map(report => `
+        <article class="issue-card${report.unread ? " issue-card-unread" : ""}">
+            <div class="issue-card-header">
+                <div>
+                    <strong>${escapeHtml(report.subject)}</strong>
+                    <span>${escapeHtml(t("submitted_by"))} ${escapeHtml(report.createdBy.displayName || report.createdBy.username || "Unknown")} · ${escapeHtml(formatDateTime(report.createdAt))}</span>
+                </div>
+            </div>
+            <p>${escapeHtml(report.details).replace(/\n/g, "<br>")}</p>
+            ${report.screenshotDataUrl
+                ? `<a class="issue-screenshot-link" href="${escapeHtml(report.screenshotDataUrl)}" target="_blank" rel="noreferrer">
+                    <span>${escapeHtml(t("screenshot"))}</span>
+                    <img src="${escapeHtml(report.screenshotDataUrl)}" alt="${escapeHtml(report.screenshotName || t("screenshot"))}">
+                </a>`
+                : ""}
+        </article>
+    `).join("");
+}
+
+function handleIssueScreenshotChange() {
+    elements.issueReportStatus.hidden = true;
+}
+
+async function submitIssueReport() {
+    const subject = elements.issueSummaryInput.value.trim();
+    const details = elements.issueDetailsInput.value.trim();
+    const screenshotFile = elements.issueScreenshotInput.files?.[0] || null;
+
+    if (!subject || !details) {
+        elements.issueReportStatus.hidden = false;
+        elements.issueReportStatus.textContent = "Add a summary and details before submitting.";
+        elements.issueReportStatus.classList.add("hero-helper-error");
+        return;
+    }
+
+    let screenshotDataUrl = "";
+    if (screenshotFile) {
+        try {
+            screenshotDataUrl = await readFileAsDataUrl(screenshotFile);
+        } catch (error) {
+            elements.issueReportStatus.hidden = false;
+            elements.issueReportStatus.textContent = error.message;
+            elements.issueReportStatus.classList.add("hero-helper-error");
+            return;
+        }
+    }
+
+    saveIssueReports([
+        {
+            id: `issue-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            subject,
+            details,
+            screenshotName: screenshotFile?.name || "",
+            screenshotDataUrl,
+            createdAt: new Date().toISOString(),
+            unread: true,
+            createdBy: {
+                userId: state.currentUser?.userId || "",
+                username: state.currentUser?.username || "",
+                displayName: state.currentUser?.displayName || state.currentUser?.username || "Unknown"
+            }
+        },
+        ...state.issueReports
+    ]);
+
+    elements.issueSummaryInput.value = "";
+    elements.issueDetailsInput.value = "";
+    elements.issueScreenshotInput.value = "";
+    elements.issueReportStatus.hidden = false;
+    elements.issueReportStatus.textContent = "Report submitted successfully.";
+    elements.issueReportStatus.classList.remove("hero-helper-error");
+}
+
+function readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+        reader.onerror = () => reject(new Error("Unable to read screenshot."));
+        reader.readAsDataURL(file);
+    });
+}
+
+function formatDateTime(value) {
+    const parsed = Date.parse(value);
+    if (Number.isNaN(parsed)) {
+        return t("no_date");
+    }
+
+    return new Intl.DateTimeFormat(getCurrentLocale(), {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+    }).format(parsed);
 }
 
 function renderExportSelectionList() {

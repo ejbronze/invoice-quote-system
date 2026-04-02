@@ -54,7 +54,7 @@ Because the current role system is browser-local, user accounts created on one d
 
 1. Open the app through Vercel or a local web server.
 2. Sign in with a local account.
-3. Use `New Quote`, `New Invoice`, or the `🧮` calculator launcher from the main dashboard action bar.
+3. Use `New Quote` or `New Invoice` from the dashboard.
 4. Move through the six editor steps:
    - `Type & Info`
    - `Client Details`
@@ -62,8 +62,9 @@ Because the current role system is browser-local, user accounts created on one d
    - `Keywords`
    - `Items Preview`
    - `Review`
-5. Save the document or use `Save & Preview PDF` on the review step.
-6. From the dashboard, edit, preview, convert, search, sort, filter, or delete saved records.
+5. Use the calculator launcher from inside the document editor whenever you need quick math during document entry.
+6. Save the document or use `Save & Preview PDF` on the review step.
+7. From the dashboard, edit, preview, convert, search, sort, filter, or delete saved records.
 
 ## Features
 
@@ -73,9 +74,10 @@ Because the current role system is browser-local, user accounts created on one d
 - Admin-only client management from the dashboard tools area, including viewing, editing, and deleting saved clients.
 - Admin-only user management for adding local users, resetting passwords, and removing local users.
 - Admin-only document attribution showing which signed-in user created each quote or invoice.
+- A streamlined top navbar showing the signed-in user, a hamburger menu for `Settings` and `Sign out`, and an admin-only mailbox icon for incoming issue reports.
 - Search documents by reference number, date, client, type, or keyword.
 - Sort documents by document date or created/exported date.
-- Open the floating calculator from the main dashboard action bar or from inside the document editor while preparing quotes and invoices. The widget now stays above the editor modal so it remains usable during document entry.
+- Open the floating calculator from inside the document editor while preparing quotes and invoices. The widget stays above the editor modal so it remains usable during document entry.
 - Export a CSV template and import bulk document rows.
 - Export full JSON backups and import JSON backups.
 - Export selected quotes/invoices as JSON.
@@ -83,6 +85,8 @@ Because the current role system is browser-local, user accounts created on one d
 - Clear browser-only local test data without touching server data.
 - Manual or calculated line-item pricing, DOP conversion support, internal pricing toggle, and keyword suggestions.
 - PDF preview window with print/save handled from the preview itself.
+- Footer branding for Palmchat Innovations Lab / Palmchat Innovations LLC NYC with a `Submit / Report Issues` flow for users.
+- Issue report modal with optional screenshot attachment and an admin inbox for reviewing submitted bug reports.
 
 ## Admin Tools
 
@@ -103,6 +107,7 @@ Admin tools currently live in the dashboard `Tools` modal and include:
 - If the API is unavailable, the app switches to browser-local mode for testing.
 - Browser-local test data can be cleared without affecting live server data.
 - Browser-local user accounts and roles are separate from the server-backed document/client data.
+- The issue-report inbox is currently browser-local as well, so reports are not yet shared across devices until a server-backed reporting layer is added.
 
 ## Output Notes
 
