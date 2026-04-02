@@ -26,7 +26,9 @@ const state = {
     workspaceDataMode: "server",
     issueReports: [],
     companyProfile: null,
-    savedItems: []
+    savedItems: [],
+    editingSavedItemId: null,
+    pendingSavedItemImageUploadId: null
 };
 
 const DOP_PER_USD = 59;
@@ -152,13 +154,18 @@ const TRANSLATIONS = {
         total_usd: "Total (USD)",
         save_item: "Create Cart Item",
         add_cart_item: "Add New Item To Cart",
+        update_cart_item: "Update Cart Item",
         use_item: "Add To Document",
         save_for_later: "Move Line Item to Cart",
         no_saved_items: "No items in the cart yet.",
         saved_item_added: "Item moved to the cart.",
+        saved_item_updated: "Cart item updated.",
         saved_item_used: "Cart item added to this document.",
         save_item_before_remove: "Move this line item to the cart before removing it?",
         open_pending_cart: "Open pending items cart",
+        item_image: "Item Image",
+        upload_item_image: "Upload item image",
+        remove_item_image: "Remove image",
         menu: "Menu",
         language: "Language",
         hero_kicker: "Document Workspace",
@@ -340,13 +347,18 @@ const TRANSLATIONS = {
         total_usd: "Total (USD)",
         save_item: "Crear Artículo del Carrito",
         add_cart_item: "Agregar Nuevo Artículo al Carrito",
+        update_cart_item: "Actualizar Artículo del Carrito",
         use_item: "Agregar al Documento",
         save_for_later: "Mover Línea al Carrito",
         no_saved_items: "Todavía no hay artículos en el carrito.",
         saved_item_added: "Artículo movido al carrito.",
+        saved_item_updated: "Artículo del carrito actualizado.",
         saved_item_used: "Artículo del carrito agregado a este documento.",
         save_item_before_remove: "¿Mover esta línea al carrito antes de quitarla?",
         open_pending_cart: "Abrir carrito de artículos pendientes",
+        item_image: "Imagen del Artículo",
+        upload_item_image: "Subir imagen del artículo",
+        remove_item_image: "Quitar imagen",
         menu: "Menú",
         language: "Idioma",
         hero_kicker: "Espacio de Documentos",
@@ -528,13 +540,18 @@ const TRANSLATIONS = {
         total_usd: "Total (USD)",
         save_item: "Créer un Article du Panier",
         add_cart_item: "Ajouter un Nouvel Article au Panier",
+        update_cart_item: "Mettre à Jour l’Article du Panier",
         use_item: "Ajouter au Document",
         save_for_later: "Déplacer la Ligne vers le Panier",
         no_saved_items: "Aucun article dans le panier pour le moment.",
         saved_item_added: "Article déplacé vers le panier.",
+        saved_item_updated: "Article du panier mis à jour.",
         saved_item_used: "Article du panier ajouté à ce document.",
         save_item_before_remove: "Déplacer cette ligne vers le panier avant de la supprimer ?",
         open_pending_cart: "Ouvrir le panier d’articles en attente",
+        item_image: "Image de l’Article",
+        upload_item_image: "Téléverser l’image de l’article",
+        remove_item_image: "Retirer l’image",
         menu: "Menu",
         language: "Langue",
         hero_kicker: "Espace Documents",
@@ -830,7 +847,7 @@ function applyTranslations() {
     setElementText("#savedItemsCopy", t("saved_items_copy"));
     setElementText("#savedItemsAddTitle", t("add_saved_item"));
     setElementText("#savedItemsAddCopy", t("add_saved_item_copy"));
-    setElementText("#savedItemCreateTitle", t("save_item"));
+    setElementText("#savedItemCreateTitle", state.editingSavedItemId ? t("edit") : t("save_item"));
     setElementText("#savedItemCreateCopy", t("add_saved_item_copy"));
     setElementText("#savedItemsLibraryTitle", t("saved_items_library"));
     setElementText("#savedItemsLibraryCopy", t("saved_items_library_copy"));
@@ -838,7 +855,8 @@ function applyTranslations() {
     setElementText("#savedItemQuantityLabel", t("quantity"));
     setElementText("#savedItemUnitPriceLabel", t("unit_price_usd"));
     setElementText("#savedItemTotalLabel", t("total_usd"));
-    elements.addSavedItemBtn.textContent = t("save_item");
+    setElementText(".saved-item-image-upload-copy strong", t("item_image"));
+    elements.addSavedItemBtn.textContent = state.editingSavedItemId ? t("update_cart_item") : t("save_item");
     const savedItemsToggleText = elements.toggleSavedItemsFormBtn.querySelector(".saved-items-toggle-text");
     if (savedItemsToggleText) {
         savedItemsToggleText.textContent = t("add_cart_item");
@@ -985,6 +1003,10 @@ function cacheElements() {
     elements.saveCompanyProfileBtn = document.getElementById("saveCompanyProfileBtn");
     elements.savedItemsList = document.getElementById("savedItemsList");
     elements.savedItemDescriptionInput = document.getElementById("savedItemDescriptionInput");
+    elements.savedItemImageInput = document.getElementById("savedItemImageInput");
+    elements.savedItemImagePreview = document.getElementById("savedItemImagePreview");
+    elements.savedItemImagePreviewImg = document.getElementById("savedItemImagePreviewImg");
+    elements.savedItemImageRemoveBtn = document.getElementById("savedItemImageRemoveBtn");
     elements.savedItemQuantityInput = document.getElementById("savedItemQuantityInput");
     elements.savedItemUnitPriceInput = document.getElementById("savedItemUnitPriceInput");
     elements.savedItemTotalInput = document.getElementById("savedItemTotalInput");
@@ -1109,6 +1131,9 @@ function bindEvents() {
     elements.saveCompanyProfileBtn.addEventListener("click", saveCompanyProfile);
     elements.addSavedItemBtn.addEventListener("click", addSavedItemFromModal);
     elements.savedItemsList.addEventListener("click", handleSavedItemsListClick);
+    document.addEventListener("click", handleImageUploadTriggerClick);
+    elements.savedItemImageInput.addEventListener("change", handleSavedItemImageInputChange);
+    elements.savedItemImageRemoveBtn.addEventListener("click", clearSavedItemImageSelection);
     elements.savedItemQuantityInput.addEventListener("input", syncSavedItemsTotal);
     elements.savedItemUnitPriceInput.addEventListener("input", syncSavedItemsTotal);
     elements.clearLocalTestDataBtn.addEventListener("click", clearLocalTestData);
@@ -1138,6 +1163,7 @@ function bindEvents() {
     elements.itemsContainer.addEventListener("click", handleItemContainerClick);
     elements.itemsContainer.addEventListener("input", handleItemsChange);
     elements.itemsContainer.addEventListener("change", handleItemsChange);
+    elements.itemsContainer.addEventListener("change", handleItemImageInputChange);
     elements.documentSearch.addEventListener("input", handleSearchInput);
     elements.documentSort.addEventListener("change", handleSortChange);
     elements.documentsGrid.addEventListener("keydown", handleDocumentCardKeydown);
@@ -1615,6 +1641,7 @@ function normalizeSavedItems(items) {
                     quantity,
                     unitPrice,
                     total,
+                    itemImageDataUrl: typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl : "",
                     createdAt: String(item.createdAt || new Date().toISOString())
                 };
             })
@@ -1951,6 +1978,113 @@ function syncSavedItemsTotal() {
     elements.savedItemTotalInput.value = formatAmount(quantity * unitPrice);
 }
 
+function syncSavedItemImageUI() {
+    if (!elements.savedItemCreateModal) {
+        return;
+    }
+
+    const imageDataUrl = elements.savedItemCreateModal.dataset.itemImageDataUrl || "";
+    const preview = elements.savedItemImagePreview;
+    const previewImg = elements.savedItemImagePreviewImg;
+    const removeBtn = elements.savedItemImageRemoveBtn;
+    const uploadCopy = document.querySelector(".saved-item-image-upload-copy small");
+
+    if (preview && previewImg) {
+        if (imageDataUrl) {
+            preview.hidden = false;
+            previewImg.src = imageDataUrl;
+        } else {
+            preview.hidden = true;
+            previewImg.removeAttribute("src");
+        }
+    }
+
+    if (removeBtn) {
+        removeBtn.hidden = !imageDataUrl;
+    }
+
+    if (uploadCopy) {
+        uploadCopy.textContent = imageDataUrl ? "Change image" : "Add image";
+    }
+}
+
+function clearSavedItemImageSelection() {
+    if (!elements.savedItemCreateModal) {
+        return;
+    }
+
+    state.pendingSavedItemImageUploadId = null;
+    elements.savedItemCreateModal.dataset.itemImageDataUrl = "";
+    if (elements.savedItemImageInput) {
+        elements.savedItemImageInput.value = "";
+    }
+    syncSavedItemImageUI();
+}
+
+async function handleSavedItemImageInputChange() {
+    const file = elements.savedItemImageInput?.files?.[0] || null;
+    if (!elements.savedItemCreateModal) {
+        return;
+    }
+
+    if (state.pendingSavedItemImageUploadId) {
+        if (!file) {
+            state.pendingSavedItemImageUploadId = null;
+            return;
+        }
+
+        try {
+            const itemImageDataUrl = await readFileAsDataUrl(file);
+            await saveSavedItemsState(state.savedItems.map(item =>
+                item.id === state.pendingSavedItemImageUploadId
+                    ? { ...item, itemImageDataUrl }
+                    : item
+            ));
+            setImportStatus("Cart item image updated.");
+        } catch (error) {
+            window.alert(error.message || "Unable to read image.");
+        } finally {
+            state.pendingSavedItemImageUploadId = null;
+            if (elements.savedItemImageInput) {
+                elements.savedItemImageInput.value = "";
+            }
+        }
+        return;
+    }
+
+    if (!file) {
+        clearSavedItemImageSelection();
+        return;
+    }
+
+    try {
+        elements.savedItemCreateModal.dataset.itemImageDataUrl = await readFileAsDataUrl(file);
+        syncSavedItemImageUI();
+    } catch (error) {
+        clearSavedItemImageSelection();
+        window.alert(error.message || "Unable to read image.");
+    }
+}
+
+function handleImageUploadTriggerClick(event) {
+    const savedItemUploadTrigger = event.target.closest(".saved-item-image-upload-btn");
+    if (savedItemUploadTrigger && elements.savedItemImageInput) {
+        event.preventDefault();
+        elements.savedItemImageInput.click();
+        return;
+    }
+
+    const itemUploadTrigger = event.target.closest(".item-image-upload-btn");
+    if (itemUploadTrigger) {
+        const itemRow = itemUploadTrigger.closest(".item-row");
+        const fileInput = itemRow?.querySelector(".item-image-input");
+        if (fileInput) {
+            event.preventDefault();
+            fileInput.click();
+        }
+    }
+}
+
 function openSavedItemsModal() {
     renderSavedItemsList();
     syncSavedItemsTotal();
@@ -1968,6 +2102,37 @@ function openSavedItemCreateModal() {
     if (!elements.savedItemCreateModal) {
         return;
     }
+    state.editingSavedItemId = null;
+    elements.savedItemDescriptionInput.value = "";
+    elements.savedItemCreateModal.dataset.itemImageDataUrl = "";
+    if (elements.savedItemImageInput) {
+        elements.savedItemImageInput.value = "";
+    }
+    elements.savedItemQuantityInput.value = "1";
+    elements.savedItemUnitPriceInput.value = "0";
+    elements.savedItemTotalInput.value = "0";
+    applyTranslations();
+    syncSavedItemImageUI();
+    elements.savedItemCreateModal.classList.add("active");
+    elements.savedItemCreateModal.setAttribute("aria-hidden", "false");
+    elements.savedItemDescriptionInput.focus();
+}
+
+function openSavedItemEditModal(item) {
+    if (!elements.savedItemCreateModal || !item) {
+        return;
+    }
+    state.editingSavedItemId = item.id;
+    elements.savedItemDescriptionInput.value = item.description || "";
+    elements.savedItemCreateModal.dataset.itemImageDataUrl = item.itemImageDataUrl || "";
+    if (elements.savedItemImageInput) {
+        elements.savedItemImageInput.value = "";
+    }
+    elements.savedItemQuantityInput.value = formatAmount(item.quantity || 0);
+    elements.savedItemUnitPriceInput.value = formatAmount(item.unitPrice || 0);
+    elements.savedItemTotalInput.value = formatAmount(item.total || 0);
+    applyTranslations();
+    syncSavedItemImageUI();
     elements.savedItemCreateModal.classList.add("active");
     elements.savedItemCreateModal.setAttribute("aria-hidden", "false");
     elements.savedItemDescriptionInput.focus();
@@ -1977,6 +2142,8 @@ function closeSavedItemCreateModal() {
     if (!elements.savedItemCreateModal) {
         return;
     }
+    state.editingSavedItemId = null;
+    elements.savedItemCreateModal.dataset.itemImageDataUrl = "";
     elements.savedItemCreateModal.classList.remove("active");
     elements.savedItemCreateModal.setAttribute("aria-hidden", "true");
 }
@@ -1987,7 +2154,6 @@ function renderSavedItemsList() {
     }
 
     updateSavedItemsCountBadge();
-    const canUseCartItems = canInsertCartItemIntoEditor();
 
     if (!state.savedItems.length) {
         elements.savedItemsList.innerHTML = `<p class="client-list-empty">${escapeHtml(t("no_saved_items"))}</p>`;
@@ -1995,18 +2161,21 @@ function renderSavedItemsList() {
     }
 
     const sortedItems = [...state.savedItems].sort((left, right) => Date.parse(right.createdAt || 0) - Date.parse(left.createdAt || 0));
+    const canUseInCurrentDocument = canInsertCartItemIntoEditor();
     elements.savedItemsList.innerHTML = sortedItems.map(item => `
         <article class="saved-item-card">
             <div class="saved-item-card-layout">
                 <div class="saved-item-thumb" aria-hidden="true">
-                    <div class="saved-item-thumb-icon">
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <rect x="4.5" y="5" width="15" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/>
-                            <circle cx="9" cy="10" r="1.4" fill="currentColor"/>
-                            <path d="M6.8 16l3.6-3.5 2.5 2.2 2.4-2 1.9 3.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                    <span>Image</span>
+                    ${item.itemImageDataUrl
+                        ? `<img src="${escapeHtml(item.itemImageDataUrl)}" alt="${escapeHtml(item.description)}">`
+                        : `<div class="saved-item-thumb-icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <rect x="4.5" y="5" width="15" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                <circle cx="9" cy="10" r="1.4" fill="currentColor"/>
+                                <path d="M6.8 16l3.6-3.5 2.5 2.2 2.4-2 1.9 3.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <span>Image</span>`}
                 </div>
                 <div class="saved-item-card-main">
                     <div class="saved-item-card-top">
@@ -2024,18 +2193,31 @@ function renderSavedItemsList() {
                 <button
                     class="saved-item-icon-action"
                     type="button"
-                    data-saved-item-action="use"
+                    data-saved-item-action="edit"
                     data-saved-item-id="${escapeHtml(item.id)}"
-                    aria-label="${escapeHtml(canUseCartItems ? t("use_item") : "Open a quote or invoice to use this item")}"
-                    title="${escapeHtml(canUseCartItems ? t("use_item") : "Open a quote or invoice to use this item")}"
-                    ${canUseCartItems ? "" : "disabled"}
+                    aria-label="${escapeHtml(t("edit"))}"
+                    title="${escapeHtml(t("edit"))}"
                 >
                     <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M12 5.5v13" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
-                        <path d="M5.5 12h13" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
-                        <circle cx="12" cy="12" r="8.2" fill="none" stroke="currentColor" stroke-width="1.6" opacity="0.35"/>
+                        <path d="M7.2 16.8l1.1-3.6L15.7 5.8a1.4 1.4 0 0 1 2 0l.5.5a1.4 1.4 0 0 1 0 2l-7.4 7.4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                        <path d="M6.8 17.2l3.8-.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                     </svg>
                 </button>
+                <button
+                    class="saved-item-icon-action"
+                    type="button"
+                    data-saved-item-action="image"
+                    data-saved-item-id="${escapeHtml(item.id)}"
+                    aria-label="${escapeHtml(t("upload_item_image"))}"
+                    title="${escapeHtml(t("upload_item_image"))}"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="4.5" y="5" width="15" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                        <circle cx="9" cy="10" r="1.4" fill="currentColor"/>
+                        <path d="M6.8 16l3.6-3.5 2.5 2.2 2.4-2 1.9 3.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                ${canUseInCurrentDocument ? `<button class="btn btn-secondary" type="button" data-saved-item-action="use" data-saved-item-id="${escapeHtml(item.id)}">${escapeHtml(t("use_item"))}</button>` : ""}
                 <button class="btn btn-secondary" type="button" data-saved-item-action="delete" data-saved-item-id="${escapeHtml(item.id)}">${escapeHtml(t("delete"))}</button>
             </div>
         </article>
@@ -2053,6 +2235,7 @@ function createSavedItem(payload) {
         quantity,
         unitPrice,
         total,
+        itemImageDataUrl: typeof payload.itemImageDataUrl === "string" ? payload.itemImageDataUrl : "",
         createdAt: new Date().toISOString()
     };
 }
@@ -2062,23 +2245,41 @@ async function addSavedItem(item) {
 }
 
 async function addSavedItemFromModal() {
+    const isEditingSavedItem = Boolean(state.editingSavedItemId);
     const description = elements.savedItemDescriptionInput.value.trim();
     const quantity = Number.parseFloat(elements.savedItemQuantityInput.value) || 0;
     const unitPrice = Number.parseFloat(elements.savedItemUnitPriceInput.value) || 0;
     const total = Number.parseFloat(elements.savedItemTotalInput.value) || (quantity * unitPrice);
+    const itemImageDataUrl = elements.savedItemCreateModal?.dataset?.itemImageDataUrl || "";
 
     if (!description) {
         window.alert("Enter an item description before adding it to the cart.");
         return;
     }
 
-    await addSavedItem({ description, quantity, unitPrice, total });
+    if (state.editingSavedItemId) {
+        await saveSavedItemsState(state.savedItems.map(item =>
+            item.id === state.editingSavedItemId
+                ? {
+                    ...item,
+                    description,
+                    quantity,
+                    unitPrice,
+                    total,
+                    itemImageDataUrl
+                }
+                : item
+        ));
+    } else {
+        await addSavedItem({ description, quantity, unitPrice, total, itemImageDataUrl });
+    }
     elements.savedItemDescriptionInput.value = "";
     elements.savedItemQuantityInput.value = "1";
     elements.savedItemUnitPriceInput.value = "0";
     elements.savedItemTotalInput.value = "0";
+    clearSavedItemImageSelection();
     closeSavedItemCreateModal();
-    setImportStatus(t("saved_item_added"));
+    setImportStatus(isEditingSavedItem ? t("saved_item_updated") : t("saved_item_added"));
 }
 
 async function removeSavedItem(itemId) {
@@ -2105,7 +2306,9 @@ function addSavedItemToEditor(item) {
     lastItem.querySelector(".item-manual-unit-toggle").checked = true;
     lastItem.querySelector(".item-unit-price").value = formatAmount(item.unitPrice);
     lastItem.querySelector(".item-total-price").value = formatAmount(item.total);
+    lastItem.dataset.itemImageDataUrl = item.itemImageDataUrl || "";
     updateItemPricing(lastItem);
+    syncItemImageUI(lastItem);
     updateItemSummary(lastItem);
     setExpandedItem(lastItem);
     updateEditorSummary();
@@ -2123,15 +2326,31 @@ async function handleSavedItemsListClick(event) {
         return;
     }
 
+    if (button.dataset.savedItemAction === "edit") {
+        openSavedItemEditModal(item);
+        return;
+    }
+
+    if (button.dataset.savedItemAction === "image") {
+        state.pendingSavedItemImageUploadId = item.id;
+        if (elements.savedItemImageInput) {
+            elements.savedItemImageInput.value = "";
+            elements.savedItemImageInput.click();
+        }
+        return;
+    }
+
     if (button.dataset.savedItemAction === "use") {
         if (!canInsertCartItemIntoEditor()) {
             setImportStatus("Open a quote or invoice first, then add cart items into that document.", true);
+            window.alert("Open a quote or invoice first, then add cart items into that document.");
             return;
         }
 
         const wasInserted = addSavedItemToEditor(item);
         if (!wasInserted) {
             setImportStatus("Unable to add that cart item into the current document.", true);
+            window.alert("Unable to add that cart item into the current document.");
             return;
         }
 
@@ -3799,6 +4018,34 @@ function addItem() {
                 <label>Description</label>
                 <textarea class="item-description" rows="2" placeholder="Item description..."></textarea>
             </div>
+            <div class="form-group item-image-group">
+                <div class="item-image-uploader">
+                    <label class="item-image-upload-btn" aria-label="${escapeHtml(t("upload_item_image"))}" title="${escapeHtml(t("upload_item_image"))}">
+                        <input type="file" class="item-image-input" accept="image/*" hidden>
+                        <span class="item-image-upload-art" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M5 7.5A2.5 2.5 0 0 1 7.5 5h9A2.5 2.5 0 0 1 19 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 16.5z" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                <path d="M8 15l2.4-2.4a1 1 0 0 1 1.4 0l1.1 1.1 2.1-2.1a1 1 0 0 1 1.4 0L19 14.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="10" cy="9.5" r="1.2" fill="currentColor"/>
+                            </svg>
+                        </span>
+                        <span class="item-image-upload-copy">
+                            <strong>${escapeHtml(t("item_image"))}</strong>
+                            <small>Add image</small>
+                        </span>
+                    </label>
+                    <button type="button" class="item-image-remove-btn" hidden aria-label="${escapeHtml(t("remove_item_image"))}" title="${escapeHtml(t("remove_item_image"))}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M6 7h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            <path d="M9.5 7V5.6c0-.4.3-.6.6-.6h3.8c.3 0 .6.2.6.6V7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            <path d="M8.2 7l.7 10.2c0 .4.3.8.8.8h4.6c.4 0 .7-.3.8-.8L16 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="item-image-preview" hidden>
+                    <img class="item-image-preview-img" alt="Item preview">
+                </div>
+            </div>
             <div class="form-row">
                 <div class="form-group">
                     <label>Quantity</label>
@@ -3856,7 +4103,9 @@ function addItem() {
     `;
 
     elements.itemsContainer.appendChild(itemDiv);
+    itemDiv.dataset.itemImageDataUrl = "";
     itemDiv.querySelector(".item-internal-panel").hidden = !state.showInternalPricing;
+    syncItemImageUI(itemDiv);
     updateItemPricing(itemDiv);
     setExpandedItem(itemDiv);
 }
@@ -3896,13 +4145,14 @@ function saveEditorItemForLater(id) {
         description,
         quantity,
         unitPrice,
-        total
+        total,
+        itemImageDataUrl: item.dataset.itemImageDataUrl || ""
     });
     removeItem(id);
     setImportStatus(t("saved_item_added"));
 }
 
-function handleItemContainerClick(event) {
+async function handleItemContainerClick(event) {
     const saveForLaterButton = event.target.closest("[data-save-item-later]");
     if (saveForLaterButton) {
         saveEditorItemForLater(saveForLaterButton.dataset.saveItemLater);
@@ -3915,12 +4165,81 @@ function handleItemContainerClick(event) {
         return;
     }
 
+    const removeImageButton = event.target.closest(".item-image-remove-btn");
+    if (removeImageButton) {
+        const itemRow = removeImageButton.closest(".item-row");
+        if (itemRow) {
+            itemRow.dataset.itemImageDataUrl = "";
+            const imageInput = itemRow.querySelector(".item-image-input");
+            if (imageInput) {
+                imageInput.value = "";
+            }
+            syncItemImageUI(itemRow);
+        }
+        return;
+    }
+
     const toggleButton = event.target.closest("[data-toggle-item]");
     if (toggleButton) {
         const item = elements.itemsContainer.querySelector(`[data-item-id="${toggleButton.dataset.toggleItem}"]`);
         if (item) {
             setExpandedItem(item);
         }
+    }
+}
+
+async function handleItemImageInputChange(event) {
+    const imageInput = event.target.closest(".item-image-input");
+    if (!imageInput) {
+        return;
+    }
+
+    const itemRow = imageInput.closest(".item-row");
+    if (!itemRow) {
+        return;
+    }
+
+    const file = imageInput.files?.[0] || null;
+    if (!file) {
+        itemRow.dataset.itemImageDataUrl = "";
+        syncItemImageUI(itemRow);
+        return;
+    }
+
+    try {
+        itemRow.dataset.itemImageDataUrl = await readFileAsDataUrl(file);
+        syncItemImageUI(itemRow);
+    } catch (error) {
+        itemRow.dataset.itemImageDataUrl = "";
+        imageInput.value = "";
+        syncItemImageUI(itemRow);
+        window.alert(error.message || "Unable to read image.");
+    }
+}
+
+function syncItemImageUI(row) {
+    const imageDataUrl = row?.dataset?.itemImageDataUrl || "";
+    const preview = row.querySelector(".item-image-preview");
+    const previewImage = row.querySelector(".item-image-preview-img");
+    const removeButton = row.querySelector(".item-image-remove-btn");
+    const uploadButtonCopy = row.querySelector(".item-image-upload-copy small");
+
+    if (!preview || !previewImage || !removeButton || !uploadButtonCopy) {
+        return;
+    }
+
+    if (imageDataUrl) {
+        preview.hidden = false;
+        previewImage.src = imageDataUrl;
+        removeButton.hidden = false;
+        row.classList.add("has-item-image");
+        uploadButtonCopy.textContent = "Change image";
+    } else {
+        preview.hidden = true;
+        previewImage.removeAttribute("src");
+        removeButton.hidden = true;
+        row.classList.remove("has-item-image");
+        uploadButtonCopy.textContent = "Add image";
     }
 }
 
@@ -4007,6 +4326,65 @@ function updateItemSummary(row) {
 
     row.querySelector(".item-summary-title").textContent = compactTitle;
     row.querySelector(".item-summary-meta").textContent = `Qty ${quantity || 0} | Unit ${formatCurrency(unitPrice)} | ${totalLabel} | Upcharge ${upchargePercent}`;
+}
+
+function documentHasItemImages(doc) {
+    return Array.isArray(doc?.items) && doc.items.some(item => Boolean(item?.itemImageDataUrl));
+}
+
+function buildDocumentItemsTable(doc) {
+    const hasItemImages = documentHasItemImages(doc);
+    const itemsHTML = doc.items.map((item, index) => {
+        const quantity = item.quantity ?? "-";
+        const lineTotal = item.totalPrice ?? ((parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0)).toFixed(2);
+        const unitPrice = item.unitPrice ?? (parseFloat(item.quantity) > 0
+            ? ((parseFloat(lineTotal) || 0) / (parseFloat(item.quantity) || 1)).toFixed(2)
+            : "0.00");
+        const formattedUnitPrice = `$${formatAmount(unitPrice)}`;
+        const formattedLineTotal = formatAmount(lineTotal);
+
+        return `
+            <tr>
+                <td class="document-item-col-no">${escapeHtml(item.itemNo || index + 1)}</td>
+                ${hasItemImages ? `
+                <td class="document-item-col-image">
+                    ${item.itemImageDataUrl
+                        ? `<div class="document-item-thumb"><img src="${escapeHtml(item.itemImageDataUrl)}" alt="${escapeHtml(item.description || `Item ${index + 1}`)}"></div>`
+                        : `<div class="document-item-thumb document-item-thumb-empty" aria-hidden="true"></div>`}
+                </td>` : ""}
+                <td class="document-item-col-description">${escapeHtml(item.description || "")}</td>
+                <td class="document-item-col-qty">${escapeHtml(quantity)}</td>
+                <td class="document-item-col-unit">${escapeHtml(formattedUnitPrice)}</td>
+                <td class="document-item-col-total">${escapeHtml(formattedLineTotal)}</td>
+            </tr>
+        `;
+    }).join("");
+
+    return `
+        <table class="document-items${hasItemImages ? " has-item-images" : ""}">
+            <colgroup>
+                <col class="document-items-col-no">
+                ${hasItemImages ? '<col class="document-items-col-image">' : ""}
+                <col class="document-items-col-description">
+                <col class="document-items-col-qty">
+                <col class="document-items-col-unit">
+                <col class="document-items-col-total">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th class="document-item-col-no">Item no.</th>
+                    ${hasItemImages ? '<th class="document-item-col-image">Image</th>' : ""}
+                    <th class="document-item-col-description">Item Description:</th>
+                    <th class="document-item-col-qty">Quantity:</th>
+                    <th class="document-item-col-unit">Unit Price<br>$USD</th>
+                    <th class="document-item-col-total">Total Price<br>$USD</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${itemsHTML}
+            </tbody>
+        </table>
+    `;
 }
 
 function updateItemInternalMetrics(row) {
@@ -4158,26 +4536,6 @@ function buildDocumentMarkup(doc) {
         ? escapeHtml(doc.notes.trim())
         : "<em>*No additional notes provided.</em>";
 
-    const itemsHTML = doc.items.map((item, index) => {
-        const quantity = item.quantity ?? "-";
-        const lineTotal = item.totalPrice ?? ((parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0)).toFixed(2);
-        const unitPrice = item.unitPrice ?? (parseFloat(item.quantity) > 0
-            ? ((parseFloat(lineTotal) || 0) / (parseFloat(item.quantity) || 1)).toFixed(2)
-            : "0.00");
-        const formattedUnitPrice = `$${formatAmount(unitPrice)}`;
-        const formattedLineTotal = formatAmount(lineTotal);
-
-        return `
-            <tr>
-                <td>${escapeHtml(item.itemNo || index + 1)}</td>
-                <td>${escapeHtml(item.description || "")}</td>
-                <td>${escapeHtml(quantity)}</td>
-                <td>${escapeHtml(formattedUnitPrice)}</td>
-                <td>${escapeHtml(formattedLineTotal)}</td>
-            </tr>
-        `;
-    }).join("");
-
     return `
         <div class="document-sheet">
             <div class="letterhead">
@@ -4211,27 +4569,7 @@ function buildDocumentMarkup(doc) {
                 ${showPoNumber ? `<div class="party-card po-card"><span class="po-label">Purchase Order Number:</span> ${escapeHtml(doc.poNumber)}</div>` : ""}
             </div>
 
-            <table class="document-items">
-                <colgroup>
-                    <col style="width: 11%;">
-                    <col style="width: 47%;">
-                    <col style="width: 12%;">
-                    <col style="width: 12%;">
-                    <col style="width: 18%;">
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th>Item no.</th>
-                        <th>Item Description:</th>
-                        <th>Quantity:</th>
-                        <th>Unit Price<br>$USD</th>
-                        <th>Total Price<br>$USD</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${itemsHTML}
-                </tbody>
-            </table>
+            ${buildDocumentItemsTable(doc)}
 
             <div class="document-divider"></div>
 
@@ -4307,26 +4645,6 @@ function buildLineItemsPreviewMarkup(doc) {
         ? escapeHtml(doc.notes.trim())
         : "<em>*No additional notes provided.</em>";
 
-    const itemsHTML = doc.items.map((item, index) => {
-        const quantity = item.quantity ?? "-";
-        const lineTotal = item.totalPrice ?? ((parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0)).toFixed(2);
-        const unitPrice = item.unitPrice ?? (parseFloat(item.quantity) > 0
-            ? ((parseFloat(lineTotal) || 0) / (parseFloat(item.quantity) || 1)).toFixed(2)
-            : "0.00");
-        const formattedUnitPrice = `$${formatAmount(unitPrice)}`;
-        const formattedLineTotal = formatAmount(lineTotal);
-
-        return `
-            <tr>
-                <td>${escapeHtml(item.itemNo || index + 1)}</td>
-                <td>${escapeHtml(item.description || "")}</td>
-                <td>${escapeHtml(quantity)}</td>
-                <td>${escapeHtml(formattedUnitPrice)}</td>
-                <td>${escapeHtml(formattedLineTotal)}</td>
-            </tr>
-        `;
-    }).join("");
-
     return `
         <div class="document-sheet line-items-review-sheet">
             <div class="line-items-review-header">
@@ -4355,27 +4673,7 @@ function buildLineItemsPreviewMarkup(doc) {
                 ${showPoNumber ? `<div class="party-card po-card"><span class="po-label">Purchase Order Number:</span> ${escapeHtml(doc.poNumber)}</div>` : ""}
             </div>
 
-            <table class="document-items">
-                <colgroup>
-                    <col style="width: 11%;">
-                    <col style="width: 47%;">
-                    <col style="width: 12%;">
-                    <col style="width: 12%;">
-                    <col style="width: 18%;">
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th>Item no.</th>
-                        <th>Item Description:</th>
-                        <th>Quantity:</th>
-                        <th>Unit Price<br>$USD</th>
-                        <th>Total Price<br>$USD</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${itemsHTML}
-                </tbody>
-            </table>
+            ${buildDocumentItemsTable(doc)}
 
             <div class="document-divider"></div>
 
@@ -4550,7 +4848,8 @@ async function persistDocument(options = {}) {
             internalCost,
             upchargePercent: internalCost > 0 ? (((totalPrice - internalCost) / internalCost) * 100) : 0,
             usesDopTotal,
-            manualUnitPrice: manualUnitPrice !== null
+            manualUnitPrice: manualUnitPrice !== null,
+            itemImageDataUrl: row.dataset.itemImageDataUrl || ""
         });
     });
 
@@ -5037,7 +5336,9 @@ function populateFormFromDocument(doc) {
         lastItem.querySelector(".item-manual-unit-toggle").checked = Boolean(item.manualUnitPrice);
         lastItem.querySelector(".item-unit-price").value = item.unitPrice ?? item.price ?? 0;
         lastItem.querySelector(".item-internal-cost").value = item.internalCost ?? 0;
+        lastItem.dataset.itemImageDataUrl = item.itemImageDataUrl || "";
         updateItemPricing(lastItem);
+        syncItemImageUI(lastItem);
         updateItemSummary(lastItem);
     });
 

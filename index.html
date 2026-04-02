@@ -190,6 +190,7 @@
             <div class="app-footer-copy">
                 <strong id="footerStudioName">Palmchat Innovations Lab - Edwin Jaquez</strong>
                 <span id="footerCreditLine">Developed under Palmchat Innovations LLC NYC.</span>
+                <span class="footer-version" id="footerVersion">v1.0.0</span>
             </div>
             <div class="app-footer-actions">
                 <button class="footer-secondary-btn" id="openCompanyProfileBtn" type="button">Company Profile</button>
@@ -747,6 +748,34 @@
                         <span id="savedItemDescriptionLabel">Item Description</span>
                         <textarea id="savedItemDescriptionInput" rows="2" placeholder="Forklift unloading service"></textarea>
                     </label>
+                    <div class="form-group report-field-wide saved-item-image-group">
+                        <div class="saved-item-image-uploader">
+                            <label class="saved-item-image-upload-btn" aria-label="Upload item image" title="Upload item image">
+                                <input type="file" id="savedItemImageInput" accept="image/*" hidden>
+                                <span class="saved-item-image-upload-art" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M5 7.5A2.5 2.5 0 0 1 7.5 5h9A2.5 2.5 0 0 1 19 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 16.5z" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                        <path d="M8 15l2.4-2.4a1 1 0 0 1 1.4 0l1.1 1.1 2.1-2.1a1 1 0 0 1 1.4 0L19 14.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <circle cx="10" cy="9.5" r="1.2" fill="currentColor"/>
+                                    </svg>
+                                </span>
+                                <span class="saved-item-image-upload-copy">
+                                    <strong>Item Image</strong>
+                                    <small>Add image</small>
+                                </span>
+                            </label>
+                            <button class="saved-item-image-remove-btn" id="savedItemImageRemoveBtn" type="button" hidden aria-label="Remove item image" title="Remove item image">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M6 7h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                    <path d="M9.5 7V5.6c0-.4.3-.6.6-.6h3.8c.3 0 .6.2.6.6V7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                    <path d="M8.2 7l.7 10.2c0 .4.3.8.8.8h4.6c.4 0 .7-.3.8-.8L16 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="saved-item-image-preview" id="savedItemImagePreview" hidden>
+                            <img id="savedItemImagePreviewImg" alt="Saved item preview">
+                        </div>
+                    </div>
                     <div class="form-row">
                         <label class="form-group">
                             <span id="savedItemQuantityLabel">Quantity</span>

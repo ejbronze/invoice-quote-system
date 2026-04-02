@@ -2,6 +2,12 @@
 
 SantoSync is a premium quote-and-invoice workspace for modern trade teams. It combines document creation, client history, per-user preferences, admin tools, and branded export output in one polished operational dashboard.
 
+Version: `1.0.0`
+
+## Version 1.0.0 Summary
+
+This version brings SantoSync into a more complete shared-workspace release. The app now supports server-backed shared workspace data for online use, a more refined pending-items cart flow, per-item image handling across the editor and cart, compact export thumbnails for imaged line items, admin issue inbox controls, stronger mobile modal behavior, and a cleaner branded dashboard shell. The quote/invoice workflow, cart behavior, document preview/export flow, and admin tooling all remain intact while the product identity and UI structure are more polished and easier to navigate.
+
 ## Brand Identity
 
 - Name: `SantoSync`
@@ -111,7 +117,8 @@ When the app is online with the API available, user accounts are stored in the s
 - Per-user language preferences for English, Spanish, and French
 - Client profiles that also preserve consignee name and address
 - Pending items cart with a dedicated create-item popup
-- Pending items cart with visual item cards, a header action pill, and document-insert controls
+- Pending items cart with visual item cards, a header action pill, document-insert controls, direct image upload from the cart list, and cart item image editing
+- Line item image support inside the document editor with a visual add-image tile
 - Issue reporting with optional screenshot upload
 - Admin issue inbox with delete controls
 - Local fallback mode when the API is unavailable
@@ -129,6 +136,7 @@ When the app is online with the API available, user accounts are stored in the s
 - Quotes do not render consignee information in final output
 - Invoices can render `Bill To` and `Consignee`
 - PO numbers are omitted when blank or set to `N/A`
+- Line item images are saved with the document and render as a compact export column when at least one item includes an uploaded image
 - Printed/exported documents use the active Company Profile identity
 - Internal-only pricing fields never appear in the exported document
 - PDF preview opens first, and printing happens from that preview window
@@ -144,6 +152,7 @@ Server-backed:
   - issue inbox/reporting
   - company profile
   - pending items cart
+  - cart item images and related shared cart metadata
 
 Browser-local:
 
