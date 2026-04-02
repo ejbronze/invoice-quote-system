@@ -1,6 +1,6 @@
-# Invoice & Quote System
+# Veloris
 
-Static web app for creating quotes and invoices, storing them through Vercel API routes, and exporting branded PDF-ready documents.
+Veloris is a premium quote-and-invoice workspace for creating polished commercial documents, storing them through Vercel API routes, and exporting branded PDF-ready output.
 
 ## Project Structure
 
@@ -50,6 +50,12 @@ The seeded default admin account in code is:
 
 Because the current role system is browser-local, user accounts created on one device do not automatically appear on another device yet.
 
+## Brand Notes
+
+- `Veloris` is a coined name intended to suggest velocity, elegance, and reliability.
+- The app now includes a branded splash screen, branded login/session transitions, and an `About Veloris` surface for product and developer context.
+- Developer credit in-app points to Palmchat Innovations Lab / Palmchat Innovations LLC NYC and Edwin Jaquez as the product designer and developer.
+
 ## Current Workflow
 
 1. Open the app through Vercel or a local web server.
@@ -74,6 +80,7 @@ Because the current role system is browser-local, user accounts created on one d
 - Admin-only client management from the dashboard tools area, including viewing, editing, and deleting saved clients.
 - Admin-only user management for adding local users, resetting passwords, and removing local users.
 - Admin-only document attribution showing which signed-in user created each quote or invoice.
+- Branded `Veloris` splash, login, and session-loading moments to give the product a more premium identity.
 - A streamlined top navbar showing the signed-in user, a hamburger menu for `Settings` and `Sign out`, and an admin-only mailbox icon for incoming issue reports.
 - Search documents by reference number, date, client, type, or keyword.
 - Sort documents by document date or created/exported date.
@@ -86,6 +93,7 @@ Because the current role system is browser-local, user accounts created on one d
 - Manual or calculated line-item pricing, DOP conversion support, internal pricing toggle, and keyword suggestions.
 - PDF preview window with print/save handled from the preview itself.
 - Footer branding for Palmchat Innovations Lab / Palmchat Innovations LLC NYC with a `Submit / Report Issues` flow for users.
+- An `About Veloris` modal with brand meaning, product context, and developer information for Edwin Jaquez.
 - Issue report modal with optional screenshot attachment and an admin inbox for reviewing submitted bug reports.
 
 ## Admin Tools

@@ -75,6 +75,75 @@ body::after {
     padding: 1.5rem;
 }
 
+.brand-splash {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 1.5rem;
+    background:
+        radial-gradient(circle at top right, rgba(66, 99, 235, 0.18), transparent 28%),
+        radial-gradient(circle at left bottom, rgba(29, 191, 140, 0.14), transparent 24%),
+        rgba(244, 248, 255, 0.92);
+    backdrop-filter: blur(18px);
+    z-index: 1300;
+    transition: opacity 0.42s ease, visibility 0.42s ease;
+}
+
+.brand-splash.is-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.brand-splash-card {
+    width: min(100%, 460px);
+    padding: 1.9rem 1.8rem;
+    border-radius: 28px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+}
+
+.brand-splash-card h2 {
+    margin-top: 0.9rem;
+    color: var(--text);
+    font-family: "Fraunces", Georgia, serif;
+    font-size: clamp(1.5rem, 3vw, 2.05rem);
+    line-height: 1.08;
+}
+
+.brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.9rem;
+    height: 2.9rem;
+    border-radius: 18px;
+    box-shadow: 0 16px 28px rgba(47, 85, 212, 0.18);
+}
+
+.brand-mark svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.brand-mark-large {
+    width: 4.15rem;
+    height: 4.15rem;
+    border-radius: 24px;
+    animation: veloris-float 2.4s ease-in-out infinite;
+}
+
+.brand-mark-topbar {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 16px;
+    margin-bottom: 0.35rem;
+}
+
 .access-gate.hidden {
     display: none;
 }
@@ -113,6 +182,32 @@ body::after {
     color: var(--text-soft);
     line-height: 1.55;
     position: relative;
+}
+
+.brand-lockup {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-bottom: 1.1rem;
+    position: relative;
+}
+
+.brand-lockup-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.brand-lockup-copy strong {
+    color: var(--text);
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 1.25rem;
+}
+
+.brand-lockup-copy span {
+    color: var(--text-faint);
+    font-size: 0.78rem;
+    line-height: 1.35;
 }
 
 .access-form {
@@ -183,15 +278,22 @@ body::after {
     text-align: center;
 }
 
+.session-loader-brand {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    margin-bottom: 1rem;
+}
+
 .session-loader-spinner {
     width: 3rem;
     height: 3rem;
-    margin: 0 auto 1rem;
     border-radius: 50%;
     border: 4px solid rgba(66, 99, 235, 0.14);
     border-top-color: var(--blue);
     border-right-color: var(--mint);
     animation: import-spin 0.75s linear infinite;
+    position: absolute;
 }
 
 .session-loader-card h2 {
@@ -244,6 +346,8 @@ body::after {
 
 .app-topbar-copy {
     min-width: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .app-topbar-kicker {
@@ -444,6 +548,53 @@ body::after {
     font-weight: 700;
     cursor: pointer;
     box-shadow: var(--shadow-sm);
+}
+
+.footer-secondary-btn {
+    border: 1px solid rgba(125, 144, 176, 0.22);
+    border-radius: 999px;
+    padding: 0.72rem 1rem;
+    background: rgba(251, 252, 255, 0.98);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+}
+
+.app-footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.about-brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.about-brand-copy strong {
+    display: block;
+    color: var(--text);
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.about-brand-copy p,
+.about-copy p {
+    color: var(--text-soft);
+    line-height: 1.55;
+}
+
+.about-copy {
+    display: grid;
+    gap: 0.8rem;
 }
 
 .workspace-hero,
@@ -1430,6 +1581,11 @@ body::after {
         opacity: 1;
         transform: translateY(0) scale(1);
     }
+}
+
+@keyframes veloris-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
 }
 
 .settings-modal-content {

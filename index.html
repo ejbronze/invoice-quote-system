@@ -7,8 +7,46 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+    <div class="brand-splash" id="brandSplash" aria-hidden="true">
+        <div class="brand-splash-card">
+            <div class="brand-mark brand-mark-large" aria-hidden="true">
+                <svg viewBox="0 0 64 64">
+                    <defs>
+                        <linearGradient id="velorisBrandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#2f55d4"/>
+                            <stop offset="55%" stop-color="#4263eb"/>
+                            <stop offset="100%" stop-color="#1dbf8c"/>
+                        </linearGradient>
+                    </defs>
+                    <rect x="8" y="8" width="48" height="48" rx="16" fill="url(#velorisBrandGradient)"/>
+                    <path d="M20 19h8l8 22 8-22h8L40.8 45H31z" fill="#ffffff"/>
+                </svg>
+            </div>
+            <span class="eyebrow">Veloris</span>
+            <h2>Premium document workflows for modern trade.</h2>
+        </div>
+    </div>
     <div class="access-gate" id="accessGate">
         <div class="access-card">
+            <div class="brand-lockup">
+                <div class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 64 64">
+                        <defs>
+                            <linearGradient id="velorisLoginGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#2f55d4"/>
+                                <stop offset="55%" stop-color="#4263eb"/>
+                                <stop offset="100%" stop-color="#1dbf8c"/>
+                            </linearGradient>
+                        </defs>
+                        <rect x="8" y="8" width="48" height="48" rx="16" fill="url(#velorisLoginGradient)"/>
+                        <path d="M20 19h8l8 22 8-22h8L40.8 45H31z" fill="#ffffff"/>
+                    </svg>
+                </div>
+                <div class="brand-lockup-copy">
+                    <strong>Veloris</strong>
+                    <span>Refined quoting and invoicing for fast-moving operations.</span>
+                </div>
+            </div>
             <span class="eyebrow">Workspace Sign In</span>
             <h1>Open The Dashboard</h1>
             <p>Sign in with a local account to create, edit, and manage quotes and invoices.</p>
@@ -27,7 +65,22 @@
 
     <div class="session-loader" id="sessionLoader" hidden aria-hidden="true">
         <div class="session-loader-card" role="status" aria-live="polite">
-            <div class="session-loader-spinner" aria-hidden="true"></div>
+            <div class="session-loader-brand" aria-hidden="true">
+                <div class="brand-mark brand-mark-large">
+                    <svg viewBox="0 0 64 64">
+                        <defs>
+                            <linearGradient id="velorisSessionGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#2f55d4"/>
+                                <stop offset="55%" stop-color="#4263eb"/>
+                                <stop offset="100%" stop-color="#1dbf8c"/>
+                            </linearGradient>
+                        </defs>
+                        <rect x="8" y="8" width="48" height="48" rx="16" fill="url(#velorisSessionGradient)"/>
+                        <path d="M20 19h8l8 22 8-22h8L40.8 45H31z" fill="#ffffff"/>
+                    </svg>
+                </div>
+                <div class="session-loader-spinner"></div>
+            </div>
             <span class="eyebrow">Loading Session</span>
             <h2>Opening your workspace</h2>
             <p id="sessionLoaderMessage">Signing in and preparing the dashboard...</p>
@@ -37,6 +90,19 @@
     <main class="container app-shell app-shell-locked" id="adminAppShell" aria-hidden="true" hidden>
         <section class="app-topbar" aria-label="Session controls">
             <div class="app-topbar-copy">
+                <div class="brand-mark brand-mark-topbar" aria-hidden="true">
+                    <svg viewBox="0 0 64 64">
+                        <defs>
+                            <linearGradient id="velorisTopbarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#2f55d4"/>
+                                <stop offset="55%" stop-color="#4263eb"/>
+                                <stop offset="100%" stop-color="#1dbf8c"/>
+                            </linearGradient>
+                        </defs>
+                        <rect x="8" y="8" width="48" height="48" rx="16" fill="url(#velorisTopbarGradient)"/>
+                        <path d="M20 19h8l8 22 8-22h8L40.8 45H31z" fill="#ffffff"/>
+                    </svg>
+                </div>
                 <span class="app-topbar-kicker">Workspace</span>
                 <strong>Invoice & Quote Dashboard</strong>
                 <span class="session-identity" id="sessionBadge" hidden></span>
@@ -161,9 +227,46 @@
                 <strong>Palmchat Innovations Lab - Edwin Jaquez</strong>
                 <span>Developed under Palmchat Innovations LLC NYC.</span>
             </div>
-            <button class="footer-report-btn" id="openIssueReportBtn" type="button">Submit / Report Issues</button>
+            <div class="app-footer-actions">
+                <button class="footer-secondary-btn" id="openAboutBtn" type="button">About Veloris</button>
+                <button class="footer-report-btn" id="openIssueReportBtn" type="button">Submit / Report Issues</button>
+            </div>
         </footer>
     </main>
+
+    <div class="modal settings-modal" id="aboutModal" aria-hidden="true">
+        <div class="modal-content settings-modal-content about-modal-content">
+            <div class="modal-header">
+                <h3 id="aboutModalTitle">About Veloris</h3>
+                <button class="close-btn" id="closeAboutModalBtn" type="button" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body settings-modal-body">
+                <div class="about-brand">
+                    <div class="brand-mark brand-mark-large" aria-hidden="true">
+                        <svg viewBox="0 0 64 64">
+                            <defs>
+                                <linearGradient id="velorisAboutGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#2f55d4"/>
+                                    <stop offset="55%" stop-color="#4263eb"/>
+                                    <stop offset="100%" stop-color="#1dbf8c"/>
+                                </linearGradient>
+                            </defs>
+                            <rect x="8" y="8" width="48" height="48" rx="16" fill="url(#velorisAboutGradient)"/>
+                            <path d="M20 19h8l8 22 8-22h8L40.8 45H31z" fill="#ffffff"/>
+                        </svg>
+                    </div>
+                    <div class="about-brand-copy">
+                        <strong>Veloris</strong>
+                        <p id="aboutBrandMeaning">A coined name built to suggest velocity, elegance, and reliability. Veloris is meant to feel premium, modern, and calm under pressure.</p>
+                    </div>
+                </div>
+                <div class="about-copy">
+                    <p id="aboutProductCopy">Veloris is a quote-and-invoice workspace designed for polished commercial documents, faster workflows, and a more refined client-facing experience.</p>
+                    <p id="aboutDeveloperCopy">Designed and developed by Edwin Jaquez through Palmchat Innovations Lab under Palmchat Innovations LLC NYC, with a focus on premium operational tools for modern trade and logistics teams.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="modal settings-modal" id="settingsModal" aria-hidden="true">
         <div class="modal-content settings-modal-content">

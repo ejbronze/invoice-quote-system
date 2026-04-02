@@ -41,6 +41,7 @@ const CURRENT_SESSION_STORAGE_KEY = "todosCurrentSession";
 const ISSUE_REPORTS_STORAGE_KEY = "todosIssueReports";
 const DEFAULT_ACCESS_ERROR_MESSAGE = "That username or password is incorrect. Try again.";
 const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
+const BRAND_SPLASH_MIN_MS = 1100;
 const LOCAL_DOCUMENTS_STORAGE_KEY = "todosLocalDocuments";
 const LOCAL_CLIENTS_STORAGE_KEY = "todosLocalClients";
 const KEYWORD_STOP_WORDS = new Set([
@@ -59,8 +60,8 @@ const TRANSLATIONS = {
         role_admin: "Admin",
         role_user: "User",
         login_kicker: "Workspace Sign In",
-        login_title: "Open The Dashboard",
-        login_copy: "Sign in with a local account to create, edit, and manage quotes and invoices.",
+        login_title: "Enter Veloris",
+        login_copy: "Sign in with a local account to create, edit, and manage polished quotes and invoices.",
         username: "Username",
         username_placeholder: "Enter username",
         password: "Password",
@@ -68,10 +69,10 @@ const TRANSLATIONS = {
         login_error: "That username or password is incorrect. Try again.",
         sign_in: "Sign In",
         session_loader_kicker: "Loading Session",
-        session_loader_title: "Opening your workspace",
-        session_loader_message: "Signing in and preparing the dashboard...",
+        session_loader_title: "Opening Veloris",
+        session_loader_message: "Signing in and preparing your branded workspace...",
         workspace: "Workspace",
-        dashboard_title_top: "Invoice & Quote Dashboard",
+        dashboard_title_top: "Veloris",
         end_session: "End Session",
         sign_out: "Sign out",
         settings: "Settings",
@@ -91,6 +92,10 @@ const TRANSLATIONS = {
         screenshot: "Screenshot",
         footer_credit_line: "Developed under Palmchat Innovations LLC NYC.",
         footer_report_cta: "Submit / Report Issues",
+        about_veloris: "About Veloris",
+        about_brand_meaning: "A coined name built to suggest velocity, elegance, and reliability. Veloris is meant to feel premium, modern, and calm under pressure.",
+        about_product_copy: "Veloris is a quote-and-invoice workspace designed for polished commercial documents, faster workflows, and a more refined client-facing experience.",
+        about_developer_copy: "Designed and developed by Edwin Jaquez through Palmchat Innovations Lab under Palmchat Innovations LLC NYC, with a focus on premium operational tools for modern trade and logistics teams.",
         menu: "Menu",
         language: "Language",
         hero_kicker: "Document Workspace",
@@ -207,8 +212,8 @@ const TRANSLATIONS = {
         role_admin: "Administrador",
         role_user: "Usuario",
         login_kicker: "Ingreso al Espacio",
-        login_title: "Abrir El Panel",
-        login_copy: "Inicia sesión con una cuenta local para crear, editar y gestionar cotizaciones y facturas.",
+        login_title: "Entrar a Veloris",
+        login_copy: "Inicia sesión con una cuenta local para crear, editar y gestionar cotizaciones y facturas con una presentación más refinada.",
         username: "Usuario",
         username_placeholder: "Ingresa el usuario",
         password: "Contraseña",
@@ -216,10 +221,10 @@ const TRANSLATIONS = {
         login_error: "Ese usuario o contraseña es incorrecto. Inténtalo de nuevo.",
         sign_in: "Iniciar sesión",
         session_loader_kicker: "Cargando sesión",
-        session_loader_title: "Abriendo tu espacio",
-        session_loader_message: "Iniciando sesión y preparando el panel...",
+        session_loader_title: "Abriendo Veloris",
+        session_loader_message: "Iniciando sesión y preparando tu espacio de trabajo de marca...",
         workspace: "Espacio",
-        dashboard_title_top: "Panel de Cotizaciones y Facturas",
+        dashboard_title_top: "Veloris",
         end_session: "Cerrar sesión",
         sign_out: "Cerrar sesión",
         settings: "Configuración",
@@ -239,6 +244,10 @@ const TRANSLATIONS = {
         screenshot: "Captura",
         footer_credit_line: "Desarrollado bajo Palmchat Innovations LLC NYC.",
         footer_report_cta: "Enviar / Reportar Problemas",
+        about_veloris: "Sobre Veloris",
+        about_brand_meaning: "Un nombre creado para sugerir velocidad, elegancia y fiabilidad. Veloris está pensado para sentirse premium, moderno y sereno bajo presión.",
+        about_product_copy: "Veloris es un espacio de cotizaciones y facturas pensado para documentos comerciales más pulidos, flujos más rápidos y una experiencia más refinada frente al cliente.",
+        about_developer_copy: "Diseñado y desarrollado por Edwin Jaquez a través de Palmchat Innovations Lab bajo Palmchat Innovations LLC NYC, con enfoque en herramientas operativas premium para equipos modernos de comercio y logística.",
         menu: "Menú",
         language: "Idioma",
         hero_kicker: "Espacio de Documentos",
@@ -355,8 +364,8 @@ const TRANSLATIONS = {
         role_admin: "Administrateur",
         role_user: "Utilisateur",
         login_kicker: "Connexion à l’Espace",
-        login_title: "Ouvrir Le Tableau",
-        login_copy: "Connectez-vous avec un compte local pour créer, modifier et gérer les devis et factures.",
+        login_title: "Entrer dans Veloris",
+        login_copy: "Connectez-vous avec un compte local pour créer, modifier et gérer des devis et factures avec une présentation plus raffinée.",
         username: "Nom d’utilisateur",
         username_placeholder: "Entrez le nom d’utilisateur",
         password: "Mot de passe",
@@ -364,10 +373,10 @@ const TRANSLATIONS = {
         login_error: "Ce nom d’utilisateur ou mot de passe est incorrect. Réessayez.",
         sign_in: "Se connecter",
         session_loader_kicker: "Chargement de session",
-        session_loader_title: "Ouverture de votre espace",
-        session_loader_message: "Connexion et préparation du tableau de bord...",
+        session_loader_title: "Ouverture de Veloris",
+        session_loader_message: "Connexion et préparation de votre espace de travail de marque...",
         workspace: "Espace",
-        dashboard_title_top: "Tableau Devis & Factures",
+        dashboard_title_top: "Veloris",
         end_session: "Fermer la session",
         sign_out: "Se déconnecter",
         settings: "Paramètres",
@@ -387,6 +396,10 @@ const TRANSLATIONS = {
         screenshot: "Capture",
         footer_credit_line: "Développé sous Palmchat Innovations LLC NYC.",
         footer_report_cta: "Soumettre / Signaler un Problème",
+        about_veloris: "À propos de Veloris",
+        about_brand_meaning: "Un nom imaginé pour évoquer la vitesse, l’élégance et la fiabilité. Veloris est pensé pour paraître premium, moderne et serein sous pression.",
+        about_product_copy: "Veloris est un espace devis-factures conçu pour des documents commerciaux plus soignés, des flux plus rapides et une expérience client plus raffinée.",
+        about_developer_copy: "Conçu et développé par Edwin Jaquez via Palmchat Innovations Lab sous Palmchat Innovations LLC NYC, avec un accent sur des outils opérationnels premium pour les équipes modernes du commerce et de la logistique.",
         menu: "Menu",
         language: "Langue",
         hero_kicker: "Espace Documents",
@@ -647,7 +660,12 @@ function applyTranslations() {
     elements.submitIssueReportBtn.textContent = t("submit_report");
     setElementText("#issueInboxTitle", t("issue_inbox"));
     setElementText("#issueInboxCopy", t("issue_inbox_copy"));
+    setElementText("#aboutModalTitle", t("about_veloris"));
+    setElementText("#aboutBrandMeaning", t("about_brand_meaning"));
+    setElementText("#aboutProductCopy", t("about_product_copy"));
+    setElementText("#aboutDeveloperCopy", t("about_developer_copy"));
     setElementText(".app-footer-copy span", t("footer_credit_line"));
+    elements.openAboutBtn.textContent = t("about_veloris");
     elements.openIssueReportBtn.textContent = t("footer_report_cta");
 
     updateStaticEditorTranslations();
@@ -702,6 +720,7 @@ function cacheElements() {
     elements.accessCode = document.getElementById("accessCode");
     elements.accessSubmitBtn = document.getElementById("accessSubmitBtn");
     elements.accessError = document.getElementById("accessError");
+    elements.brandSplash = document.getElementById("brandSplash");
     elements.sessionLoader = document.getElementById("sessionLoader");
     elements.sessionLoaderMessage = document.getElementById("sessionLoaderMessage");
     elements.settingsModal = document.getElementById("settingsModal");
@@ -723,6 +742,7 @@ function cacheElements() {
     elements.exportSelectedJsonBtn = document.getElementById("exportSelectedJsonBtn");
     elements.issueReportModal = document.getElementById("issueReportModal");
     elements.openIssueReportBtn = document.getElementById("openIssueReportBtn");
+    elements.openAboutBtn = document.getElementById("openAboutBtn");
     elements.closeIssueReportModalBtn = document.getElementById("closeIssueReportModalBtn");
     elements.issueSummaryInput = document.getElementById("issueSummaryInput");
     elements.issueDetailsInput = document.getElementById("issueDetailsInput");
@@ -732,6 +752,8 @@ function cacheElements() {
     elements.issueInboxModal = document.getElementById("issueInboxModal");
     elements.closeIssueInboxModalBtn = document.getElementById("closeIssueInboxModalBtn");
     elements.issueInboxList = document.getElementById("issueInboxList");
+    elements.aboutModal = document.getElementById("aboutModal");
+    elements.closeAboutModalBtn = document.getElementById("closeAboutModalBtn");
     elements.showInternalPricingToggle = document.getElementById("showInternalPricingToggle");
     elements.newUserDisplayName = document.getElementById("newUserDisplayName");
     elements.newUserUsername = document.getElementById("newUserUsername");
@@ -832,7 +854,9 @@ function bindEvents() {
     elements.selectAllExportsToggle.addEventListener("change", handleSelectAllExportsToggle);
     elements.exportSelectedJsonBtn.addEventListener("click", exportSelectedDocuments);
     elements.openIssueReportBtn.addEventListener("click", openIssueReportModal);
+    elements.openAboutBtn.addEventListener("click", openAboutModal);
     elements.closeIssueReportModalBtn.addEventListener("click", closeIssueReportModal);
+    elements.closeAboutModalBtn.addEventListener("click", closeAboutModal);
     elements.issueScreenshotInput.addEventListener("change", handleIssueScreenshotChange);
     elements.submitIssueReportBtn.addEventListener("click", submitIssueReport);
     elements.closeIssueInboxModalBtn.addEventListener("click", closeIssueInboxModal);
@@ -907,6 +931,12 @@ function bindEvents() {
         }
     });
 
+    elements.aboutModal.addEventListener("click", event => {
+        if (event.target === elements.aboutModal) {
+            closeAboutModal();
+        }
+    });
+
     elements.documentModal.addEventListener("input", updateEditorSummary);
     elements.documentModal.addEventListener("change", updateEditorSummary);
     document.addEventListener("click", handleGlobalClick);
@@ -930,10 +960,19 @@ function init() {
     hydrateEditorPreferences();
     updateCalculatorDisplay();
     if (!hasActiveSession()) {
+        revealBrandSplash();
         return;
     }
 
     bootstrapAppData();
+    revealBrandSplash();
+}
+
+function revealBrandSplash() {
+    window.setTimeout(() => {
+        elements.brandSplash.classList.add("is-hidden");
+        elements.brandSplash.setAttribute("aria-hidden", "true");
+    }, BRAND_SPLASH_MIN_MS);
 }
 
 function toggleCalculator() {
@@ -1449,6 +1488,16 @@ function openIssueInboxModal() {
 function closeIssueInboxModal() {
     elements.issueInboxModal.classList.remove("active");
     elements.issueInboxModal.setAttribute("aria-hidden", "true");
+}
+
+function openAboutModal() {
+    elements.aboutModal.classList.add("active");
+    elements.aboutModal.setAttribute("aria-hidden", "false");
+}
+
+function closeAboutModal() {
+    elements.aboutModal.classList.remove("active");
+    elements.aboutModal.setAttribute("aria-hidden", "true");
 }
 
 function renderUserManagementList() {
