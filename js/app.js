@@ -15,12 +15,21 @@ const state = {
     isDraggingCalculator: false,
     calculatorDragOffsetX: 0,
     calculatorDragOffsetY: 0,
-    isBootstrapping: false
+    isBootstrapping: false,
+    showInternalPricing: false,
+    dataMode: "server"
 };
 
 const DOP_PER_USD = 59;
 const ADMIN_ACCESS_CODE = "Todos123";
 const ADMIN_ACCESS_STORAGE_KEY = "todosAdminVerified";
+const LOCAL_DOCUMENTS_STORAGE_KEY = "todosLocalDocuments";
+const LOCAL_CLIENTS_STORAGE_KEY = "todosLocalClients";
+const KEYWORD_STOP_WORDS = new Set([
+    "a", "an", "and", "at", "by", "for", "from", "in", "into", "of", "on", "or", "per",
+    "the", "to", "with", "without", "service", "services", "charge", "charges", "item",
+    "items", "fee", "fees", "shipment", "shipments", "cargo", "client", "invoice", "quote"
+]);
 
 const elements = {};
 
@@ -39,6 +48,13 @@ function cacheElements() {
     elements.settingsModal = document.getElementById("settingsModal");
     elements.openSettingsBtn = document.getElementById("openSettingsBtn");
     elements.closeSettingsBtn = document.getElementById("closeSettingsBtn");
+    elements.exportModal = document.getElementById("exportModal");
+    elements.openExportSelectionBtn = document.getElementById("openExportSelectionBtn");
+    elements.closeExportModalBtn = document.getElementById("closeExportModalBtn");
+    elements.selectAllExportsToggle = document.getElementById("selectAllExportsToggle");
+    elements.exportSelectionList = document.getElementById("exportSelectionList");
+    elements.exportSelectedJsonBtn = document.getElementById("exportSelectedJsonBtn");
+    elements.showInternalPricingToggle = document.getElementById("showInternalPricingToggle");
     elements.documentModal = document.getElementById("documentModal");
     elements.stepIndicator = document.querySelector(".step-indicator");
     elements.modalTitle = document.getElementById("modalTitle");
@@ -51,6 +67,8 @@ function cacheElements() {
     elements.clientSelect = document.getElementById("clientSelect");
     elements.clientName = document.getElementById("clientName");
     elements.clientAddress = document.getElementById("clientAddress");
+    elements.consigneeName = document.getElementById("consigneeName");
+    elements.consigneeAddress = document.getElementById("consigneeAddress");
     elements.notes = document.getElementById("notes");
     elements.paymentTerms = document.getElementById("paymentTerms");
     elements.includeSignature = document.getElementById("includeSignature");
@@ -67,6 +85,7 @@ function cacheElements() {
     elements.importCsvBtn = document.getElementById("importCsvBtn");
     elements.exportBackupBtn = document.getElementById("exportBackupBtn");
     elements.importBackupBtn = document.getElementById("importBackupBtn");
+    elements.clearLocalTestDataBtn = document.getElementById("clearLocalTestDataBtn");
     elements.importBackupInput = document.getElementById("importBackupInput");
     elements.importDocumentStatus = document.getElementById("importDocumentStatus");
     elements.closeModalBtn = document.getElementById("closeModalBtn");
@@ -92,6 +111,7 @@ function cacheElements() {
     elements.summaryItems = document.getElementById("summaryItems");
     elements.summaryTotal = document.getElementById("summaryTotal");
     elements.summaryTags = document.getElementById("summaryTags");
+    elements.tagSuggestions = document.getElementById("tagSuggestions");
     elements.sidebarTip = document.getElementById("sidebarTip");
     elements.calculatorLauncher = document.getElementById("calculatorLauncher");
     elements.calculatorWidget = document.getElementById("calculatorWidget");
@@ -117,7 +137,13 @@ function bindEvents() {
     elements.exportCsvTemplateBtn.addEventListener("click", exportCsvTemplate);
     elements.importCsvBtn.addEventListener("click", openCsvImportPicker);
     elements.exportBackupBtn.addEventListener("click", exportSystemBackup);
+    elements.openExportSelectionBtn.addEventListener("click", openExportModal);
+    elements.closeExportModalBtn.addEventListener("click", closeExportModal);
+    elements.selectAllExportsToggle.addEventListener("change", handleSelectAllExportsToggle);
+    elements.exportSelectedJsonBtn.addEventListener("click", exportSelectedDocuments);
+    elements.clearLocalTestDataBtn.addEventListener("click", clearLocalTestData);
     elements.valueToggleCard.addEventListener("click", toggleValueView);
+    elements.showInternalPricingToggle.addEventListener("change", handleInternalPricingToggleChange);
     elements.importBackupBtn.addEventListener("click", () => {
         elements.importBackupInput.click();
     });
@@ -140,6 +166,7 @@ function bindEvents() {
     elements.documentSearch.addEventListener("input", handleSearchInput);
     elements.documentSort.addEventListener("change", handleSortChange);
     elements.documentsGrid.addEventListener("keydown", handleDocumentCardKeydown);
+    elements.tagSuggestions.addEventListener("click", handleKeywordSuggestionClick);
     elements.calculatorLauncher.addEventListener("click", toggleCalculator);
     elements.calculatorMinimizeBtn.addEventListener("click", hideCalculator);
     elements.calculatorCloseBtn.addEventListener("click", hideCalculator);
@@ -163,12 +190,19 @@ function bindEvents() {
         }
     });
 
+    elements.exportModal.addEventListener("click", event => {
+        if (event.target === elements.exportModal) {
+            closeExportModal();
+        }
+    });
+
     elements.documentModal.addEventListener("input", updateEditorSummary);
     elements.documentModal.addEventListener("change", updateEditorSummary);
 }
 
 function init() {
     applyAccessState(hasAdminAccess());
+    hydrateEditorPreferences();
     updateCalculatorDisplay();
     if (!hasAdminAccess()) {
         return;
@@ -380,6 +414,7 @@ function unlockAdminAccess() {
 }
 
 function openSettingsModal() {
+    syncEditorPreferenceControls();
     elements.settingsModal.classList.add("active");
     elements.settingsModal.setAttribute("aria-hidden", "false");
 }
@@ -387,6 +422,88 @@ function openSettingsModal() {
 function closeSettingsModal() {
     elements.settingsModal.classList.remove("active");
     elements.settingsModal.setAttribute("aria-hidden", "true");
+}
+
+function openExportModal() {
+    closeSettingsModal();
+    renderExportSelectionList();
+    elements.exportModal.classList.add("active");
+    elements.exportModal.setAttribute("aria-hidden", "false");
+}
+
+function closeExportModal() {
+    elements.exportModal.classList.remove("active");
+    elements.exportModal.setAttribute("aria-hidden", "true");
+}
+
+function renderExportSelectionList() {
+    if (!state.documents.length) {
+        elements.exportSelectionList.innerHTML = '<p class="export-empty">No documents available to export.</p>';
+        elements.selectAllExportsToggle.checked = false;
+        return;
+    }
+
+    const sortedDocuments = [...state.documents].sort((left, right) => compareDocuments(left, right, "date_desc"));
+    elements.exportSelectionList.innerHTML = sortedDocuments.map(doc => `
+        <label class="export-row">
+            <input type="checkbox" class="export-doc-checkbox" value="${escapeHtml(String(doc.id))}" checked>
+            <span class="export-row-copy">
+                <span class="export-row-title">${escapeHtml(doc.refNumber || "Untitled document")}</span>
+                <span class="export-row-meta">${escapeHtml(doc.type === "quote" ? "Quote" : "Invoice")} • ${escapeHtml(doc.clientName || "Unknown client")} • ${escapeHtml(formatDisplayDate(doc.date) || "No date")}</span>
+            </span>
+        </label>
+    `).join("");
+    elements.selectAllExportsToggle.checked = true;
+}
+
+function handleSelectAllExportsToggle(event) {
+    const isChecked = Boolean(event.target.checked);
+    elements.exportSelectionList.querySelectorAll(".export-doc-checkbox").forEach(checkbox => {
+        checkbox.checked = isChecked;
+    });
+}
+
+function exportSelectedDocuments() {
+    const selectedIds = Array.from(elements.exportSelectionList.querySelectorAll(".export-doc-checkbox:checked"))
+        .map(checkbox => checkbox.value);
+
+    if (!selectedIds.length) {
+        setImportStatus("Select at least one quote or invoice to export.", true);
+        return;
+    }
+
+    const selectedDocuments = state.documents.filter(doc => selectedIds.includes(String(doc.id)));
+    const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+    downloadJSONFile(`invoice-quote-export-${stamp}.json`, {
+        exportedAt: new Date().toISOString(),
+        version: 1,
+        documents: selectedDocuments
+    });
+    closeExportModal();
+    setImportStatus(`Exported ${selectedDocuments.length} selected documents as JSON.`);
+}
+
+function hydrateEditorPreferences() {
+    state.showInternalPricing = false;
+    syncEditorPreferenceControls();
+}
+
+function syncEditorPreferenceControls() {
+    if (elements.showInternalPricingToggle) {
+        elements.showInternalPricingToggle.checked = state.showInternalPricing;
+    }
+    syncInternalPricingVisibility();
+}
+
+function handleInternalPricingToggleChange(event) {
+    state.showInternalPricing = Boolean(event.target.checked);
+    syncInternalPricingVisibility();
+}
+
+function syncInternalPricingVisibility() {
+    elements.itemsContainer.querySelectorAll(".item-internal-panel").forEach(panel => {
+        panel.hidden = !state.showInternalPricing;
+    });
 }
 
 function handleAccessSubmit(event) {
@@ -458,6 +575,8 @@ function normalizeDocuments(documents) {
             notes: doc.notes || existingDoc.notes,
             clientName: doc.clientName || existingDoc.clientName,
             clientAddress: doc.clientAddress || existingDoc.clientAddress,
+            consigneeName: doc.consigneeName || existingDoc.consigneeName,
+            consigneeAddress: doc.consigneeAddress || existingDoc.consigneeAddress,
             poNumber: doc.poNumber || existingDoc.poNumber,
             paymentTerms: doc.paymentTerms || existingDoc.paymentTerms,
             total: Number(doc.total || existingDoc.total || 0),
@@ -509,6 +628,58 @@ function setImportStatus(message, isError = false) {
     elements.importDocumentStatus.classList.toggle("hero-helper-error", isError);
 }
 
+function readLocalDataset(storageKey, fallbackValue) {
+    try {
+        const rawValue = window.localStorage.getItem(storageKey);
+        if (!rawValue) {
+            return fallbackValue;
+        }
+
+        return JSON.parse(rawValue);
+    } catch (error) {
+        return fallbackValue;
+    }
+}
+
+function writeLocalDataset(storageKey, value) {
+    window.localStorage.setItem(storageKey, JSON.stringify(value));
+}
+
+function clearLocalDataset(storageKey) {
+    window.localStorage.removeItem(storageKey);
+}
+
+function loadLocalAppData() {
+    const documents = normalizeDocuments(readLocalDataset(LOCAL_DOCUMENTS_STORAGE_KEY, []));
+    const clients = normalizeClients(readLocalDataset(LOCAL_CLIENTS_STORAGE_KEY, []));
+
+    state.dataMode = "local";
+    state.documents = documents;
+    state.clients = clients;
+    renderClientOptions();
+    prepareNewDocument("quote");
+    renderDocuments();
+    setImportStatus("Running in local test mode. Data is saved in this browser only.");
+}
+
+function clearLocalTestData() {
+    if (state.dataMode !== "local") {
+        setImportStatus("Local test data is only available while the app is running in browser-only mode.");
+        closeSettingsModal();
+        return;
+    }
+
+    if (!window.confirm("Clear all local test quotes, invoices, and saved clients from this browser?")) {
+        return;
+    }
+
+    clearLocalDataset(LOCAL_DOCUMENTS_STORAGE_KEY);
+    clearLocalDataset(LOCAL_CLIENTS_STORAGE_KEY);
+    loadLocalAppData();
+    closeSettingsModal();
+    setImportStatus("Local test data cleared from this browser.");
+}
+
 async function bootstrapAppData() {
     if (state.isBootstrapping) {
         return;
@@ -523,38 +694,64 @@ async function bootstrapAppData() {
             requestJSON("/api/clients")
         ]);
 
+        state.dataMode = "server";
         state.documents = normalizeDocuments(documentsResponse.documents);
         state.clients = normalizeClients(clientsResponse.clients);
         renderClientOptions();
         prepareNewDocument("quote");
         renderDocuments();
     } catch (error) {
-        state.documents = [];
-        state.clients = normalizeClients([]);
-        renderClientOptions();
-        prepareNewDocument("quote");
-        renderDocumentsMessage(`Unable to load server data: ${error.message}`);
+        loadLocalAppData();
+        setImportStatus(`Server unavailable (${error.message}). Local test mode is active for this browser.`);
     } finally {
         state.isBootstrapping = false;
     }
 }
 
 async function saveDocumentsToServer(documents) {
-    const payload = await requestJSON("/api/documents", {
-        method: "POST",
-        body: JSON.stringify({ documents })
-    });
+    if (state.dataMode === "local") {
+        state.documents = normalizeDocuments(documents);
+        writeLocalDataset(LOCAL_DOCUMENTS_STORAGE_KEY, state.documents);
+        return;
+    }
 
-    state.documents = normalizeDocuments(payload.documents);
+    try {
+        const payload = await requestJSON("/api/documents", {
+            method: "POST",
+            body: JSON.stringify({ documents })
+        });
+
+        state.dataMode = "server";
+        state.documents = normalizeDocuments(payload.documents);
+    } catch (error) {
+        state.dataMode = "local";
+        state.documents = normalizeDocuments(documents);
+        writeLocalDataset(LOCAL_DOCUMENTS_STORAGE_KEY, state.documents);
+        setImportStatus("Server save failed, so changes were saved locally in this browser instead.");
+    }
 }
 
 async function saveClientsToServer(clients) {
-    const payload = await requestJSON("/api/clients", {
-        method: "POST",
-        body: JSON.stringify({ clients })
-    });
+    if (state.dataMode === "local") {
+        state.clients = normalizeClients(clients);
+        writeLocalDataset(LOCAL_CLIENTS_STORAGE_KEY, state.clients);
+        return;
+    }
 
-    state.clients = normalizeClients(payload.clients);
+    try {
+        const payload = await requestJSON("/api/clients", {
+            method: "POST",
+            body: JSON.stringify({ clients })
+        });
+
+        state.dataMode = "server";
+        state.clients = normalizeClients(payload.clients);
+    } catch (error) {
+        state.dataMode = "local";
+        state.clients = normalizeClients(clients);
+        writeLocalDataset(LOCAL_CLIENTS_STORAGE_KEY, state.clients);
+        setImportStatus("Server save failed, so clients were saved locally in this browser instead.");
+    }
 }
 
 function downloadTextFile(filename, content, mimeType) {
@@ -806,15 +1003,6 @@ async function handleCsvImportSelect(event) {
     }
 }
 
-function exportSingleDocument(doc) {
-    const safeRef = String(doc.refNumber || "document").replace(/[^a-z0-9-_]+/gi, "-");
-    downloadJSONFile(`${safeRef}.json`, {
-        exportedAt: new Date().toISOString(),
-        version: 1,
-        document: doc
-    });
-}
-
 async function handleBackupImportSelect(event) {
     const [file] = event.target.files || [];
     event.target.value = "";
@@ -878,16 +1066,37 @@ function formatAmount(amount) {
     }).format(Number(amount || 0));
 }
 
+function parseDecimalInput(value) {
+    const normalized = String(value || "")
+        .replace(/,/g, "")
+        .replace(/[^\d.]/g, "");
+    const match = normalized.match(/^\d*\.?\d*/);
+    const parsed = parseFloat(match ? match[0] : "");
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function hasMeaningfulPoNumber(value) {
+    const normalized = String(value || "").trim();
+    return Boolean(normalized && normalized.toUpperCase() !== "N/A");
+}
+
 function getStepContent(step) {
+    const isEditing = isExistingDocumentEditMode();
     const stepContent = {
         1: {
             title: "Type & Info",
-            text: "Choose the document type, confirm the date, and set the reference details.",
-            tip: "Use tags for destination, customer segment, or priority so future searches are faster."
+            text: isEditing
+                ? "Update the saved document details and save right away if this is the only change you need."
+                : "Choose the document type, confirm the date, and set the reference details.",
+            tip: isEditing
+                ? "Existing documents can be updated from any step, so you do not have to return to final review for quick fixes."
+                : "Reference details first keeps new documents organized before you move into client and pricing work."
         },
         2: {
             title: "Client Details",
-            text: "Select an existing client or enter a new one, then capture the address exactly as it should appear on the document.",
+            text: isEditing
+                ? "Tighten up the saved client name or address without losing your place in the workflow."
+                : "Select an existing client or enter a new one, then capture the address exactly as it should appear on the document.",
             tip: "Saved clients help you move much faster on repeat work and keep naming consistent."
         },
         3: {
@@ -896,11 +1105,16 @@ function getStepContent(step) {
             tip: "Keep item descriptions short and specific. The table stays cleaner when each service is one line item."
         },
         4: {
+            title: "Keywords",
+            text: "Add search keywords after the line items are in place, or tap a suggestion generated from your item descriptions.",
+            tip: "Keywords work best when they reflect destinations, service types, equipment, or priorities you will search for later."
+        },
+        5: {
             title: "Items Preview",
             text: "Review the line items, notes, and totals in document form before moving to the final print preview.",
             tip: "This step is useful for catching quantity, unit price, and subtotal issues before you check the full page layout."
         },
-        5: {
+        6: {
             title: "Review",
             text: "Check the final layout before saving and exporting the PDF.",
             tip: "This preview mirrors the live document structure, so it is the fastest way to catch layout mistakes before print."
@@ -932,9 +1146,11 @@ function updateEditorSummary() {
 
     elements.summaryTags.innerHTML = tags.length
         ? tags.map(tag => `<span class="sidebar-tag">${escapeHtml(tag)}</span>`).join("")
-        : '<span class="sidebar-tag muted">No tags yet</span>';
+        : '<span class="sidebar-tag muted">No keywords yet</span>';
 
-    if (state.currentStep >= 4) {
+    renderKeywordSuggestions(tags);
+
+    if (state.currentStep >= 5) {
         generatePreviews();
     }
 }
@@ -945,6 +1161,130 @@ function parseTags(value) {
         .map(tag => tag.trim())
         .filter(Boolean)
         .filter((tag, index, tags) => tags.findIndex(entry => entry.toLowerCase() === tag.toLowerCase()) === index);
+}
+
+function isExistingDocumentEditMode() {
+    return state.editingDocumentId !== null;
+}
+
+function getTotalSteps() {
+    return elements.stepIndicator.querySelectorAll(".step[data-step]").length;
+}
+
+function toKeywordLabel(value) {
+    return value
+        .split(" ")
+        .filter(Boolean)
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ");
+}
+
+function normalizeKeywordCandidate(value) {
+    return String(value || "")
+        .toLowerCase()
+        .replace(/[^\w\s/&-]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function getSuggestedKeywords() {
+    const existingKeywords = new Set(parseTags(elements.docTags.value).map(tag => tag.toLowerCase()));
+    const scores = new Map();
+    const addSuggestion = (candidate, weight) => {
+        const normalized = normalizeKeywordCandidate(candidate);
+        if (!normalized || normalized.length < 3 || normalized.length > 40) {
+            return;
+        }
+
+        const words = normalized.split(" ").filter(Boolean);
+        if (!words.length) {
+            return;
+        }
+
+        if (words.length === 1 && KEYWORD_STOP_WORDS.has(words[0])) {
+            return;
+        }
+
+        if (words.every(word => KEYWORD_STOP_WORDS.has(word))) {
+            return;
+        }
+
+        scores.set(normalized, (scores.get(normalized) || 0) + weight);
+    };
+
+    elements.itemsContainer.querySelectorAll(".item-row").forEach(row => {
+        const description = row.querySelector(".item-description").value.trim();
+        if (!description) {
+            return;
+        }
+
+        description
+            .split(/[,/|]+/)
+            .map(segment => segment.trim())
+            .filter(Boolean)
+            .forEach(segment => addSuggestion(segment, 4));
+
+        const words = description
+            .toLowerCase()
+            .split(/[^a-z0-9]+/i)
+            .map(word => word.trim())
+            .filter(word => word.length >= 2 && !KEYWORD_STOP_WORDS.has(word));
+
+        words.forEach(word => {
+            addSuggestion(word, 1);
+        });
+
+        for (let index = 0; index < words.length - 1; index += 1) {
+            const phrase = `${words[index]} ${words[index + 1]}`;
+            addSuggestion(phrase, 2);
+        }
+
+        for (let index = 0; index < words.length - 2; index += 1) {
+            const phrase = `${words[index]} ${words[index + 1]} ${words[index + 2]}`;
+            addSuggestion(phrase, 1);
+        }
+    });
+
+    return Array.from(scores.entries())
+        .filter(([keyword]) => !existingKeywords.has(keyword))
+        .sort((left, right) => {
+            if (right[1] !== left[1]) {
+                return right[1] - left[1];
+            }
+            return left[0].localeCompare(right[0]);
+        })
+        .slice(0, 8)
+        .map(([keyword]) => toKeywordLabel(keyword));
+}
+
+function renderKeywordSuggestions(existingTags = parseTags(elements.docTags.value)) {
+    if (!elements.tagSuggestions) {
+        return;
+    }
+
+    const suggestions = getSuggestedKeywords();
+    if (!suggestions.length) {
+        elements.tagSuggestions.innerHTML = existingTags.length
+            ? '<span class="keyword-suggestion-empty">No new keyword suggestions right now.</span>'
+            : '<span class="keyword-suggestion-empty">Add or update line items to see suggestions.</span>';
+        return;
+    }
+
+    elements.tagSuggestions.innerHTML = suggestions.map(keyword => `
+        <button type="button" class="keyword-suggestion-chip" data-keyword="${escapeHtml(keyword)}">${escapeHtml(keyword)}</button>
+    `).join("");
+}
+
+function handleKeywordSuggestionClick(event) {
+    const button = event.target.closest("[data-keyword]");
+    if (!button) {
+        return;
+    }
+
+    const nextTags = parseTags(elements.docTags.value);
+    nextTags.push(button.dataset.keyword);
+    elements.docTags.value = parseTags(nextTags.join(", ")).join(", ");
+    updateEditorSummary();
 }
 
 function getRefPrefix() {
@@ -991,7 +1331,11 @@ function openModal(type = "quote") {
     updateModalTitle();
     elements.documentModal.classList.add("active");
     elements.documentModal.setAttribute("aria-hidden", "false");
-    goToStep(1);
+    goToStep(isExistingDocumentEditMode() ? getTotalSteps() : 1);
+}
+
+function getActionButtonMarkup(icon, label) {
+    return `<span class="btn-icon" aria-hidden="true">${icon}</span><span>${label}</span>`;
 }
 
 function closeModal() {
@@ -1013,8 +1357,14 @@ function updateModalTitle() {
         elements.modalTitle.textContent = `New ${docLabel}`;
     }
 
-    elements.saveBtn.textContent = state.editingDocumentId !== null ? "Update" : "Save";
-    elements.exportPdfBtn.textContent = state.editingDocumentId !== null ? "Update & Export PDF" : "Save & Export PDF";
+    elements.saveBtn.innerHTML = getActionButtonMarkup(
+        '<svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 4v6h8V4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 17h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+        state.editingDocumentId !== null ? "Save Changes" : "Save Draft"
+    );
+    elements.exportPdfBtn.innerHTML = getActionButtonMarkup(
+        '<svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3v6h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 15h8M8 11h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+        state.editingDocumentId !== null ? "Save Changes & Open PDF Preview" : "Save Draft & Open PDF Preview"
+    );
     generateRefNumber();
 }
 
@@ -1024,6 +1374,8 @@ function resetForm() {
     elements.clientSelect.value = "";
     elements.clientName.value = "";
     elements.clientAddress.value = "";
+    elements.consigneeName.value = "";
+    elements.consigneeAddress.value = "";
     elements.poNumber.value = "";
     elements.docTags.value = "";
     elements.notes.value = "";
@@ -1046,6 +1398,8 @@ function prepareNewDocument(type = "quote") {
     elements.clientSelect.value = "";
     elements.clientName.value = "";
     elements.clientAddress.value = "";
+    elements.consigneeName.value = "";
+    elements.consigneeAddress.value = "";
     elements.poNumber.value = "";
     elements.docTags.value = "";
     elements.notes.value = "";
@@ -1057,30 +1411,32 @@ function prepareNewDocument(type = "quote") {
 }
 
 function goToStep(step) {
+    const totalSteps = getTotalSteps();
     state.currentStep = step;
-    elements.documentModal.classList.toggle("review-mode", step === 5);
+    elements.documentModal.classList.toggle("review-mode", step === totalSteps);
 
-    document.querySelectorAll(".step").forEach((el, idx) => {
+    document.querySelectorAll(".step[data-step]").forEach(el => {
+        const stepNumber = Number(el.dataset.step);
         el.classList.remove("active", "completed");
-        if (idx + 1 < step) {
+        if (stepNumber < step) {
             el.classList.add("completed");
         }
-        if (idx + 1 === step) {
+        if (stepNumber === step) {
             el.classList.add("active");
         }
     });
 
-    document.querySelectorAll(".form-step").forEach((el, idx) => {
-        const stepNumber = idx + 1;
+    document.querySelectorAll(".form-step[data-step]").forEach(el => {
+        const stepNumber = Number(el.dataset.step);
         el.classList.toggle("active", stepNumber === step);
     });
 
     elements.prevBtn.style.display = step > 1 ? "block" : "none";
-    elements.nextBtn.style.display = step < 5 ? "block" : "none";
-    elements.saveBtn.style.display = step === 5 ? "block" : "none";
-    elements.exportPdfBtn.style.display = step === 5 ? "block" : "none";
+    elements.nextBtn.style.display = step < totalSteps ? "block" : "none";
+    elements.saveBtn.style.display = (isExistingDocumentEditMode() || step === totalSteps) ? "block" : "none";
+    elements.exportPdfBtn.style.display = step === totalSteps ? "block" : "none";
 
-    if (step >= 4) {
+    if (step >= totalSteps - 1) {
         generatePreviews();
     }
 
@@ -1088,7 +1444,7 @@ function goToStep(step) {
 }
 
 function nextStep() {
-    if (validateStep(state.currentStep)) {
+    if (isExistingDocumentEditMode() || validateStep(state.currentStep)) {
         goToStep(state.currentStep + 1);
     }
 }
@@ -1108,7 +1464,7 @@ function handleStepIndicatorClick(event) {
         return;
     }
 
-    if (targetStep > state.currentStep) {
+    if (targetStep > state.currentStep && !isExistingDocumentEditMode()) {
         for (let step = state.currentStep; step < targetStep; step += 1) {
             if (!validateStep(step)) {
                 return;
@@ -1167,23 +1523,25 @@ function addItem() {
                     <input type="number" class="item-total-price" value="0" min="0" step="0.01">
                 </div>
                 <div class="form-group">
-                    <label class="inline-toggle-label">
-                        <span>Unit Price (USD)</span>
-                        <span class="inline-checkbox">
-                            <input type="checkbox" class="item-manual-unit-toggle">
-                            <span>Manual</span>
-                        </span>
-                    </label>
-                    <input type="number" class="item-unit-price" value="0.00" min="0" step="0.01" readonly>
-                    <small class="field-help">Default behavior calculates unit price automatically from total price and quantity.</small>
+                    <label>Unit Price (USD)</label>
+                    <input type="text" class="item-unit-price" value="0.00" inputmode="decimal" placeholder="0.00" readonly>
                 </div>
             </div>
-            <div class="form-group item-currency-mode">
-                <label class="checkbox-row">
-                    <input type="checkbox" class="item-dop-toggle">
-                    <span>Use DOP amount box</span>
-                </label>
-                <small class="field-help">Toggle this on to enter the price in pesos. The app converts it back to USD at RD$${DOP_PER_USD} = US$1.</small>
+            <div class="item-pricing-options">
+                <div class="item-pricing-option">
+                    <label class="checkbox-row checkbox-row-block">
+                        <input type="checkbox" class="item-manual-unit-toggle">
+                        <span>Enter unit price manually</span>
+                    </label>
+                    <small class="field-help">Leave this off to auto-calculate the unit price from quantity and total.</small>
+                </div>
+                <div class="item-pricing-option item-currency-mode">
+                    <label class="checkbox-row checkbox-row-block">
+                        <input type="checkbox" class="item-dop-toggle">
+                        <span>Enter total in DOP</span>
+                    </label>
+                    <small class="field-help">Converts pesos back to USD using RD$${DOP_PER_USD} = US$1.</small>
+                </div>
             </div>
             <div class="form-row item-dop-row" style="display: none;">
                 <div class="form-group item-total-price-dop-group">
@@ -1212,6 +1570,7 @@ function addItem() {
     `;
 
     elements.itemsContainer.appendChild(itemDiv);
+    itemDiv.querySelector(".item-internal-panel").hidden = !state.showInternalPricing;
     updateItemPricing(itemDiv);
     setExpandedItem(itemDiv);
 }
@@ -1247,16 +1606,26 @@ function handleItemContainerClick(event) {
     }
 }
 
-function handleItemsChange() {
+function handleItemsChange(event) {
+    const activeRow = event?.target?.closest?.(".item-row") || null;
+    const shouldPreserveManualUnitInput = Boolean(
+        event
+        && event.type === "input"
+        && event.target?.classList?.contains("item-unit-price")
+    );
+
     elements.itemsContainer.querySelectorAll(".item-row").forEach(row => {
-        updateItemPricing(row);
+        updateItemPricing(row, {
+            preserveManualUnitInput: shouldPreserveManualUnitInput && row === activeRow
+        });
         updateItemSummary(row);
     });
     calculateTotals();
     updateEditorSummary();
 }
 
-function updateItemPricing(row) {
+function updateItemPricing(row, options = {}) {
+    const { preserveManualUnitInput = false } = options;
     const quantity = parseFloat(row.querySelector(".item-quantity").value) || 0;
     const totalPriceInput = row.querySelector(".item-total-price");
     const totalPriceUsdGroup = row.querySelector(".item-total-price-usd-group");
@@ -1283,8 +1652,10 @@ function updateItemPricing(row) {
     totalPriceInput.readOnly = isUsingDopTotal;
 
     if (isManual) {
-        const manualUnitPrice = parseFloat(unitPriceInput.value) || 0;
-        unitPriceInput.value = manualUnitPrice.toFixed(2);
+        const manualUnitPrice = parseDecimalInput(unitPriceInput.value);
+        if (!preserveManualUnitInput) {
+            unitPriceInput.value = manualUnitPrice.toFixed(2);
+        }
         totalPriceInput.value = (manualUnitPrice * quantity).toFixed(2);
         dopTotalPriceInput.value = (manualUnitPrice * quantity * DOP_PER_USD).toFixed(2);
     } else {
@@ -1306,7 +1677,7 @@ function updateItemSummary(row) {
     const description = row.querySelector(".item-description").value.trim();
     const quantity = parseFloat(row.querySelector(".item-quantity").value) || 0;
     const totalPrice = parseFloat(row.querySelector(".item-total-price").value) || 0;
-    const unitPrice = parseFloat(row.querySelector(".item-unit-price").value) || 0;
+    const unitPrice = parseDecimalInput(row.querySelector(".item-unit-price").value);
     const usesDopTotal = row.querySelector(".item-dop-toggle").checked;
     const dopTotalPrice = parseFloat(row.querySelector(".item-total-price-dop").value) || 0;
     const upchargePercent = row.querySelector(".item-upcharge-percent").value;
@@ -1421,7 +1792,7 @@ function buildDocumentData() {
         const totalPriceDop = parseFloat(row.querySelector(".item-total-price-dop").value) || 0;
         const internalCost = parseFloat(row.querySelector(".item-internal-cost").value) || 0;
         const unitPrice = isManualUnitPrice
-            ? (parseFloat(row.querySelector(".item-unit-price").value) || 0)
+            ? parseDecimalInput(row.querySelector(".item-unit-price").value)
             : (quantity > 0 ? totalPrice / quantity : 0);
         items.push({
             itemNo: index + 1,
@@ -1445,6 +1816,8 @@ function buildDocumentData() {
         date: elements.docDate.value,
         clientName: elements.clientName.value,
         clientAddress: elements.clientAddress.value,
+        consigneeName: elements.consigneeName.value,
+        consigneeAddress: elements.consigneeAddress.value,
         poNumber: elements.poNumber.value || "N/A",
         tags: parseTags(elements.docTags.value),
         notes: elements.notes.value,
@@ -1459,6 +1832,7 @@ function buildDocumentData() {
 
 function buildDocumentMarkup(doc) {
     const documentTitle = doc.type === "quote" ? "Quote" : "Invoice";
+    const showPoNumber = hasMeaningfulPoNumber(doc.poNumber);
     const safeNotes = doc.notes && doc.notes.trim()
         ? escapeHtml(doc.notes.trim())
         : "<em>*No additional notes provided.</em>";
@@ -1498,14 +1872,22 @@ function buildDocumentMarkup(doc) {
             </div>
 
             <div class="document-parties">
-                <div>
-                    <div class="issued-to-label"><strong>Issued To:</strong></div>
+                <div class="party-card">
+                    <div class="issued-to-label"><strong>Bill To:</strong></div>
                     <div class="issued-to-value">
                         ${escapeHtml(doc.clientName)}<br>
                         ${escapeHtml(doc.clientAddress).replace(/\n/g, "<br>")}
                     </div>
                 </div>
-                <div><span class="po-label">Purchase Order Number:</span> ${escapeHtml(doc.poNumber || "N/A")}</div>
+                <div class="party-card">
+                    <div class="issued-to-label"><strong>Consignee:</strong></div>
+                    <div class="issued-to-value compact-party-value">
+                        ${doc.consigneeName || doc.consigneeAddress
+                            ? `${escapeHtml(doc.consigneeName || "Consignee pending")}${doc.consigneeAddress ? `<br>${escapeHtml(doc.consigneeAddress).replace(/\n/g, "<br>")}` : ""}`
+                            : "<em>Not provided</em>"}
+                    </div>
+                </div>
+                ${showPoNumber ? `<div class="party-card po-card"><span class="po-label">Purchase Order Number:</span> ${escapeHtml(doc.poNumber)}</div>` : ""}
             </div>
 
             <table class="document-items">
@@ -1597,6 +1979,7 @@ function buildDocumentMarkup(doc) {
 
 function buildLineItemsPreviewMarkup(doc) {
     const documentTitle = doc.type === "quote" ? "Quote" : "Invoice";
+    const showPoNumber = hasMeaningfulPoNumber(doc.poNumber);
     const safeNotes = doc.notes && doc.notes.trim()
         ? escapeHtml(doc.notes.trim())
         : "<em>*No additional notes provided.</em>";
@@ -1629,8 +2012,24 @@ function buildLineItemsPreviewMarkup(doc) {
             </div>
 
             <div class="document-meta">
-                <div><strong>Issued To:</strong> ${escapeHtml(doc.clientName || "Client pending")}</div>
+                <div><strong>Bill To:</strong> ${escapeHtml(doc.clientName || "Client pending")}</div>
                 <div><strong>Date:</strong> <span class="meta-date-value">${escapeHtml(formatDisplayDate(doc.date))}</span></div>
+            </div>
+
+            <div class="document-parties line-items-parties">
+                <div class="party-card">
+                    <div class="issued-to-label"><strong>Bill To:</strong></div>
+                    <div class="issued-to-value">${escapeHtml(doc.clientAddress || "Address pending").replace(/\n/g, "<br>")}</div>
+                </div>
+                <div class="party-card">
+                    <div class="issued-to-label"><strong>Consignee:</strong></div>
+                    <div class="issued-to-value compact-party-value">
+                        ${doc.consigneeName || doc.consigneeAddress
+                            ? `${escapeHtml(doc.consigneeName || "Consignee pending")}${doc.consigneeAddress ? `<br>${escapeHtml(doc.consigneeAddress).replace(/\n/g, "<br>")}` : ""}`
+                            : "<em>Not provided</em>"}
+                    </div>
+                </div>
+                ${showPoNumber ? `<div class="party-card po-card"><span class="po-label">Purchase Order Number:</span> ${escapeHtml(doc.poNumber)}</div>` : ""}
             </div>
 
             <table class="document-items">
@@ -1725,14 +2124,49 @@ function openPrintWindow(doc) {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>${escapeHtml((doc.type === "quote" ? "Quote" : "Invoice") + " " + doc.refNumber)}</title>
             ${getPrintStylesMarkup()}
+            <style>
+                .pdf-preview-toolbar {
+                    position: sticky;
+                    top: 0;
+                    z-index: 20;
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 0.75rem;
+                    padding: 0.9rem 1rem;
+                    background: rgba(245, 247, 250, 0.96);
+                    border-bottom: 1px solid #d8e0e8;
+                    backdrop-filter: blur(10px);
+                }
+
+                .pdf-preview-toolbar button {
+                    border: 0;
+                    border-radius: 999px;
+                    padding: 0.7rem 1rem;
+                    font: inherit;
+                    font-weight: 700;
+                    cursor: pointer;
+                    background: #1d4ed8;
+                    color: white;
+                }
+
+                .pdf-preview-toolbar button.secondary {
+                    background: #e7eef6;
+                    color: #28415b;
+                }
+
+                @media print {
+                    .pdf-preview-toolbar {
+                        display: none !important;
+                    }
+                }
+            </style>
         </head>
         <body class="print-window">
+            <div class="pdf-preview-toolbar">
+                <button class="secondary" type="button" onclick="window.close()">Close Preview</button>
+                <button type="button" onclick="window.print()">Print or Save as PDF</button>
+            </div>
             <div id="previewContainer" class="preview-container">${buildDocumentMarkup(doc)}</div>
-            <script>
-                window.onload = function () {
-                    window.print();
-                };
-            <\/script>
         </body>
         </html>
     `);
@@ -1751,6 +2185,8 @@ async function persistDocument(options = {}) {
         date: elements.docDate.value,
         clientName: elements.clientName.value,
         clientAddress: elements.clientAddress.value,
+        consigneeName: elements.consigneeName.value,
+        consigneeAddress: elements.consigneeAddress.value,
         poNumber: elements.poNumber.value,
         tags: parseTags(elements.docTags.value),
         notes: elements.notes.value,
@@ -1769,7 +2205,7 @@ async function persistDocument(options = {}) {
         const totalPriceDop = parseFloat(row.querySelector(".item-total-price-dop").value) || 0;
         const internalCost = parseFloat(row.querySelector(".item-internal-cost").value) || 0;
         const manualUnitPrice = row.querySelector(".item-manual-unit-toggle").checked
-            ? (parseFloat(row.querySelector(".item-unit-price").value) || 0)
+            ? parseDecimalInput(row.querySelector(".item-unit-price").value)
             : null;
         doc.items.push({
             description: row.querySelector(".item-description").value,
@@ -1820,7 +2256,7 @@ async function persistDocument(options = {}) {
     const actionLabel = isEditing ? "updated" : "saved";
     if (exportAfterSave) {
         openPrintWindow(doc);
-        alert(`${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.\n\nThe print dialog has opened so you can save it as a PDF.`);
+        alert(`${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.\n\nA PDF preview has opened in a new window. Print only if you want to from there.`);
         return;
     }
 
@@ -1828,11 +2264,45 @@ async function persistDocument(options = {}) {
 }
 
 async function saveDocumentOnly() {
+    if (!validateDocumentForSave()) {
+        return;
+    }
     await persistDocument({ exportAfterSave: false });
 }
 
 async function saveAndExportDocument() {
+    if (!validateDocumentForSave()) {
+        return;
+    }
     await persistDocument({ exportAfterSave: true });
+}
+
+function validateDocumentForSave() {
+    if (!elements.refNumber.value.trim()) {
+        alert("Please enter a reference number.");
+        goToStep(1);
+        return false;
+    }
+
+    if (!elements.docDate.value) {
+        alert("Please choose a document date.");
+        goToStep(1);
+        return false;
+    }
+
+    if (!elements.clientName.value.trim()) {
+        alert("Please enter client name");
+        goToStep(2);
+        return false;
+    }
+
+    if (elements.itemsContainer.querySelectorAll(".item-row").length === 0) {
+        alert("Please add at least one item");
+        goToStep(3);
+        return false;
+    }
+
+    return true;
 }
 
 function updateOverviewStats() {
@@ -1982,8 +2452,8 @@ function renderDocuments() {
                 </div>
                 <div class="doc-actions">
                     ${isLockedSourceQuote ? '<span class="doc-lock-note">Locked after conversion</span>' : `<button type="button" class="doc-action-btn" data-action="edit" data-id="${doc.id}">Edit</button>`}
+                    ${isLockedSourceQuote ? "" : `<button type="button" class="doc-action-btn" data-action="export-pdf" data-id="${doc.id}">Open PDF Preview</button>`}
                     ${doc.legacyPdfUrl ? `<button type="button" class="doc-action-btn" data-action="view-pdf" data-id="${doc.id}">View PDF</button>` : ""}
-                    <button type="button" class="doc-action-btn" data-action="export-json" data-id="${doc.id}">Export JSON</button>
                     ${doc.type === "quote" && !isLockedSourceQuote ? `<button type="button" class="doc-action-btn" data-action="convert" data-id="${doc.id}">Convert to Invoice</button>` : ""}
                     ${isLockedSourceQuote ? "" : `<button type="button" class="doc-action-btn doc-action-btn-danger" data-action="delete" data-id="${doc.id}">Delete</button>`}
                 </div>
@@ -2081,6 +2551,11 @@ function handleDocumentCardClick(event) {
 
         if (action === "edit") {
             editDocument(docId);
+        } else if (action === "export-pdf") {
+            const doc = state.documents.find(entry => entry.id === docId);
+            if (doc) {
+                openPrintWindow(doc);
+            }
         } else if (action === "delete") {
             deleteDocument(docId);
         } else if (action === "convert") {
@@ -2089,12 +2564,6 @@ function handleDocumentCardClick(event) {
             const doc = state.documents.find(entry => entry.id === docId);
             if (doc?.legacyPdfUrl) {
                 window.open(`/api/legacy-pdf?documentId=${encodeURIComponent(String(doc.id))}`, "_blank", "noopener,noreferrer");
-            }
-        } else if (action === "export-json") {
-            const doc = state.documents.find(entry => entry.id === docId);
-            if (doc) {
-                exportSingleDocument(doc);
-                setImportStatus(`Exported ${doc.refNumber || "document"} as JSON.`);
             }
         }
         return;
@@ -2128,6 +2597,8 @@ function populateFormFromDocument(doc) {
     elements.docDate.value = doc.date;
     elements.clientName.value = doc.clientName;
     elements.clientAddress.value = doc.clientAddress;
+    elements.consigneeName.value = doc.consigneeName || "";
+    elements.consigneeAddress.value = doc.consigneeAddress || "";
     elements.poNumber.value = doc.poNumber || "";
     elements.docTags.value = Array.isArray(doc.tags) ? doc.tags.join(", ") : "";
     elements.notes.value = doc.notes || "";
@@ -2151,6 +2622,8 @@ function populateFormFromDocument(doc) {
         updateItemPricing(lastItem);
         updateItemSummary(lastItem);
     });
+
+    syncInternalPricingVisibility();
 }
 
 function editDocument(id) {
@@ -2169,7 +2642,7 @@ function editDocument(id) {
     openModal(doc.type);
     populateFormFromDocument(doc);
     updateModalTitle();
-    goToStep(5);
+    goToStep(getTotalSteps());
     updateEditorSummary();
 }
 
@@ -2218,6 +2691,6 @@ function convertQuoteToInvoice(id) {
     setToday();
     generateRefNumber();
     updateModalTitle();
-    goToStep(5);
+    goToStep(getTotalSteps());
     updateEditorSummary();
 }
