@@ -26,6 +26,7 @@ const state = {
 };
 
 const DOP_PER_USD = 59;
+const DEFAULT_PAYMENT_TERMS = "NET15 : Full payment for goods or services is due within 15 calendar days of the invoice date, aligned with shipping or completion.";
 const DEFAULT_ADMIN_USER = Object.freeze({
     id: "admin-root",
     username: "admin",
@@ -1938,7 +1939,7 @@ function exportCsvTemplate() {
         "PO-1001",
         "\"Priority, Port-au-Prince\"",
         "\"Legacy bulk import example\"",
-        "Payment Upon Receipt",
+        `"${DEFAULT_PAYMENT_TERMS}"`,
         "Freight coordination services",
         "1",
         "850.00",
@@ -2045,7 +2046,7 @@ function buildDocumentFromCsvRow(row, indexMap) {
         poNumber: csvValue(row, indexMap, "poNumber"),
         tags: parseTags(csvValue(row, indexMap, "tags")),
         notes: csvValue(row, indexMap, "notes"),
-        paymentTerms: csvValue(row, indexMap, "paymentTerms") || "Payment Upon Receipt",
+        paymentTerms: csvValue(row, indexMap, "paymentTerms") || DEFAULT_PAYMENT_TERMS,
         includeSignature: false,
         printedAt: new Date().toISOString(),
         subtotal: total,
@@ -2555,7 +2556,7 @@ function resetForm() {
     elements.poNumber.value = "";
     elements.docTags.value = "";
     elements.notes.value = "";
-    elements.paymentTerms.value = "Payment Upon Receipt";
+    elements.paymentTerms.value = DEFAULT_PAYMENT_TERMS;
     elements.includeSignature.checked = true;
     elements.itemsContainer.innerHTML = "";
     state.itemCounter = 0;
@@ -2579,7 +2580,7 @@ function prepareNewDocument(type = "quote") {
     elements.poNumber.value = "";
     elements.docTags.value = "";
     elements.notes.value = "";
-    elements.paymentTerms.value = "Payment Upon Receipt";
+    elements.paymentTerms.value = DEFAULT_PAYMENT_TERMS;
     elements.includeSignature.checked = true;
     elements.docType.value = type;
     setToday();
@@ -3009,6 +3010,9 @@ function buildDocumentData() {
 
 function buildDocumentMarkup(doc) {
     const documentTitle = doc.type === "quote" ? "Quote" : "Invoice";
+    const referenceLabel = doc.type === "quote" ? "Reference No." : `${documentTitle} Reference`;
+    const primaryPartyLabel = doc.type === "quote" ? "For:" : "Bill To:";
+    const showConsignee = doc.type !== "quote";
     const showPoNumber = hasMeaningfulPoNumber(doc.poNumber);
     const safeNotes = doc.notes && doc.notes.trim()
         ? escapeHtml(doc.notes.trim())
@@ -3044,26 +3048,26 @@ function buildDocumentMarkup(doc) {
 
             <div class="document-body">
             <div class="document-meta">
-                <div><strong>${documentTitle} Reference:</strong> ${escapeHtml(doc.refNumber)}</div>
+                <div><strong>${referenceLabel}</strong> ${escapeHtml(doc.refNumber)}</div>
                 <div><strong>Date:</strong> <span class="meta-date-value">${escapeHtml(formatDisplayDate(doc.date))}</span></div>
             </div>
 
             <div class="document-parties">
                 <div class="party-card">
-                    <div class="issued-to-label"><strong>Bill To:</strong></div>
+                    <div class="issued-to-label"><strong>${primaryPartyLabel}</strong></div>
                     <div class="issued-to-value">
                         ${escapeHtml(doc.clientName)}<br>
                         ${escapeHtml(doc.clientAddress).replace(/\n/g, "<br>")}
                     </div>
                 </div>
-                <div class="party-card">
+                ${showConsignee ? `<div class="party-card">
                     <div class="issued-to-label"><strong>Consignee:</strong></div>
                     <div class="issued-to-value compact-party-value">
                         ${doc.consigneeName || doc.consigneeAddress
                             ? `${escapeHtml(doc.consigneeName || "Consignee pending")}${doc.consigneeAddress ? `<br>${escapeHtml(doc.consigneeAddress).replace(/\n/g, "<br>")}` : ""}`
                             : "<em>Not provided</em>"}
                     </div>
-                </div>
+                </div>` : ""}
                 ${showPoNumber ? `<div class="party-card po-card"><span class="po-label">Purchase Order Number:</span> ${escapeHtml(doc.poNumber)}</div>` : ""}
             </div>
 
@@ -3099,7 +3103,7 @@ function buildDocumentMarkup(doc) {
             <div class="document-bottom">
                 <div class="document-terms">
                     <span class="terms-label"><strong>Terms of Payment:</strong></span>
-                    ${escapeHtml(doc.paymentTerms || "Payment Upon Receipt")}
+                    ${escapeHtml(doc.paymentTerms || DEFAULT_PAYMENT_TERMS)}
                 </div>
 
                 <table class="document-totals">
@@ -3156,6 +3160,8 @@ function buildDocumentMarkup(doc) {
 
 function buildLineItemsPreviewMarkup(doc) {
     const documentTitle = doc.type === "quote" ? "Quote" : "Invoice";
+    const primaryPartyLabel = doc.type === "quote" ? "For:" : "Bill To:";
+    const showConsignee = doc.type !== "quote";
     const showPoNumber = hasMeaningfulPoNumber(doc.poNumber);
     const safeNotes = doc.notes && doc.notes.trim()
         ? escapeHtml(doc.notes.trim())
@@ -3189,23 +3195,23 @@ function buildLineItemsPreviewMarkup(doc) {
             </div>
 
             <div class="document-meta">
-                <div><strong>Bill To:</strong> ${escapeHtml(doc.clientName || "Client pending")}</div>
+                <div><strong>${primaryPartyLabel}</strong> ${escapeHtml(doc.clientName || "Client pending")}</div>
                 <div><strong>Date:</strong> <span class="meta-date-value">${escapeHtml(formatDisplayDate(doc.date))}</span></div>
             </div>
 
             <div class="document-parties line-items-parties">
                 <div class="party-card">
-                    <div class="issued-to-label"><strong>Bill To:</strong></div>
+                    <div class="issued-to-label"><strong>${primaryPartyLabel}</strong></div>
                     <div class="issued-to-value">${escapeHtml(doc.clientAddress || "Address pending").replace(/\n/g, "<br>")}</div>
                 </div>
-                <div class="party-card">
+                ${showConsignee ? `<div class="party-card">
                     <div class="issued-to-label"><strong>Consignee:</strong></div>
                     <div class="issued-to-value compact-party-value">
                         ${doc.consigneeName || doc.consigneeAddress
                             ? `${escapeHtml(doc.consigneeName || "Consignee pending")}${doc.consigneeAddress ? `<br>${escapeHtml(doc.consigneeAddress).replace(/\n/g, "<br>")}` : ""}`
                             : "<em>Not provided</em>"}
                     </div>
-                </div>
+                </div>` : ""}
                 ${showPoNumber ? `<div class="party-card po-card"><span class="po-label">Purchase Order Number:</span> ${escapeHtml(doc.poNumber)}</div>` : ""}
             </div>
 
@@ -3241,7 +3247,7 @@ function buildLineItemsPreviewMarkup(doc) {
             <div class="document-bottom">
                 <div class="document-terms">
                     <span class="terms-label"><strong>Terms of Payment:</strong></span>
-                    ${escapeHtml(doc.paymentTerms || "Payment Upon Receipt")}
+                    ${escapeHtml(doc.paymentTerms || DEFAULT_PAYMENT_TERMS)}
                 </div>
 
                 <table class="document-totals">
@@ -3867,7 +3873,7 @@ function populateFormFromDocument(doc) {
     elements.poNumber.value = doc.poNumber || "";
     elements.docTags.value = Array.isArray(doc.tags) ? doc.tags.join(", ") : "";
     elements.notes.value = doc.notes || "";
-    elements.paymentTerms.value = doc.paymentTerms || "Payment Upon Receipt";
+    elements.paymentTerms.value = doc.paymentTerms || DEFAULT_PAYMENT_TERMS;
     elements.includeSignature.checked = doc.includeSignature !== false;
 
     elements.itemsContainer.innerHTML = "";
