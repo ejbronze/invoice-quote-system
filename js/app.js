@@ -5119,6 +5119,16 @@ function renderDocuments() {
 
         return `
             <div class="document-row${isLockedSourceQuote ? " document-row-locked" : ""}"${cardViewId}${isLockedSourceQuote ? "" : ' tabindex="0" role="button"'} aria-label="${escapeHtml(rowAriaLabel)}">
+                <div class="doc-status-indicator ${statusClass}" aria-label="${escapeHtml(statusLabel)}" title="${escapeHtml(statusLabel)}">
+                    ${doc.status === "draft"
+                        ? `<span class="doc-status-dot" aria-hidden="true"></span>`
+                        : `<span class="doc-status-check" aria-hidden="true">
+                            <svg viewBox="0 0 16 16">
+                                <path d="M3.2 8.5l3 3.1 6.4-6.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>`}
+                    <span class="visually-hidden">${escapeHtml(statusLabel)}</span>
+                </div>
                 <div class="doc-row-main">
                     <div class="doc-row-primary">
                         <span class="doc-type ${doc.type}">${escapeHtml(doc.type === "quote" ? t("quote_singular") : t("invoice_singular"))}</span>
@@ -5131,7 +5141,6 @@ function renderDocuments() {
                     </div>
                 </div>
                 <div class="doc-row-badges">
-                    <span class="doc-status-badge ${statusClass}">${escapeHtml(statusLabel)}</span>
                     ${statusBadge}
                     ${legacyBadge}
                     ${getDocumentTagPreviewMarkup(doc)}

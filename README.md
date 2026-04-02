@@ -126,6 +126,7 @@ When the app is online with the API available, user accounts are stored in the s
 - CSV template export and CSV import
 - Calculator inside the document editor
 - Compact dashboard actions and snapshot strip
+- Document cards use compact top-left state indicators instead of full draft/logged pills
 - Mobile-tuned modal sizing for cart, issue reporting, and document preview/export flows
 - Branded splash, auth, session-loading, about, and dashboard identity
 - Branded print/PDF preview output with SantoSync company identity

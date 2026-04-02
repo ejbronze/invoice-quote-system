@@ -1628,7 +1628,7 @@ body::after {
     background: var(--surface-tint);
     border: 1px solid var(--line);
     border-radius: 18px;
-    padding: 0.95rem 1rem;
+    padding: 1rem 1rem 0.95rem 1rem;
     transition: all 0.28s ease;
     cursor: pointer;
     box-shadow: var(--shadow-sm);
@@ -1752,30 +1752,78 @@ body::after {
     flex-wrap: wrap;
 }
 
+.doc-status-indicator {
+    position: absolute;
+    top: 0.72rem;
+    left: 0.72rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+}
+
+.doc-status-indicator.logged {
+    color: #15805d;
+}
+
+.doc-status-indicator.draft {
+    color: #d69218;
+}
+
+.doc-status-dot,
+.doc-status-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 999px;
+}
+
+.doc-status-indicator.logged .doc-status-check {
+    background: rgba(29, 191, 140, 0.16);
+    box-shadow: 0 0 0 1px rgba(21, 128, 93, 0.14);
+}
+
+.doc-status-indicator.logged .doc-status-check svg {
+    width: 0.72rem;
+    height: 0.72rem;
+    display: block;
+}
+
+.doc-status-indicator.draft .doc-status-dot {
+    background: #f4c84a;
+    box-shadow:
+        0 0 0 1px rgba(214, 146, 24, 0.24),
+        0 0 0 0 rgba(244, 200, 74, 0.45);
+    animation: doc-draft-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes doc-draft-pulse {
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(0.92);
+        box-shadow:
+            0 0 0 1px rgba(214, 146, 24, 0.24),
+            0 0 0 0 rgba(244, 200, 74, 0.45);
+    }
+
+    50% {
+        opacity: 0.72;
+        transform: scale(1);
+        box-shadow:
+            0 0 0 1px rgba(214, 146, 24, 0.16),
+            0 0 0 6px rgba(244, 200, 74, 0);
+    }
+}
+
 .doc-tags {
     display: flex;
     gap: 0.4rem;
     flex-wrap: wrap;
-}
-
-.doc-status-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.28rem 0.65rem;
-    border-radius: 999px;
-    font-family: inherit;
-    font-size: 0.7rem;
-    font-weight: 700;
-}
-
-.doc-status-badge.draft {
-    background: rgba(255, 157, 66, 0.14);
-    color: #b36418;
-}
-
-.doc-status-badge.logged {
-    background: rgba(29, 191, 140, 0.12);
-    color: #167356;
 }
 
 .doc-tag {
