@@ -16,13 +16,28 @@ const state = {
     calculatorDragOffsetX: 0,
     calculatorDragOffsetY: 0,
     isBootstrapping: false,
+    isAuthenticating: false,
+    inactivityTimerId: null,
+    currentLanguage: "en",
+    currentUser: null,
+    userAccounts: [],
     showInternalPricing: false,
     dataMode: "server"
 };
 
 const DOP_PER_USD = 59;
-const ADMIN_ACCESS_CODE = "Todos123";
-const ADMIN_ACCESS_STORAGE_KEY = "todosAdminVerified";
+const DEFAULT_ADMIN_USER = Object.freeze({
+    id: "admin-root",
+    username: "admin",
+    displayName: "Admin",
+    password: "Todos123",
+    role: "admin",
+    language: "en"
+});
+const USER_ACCOUNTS_STORAGE_KEY = "todosUserAccounts";
+const CURRENT_SESSION_STORAGE_KEY = "todosCurrentSession";
+const DEFAULT_ACCESS_ERROR_MESSAGE = "That username or password is incorrect. Try again.";
+const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
 const LOCAL_DOCUMENTS_STORAGE_KEY = "todosLocalDocuments";
 const LOCAL_CLIENTS_STORAGE_KEY = "todosLocalClients";
 const KEYWORD_STOP_WORDS = new Set([
@@ -30,6 +45,400 @@ const KEYWORD_STOP_WORDS = new Set([
     "the", "to", "with", "without", "service", "services", "charge", "charges", "item",
     "items", "fee", "fees", "shipment", "shipments", "cargo", "client", "invoice", "quote"
 ]);
+const LANGUAGE_LOCALES = {
+    en: "en-US",
+    es: "es-DO",
+    fr: "fr-FR"
+};
+const TRANSLATIONS = {
+    en: {
+        language_name: "English",
+        role_admin: "Admin",
+        role_user: "User",
+        login_kicker: "Workspace Sign In",
+        login_title: "Open The Dashboard",
+        login_copy: "Sign in with a local account to create, edit, and manage quotes and invoices.",
+        username: "Username",
+        username_placeholder: "Enter username",
+        password: "Password",
+        password_placeholder: "Enter password",
+        login_error: "That username or password is incorrect. Try again.",
+        sign_in: "Sign In",
+        session_loader_kicker: "Loading Session",
+        session_loader_title: "Opening your workspace",
+        session_loader_message: "Signing in and preparing the dashboard...",
+        workspace: "Workspace",
+        dashboard_title_top: "Invoice & Quote Dashboard",
+        end_session: "End Session",
+        language: "Language",
+        hero_kicker: "Document Workspace",
+        hero_title: "Quotes and invoices without the clutter.",
+        hero_copy: "Build polished documents, convert quotes fast, and keep your day moving from one clean workspace.",
+        new_quote: "New Quote",
+        new_invoice: "New Invoice",
+        import_status_default: "Use JSON backup tools to restore deleted records or move data between environments.",
+        snapshot: "Snapshot",
+        documents: "Documents",
+        quote_singular: "Quote",
+        invoice_singular: "Invoice",
+        quotes: "Quotes",
+        invoices: "Invoices",
+        date_label: "Date",
+        total: "Total",
+        created_by: "Created by",
+        converted_source: "Converted Source",
+        legacy_pdf_attached: "Legacy PDF Attached",
+        locked_after_conversion: "Locked after conversion",
+        open_pdf_preview: "Open PDF Preview",
+        view_pdf: "View PDF",
+        convert_to_invoice: "Convert to Invoice",
+        pipeline_value: "Pipeline Value",
+        amount_invoiced: "Amount Invoiced",
+        tap_view_invoiced: "Tap to view invoiced amount",
+        tap_view_pipeline: "Tap to view pipeline value",
+        documents_heading: "Documents",
+        documents_subtitle: "Click any row to open it, then sort, filter, and manage your quotes and invoices.",
+        sort: "Sort",
+        search: "Search",
+        search_placeholder: "Search by ref, date, client, type, or keyword",
+        sort_date_desc: "Date: Newest First",
+        sort_date_asc: "Date: Oldest First",
+        sort_created_desc: "Created: Newest First",
+        sort_created_asc: "Created: Oldest First",
+        filter_all: "All",
+        no_date: "No date",
+        unknown_client: "Unknown client",
+        empty_documents: "No documents yet. Create your first quote or invoice!",
+        empty_documents_filtered: "No documents match your current search or filter.",
+        tools: "Tools",
+        tools_copy: "Use admin tools to manage users, clients, imports, backups, and local testing.",
+        user_management: "User Management",
+        user_management_copy: "Create local accounts, assign roles, reset passwords, and remove users who should not access the workspace.",
+        display_name: "Display Name",
+        display_name_placeholder: "For example, David",
+        temp_password: "Temporary Password",
+        temp_password_placeholder: "Create a password",
+        role: "Role",
+        add_user: "Add User",
+        no_users: "No users have been added yet.",
+        current_session: "Current session",
+        reset_password: "Reset Password",
+        delete: "Delete",
+        client_records: "Client Records",
+        client_records_copy: "View all saved clients, update their details, or remove outdated entries from the shared client list.",
+        no_clients: "No saved clients yet.",
+        edit: "Edit",
+        editor_preferences: "Editor Preferences",
+        editor_preferences_copy: "Choose which optional fields should appear while you build quotes and invoices.",
+        show_internal_pricing: "Show internal pricing fields in line items",
+        csv_tools: "CSV Tools",
+        csv_tools_copy: "Download the spreadsheet template or import rows to create multiple documents at once.",
+        export_csv_template: "Export CSV Template",
+        import_csv: "Import CSV",
+        json_backup: "JSON Backup",
+        json_backup_copy: "Export a full backup or restore documents and clients from a JSON file.",
+        export_backup: "Export Backup",
+        import_backup: "Import Backup",
+        selective_export: "Selective Export",
+        selective_export_copy: "Open the export window and choose only the quotes or invoices you want in the JSON file.",
+        export_selected_json: "Export Selected JSON",
+        local_testing: "Local Testing",
+        local_testing_copy: "Clear browser-only test data without affecting any server data.",
+        clear_local_test_data: "Clear Local Test Data",
+        export_json_title: "Export JSON",
+        export_json_copy: "Choose the quotes and invoices you want in this export file.",
+        select_all_documents: "Select all documents",
+        download_selected_json: "Download Selected JSON",
+        no_documents_export: "No documents available to export.",
+        type_info: "Type & Info",
+        client_details: "Client Details",
+        line_items: "Line Items",
+        keywords: "Keywords",
+        items_preview: "Items Preview",
+        review: "Review",
+        current_step: "Current Step",
+        previous: "Previous",
+        next: "Next",
+        save_draft: "Save Draft",
+        save_changes: "Save Changes",
+        save_preview_pdf: "Save & Preview PDF",
+        document_summary: "Document Summary",
+        ref_pending: "Ref pending",
+        date_pending: "Date pending",
+        client: "Client",
+        no_client_selected: "No client selected",
+        choose_or_enter_client: "Choose or enter a client to continue.",
+        choose_or_add_client: "-- Choose or Add Client --",
+        other_manual: "Other (manual entry)",
+        commercial_snapshot: "Commercial Snapshot",
+        items: "Items",
+        subtotal: "Subtotal",
+        no_keywords: "No keywords yet",
+        pdf_options: "PDF Options",
+        include_signature: "Include signature on export",
+        include_signature_help: "Turn this off for unsigned quotes or invoices before opening the PDF preview.",
+        workflow_tip: "Workflow Tip",
+        workflow_tip_copy: "Keep line items concise and use keywords like destination, service type, or priority to make search much easier later."
+    },
+    es: {
+        language_name: "Español",
+        role_admin: "Administrador",
+        role_user: "Usuario",
+        login_kicker: "Ingreso al Espacio",
+        login_title: "Abrir El Panel",
+        login_copy: "Inicia sesión con una cuenta local para crear, editar y gestionar cotizaciones y facturas.",
+        username: "Usuario",
+        username_placeholder: "Ingresa el usuario",
+        password: "Contraseña",
+        password_placeholder: "Ingresa la contraseña",
+        login_error: "Ese usuario o contraseña es incorrecto. Inténtalo de nuevo.",
+        sign_in: "Iniciar sesión",
+        session_loader_kicker: "Cargando sesión",
+        session_loader_title: "Abriendo tu espacio",
+        session_loader_message: "Iniciando sesión y preparando el panel...",
+        workspace: "Espacio",
+        dashboard_title_top: "Panel de Cotizaciones y Facturas",
+        end_session: "Cerrar sesión",
+        language: "Idioma",
+        hero_kicker: "Espacio de Documentos",
+        hero_title: "Cotizaciones y facturas sin desorden.",
+        hero_copy: "Crea documentos pulidos, convierte cotizaciones rápido y mantén tu día en movimiento desde un solo espacio limpio.",
+        new_quote: "Nueva Cotización",
+        new_invoice: "Nueva Factura",
+        import_status_default: "Usa las herramientas JSON para restaurar registros eliminados o mover datos entre entornos.",
+        snapshot: "Resumen",
+        documents: "Documentos",
+        quote_singular: "Cotización",
+        invoice_singular: "Factura",
+        quotes: "Cotizaciones",
+        invoices: "Facturas",
+        date_label: "Fecha",
+        total: "Total",
+        created_by: "Creado por",
+        converted_source: "Fuente Convertida",
+        legacy_pdf_attached: "PDF heredado adjunto",
+        locked_after_conversion: "Bloqueado después de la conversión",
+        open_pdf_preview: "Abrir Vista PDF",
+        view_pdf: "Ver PDF",
+        convert_to_invoice: "Convertir en Factura",
+        pipeline_value: "Valor en Proceso",
+        amount_invoiced: "Monto Facturado",
+        tap_view_invoiced: "Toca para ver el monto facturado",
+        tap_view_pipeline: "Toca para ver el valor en proceso",
+        documents_heading: "Documentos",
+        documents_subtitle: "Haz clic en cualquier fila para abrirla y luego ordenar, filtrar y gestionar tus cotizaciones y facturas.",
+        sort: "Ordenar",
+        search: "Buscar",
+        search_placeholder: "Buscar por ref., fecha, cliente, tipo o palabra clave",
+        sort_date_desc: "Fecha: más reciente primero",
+        sort_date_asc: "Fecha: más antigua primero",
+        sort_created_desc: "Creado: más reciente primero",
+        sort_created_asc: "Creado: más antiguo primero",
+        filter_all: "Todos",
+        no_date: "Sin fecha",
+        unknown_client: "Cliente desconocido",
+        empty_documents: "Aún no hay documentos. Crea tu primera cotización o factura.",
+        empty_documents_filtered: "No hay documentos que coincidan con tu búsqueda o filtro actual.",
+        tools: "Herramientas",
+        tools_copy: "Usa herramientas administrativas para gestionar usuarios, clientes, importaciones, respaldos y pruebas locales.",
+        user_management: "Gestión de Usuarios",
+        user_management_copy: "Crea cuentas locales, asigna roles, restablece contraseñas y elimina usuarios que no deben acceder al espacio.",
+        display_name: "Nombre Visible",
+        display_name_placeholder: "Por ejemplo, David",
+        temp_password: "Contraseña Temporal",
+        temp_password_placeholder: "Crea una contraseña",
+        role: "Rol",
+        add_user: "Agregar Usuario",
+        no_users: "Todavía no se han agregado usuarios.",
+        current_session: "Sesión actual",
+        reset_password: "Restablecer contraseña",
+        delete: "Eliminar",
+        client_records: "Registros de Clientes",
+        client_records_copy: "Ver todos los clientes guardados, actualizar sus datos o eliminar entradas desactualizadas de la lista compartida.",
+        no_clients: "Todavía no hay clientes guardados.",
+        edit: "Editar",
+        editor_preferences: "Preferencias del Editor",
+        editor_preferences_copy: "Elige qué campos opcionales deben aparecer mientras creas cotizaciones y facturas.",
+        show_internal_pricing: "Mostrar campos de precios internos en las líneas",
+        csv_tools: "Herramientas CSV",
+        csv_tools_copy: "Descarga la plantilla o importa filas para crear varios documentos a la vez.",
+        export_csv_template: "Exportar Plantilla CSV",
+        import_csv: "Importar CSV",
+        json_backup: "Respaldo JSON",
+        json_backup_copy: "Exporta un respaldo completo o restaura documentos y clientes desde un archivo JSON.",
+        export_backup: "Exportar Respaldo",
+        import_backup: "Importar Respaldo",
+        selective_export: "Exportación Selectiva",
+        selective_export_copy: "Abre la ventana de exportación y elige solo las cotizaciones o facturas que deseas en el archivo JSON.",
+        export_selected_json: "Exportar JSON Seleccionado",
+        local_testing: "Pruebas Locales",
+        local_testing_copy: "Borra datos de prueba del navegador sin afectar ningún dato del servidor.",
+        clear_local_test_data: "Borrar Datos Locales de Prueba",
+        export_json_title: "Exportar JSON",
+        export_json_copy: "Elige las cotizaciones y facturas que deseas en este archivo de exportación.",
+        select_all_documents: "Seleccionar todos los documentos",
+        download_selected_json: "Descargar JSON Seleccionado",
+        no_documents_export: "No hay documentos disponibles para exportar.",
+        type_info: "Tipo e Información",
+        client_details: "Datos del Cliente",
+        line_items: "Líneas",
+        keywords: "Palabras Clave",
+        items_preview: "Vista de Líneas",
+        review: "Revisión",
+        current_step: "Paso Actual",
+        previous: "Anterior",
+        next: "Siguiente",
+        save_draft: "Guardar Borrador",
+        save_changes: "Guardar Cambios",
+        save_preview_pdf: "Guardar y Ver PDF",
+        document_summary: "Resumen del Documento",
+        ref_pending: "Ref pendiente",
+        date_pending: "Fecha pendiente",
+        client: "Cliente",
+        no_client_selected: "Ningún cliente seleccionado",
+        choose_or_enter_client: "Elige o ingresa un cliente para continuar.",
+        choose_or_add_client: "-- Elegir o agregar cliente --",
+        other_manual: "Otro (ingreso manual)",
+        commercial_snapshot: "Resumen Comercial",
+        items: "Ítems",
+        subtotal: "Subtotal",
+        no_keywords: "Aún no hay palabras clave",
+        pdf_options: "Opciones PDF",
+        include_signature: "Incluir firma al exportar",
+        include_signature_help: "Desactiva esto para cotizaciones o facturas sin firma antes de abrir la vista PDF.",
+        workflow_tip: "Consejo de Flujo",
+        workflow_tip_copy: "Mantén las líneas concisas y usa palabras clave como destino, tipo de servicio o prioridad para facilitar la búsqueda."
+    },
+    fr: {
+        language_name: "Français",
+        role_admin: "Administrateur",
+        role_user: "Utilisateur",
+        login_kicker: "Connexion à l’Espace",
+        login_title: "Ouvrir Le Tableau",
+        login_copy: "Connectez-vous avec un compte local pour créer, modifier et gérer les devis et factures.",
+        username: "Nom d’utilisateur",
+        username_placeholder: "Entrez le nom d’utilisateur",
+        password: "Mot de passe",
+        password_placeholder: "Entrez le mot de passe",
+        login_error: "Ce nom d’utilisateur ou mot de passe est incorrect. Réessayez.",
+        sign_in: "Se connecter",
+        session_loader_kicker: "Chargement de session",
+        session_loader_title: "Ouverture de votre espace",
+        session_loader_message: "Connexion et préparation du tableau de bord...",
+        workspace: "Espace",
+        dashboard_title_top: "Tableau Devis & Factures",
+        end_session: "Fermer la session",
+        language: "Langue",
+        hero_kicker: "Espace Documents",
+        hero_title: "Devis et factures sans encombrement.",
+        hero_copy: "Créez des documents soignés, convertissez les devis rapidement et gardez votre journée fluide depuis un seul espace clair.",
+        new_quote: "Nouveau Devis",
+        new_invoice: "Nouvelle Facture",
+        import_status_default: "Utilisez les outils JSON pour restaurer des enregistrements supprimés ou déplacer des données entre environnements.",
+        snapshot: "Aperçu",
+        documents: "Documents",
+        quote_singular: "Devis",
+        invoice_singular: "Facture",
+        quotes: "Devis",
+        invoices: "Factures",
+        date_label: "Date",
+        total: "Total",
+        created_by: "Créé par",
+        converted_source: "Source Convertie",
+        legacy_pdf_attached: "PDF hérité joint",
+        locked_after_conversion: "Verrouillé après conversion",
+        open_pdf_preview: "Ouvrir l’aperçu PDF",
+        view_pdf: "Voir le PDF",
+        convert_to_invoice: "Convertir en Facture",
+        pipeline_value: "Valeur Pipeline",
+        amount_invoiced: "Montant Facturé",
+        tap_view_invoiced: "Touchez pour voir le montant facturé",
+        tap_view_pipeline: "Touchez pour voir la valeur pipeline",
+        documents_heading: "Documents",
+        documents_subtitle: "Cliquez sur une ligne pour l’ouvrir, puis triez, filtrez et gérez vos devis et factures.",
+        sort: "Trier",
+        search: "Rechercher",
+        search_placeholder: "Rechercher par réf., date, client, type ou mot-clé",
+        sort_date_desc: "Date : plus récent d’abord",
+        sort_date_asc: "Date : plus ancien d’abord",
+        sort_created_desc: "Créé : plus récent d’abord",
+        sort_created_asc: "Créé : plus ancien d’abord",
+        filter_all: "Tous",
+        no_date: "Aucune date",
+        unknown_client: "Client inconnu",
+        empty_documents: "Aucun document pour l’instant. Créez votre premier devis ou facture.",
+        empty_documents_filtered: "Aucun document ne correspond à votre recherche ou filtre actuel.",
+        tools: "Outils",
+        tools_copy: "Utilisez les outils d’administration pour gérer les utilisateurs, clients, imports, sauvegardes et tests locaux.",
+        user_management: "Gestion des Utilisateurs",
+        user_management_copy: "Créez des comptes locaux, attribuez des rôles, réinitialisez des mots de passe et supprimez les utilisateurs qui ne doivent pas accéder à l’espace.",
+        display_name: "Nom Affiché",
+        display_name_placeholder: "Par exemple, David",
+        temp_password: "Mot de Passe Temporaire",
+        temp_password_placeholder: "Créer un mot de passe",
+        role: "Rôle",
+        add_user: "Ajouter un Utilisateur",
+        no_users: "Aucun utilisateur n’a encore été ajouté.",
+        current_session: "Session actuelle",
+        reset_password: "Réinitialiser le mot de passe",
+        delete: "Supprimer",
+        client_records: "Fiches Clients",
+        client_records_copy: "Affichez tous les clients enregistrés, modifiez leurs détails ou supprimez les entrées obsolètes de la liste partagée.",
+        no_clients: "Aucun client enregistré pour le moment.",
+        edit: "Modifier",
+        editor_preferences: "Préférences de l’Éditeur",
+        editor_preferences_copy: "Choisissez quels champs optionnels doivent apparaître pendant la création des devis et factures.",
+        show_internal_pricing: "Afficher les champs de tarification interne dans les lignes",
+        csv_tools: "Outils CSV",
+        csv_tools_copy: "Téléchargez le modèle ou importez des lignes pour créer plusieurs documents à la fois.",
+        export_csv_template: "Exporter le Modèle CSV",
+        import_csv: "Importer CSV",
+        json_backup: "Sauvegarde JSON",
+        json_backup_copy: "Exportez une sauvegarde complète ou restaurez documents et clients depuis un fichier JSON.",
+        export_backup: "Exporter la Sauvegarde",
+        import_backup: "Importer la Sauvegarde",
+        selective_export: "Export Sélectif",
+        selective_export_copy: "Ouvrez la fenêtre d’export et choisissez seulement les devis ou factures à inclure dans le fichier JSON.",
+        export_selected_json: "Exporter le JSON Sélectionné",
+        local_testing: "Tests Locaux",
+        local_testing_copy: "Effacez les données de test du navigateur sans affecter les données du serveur.",
+        clear_local_test_data: "Effacer les Données Locales de Test",
+        export_json_title: "Exporter JSON",
+        export_json_copy: "Choisissez les devis et factures à inclure dans ce fichier d’export.",
+        select_all_documents: "Sélectionner tous les documents",
+        download_selected_json: "Télécharger le JSON Sélectionné",
+        no_documents_export: "Aucun document disponible pour l’export.",
+        type_info: "Type & Infos",
+        client_details: "Détails Client",
+        line_items: "Lignes",
+        keywords: "Mots-clés",
+        items_preview: "Aperçu des Lignes",
+        review: "Révision",
+        current_step: "Étape Actuelle",
+        previous: "Précédent",
+        next: "Suivant",
+        save_draft: "Enregistrer le Brouillon",
+        save_changes: "Enregistrer les Modifications",
+        save_preview_pdf: "Enregistrer et Voir le PDF",
+        document_summary: "Résumé du Document",
+        ref_pending: "Réf en attente",
+        date_pending: "Date en attente",
+        client: "Client",
+        no_client_selected: "Aucun client sélectionné",
+        choose_or_enter_client: "Choisissez ou saisissez un client pour continuer.",
+        choose_or_add_client: "-- Choisir ou ajouter un client --",
+        other_manual: "Autre (saisie manuelle)",
+        commercial_snapshot: "Aperçu Commercial",
+        items: "Articles",
+        subtotal: "Sous-total",
+        no_keywords: "Aucun mot-clé pour l’instant",
+        pdf_options: "Options PDF",
+        include_signature: "Inclure la signature à l’export",
+        include_signature_help: "Désactivez ceci pour des devis ou factures non signés avant d’ouvrir l’aperçu PDF.",
+        workflow_tip: "Conseil de Flux",
+        workflow_tip_copy: "Gardez les lignes concises et utilisez des mots-clés comme destination, type de service ou priorité pour faciliter la recherche."
+    }
+};
 
 const elements = {};
 
@@ -39,13 +448,187 @@ document.addEventListener("DOMContentLoaded", () => {
     init();
 });
 
+function getCurrentLanguage() {
+    return TRANSLATIONS[state.currentLanguage] ? state.currentLanguage : "en";
+}
+
+function getCurrentLocale() {
+    return LANGUAGE_LOCALES[getCurrentLanguage()] || "en-US";
+}
+
+function t(key, vars = {}) {
+    const language = getCurrentLanguage();
+    const template = TRANSLATIONS[language]?.[key] ?? TRANSLATIONS.en[key] ?? key;
+    return String(template).replace(/\{(\w+)\}/g, (_, token) => String(vars[token] ?? ""));
+}
+
+function setElementText(selector, value) {
+    const element = typeof selector === "string" ? document.querySelector(selector) : selector;
+    if (element) {
+        element.textContent = value;
+    }
+}
+
+function setElementHtml(selector, value) {
+    const element = typeof selector === "string" ? document.querySelector(selector) : selector;
+    if (element) {
+        element.innerHTML = value;
+    }
+}
+
+function applyTranslations() {
+    document.documentElement.lang = getCurrentLanguage();
+    elements.languageSelect.value = getCurrentLanguage();
+
+    setElementText(".access-card .eyebrow", t("login_kicker"));
+    setElementText(".access-card h1", t("login_title"));
+    setElementText(".access-card p", t("login_copy"));
+    setElementText(document.querySelector('label[for="accessUsername"]'), t("username"));
+    setElementText(document.querySelector('label[for="accessCode"]'), t("password"));
+    elements.accessUsername.placeholder = t("username_placeholder");
+    elements.accessCode.placeholder = t("password_placeholder");
+    elements.accessError.textContent = t("login_error");
+    setElementText(".access-submit-label", t("sign_in"));
+    setElementText(".session-loader-card .eyebrow", t("session_loader_kicker"));
+    setElementText(".session-loader-card h2", t("session_loader_title"));
+    elements.sessionLoaderMessage.textContent = t("session_loader_message");
+    setElementText(".app-topbar-kicker", t("workspace"));
+    setElementText(".app-topbar-copy strong", t("dashboard_title_top"));
+    elements.endSessionBtn.textContent = t("end_session");
+    document.getElementById("languagePickerLabel").textContent = t("language");
+    elements.languageSelect.options[0].textContent = TRANSLATIONS.en.language_name;
+    elements.languageSelect.options[1].textContent = TRANSLATIONS.es.language_name;
+    elements.languageSelect.options[2].textContent = TRANSLATIONS.fr.language_name;
+
+    setElementText(".workspace-hero .eyebrow", t("hero_kicker"));
+    setElementText(".hero-copy h1", t("hero_title"));
+    setElementText(".hero-copy p", t("hero_copy"));
+    elements.newQuoteBtn.textContent = t("new_quote");
+    elements.newInvoiceBtn.textContent = t("new_invoice");
+    if (!elements.importDocumentStatus.dataset.customized) {
+        elements.importDocumentStatus.textContent = t("import_status_default");
+    }
+    setElementText(".overview-kicker", t("snapshot"));
+    setElementText(elements.totalDocumentsStat.previousElementSibling, t("documents"));
+    setElementText(elements.quoteCountStat.previousElementSibling, t("quotes"));
+    setElementText(elements.invoiceCountStat.previousElementSibling, t("invoices"));
+    if (state.valueView === "invoiced") {
+        elements.totalValueLabel.textContent = t("amount_invoiced");
+        elements.totalValueHint.textContent = t("tap_view_pipeline");
+    } else {
+        elements.totalValueLabel.textContent = t("pipeline_value");
+        elements.totalValueHint.textContent = t("tap_view_invoiced");
+    }
+    setElementText(".dashboard-topbar h2", t("documents_heading"));
+    setElementText(".dashboard-subtitle", t("documents_subtitle"));
+    setElementText(document.querySelector('.sort-field .search-label'), t("sort"));
+    setElementText(document.querySelector('.search-field .search-label'), t("search"));
+    elements.documentSearch.placeholder = t("search_placeholder");
+    elements.documentSort.options[0].textContent = t("sort_date_desc");
+    elements.documentSort.options[1].textContent = t("sort_date_asc");
+    elements.documentSort.options[2].textContent = t("sort_created_desc");
+    elements.documentSort.options[3].textContent = t("sort_created_asc");
+    elements.filterButtons[0].textContent = t("filter_all");
+    elements.filterButtons[1].textContent = t("quotes");
+    elements.filterButtons[2].textContent = t("invoices");
+
+    setElementText("#settingsModal h3", t("tools"));
+    setElementText("#settingsModal .settings-copy", t("tools_copy"));
+    setElementText(elements.newUserDisplayName.closest("label").querySelector("span"), t("display_name"));
+    setElementText(elements.newUserUsername.closest("label").querySelector("span"), t("username"));
+    setElementText(elements.newUserPassword.closest("label").querySelector("span"), t("temp_password"));
+    setElementText(elements.newUserRole.closest("label").querySelector("span"), t("role"));
+    elements.newUserDisplayName.placeholder = t("display_name_placeholder");
+    elements.newUserUsername.placeholder = t("username_placeholder");
+    elements.newUserPassword.placeholder = t("temp_password_placeholder");
+    elements.newUserRole.options[0].textContent = t("role_user");
+    elements.newUserRole.options[1].textContent = t("role_admin");
+    elements.addUserBtn.textContent = t("add_user");
+
+    const settingsPanels = elements.settingsModal.querySelectorAll(".settings-panel");
+    settingsPanels[0].querySelector("h4").textContent = t("user_management");
+    settingsPanels[0].querySelector(".settings-panel-header p").textContent = t("user_management_copy");
+    settingsPanels[1].querySelector("h4").textContent = t("client_records");
+    settingsPanels[1].querySelector(".settings-panel-header p").textContent = t("client_records_copy");
+    settingsPanels[2].querySelector("h4").textContent = t("editor_preferences");
+    settingsPanels[2].querySelector(".settings-panel-header p").textContent = t("editor_preferences_copy");
+    settingsPanels[2].querySelector("span").textContent = t("show_internal_pricing");
+    settingsPanels[3].querySelector("h4").textContent = t("csv_tools");
+    settingsPanels[3].querySelector(".settings-panel-header p").textContent = t("csv_tools_copy");
+    elements.exportCsvTemplateBtn.textContent = t("export_csv_template");
+    elements.importCsvBtn.textContent = t("import_csv");
+    settingsPanels[4].querySelector("h4").textContent = t("json_backup");
+    settingsPanels[4].querySelector(".settings-panel-header p").textContent = t("json_backup_copy");
+    elements.exportBackupBtn.textContent = t("export_backup");
+    elements.importBackupBtn.textContent = t("import_backup");
+    settingsPanels[5].querySelector("h4").textContent = t("selective_export");
+    settingsPanels[5].querySelector(".settings-panel-header p").textContent = t("selective_export_copy");
+    elements.openExportSelectionBtn.textContent = t("export_selected_json");
+    settingsPanels[6].querySelector("h4").textContent = t("local_testing");
+    settingsPanels[6].querySelector(".settings-panel-header p").textContent = t("local_testing_copy");
+    elements.clearLocalTestDataBtn.textContent = t("clear_local_test_data");
+
+    setElementText("#exportModal h3", t("export_json_title"));
+    setElementText("#exportModal .settings-copy", t("export_json_copy"));
+    setElementText("#selectAllExportsToggle + span", t("select_all_documents"));
+    elements.exportSelectedJsonBtn.textContent = t("download_selected_json");
+
+    updateStaticEditorTranslations();
+    updateEditorSummary();
+    renderUserManagementList();
+    renderClientManagementList();
+    renderExportSelectionList();
+    renderDocuments();
+}
+
+function updateStaticEditorTranslations() {
+    elements.stepIndicator.querySelectorAll(".step .step-label")[0].textContent = t("type_info");
+    elements.stepIndicator.querySelectorAll(".step .step-label")[1].textContent = t("client_details");
+    elements.stepIndicator.querySelectorAll(".step .step-label")[2].textContent = t("line_items");
+    elements.stepIndicator.querySelectorAll(".step .step-label")[3].textContent = t("keywords");
+    elements.stepIndicator.querySelectorAll(".step .step-label")[4].textContent = t("items_preview");
+    elements.stepIndicator.querySelectorAll(".step .step-label")[5].textContent = t("review");
+    setElementText(".step-intro-label", t("current_step"));
+    setElementText(document.querySelector('.sidebar-card .sidebar-label'), t("document_summary"));
+    setElementText(document.querySelectorAll('.sidebar-card .sidebar-label')[1], t("client"));
+    setElementText(document.querySelectorAll('.sidebar-card .sidebar-label')[2], t("commercial_snapshot"));
+    setElementText(document.querySelectorAll('.sidebar-card .sidebar-label')[3], t("pdf_options"));
+    setElementText(document.querySelectorAll('.sidebar-card .sidebar-label')[4], t("workflow_tip"));
+    setElementText(document.querySelector('#includeSignature + span'), t("include_signature"));
+    setElementText(document.querySelector('#includeSignature').closest('.sidebar-card').querySelector('.field-help'), t("include_signature_help"));
+    elements.prevBtn.textContent = t("previous");
+    elements.nextBtn.textContent = t("next");
+}
+
+async function handleLanguageChange(event) {
+    const nextLanguage = event.target.value;
+    state.currentLanguage = TRANSLATIONS[nextLanguage] ? nextLanguage : "en";
+
+    if (state.currentUser) {
+        state.currentUser.language = state.currentLanguage;
+        sessionStorage.setItem(CURRENT_SESSION_STORAGE_KEY, JSON.stringify(state.currentUser));
+        saveUserAccounts(state.userAccounts.map(user =>
+            user.id === state.currentUser.userId ? { ...user, language: state.currentLanguage } : user
+        ));
+    }
+
+    applyTranslations();
+}
+
 function cacheElements() {
     elements.accessGate = document.getElementById("accessGate");
     elements.adminAppShell = document.getElementById("adminAppShell");
     elements.accessForm = document.getElementById("accessForm");
+    elements.accessUsername = document.getElementById("accessUsername");
     elements.accessCode = document.getElementById("accessCode");
+    elements.accessSubmitBtn = document.getElementById("accessSubmitBtn");
     elements.accessError = document.getElementById("accessError");
+    elements.sessionLoader = document.getElementById("sessionLoader");
+    elements.sessionLoaderMessage = document.getElementById("sessionLoaderMessage");
     elements.settingsModal = document.getElementById("settingsModal");
+    elements.endSessionBtn = document.getElementById("endSessionBtn");
+    elements.sessionBadge = document.getElementById("sessionBadge");
+    elements.languageSelect = document.getElementById("languageSelect");
     elements.openSettingsBtn = document.getElementById("openSettingsBtn");
     elements.closeSettingsBtn = document.getElementById("closeSettingsBtn");
     elements.exportModal = document.getElementById("exportModal");
@@ -55,6 +638,13 @@ function cacheElements() {
     elements.exportSelectionList = document.getElementById("exportSelectionList");
     elements.exportSelectedJsonBtn = document.getElementById("exportSelectedJsonBtn");
     elements.showInternalPricingToggle = document.getElementById("showInternalPricingToggle");
+    elements.newUserDisplayName = document.getElementById("newUserDisplayName");
+    elements.newUserUsername = document.getElementById("newUserUsername");
+    elements.newUserPassword = document.getElementById("newUserPassword");
+    elements.newUserRole = document.getElementById("newUserRole");
+    elements.addUserBtn = document.getElementById("addUserBtn");
+    elements.userManagementList = document.getElementById("userManagementList");
+    elements.clientManagementList = document.getElementById("clientManagementList");
     elements.documentModal = document.getElementById("documentModal");
     elements.stepIndicator = document.querySelector(".step-indicator");
     elements.modalTitle = document.getElementById("modalTitle");
@@ -132,6 +722,8 @@ function bindEvents() {
         prepareNewDocument("invoice");
         openModal("invoice");
     });
+    elements.endSessionBtn.addEventListener("click", handleEndSessionClick);
+    elements.languageSelect.addEventListener("change", handleLanguageChange);
     elements.openSettingsBtn.addEventListener("click", openSettingsModal);
     elements.closeSettingsBtn.addEventListener("click", closeSettingsModal);
     elements.exportCsvTemplateBtn.addEventListener("click", exportCsvTemplate);
@@ -142,6 +734,9 @@ function bindEvents() {
     elements.selectAllExportsToggle.addEventListener("change", handleSelectAllExportsToggle);
     elements.exportSelectedJsonBtn.addEventListener("click", exportSelectedDocuments);
     elements.clearLocalTestDataBtn.addEventListener("click", clearLocalTestData);
+    elements.addUserBtn.addEventListener("click", handleAddUser);
+    elements.userManagementList.addEventListener("click", handleUserManagementClick);
+    elements.clientManagementList.addEventListener("click", handleClientManagementClick);
     elements.valueToggleCard.addEventListener("click", toggleValueView);
     elements.showInternalPricingToggle.addEventListener("change", handleInternalPricingToggleChange);
     elements.importBackupBtn.addEventListener("click", () => {
@@ -151,6 +746,7 @@ function bindEvents() {
     elements.closeModalBtn.addEventListener("click", closeModal);
     elements.docType.addEventListener("change", updateModalTitle);
     elements.refNumber.addEventListener("input", handleRefNumberInput);
+    elements.docDate.addEventListener("change", handleDocumentDateChange);
     elements.clientSelect.addEventListener("change", onClientSelectChange);
     elements.saveClientBtn.addEventListener("click", saveClient);
     elements.addItemBtn.addEventListener("click", addItem);
@@ -198,13 +794,25 @@ function bindEvents() {
 
     elements.documentModal.addEventListener("input", updateEditorSummary);
     elements.documentModal.addEventListener("change", updateEditorSummary);
+    document.addEventListener("pointerdown", handleSessionActivity);
+    document.addEventListener("keydown", handleSessionActivity);
+    document.addEventListener("input", handleSessionActivity);
+    window.addEventListener("focus", handleSessionActivity);
+    window.addEventListener("scroll", handleSessionActivity, { passive: true });
 }
 
 function init() {
-    applyAccessState(hasAdminAccess());
+    state.userAccounts = loadUserAccounts();
+    state.currentUser = getStoredSessionUser();
+    state.currentLanguage = state.currentUser?.language || "en";
+    applyRoleAccess();
+    applyAccessState(hasActiveSession());
+    setAccessLoading(false);
+    setSessionLoader(false);
+    applyTranslations();
     hydrateEditorPreferences();
     updateCalculatorDisplay();
-    if (!hasAdminAccess()) {
+    if (!hasActiveSession()) {
         return;
     }
 
@@ -389,8 +997,132 @@ function stopCalculatorDrag(event) {
     }
 }
 
-function hasAdminAccess() {
-    return sessionStorage.getItem(ADMIN_ACCESS_STORAGE_KEY) === "true";
+function normalizeUserAccounts(users) {
+    const normalizedUsers = Array.isArray(users)
+        ? users
+            .filter(user => user && typeof user === "object")
+            .map(user => ({
+                id: String(user.id || `user-${Date.now()}-${Math.random().toString(36).slice(2)}`),
+                username: String(user.username || "").trim().toLowerCase(),
+                displayName: String(user.displayName || user.username || "").trim(),
+                password: String(user.password || ""),
+                role: user.role === "admin" ? "admin" : "user",
+                language: TRANSLATIONS[user.language] ? user.language : "en"
+            }))
+            .filter(user => user.username && user.displayName && user.password)
+        : [];
+
+    const mergedUsers = [];
+    const usernameSet = new Set();
+    normalizedUsers.forEach(user => {
+        if (usernameSet.has(user.username)) {
+            return;
+        }
+        usernameSet.add(user.username);
+        mergedUsers.push(user);
+    });
+
+    if (!mergedUsers.some(user => user.username === DEFAULT_ADMIN_USER.username)) {
+        mergedUsers.unshift({ ...DEFAULT_ADMIN_USER });
+    } else {
+        const adminIndex = mergedUsers.findIndex(user => user.username === DEFAULT_ADMIN_USER.username);
+        mergedUsers[adminIndex] = {
+            ...mergedUsers[adminIndex],
+            id: mergedUsers[adminIndex].id || DEFAULT_ADMIN_USER.id,
+            displayName: mergedUsers[adminIndex].displayName || DEFAULT_ADMIN_USER.displayName,
+            password: mergedUsers[adminIndex].password || DEFAULT_ADMIN_USER.password,
+            role: "admin"
+        };
+    }
+
+    return mergedUsers;
+}
+
+function loadUserAccounts() {
+    const users = normalizeUserAccounts(readLocalDataset(USER_ACCOUNTS_STORAGE_KEY, []));
+    writeLocalDataset(USER_ACCOUNTS_STORAGE_KEY, users);
+    return users;
+}
+
+function saveUserAccounts(users) {
+    state.userAccounts = normalizeUserAccounts(users);
+    writeLocalDataset(USER_ACCOUNTS_STORAGE_KEY, state.userAccounts);
+    renderUserManagementList();
+}
+
+function getStoredSessionUser() {
+    try {
+        const rawValue = sessionStorage.getItem(CURRENT_SESSION_STORAGE_KEY);
+        if (!rawValue) {
+            return null;
+        }
+
+        const session = JSON.parse(rawValue);
+        if (!session || typeof session !== "object" || !session.userId) {
+            return null;
+        }
+
+        const user = state.userAccounts.find(entry => entry.id === session.userId);
+        if (!user) {
+            return null;
+        }
+
+        return {
+            userId: user.id,
+            username: user.username,
+            displayName: user.displayName,
+            role: user.role,
+            language: TRANSLATIONS[user.language] ? user.language : "en"
+        };
+    } catch (error) {
+        return null;
+    }
+}
+
+function hasActiveSession() {
+    return Boolean(state.currentUser);
+}
+
+function isAdminSession() {
+    return state.currentUser?.role === "admin";
+}
+
+function persistCurrentSession(user) {
+    state.currentUser = {
+        userId: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        role: user.role,
+        language: user.language || "en"
+    };
+    sessionStorage.setItem(CURRENT_SESSION_STORAGE_KEY, JSON.stringify(state.currentUser));
+    applyRoleAccess();
+}
+
+function clearCurrentSession() {
+    state.currentUser = null;
+    sessionStorage.removeItem(CURRENT_SESSION_STORAGE_KEY);
+    applyRoleAccess();
+}
+
+function applyRoleAccess() {
+    const isAdmin = isAdminSession();
+    const hasSession = hasActiveSession();
+
+    elements.openSettingsBtn.hidden = !isAdmin;
+    elements.openSettingsBtn.setAttribute("aria-hidden", String(!isAdmin));
+    elements.openSettingsBtn.tabIndex = isAdmin ? 0 : -1;
+    elements.sessionBadge.hidden = !hasSession;
+    elements.sessionBadge.textContent = hasSession
+        ? `${state.currentUser.displayName} · ${isAdmin ? t("role_admin") : t("role_user")}`
+        : "";
+
+    if (!isAdmin) {
+        closeSettingsModal();
+    }
+
+    renderUserManagementList();
+    renderClientManagementList();
 }
 
 function applyAccessState(isUnlocked) {
@@ -400,21 +1132,102 @@ function applyAccessState(isUnlocked) {
     elements.adminAppShell.hidden = !isUnlocked;
     elements.adminAppShell.setAttribute("aria-hidden", String(!isUnlocked));
 
-    if (!isUnlocked) {
+    if (isUnlocked) {
+        resetInactivityTimer();
+    } else {
+        clearInactivityTimer();
         elements.accessForm.reset();
+        elements.accessError.textContent = DEFAULT_ACCESS_ERROR_MESSAGE;
         elements.accessError.hidden = true;
-        elements.accessCode.focus();
+        setAccessLoading(false);
+        setSessionLoader(false);
+        elements.accessUsername.focus();
     }
 }
 
-function unlockAdminAccess() {
-    sessionStorage.setItem(ADMIN_ACCESS_STORAGE_KEY, "true");
+function setAccessLoading(isLoading) {
+    state.isAuthenticating = isLoading;
+    elements.accessForm.classList.toggle("is-authenticating", isLoading);
+    elements.accessUsername.disabled = isLoading;
+    elements.accessCode.disabled = isLoading;
+    elements.accessSubmitBtn.disabled = isLoading;
+}
+
+function setSessionLoader(isVisible, message = t("session_loader_message")) {
+    elements.sessionLoader.hidden = !isVisible;
+    elements.sessionLoader.setAttribute("aria-hidden", String(!isVisible));
+    elements.sessionLoaderMessage.textContent = message;
+}
+
+async function unlockAccess(user) {
+    persistCurrentSession(user);
+    await bootstrapAppData();
     applyAccessState(true);
-    bootstrapAppData();
+}
+
+function clearInactivityTimer() {
+    if (state.inactivityTimerId !== null) {
+        window.clearTimeout(state.inactivityTimerId);
+        state.inactivityTimerId = null;
+    }
+}
+
+function resetInactivityTimer() {
+    if (!hasActiveSession() || state.isAuthenticating) {
+        clearInactivityTimer();
+        return;
+    }
+
+    clearInactivityTimer();
+    state.inactivityTimerId = window.setTimeout(() => {
+        signOutForInactivity();
+    }, INACTIVITY_TIMEOUT_MS);
+}
+
+function handleSessionActivity() {
+    if (!hasActiveSession() || state.isAuthenticating) {
+        return;
+    }
+
+    resetInactivityTimer();
+}
+
+function endSession(message = "", { showMessage = false } = {}) {
+    clearInactivityTimer();
+    clearCurrentSession();
+    closeModal();
+    closeSettingsModal();
+    closeExportModal();
+    hideCalculator();
+    applyAccessState(false);
+
+    if (showMessage) {
+        elements.accessError.textContent = message;
+        elements.accessError.hidden = false;
+    }
+}
+
+function signOutForInactivity() {
+    endSession("Signed out after 5 minutes of inactivity. Sign in again to continue.", {
+        showMessage: true
+    });
+}
+
+function handleEndSessionClick() {
+    endSession("Session ended. Sign in again to open the dashboard.", {
+        showMessage: true
+    });
 }
 
 function openSettingsModal() {
+    if (!isAdminSession()) {
+        setImportStatus("Only admin accounts can open workspace tools.", true);
+        return;
+    }
+
     syncEditorPreferenceControls();
+    renderUserManagementList();
+    renderClientManagementList();
     elements.settingsModal.classList.add("active");
     elements.settingsModal.setAttribute("aria-hidden", "false");
 }
@@ -424,7 +1237,247 @@ function closeSettingsModal() {
     elements.settingsModal.setAttribute("aria-hidden", "true");
 }
 
+function renderUserManagementList() {
+    if (!elements.userManagementList) {
+        return;
+    }
+
+    if (!isAdminSession()) {
+        elements.userManagementList.innerHTML = "";
+        return;
+    }
+
+    if (!state.userAccounts.length) {
+        elements.userManagementList.innerHTML = `<p class="user-list-empty">${escapeHtml(t("no_users"))}</p>`;
+        return;
+    }
+
+    elements.userManagementList.innerHTML = state.userAccounts.map(user => {
+        const isCurrentUser = state.currentUser?.userId === user.id;
+        const isOnlyAdmin = user.role === "admin" && state.userAccounts.filter(entry => entry.role === "admin").length === 1;
+        return `
+            <article class="user-row">
+                <div class="user-row-copy">
+                    <strong>${escapeHtml(user.displayName)}</strong>
+                    <span>@${escapeHtml(user.username)} · ${escapeHtml(user.role === "admin" ? t("role_admin") : t("role_user"))}${isCurrentUser ? ` · ${escapeHtml(t("current_session"))}` : ""}</span>
+                </div>
+                <div class="user-row-actions">
+                    <button class="btn btn-secondary" type="button" data-user-action="reset-password" data-user-id="${escapeHtml(user.id)}">${escapeHtml(t("reset_password"))}</button>
+                    <button class="btn btn-secondary" type="button" data-user-action="delete-user" data-user-id="${escapeHtml(user.id)}"${isCurrentUser || isOnlyAdmin ? " disabled" : ""}>${escapeHtml(t("delete"))}</button>
+                </div>
+            </article>
+        `;
+    }).join("");
+}
+
+function renderClientManagementList() {
+    if (!elements.clientManagementList) {
+        return;
+    }
+
+    if (!isAdminSession()) {
+        elements.clientManagementList.innerHTML = "";
+        return;
+    }
+
+    if (!state.clients.length) {
+        elements.clientManagementList.innerHTML = `<p class="client-list-empty">${escapeHtml(t("no_clients"))}</p>`;
+        return;
+    }
+
+    elements.clientManagementList.innerHTML = state.clients.map(client => `
+        <article class="client-row">
+            <div class="client-row-copy">
+                <strong>${escapeHtml(client.name)}</strong>
+                <span>${escapeHtml(client.address || "No address saved").replace(/\n/g, "<br>")}</span>
+            </div>
+            <div class="client-row-actions">
+                <button class="btn btn-secondary" type="button" data-client-action="edit-client" data-client-id="${escapeHtml(client.id)}">${escapeHtml(t("edit"))}</button>
+                <button class="btn btn-secondary" type="button" data-client-action="delete-client" data-client-id="${escapeHtml(client.id)}">${escapeHtml(t("delete"))}</button>
+            </div>
+        </article>
+    `).join("");
+}
+
+function handleAddUser() {
+    if (!isAdminSession()) {
+        setImportStatus("Only admin accounts can manage users.", true);
+        return;
+    }
+
+    const displayName = elements.newUserDisplayName.value.trim();
+    const username = elements.newUserUsername.value.trim().toLowerCase();
+    const password = elements.newUserPassword.value.trim();
+    const role = elements.newUserRole.value === "admin" ? "admin" : "user";
+
+    if (!displayName || !username || !password) {
+        alert("Enter a display name, username, and password before adding a user.");
+        return;
+    }
+
+    if (!/^[a-z0-9._-]+$/.test(username)) {
+        alert("Usernames can include letters, numbers, periods, underscores, and hyphens only.");
+        return;
+    }
+
+    if (state.userAccounts.some(user => user.username === username)) {
+        alert("That username already exists. Choose another one.");
+        return;
+    }
+
+    saveUserAccounts([
+        ...state.userAccounts,
+        {
+            id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            displayName,
+            username,
+            password,
+            role
+        }
+    ]);
+
+    elements.newUserDisplayName.value = "";
+    elements.newUserUsername.value = "";
+    elements.newUserPassword.value = "";
+    elements.newUserRole.value = "user";
+    setImportStatus(`Added ${displayName} as a ${role}.`);
+}
+
+function handleUserManagementClick(event) {
+    const button = event.target.closest("[data-user-action]");
+    if (!button || !isAdminSession()) {
+        return;
+    }
+
+    const userId = button.dataset.userId;
+    const action = button.dataset.userAction;
+    const user = state.userAccounts.find(entry => entry.id === userId);
+    if (!user) {
+        return;
+    }
+
+    if (action === "reset-password") {
+        const nextPassword = window.prompt(`Enter a new password for ${user.displayName}:`, "");
+        if (!nextPassword) {
+            return;
+        }
+
+        saveUserAccounts(state.userAccounts.map(entry =>
+            entry.id === user.id ? { ...entry, password: nextPassword.trim() || entry.password } : entry
+        ));
+        setImportStatus(`Password reset for ${user.displayName}.`);
+        return;
+    }
+
+    if (action === "delete-user") {
+        if (state.currentUser?.userId === user.id) {
+            alert("You cannot delete the account currently signed in.");
+            return;
+        }
+
+        const adminCount = state.userAccounts.filter(entry => entry.role === "admin").length;
+        if (user.role === "admin" && adminCount <= 1) {
+            alert("Keep at least one admin account in the workspace.");
+            return;
+        }
+
+        if (!window.confirm(`Remove ${user.displayName} from this device's local user list?`)) {
+            return;
+        }
+
+        saveUserAccounts(state.userAccounts.filter(entry => entry.id !== user.id));
+        setImportStatus(`Removed ${user.displayName} from local access.`);
+    }
+}
+
+async function handleClientManagementClick(event) {
+    const button = event.target.closest("[data-client-action]");
+    if (!button || !isAdminSession()) {
+        return;
+    }
+
+    const clientId = button.dataset.clientId;
+    const action = button.dataset.clientAction;
+    const client = state.clients.find(entry => isSameDocumentId(entry.id, clientId));
+    if (!client) {
+        return;
+    }
+
+    if (action === "edit-client") {
+        const nextName = window.prompt("Update client name:", client.name);
+        if (nextName === null) {
+            return;
+        }
+
+        const trimmedName = nextName.trim();
+        if (!trimmedName) {
+            alert("Client name cannot be empty.");
+            return;
+        }
+
+        const nextAddress = window.prompt("Update client address:", client.address || "");
+        if (nextAddress === null) {
+            return;
+        }
+
+        const trimmedAddress = nextAddress.trim();
+        if (!trimmedAddress) {
+            alert("Client address cannot be empty.");
+            return;
+        }
+
+        const duplicateClient = state.clients.find(entry =>
+            !isSameDocumentId(entry.id, client.id) && entry.name.toLowerCase() === trimmedName.toLowerCase()
+        );
+        if (duplicateClient) {
+            alert("Another saved client already uses that name.");
+            return;
+        }
+
+        try {
+            await saveClientsToServer(state.clients.map(entry =>
+                isSameDocumentId(entry.id, client.id)
+                    ? { ...entry, name: trimmedName, address: trimmedAddress }
+                    : entry
+            ));
+        } catch (error) {
+            alert(`Unable to update this client.\n\n${error.message}`);
+            return;
+        }
+
+        renderClientOptions();
+        renderClientManagementList();
+        setImportStatus(`Updated saved client ${trimmedName}.`);
+        return;
+    }
+
+    if (action === "delete-client") {
+        if (!window.confirm(`Delete saved client "${client.name}"?`)) {
+            return;
+        }
+
+        try {
+            await saveClientsToServer(state.clients.filter(entry => !isSameDocumentId(entry.id, client.id)));
+        } catch (error) {
+            alert(`Unable to delete this client.\n\n${error.message}`);
+            return;
+        }
+
+        renderClientOptions();
+        renderClientManagementList();
+        if (elements.clientSelect.value === client.id) {
+            elements.clientSelect.value = "";
+        }
+        setImportStatus(`Deleted saved client ${client.name}.`);
+    }
+}
+
 function openExportModal() {
+    if (!isAdminSession()) {
+        setImportStatus("Only admin accounts can export JSON files.", true);
+        return;
+    }
+
     closeSettingsModal();
     renderExportSelectionList();
     elements.exportModal.classList.add("active");
@@ -438,7 +1491,7 @@ function closeExportModal() {
 
 function renderExportSelectionList() {
     if (!state.documents.length) {
-        elements.exportSelectionList.innerHTML = '<p class="export-empty">No documents available to export.</p>';
+        elements.exportSelectionList.innerHTML = `<p class="export-empty">${escapeHtml(t("no_documents_export"))}</p>`;
         elements.selectAllExportsToggle.checked = false;
         return;
     }
@@ -449,7 +1502,7 @@ function renderExportSelectionList() {
             <input type="checkbox" class="export-doc-checkbox" value="${escapeHtml(String(doc.id))}" checked>
             <span class="export-row-copy">
                 <span class="export-row-title">${escapeHtml(doc.refNumber || "Untitled document")}</span>
-                <span class="export-row-meta">${escapeHtml(doc.type === "quote" ? "Quote" : "Invoice")} • ${escapeHtml(doc.clientName || "Unknown client")} • ${escapeHtml(formatDisplayDate(doc.date) || "No date")}</span>
+                <span class="export-row-meta">${escapeHtml(doc.type === "quote" ? t("quote_singular") : t("invoice_singular"))} • ${escapeHtml(doc.clientName || t("unknown_client"))} • ${escapeHtml(formatDisplayDate(doc.date) || t("no_date"))}</span>
             </span>
         </label>
     `).join("");
@@ -464,6 +1517,11 @@ function handleSelectAllExportsToggle(event) {
 }
 
 function exportSelectedDocuments() {
+    if (!isAdminSession()) {
+        setImportStatus("Only admin accounts can export JSON files.", true);
+        return;
+    }
+
     const selectedIds = Array.from(elements.exportSelectionList.querySelectorAll(".export-doc-checkbox:checked"))
         .map(checkbox => checkbox.value);
 
@@ -506,19 +1564,41 @@ function syncInternalPricingVisibility() {
     });
 }
 
-function handleAccessSubmit(event) {
+async function handleAccessSubmit(event) {
     event.preventDefault();
 
-    const submittedCode = elements.accessCode.value.trim();
-    const isValid = submittedCode === ADMIN_ACCESS_CODE;
-    elements.accessError.hidden = isValid;
-
-    if (!isValid) {
-        elements.accessCode.select();
+    if (state.isAuthenticating) {
         return;
     }
 
-    unlockAdminAccess();
+    const submittedUsername = elements.accessUsername.value.trim().toLowerCase();
+    const submittedCode = elements.accessCode.value.trim();
+    const matchingUser = state.userAccounts.find(user =>
+        user.username === submittedUsername && user.password === submittedCode
+    );
+    const isValid = Boolean(matchingUser);
+    elements.accessError.textContent = DEFAULT_ACCESS_ERROR_MESSAGE;
+    elements.accessError.hidden = isValid;
+
+    if (!isValid) {
+        if (!submittedUsername) {
+            elements.accessUsername.focus();
+        } else {
+            elements.accessCode.select();
+        }
+        return;
+    }
+
+    setAccessLoading(true);
+    setSessionLoader(true);
+    await new Promise(resolve => window.setTimeout(resolve, 300));
+
+    try {
+        await unlockAccess(matchingUser);
+    } finally {
+        setAccessLoading(false);
+        setSessionLoader(false);
+    }
 }
 
 async function requestJSON(url, options = {}) {
@@ -570,6 +1650,7 @@ function normalizeDocuments(documents) {
             ...doc,
             legacyPdfUrl: doc.legacyPdfUrl || existingDoc.legacyPdfUrl,
             legacyPdfFilename: doc.legacyPdfFilename || existingDoc.legacyPdfFilename,
+            createdBy: doc.createdBy || existingDoc.createdBy || null,
             tags: Array.isArray(doc.tags) && doc.tags.length ? doc.tags : existingDoc.tags,
             items: Array.isArray(doc.items) && doc.items.length ? doc.items : existingDoc.items,
             notes: doc.notes || existingDoc.notes,
@@ -626,6 +1707,7 @@ function renderDocumentsMessage(message) {
 function setImportStatus(message, isError = false) {
     elements.importDocumentStatus.textContent = message;
     elements.importDocumentStatus.classList.toggle("hero-helper-error", isError);
+    elements.importDocumentStatus.dataset.customized = message === t("import_status_default") ? "" : "true";
 }
 
 function readLocalDataset(storageKey, fallbackValue) {
@@ -663,6 +1745,12 @@ function loadLocalAppData() {
 }
 
 function clearLocalTestData() {
+    if (!isAdminSession()) {
+        setImportStatus("Only admin accounts can clear local test data.", true);
+        closeSettingsModal();
+        return;
+    }
+
     if (state.dataMode !== "local") {
         setImportStatus("Local test data is only available while the app is running in browser-only mode.");
         closeSettingsModal();
@@ -779,6 +1867,11 @@ function downloadJSONFile(filename, data) {
 }
 
 function exportSystemBackup() {
+    if (!isAdminSession()) {
+        setImportStatus("Only admin accounts can export backups.", true);
+        return;
+    }
+
     const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
     downloadJSONFile(`invoice-quote-backup-${stamp}.json`, {
         exportedAt: new Date().toISOString(),
@@ -791,6 +1884,11 @@ function exportSystemBackup() {
 }
 
 function exportCsvTemplate() {
+    if (!isAdminSession()) {
+        setImportStatus("Only admin accounts can export CSV templates.", true);
+        return;
+    }
+
     const headers = [
         "type",
         "refNumber",
@@ -831,6 +1929,11 @@ function exportCsvTemplate() {
 }
 
 function openCsvImportPicker() {
+    if (!isAdminSession()) {
+        setImportStatus("Only admin accounts can import CSV files.", true);
+        return;
+    }
+
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".csv,text/csv";
@@ -942,6 +2045,12 @@ function buildDocumentFromCsvRow(row, indexMap) {
 }
 
 async function handleCsvImportSelect(event) {
+    if (!isAdminSession()) {
+        setImportStatus("Only admin accounts can import CSV files.", true);
+        event.target.value = "";
+        return;
+    }
+
     const [file] = event.target.files || [];
     if (!file) {
         return;
@@ -1004,6 +2113,12 @@ async function handleCsvImportSelect(event) {
 }
 
 async function handleBackupImportSelect(event) {
+    if (!isAdminSession()) {
+        setImportStatus("Only admin accounts can import backups.", true);
+        event.target.value = "";
+        return;
+    }
+
     const [file] = event.target.files || [];
     event.target.value = "";
 
@@ -1052,7 +2167,7 @@ function getLocalDateInputValue(dateValue = new Date()) {
 }
 
 function formatCurrency(amount) {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat(getCurrentLocale(), {
         style: "currency",
         currency: "USD",
         minimumFractionDigits: 2
@@ -1060,7 +2175,7 @@ function formatCurrency(amount) {
 }
 
 function formatAmount(amount) {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat(getCurrentLocale(), {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     }).format(Number(amount || 0));
@@ -1084,7 +2199,7 @@ function getStepContent(step) {
     const isEditing = isExistingDocumentEditMode();
     const stepContent = {
         1: {
-            title: "Type & Info",
+            title: t("type_info"),
             text: isEditing
                 ? "Update the saved document details and save right away if this is the only change you need."
                 : "Choose the document type, confirm the date, and set the reference details.",
@@ -1093,29 +2208,29 @@ function getStepContent(step) {
                 : "Reference details first keeps new documents organized before you move into client and pricing work."
         },
         2: {
-            title: "Client Details",
+            title: t("client_details"),
             text: isEditing
                 ? "Tighten up the saved client name or address without losing your place in the workflow."
                 : "Select an existing client or enter a new one, then capture the address exactly as it should appear on the document.",
             tip: "Saved clients help you move much faster on repeat work and keep naming consistent."
         },
         3: {
-            title: "Line Items",
+            title: t("line_items"),
             text: "Add services, pricing, and payment terms. Unit price is derived automatically unless you switch to manual mode.",
             tip: "Keep item descriptions short and specific. The table stays cleaner when each service is one line item."
         },
         4: {
-            title: "Keywords",
+            title: t("keywords"),
             text: "Add search keywords after the line items are in place, or tap a suggestion generated from your item descriptions.",
             tip: "Keywords work best when they reflect destinations, service types, equipment, or priorities you will search for later."
         },
         5: {
-            title: "Items Preview",
+            title: t("items_preview"),
             text: "Review the line items, notes, and totals in document form before moving to the final print preview.",
             tip: "This step is useful for catching quantity, unit price, and subtotal issues before you check the full page layout."
         },
         6: {
-            title: "Review",
+            title: t("review"),
             text: "Check the final layout before saving and exporting the PDF.",
             tip: "This preview mirrors the live document structure, so it is the fastest way to catch layout mistakes before print."
         }
@@ -1125,7 +2240,7 @@ function getStepContent(step) {
 }
 
 function updateEditorSummary() {
-    const docType = elements.docType.value === "invoice" ? "Invoice" : "Quote";
+    const docType = elements.docType.value === "invoice" ? t("invoice_singular") : t("quote_singular");
     const clientName = elements.clientName.value.trim();
     const clientAddress = elements.clientAddress.value.trim();
     const tags = parseTags(elements.docTags.value);
@@ -1137,16 +2252,16 @@ function updateEditorSummary() {
     elements.sidebarTip.textContent = stepContent.tip;
 
     elements.summaryDocType.textContent = docType;
-    elements.summaryRef.textContent = elements.refNumber.value ? `Ref ${elements.refNumber.value}` : "Ref pending";
-    elements.summaryDate.textContent = elements.docDate.value ? formatDisplayDate(elements.docDate.value) : "Date pending";
-    elements.summaryClient.textContent = clientName || "No client selected";
-    elements.summaryAddress.textContent = clientAddress || "Choose or enter a client to continue.";
+    elements.summaryRef.textContent = elements.refNumber.value ? `Ref ${elements.refNumber.value}` : t("ref_pending");
+    elements.summaryDate.textContent = elements.docDate.value ? formatDisplayDate(elements.docDate.value) : t("date_pending");
+    elements.summaryClient.textContent = clientName || t("no_client_selected");
+    elements.summaryAddress.textContent = clientAddress || t("choose_or_enter_client");
     elements.summaryItems.textContent = String(itemCount);
     elements.summaryTotal.textContent = formatCurrency(calculateTotals());
 
     elements.summaryTags.innerHTML = tags.length
         ? tags.map(tag => `<span class="sidebar-tag">${escapeHtml(tag)}</span>`).join("")
-        : '<span class="sidebar-tag muted">No keywords yet</span>';
+        : `<span class="sidebar-tag muted">${escapeHtml(t("no_keywords"))}</span>`;
 
     renderKeywordSuggestions(tags);
 
@@ -1287,23 +2402,41 @@ function handleKeywordSuggestionClick(event) {
     updateEditorSummary();
 }
 
-function getRefPrefix() {
-    const date = new Date();
+function getRefPrefix(dateValue = elements.docDate?.value || new Date()) {
+    const date = dateValue ? new Date(dateValue) : new Date();
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     return `TL-${year}-${month}${day}`;
 }
 
-function getNextRefSequence() {
-    const matchingNumbers = state.documents
+function getNextRefSequence(dateValue = elements.docDate?.value || new Date()) {
+    const prefix = getRefPrefix(dateValue);
+    const usedNumbers = state.documents
         .map(doc => {
-            const match = String(doc.refNumber).match(/^TL-\d{4}-\d{4}-(\d+)$/);
-            return match ? Number(match[1]) : 0;
-        })
-        .filter(Boolean);
+            const match = String(doc.refNumber || "").toUpperCase().match(/^TL-\d{4}-\d{4}-(\d+)$/);
+            if (!match) {
+                return null;
+            }
 
-    return String((matchingNumbers.length ? Math.max(...matchingNumbers) : 0) + 1).padStart(2, "0");
+            return String(doc.refNumber || "").toUpperCase().startsWith(`${prefix}-`) ? Number(match[1]) : null;
+        })
+        .filter(number => Number.isInteger(number) && number > 0)
+        .sort((left, right) => left - right);
+
+    let nextSequence = 1;
+    for (const usedNumber of usedNumbers) {
+        if (usedNumber === nextSequence) {
+            nextSequence += 1;
+            continue;
+        }
+
+        if (usedNumber > nextSequence) {
+            break;
+        }
+    }
+
+    return String(nextSequence).padStart(2, "0");
 }
 
 function handleRefNumberInput() {
@@ -1311,6 +2444,11 @@ function handleRefNumberInput() {
     const digitSuffix = elements.refNumber.value.replace(/\D/g, "").slice(-2);
     const fallbackSuffix = getNextRefSequence();
     elements.refNumber.value = `${prefix}-${digitSuffix || fallbackSuffix}`;
+    updateEditorSummary();
+}
+
+function handleDocumentDateChange() {
+    generateRefNumber();
     updateEditorSummary();
 }
 
@@ -1335,6 +2473,10 @@ function openModal(type = "quote") {
 }
 
 function getActionButtonMarkup(icon, label) {
+    if (!label) {
+        return `<span class="btn-icon" aria-hidden="true">${icon}</span>`;
+    }
+
     return `<span class="btn-icon" aria-hidden="true">${icon}</span><span>${label}</span>`;
 }
 
@@ -1348,7 +2490,7 @@ function closeModal() {
 function updateModalTitle() {
     const type = elements.docType.value;
     state.currentDocType = type;
-    const docLabel = type === "quote" ? "Quote" : "Invoice";
+    const docLabel = type === "quote" ? t("quote_singular") : t("invoice_singular");
     if (state.editingDocumentId !== null) {
         elements.modalTitle.textContent = `Edit ${docLabel}`;
     } else if (state.convertingFromQuoteId !== null) {
@@ -1357,14 +2499,20 @@ function updateModalTitle() {
         elements.modalTitle.textContent = `New ${docLabel}`;
     }
 
+    const saveButtonLabel = state.editingDocumentId !== null ? t("save_changes") : t("save_draft");
     elements.saveBtn.innerHTML = getActionButtonMarkup(
         '<svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 4v6h8V4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 17h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-        state.editingDocumentId !== null ? "Save Changes" : "Save Draft"
+        ""
     );
+    elements.saveBtn.setAttribute("aria-label", saveButtonLabel);
+    elements.saveBtn.setAttribute("title", saveButtonLabel);
+    elements.saveBtn.classList.add("btn-icon-only");
     elements.exportPdfBtn.innerHTML = getActionButtonMarkup(
         '<svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3v6h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 15h8M8 11h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-        state.editingDocumentId !== null ? "Save Changes & Open PDF Preview" : "Save Draft & Open PDF Preview"
+        t("save_preview_pdf")
     );
+    elements.exportPdfBtn.removeAttribute("title");
+    elements.exportPdfBtn.removeAttribute("aria-label");
     generateRefNumber();
 }
 
@@ -1752,7 +2900,7 @@ function formatDisplayDate(dateValue) {
         ? new Date(Number(dateOnlyMatch[1]), Number(dateOnlyMatch[2]) - 1, Number(dateOnlyMatch[3]))
         : new Date(normalizedValue);
 
-    return parsedDate.toLocaleDateString("en-US", {
+    return parsedDate.toLocaleDateString(getCurrentLocale(), {
         year: "numeric",
         month: "short",
         day: "numeric"
@@ -1760,7 +2908,7 @@ function formatDisplayDate(dateValue) {
 }
 
 function formatPrintedDate(dateValue = new Date()) {
-    return new Date(dateValue).toLocaleDateString("en-US", {
+    return new Date(dateValue).toLocaleDateString(getCurrentLocale(), {
         year: "numeric",
         month: "short",
         day: "numeric"
@@ -2176,7 +3324,7 @@ function openPrintWindow(doc) {
 async function persistDocument(options = {}) {
     const { exportAfterSave = false } = options;
     const isEditing = state.editingDocumentId !== null;
-    const existingDocument = isEditing ? state.documents.find(entry => entry.id === state.editingDocumentId) : null;
+    const existingDocument = isEditing ? getDocumentById(state.editingDocumentId) : null;
     const doc = {
         ...(existingDocument || {}),
         id: state.editingDocumentId ?? Date.now(),
@@ -2192,6 +3340,12 @@ async function persistDocument(options = {}) {
         notes: elements.notes.value,
         paymentTerms: elements.paymentTerms.value,
         includeSignature: elements.includeSignature.checked,
+        createdBy: existingDocument?.createdBy || (state.currentUser ? {
+            userId: state.currentUser.userId,
+            username: state.currentUser.username,
+            displayName: state.currentUser.displayName,
+            role: state.currentUser.role
+        } : null),
         printedAt: elements.docDate.value ? `${elements.docDate.value}T12:00:00.000Z` : (existingDocument?.printedAt || new Date().toISOString()),
         items: [],
         subtotal: 0,
@@ -2227,11 +3381,11 @@ async function persistDocument(options = {}) {
     let nextDocuments;
 
     if (isEditing) {
-        nextDocuments = state.documents.map(entry => entry.id === state.editingDocumentId ? doc : entry);
+        nextDocuments = state.documents.map(entry => isSameDocumentId(entry.id, state.editingDocumentId) ? doc : entry);
     } else {
         if (state.convertingFromQuoteId !== null) {
             doc.sourceQuoteId = state.convertingFromQuoteId;
-            nextDocuments = state.documents.map(entry => entry.id === state.convertingFromQuoteId
+            nextDocuments = state.documents.map(entry => isSameDocumentId(entry.id, state.convertingFromQuoteId)
                 ? {
                     ...entry,
                     lockedAfterConversion: true,
@@ -2321,8 +3475,8 @@ function updateOverviewStats() {
     elements.quoteCountStat.textContent = String(quoteCount);
     elements.invoiceCountStat.textContent = String(invoiceCount);
     elements.totalValueStat.textContent = formatCurrency(totalValue);
-    elements.totalValueLabel.textContent = showingInvoiced ? "Amount Invoiced" : "Pipeline Value";
-    elements.totalValueHint.textContent = showingInvoiced ? "Tap to view pipeline value" : "Tap to view invoiced amount";
+    elements.totalValueLabel.textContent = showingInvoiced ? t("amount_invoiced") : t("pipeline_value");
+    elements.totalValueHint.textContent = showingInvoiced ? t("tap_view_pipeline") : t("tap_view_invoiced");
     elements.valueToggleCard.setAttribute("aria-pressed", String(showingInvoiced));
     elements.valueToggleCard.classList.toggle("is-invoiced", showingInvoiced);
 }
@@ -2357,7 +3511,32 @@ function compareDocuments(left, right, sortOrder) {
         return (leftTimestamp - rightTimestamp) * direction;
     }
 
-    return String(left.refNumber || left.id || "").localeCompare(String(right.refNumber || right.id || ""));
+    const leftRefInfo = getDocumentRefInfo(left);
+    const rightRefInfo = getDocumentRefInfo(right);
+    if (leftRefInfo && rightRefInfo && leftRefInfo.prefix === rightRefInfo.prefix && leftRefInfo.sequence !== rightRefInfo.sequence) {
+        return (leftRefInfo.sequence - rightRefInfo.sequence) * direction;
+    }
+
+    const leftCreatedAt = getDocumentCreatedAt(left);
+    const rightCreatedAt = getDocumentCreatedAt(right);
+    if (leftCreatedAt !== rightCreatedAt) {
+        return (leftCreatedAt - rightCreatedAt) * direction;
+    }
+
+    return String(left.refNumber || left.id || "").localeCompare(String(right.refNumber || right.id || "")) * direction;
+}
+
+function getDocumentRefInfo(doc) {
+    const refNumber = String(doc?.refNumber || "").trim().toUpperCase();
+    const match = refNumber.match(/^(TL-\d{4}-\d{4})-(\d+)$/);
+    if (!match) {
+        return null;
+    }
+
+    return {
+        prefix: match[1],
+        sequence: Number(match[2])
+    };
 }
 
 function getDocumentDateAt(doc) {
@@ -2387,6 +3566,14 @@ function getDocumentCreatedAt(doc) {
     return 0;
 }
 
+function isSameDocumentId(left, right) {
+    return String(left) === String(right);
+}
+
+function getDocumentById(id) {
+    return state.documents.find(entry => isSameDocumentId(entry.id, id));
+}
+
 function renderDocuments() {
     updateOverviewStats();
 
@@ -2398,7 +3585,7 @@ function renderDocuments() {
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z"></path>
                 </svg>
-                <p>No documents yet. Create your first quote or invoice!</p>
+                <p>${escapeHtml(t("empty_documents"))}</p>
             </div>
         `;
         return;
@@ -2410,7 +3597,7 @@ function renderDocuments() {
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                 </svg>
-                <p>No documents match your current search or filter.</p>
+                <p>${escapeHtml(t("empty_documents_filtered"))}</p>
             </div>
         `;
         return;
@@ -2420,12 +3607,15 @@ function renderDocuments() {
         const date = formatDisplayDate(doc.date);
         const tags = Array.isArray(doc.tags) ? doc.tags : [];
         const isLockedSourceQuote = Boolean(doc.lockedAfterConversion);
+        const creatorLabel = isAdminSession() && doc.createdBy?.displayName
+            ? `${escapeHtml(doc.createdBy.displayName)}${doc.createdBy.username ? ` (@${escapeHtml(doc.createdBy.username)})` : ""}`
+            : "";
         const cardViewId = isLockedSourceQuote ? "" : ` data-view-id="${doc.id}"`;
         const statusBadge = isLockedSourceQuote
-            ? '<span class="doc-lock-badge">Converted Source</span>'
+            ? `<span class="doc-lock-badge">${escapeHtml(t("converted_source"))}</span>`
             : "";
         const legacyBadge = doc.legacyPdfUrl
-            ? '<span class="doc-lock-badge">Legacy PDF Attached</span>'
+            ? `<span class="doc-lock-badge">${escapeHtml(t("legacy_pdf_attached"))}</span>`
             : "";
         const rowAriaLabel = `${doc.type} ${doc.refNumber || "document"} for ${doc.clientName || "unknown client"}`;
 
@@ -2433,12 +3623,13 @@ function renderDocuments() {
             <div class="document-row${isLockedSourceQuote ? " document-row-locked" : ""}"${cardViewId}${isLockedSourceQuote ? "" : ' tabindex="0" role="button"'} aria-label="${escapeHtml(rowAriaLabel)}">
                 <div class="doc-row-main">
                     <div class="doc-row-primary">
-                        <span class="doc-type ${doc.type}">${doc.type}</span>
+                        <span class="doc-type ${doc.type}">${escapeHtml(doc.type === "quote" ? t("quote_singular") : t("invoice_singular"))}</span>
                         <div class="doc-ref">${doc.refNumber}</div>
                     </div>
                     <div class="doc-row-secondary">
                         <div class="doc-client">${escapeHtml(doc.clientName)}</div>
-                        <div class="doc-date">Date ${date}</div>
+                        <div class="doc-date">${escapeHtml(t("date_label"))} ${date}</div>
+                        ${creatorLabel ? `<div class="doc-creator">${escapeHtml(t("created_by"))} ${creatorLabel}</div>` : ""}
                     </div>
                 </div>
                 <div class="doc-row-badges">
@@ -2447,15 +3638,15 @@ function renderDocuments() {
                     ${tags.length ? `<div class="doc-tags">${tags.map(tag => `<span class="doc-tag">${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
                 </div>
                 <div class="doc-row-total">
-                    <span class="doc-total-label">Total</span>
+                    <span class="doc-total-label">${escapeHtml(t("total"))}</span>
                     <div class="doc-total">${formatCurrency(doc.total || 0)}</div>
                 </div>
                 <div class="doc-actions">
-                    ${isLockedSourceQuote ? '<span class="doc-lock-note">Locked after conversion</span>' : `<button type="button" class="doc-action-btn" data-action="edit" data-id="${doc.id}">Edit</button>`}
-                    ${isLockedSourceQuote ? "" : `<button type="button" class="doc-action-btn" data-action="export-pdf" data-id="${doc.id}">Open PDF Preview</button>`}
-                    ${doc.legacyPdfUrl ? `<button type="button" class="doc-action-btn" data-action="view-pdf" data-id="${doc.id}">View PDF</button>` : ""}
-                    ${doc.type === "quote" && !isLockedSourceQuote ? `<button type="button" class="doc-action-btn" data-action="convert" data-id="${doc.id}">Convert to Invoice</button>` : ""}
-                    ${isLockedSourceQuote ? "" : `<button type="button" class="doc-action-btn doc-action-btn-danger" data-action="delete" data-id="${doc.id}">Delete</button>`}
+                    ${isLockedSourceQuote ? `<span class="doc-lock-note">${escapeHtml(t("locked_after_conversion"))}</span>` : `<button type="button" class="doc-action-btn" data-action="edit" data-id="${doc.id}">${escapeHtml(t("edit"))}</button>`}
+                    ${isLockedSourceQuote ? "" : `<button type="button" class="doc-action-btn" data-action="export-pdf" data-id="${doc.id}">${escapeHtml(t("open_pdf_preview"))}</button>`}
+                    ${doc.legacyPdfUrl ? `<button type="button" class="doc-action-btn" data-action="view-pdf" data-id="${doc.id}">${escapeHtml(t("view_pdf"))}</button>` : ""}
+                    ${doc.type === "quote" && !isLockedSourceQuote ? `<button type="button" class="doc-action-btn" data-action="convert" data-id="${doc.id}">${escapeHtml(t("convert_to_invoice"))}</button>` : ""}
+                    ${isLockedSourceQuote ? "" : `<button type="button" class="doc-action-btn doc-action-btn-danger" data-action="delete" data-id="${doc.id}">${escapeHtml(t("delete"))}</button>`}
                 </div>
             </div>
         `;
@@ -2481,10 +3672,11 @@ function setActiveFilter(filter) {
 }
 
 function renderClientOptions() {
-    elements.clientSelect.innerHTML = '<option value="">-- Choose or Add Client --</option><option value="other">Other (manual entry)</option>';
+    elements.clientSelect.innerHTML = `<option value="">${escapeHtml(t("choose_or_add_client"))}</option><option value="other">${escapeHtml(t("other_manual"))}</option>`;
     state.clients.forEach(client => {
         elements.clientSelect.innerHTML += `<option value="${client.id}">${client.name}</option>`;
     });
+    renderClientManagementList();
 }
 
 function onClientSelectChange() {
@@ -2537,31 +3729,35 @@ async function saveClient() {
 
     alert(existing ? "Client already exists; address updated." : "Client saved for future use.");
     renderClientOptions();
+    renderClientManagementList();
 
     const selectedClient = state.clients.find(client => client.name === name);
     elements.clientSelect.value = selectedClient ? selectedClient.id : "";
     updateEditorSummary();
 }
 
-function handleDocumentCardClick(event) {
+async function handleDocumentCardClick(event) {
     const actionButton = event.target.closest("[data-action]");
     if (actionButton) {
-        const docId = Number(actionButton.dataset.id);
+        event.preventDefault();
+        event.stopPropagation();
+
+        const docId = actionButton.dataset.id;
         const action = actionButton.dataset.action;
 
         if (action === "edit") {
             editDocument(docId);
         } else if (action === "export-pdf") {
-            const doc = state.documents.find(entry => entry.id === docId);
+            const doc = getDocumentById(docId);
             if (doc) {
                 openPrintWindow(doc);
             }
         } else if (action === "delete") {
-            deleteDocument(docId);
+            await deleteDocument(docId);
         } else if (action === "convert") {
             convertQuoteToInvoice(docId);
         } else if (action === "view-pdf") {
-            const doc = state.documents.find(entry => entry.id === docId);
+            const doc = getDocumentById(docId);
             if (doc?.legacyPdfUrl) {
                 window.open(`/api/legacy-pdf?documentId=${encodeURIComponent(String(doc.id))}`, "_blank", "noopener,noreferrer");
             }
@@ -2574,7 +3770,7 @@ function handleDocumentCardClick(event) {
         return;
     }
 
-    editDocument(Number(card.dataset.viewId));
+    editDocument(card.dataset.viewId);
 }
 
 function handleDocumentCardKeydown(event) {
@@ -2588,7 +3784,7 @@ function handleDocumentCardKeydown(event) {
     }
 
     event.preventDefault();
-    editDocument(Number(row.dataset.viewId));
+    editDocument(row.dataset.viewId);
 }
 
 function populateFormFromDocument(doc) {
@@ -2627,7 +3823,7 @@ function populateFormFromDocument(doc) {
 }
 
 function editDocument(id) {
-    const doc = state.documents.find(entry => entry.id === id);
+    const doc = getDocumentById(id);
     if (!doc) {
         return;
     }
@@ -2647,7 +3843,7 @@ function editDocument(id) {
 }
 
 async function deleteDocument(id) {
-    const doc = state.documents.find(entry => entry.id === id);
+    const doc = getDocumentById(id);
     if (!doc) {
         return;
     }
@@ -2662,7 +3858,7 @@ async function deleteDocument(id) {
         return;
     }
 
-    const nextDocuments = state.documents.filter(entry => entry.id !== id);
+    const nextDocuments = state.documents.filter(entry => !isSameDocumentId(entry.id, id));
 
     try {
         await saveDocumentsToServer(nextDocuments);
@@ -2673,7 +3869,7 @@ async function deleteDocument(id) {
 }
 
 function convertQuoteToInvoice(id) {
-    const doc = state.documents.find(entry => entry.id === id && entry.type === "quote");
+    const doc = state.documents.find(entry => isSameDocumentId(entry.id, id) && entry.type === "quote");
     if (!doc) {
         return;
     }

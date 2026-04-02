@@ -1,6 +1,6 @@
 # Invoice & Quote System
 
-Static web app for creating quotes and invoices, storing them on the server, and exporting branded PDF-ready documents that match the RG Logistics layout.
+Static web app for creating quotes and invoices, storing them through Vercel API routes, and exporting branded PDF-ready documents.
 
 ## Project Structure
 
@@ -20,112 +20,106 @@ Static web app for creating quotes and invoices, storing them on the server, and
 │   ├── clients.js
 │   ├── debug-blob-write.js
 │   ├── debug-blob.js
-│   └── documents.js
+│   ├── documents.js
+│   ├── legacy-pdf.js
+│   └── upload-legacy-pdf.js
 ├── package.json
 └── README.md
 ```
 
-## Files
+## Core Files
 
-- `index.html`: Main app markup, admin access gate, dashboard, modal editor, and preview containers.
-- `css/styles.css`: App UI, modal layout, document preview, and print/export styling.
-- `js/app.js`: State management, step flow, server sync, line-item logic, preview rendering, and print export.
-- `api/documents.js`: Vercel serverless endpoint for loading and saving quotes and invoices.
-- `api/clients.js`: Vercel serverless endpoint for loading and saving saved clients.
-- `api/_storage.js`: Shared Vercel Blob storage helpers used by the API routes.
-- `api/debug-blob.js`: Optional debug endpoint for confirming deployed Blob mode and token presence.
-- `api/debug-blob-write.js`: Optional debug endpoint for testing a live Blob write with the current deployment config.
-- `package.json`: Runtime dependency declaration for Vercel Blob storage.
-- `assets/rg-letterhead.png`: Letterhead used in quote and invoice output.
-- `assets/rg-footer-wave.png`: Footer wave image used in document output.
-- `assets/david-forman-signature.png`: Signature image used when signature export is enabled.
+- `index.html`: Sign-in gate, admin tools modal, dashboard, document editor, and preview containers.
+- `css/styles.css`: Dashboard layout, admin tools UI, editor styling, and print/export presentation.
+- `js/app.js`: Session state, local role handling, document/client persistence, modal workflow, and preview/export logic.
+- `api/documents.js`: Vercel endpoint for loading and saving quotes and invoices.
+- `api/clients.js`: Vercel endpoint for loading and saving the shared saved-client list.
+- `api/_storage.js`: Shared Vercel Blob helpers for the API layer.
+
+## Roles
+
+This app now has a simple local role model stored in browser storage on each device:
+
+- `Admin`: Can use workspace tools, manage users, manage saved clients, import/export backups, use local test utilities, and see who created each quote or invoice.
+- `User`: Can sign in, create and edit quotes/invoices, save clients from the editor flow, and use normal day-to-day document features without admin-only tools.
+
+The seeded default admin account in code is:
+
+- Username: `admin`
+- Password: `Todos123`
+
+Because the current role system is browser-local, user accounts created on one device do not automatically appear on another device yet.
 
 ## Current Workflow
 
-1. Open the app through Vercel or another local web server.
-2. Enter the admin access code `Todos123`.
-3. Create a new quote or invoice from the dashboard.
-4. Move through the five editor steps:
+1. Open the app through Vercel or a local web server.
+2. Sign in with a local account.
+3. Use `New Quote` or `New Invoice` from the dashboard.
+4. Move through the six editor steps:
    - `Type & Info`
    - `Client Details`
    - `Line Items`
+   - `Keywords`
    - `Items Preview`
    - `Review`
-5. Click any step in the step indicator to jump directly to that part of the modal. Forward jumps still respect validation rules.
-6. On the last step, inspect the final print preview.
-7. Use `Save` to store the quote or invoice without printing, or `Export PDF` to save first and then open the browser print dialog.
-8. Use the floating `Calculator` button any time you want a draggable quick-calculation tool without blocking the page.
+5. Save the document or use `Save & Preview PDF` on the review step.
+6. From the dashboard, edit, preview, convert, search, sort, filter, or delete saved records.
 
 ## Features
 
-- Create, edit, delete, and save quotes and invoices on the server.
-- Export a CSV template and bulk-import rows to create multiple quote or invoice cards at once.
-- Export and import full JSON backups from the settings modal.
-- Convert a saved quote into a new invoice while keeping the source quote in history.
-- Lock converted source quotes so they remain visible in quote history but can no longer be edited or deleted.
-- Search documents by reference number, date, client, type, or tags.
-- Sort documents by document date or created/exported date, ascending or descending.
-- View saved documents in compact interactive rows and click a row to open it for editing.
-- Add tags to documents for filtering and later lookup.
-- Save reusable client records on the server so they remain available across browsers and devices.
-- Use a compact line-item editor where each item collapses into a summary row and expands when selected.
-- Enter line-item totals in USD by default.
-- Optionally enter a line-item total in DOP and convert it automatically to USD using `RD$59 = US$1`.
-- Optionally make the unit price field manually editable instead of deriving it from quantity and total.
-- Track an internal-only line-item cost and automatically calculate the upcharge percentage.
-- Toggle the value summary card between `Pipeline Value` and `Amount Invoiced`.
-- Toggle the signature on or off before export.
-- Keep the saved/exported timestamp aligned to the Step 1 document date, using the same local date shown in the editor.
-- Continue quote/invoice numbering from the highest saved document sequence already in the system.
-- Adjust the trailing digits of the generated reference number manually when needed.
-- Open a draggable floating calculator without blocking the rest of the workspace.
-- Save from Step 5 without exporting, or export through the browser print dialog using the branded quote/invoice layout.
+- Create, edit, delete, and save quotes and invoices.
+- Convert a saved quote into an invoice while keeping the source quote as a locked history record.
+- Save reusable client records and reuse them from the editor.
+- Admin-only client management from the dashboard tools area, including viewing, editing, and deleting saved clients.
+- Admin-only user management for adding local users, resetting passwords, and removing local users.
+- Admin-only document attribution showing which signed-in user created each quote or invoice.
+- Search documents by reference number, date, client, type, or keyword.
+- Sort documents by document date or created/exported date.
+- Export a CSV template and import bulk document rows.
+- Export full JSON backups and import JSON backups.
+- Export selected quotes/invoices as JSON.
+- Fall back to browser-local test mode automatically if the API is unavailable.
+- Clear browser-only local test data without touching server data.
+- Manual or calculated line-item pricing, DOP conversion support, internal pricing toggle, and keyword suggestions.
+- PDF preview window with print/save handled from the preview itself.
 
-## Document Output Notes
+## Admin Tools
 
-- Quotes display `Quote` in the title area.
-- Invoices display `Invoice` in the title area.
-- The document output uses the RG Logistics letterhead and footer assets from the `assets` folder.
-- The printed/exported document remains USD-based even when a line item was entered in DOP.
-- Internal-only pricing fields such as internal cost and upcharge percentage are never shown in the printed/exported document.
-- Signature output depends on `assets/david-forman-signature.png` and the `Include signature on export` option.
+Admin tools currently live in the dashboard `Tools` modal and include:
 
-## Conversion Notes
-
-- Converting a quote creates a new working document from that quote's data.
-- Before saving the converted document, the user can still change the document type back to `Quote` if needed.
-- After the converted document is saved, the original quote remains in quote history as a locked source record.
-- Locked source quotes are preserved for reference and cannot be edited or deleted.
+- User management
+- Client record management
+- Editor preferences
+- CSV import/export tools
+- JSON backup import/export
+- Selective JSON export
+- Local testing utilities
 
 ## Storage Notes
 
-- Documents and saved clients are loaded and saved through the Vercel `/api` routes.
-- The API routes persist data in Vercel Blob storage as JSON snapshots.
-- CSV import is handled in the browser and then saved to the same server-backed document store.
-- Blob access defaults to `public`; if your Vercel Blob store is private, set `BLOB_ACCESS_MODE=private`.
-- If you need to verify the deployed Blob configuration, you can temporarily check `/api/debug-blob` to confirm the active access mode and that a token is present.
-- If you need to verify live Blob write behavior, you can temporarily check `/api/debug-blob-write` to test a tiny write with the deployment's current access mode.
-- Because the data is stored server-side, quotes, invoices, and saved clients can be shared across browsers and devices.
-- This setup requires `BLOB_READ_WRITE_TOKEN` to be configured in Vercel for the deployed project.
+- Documents and clients are loaded and saved through `/api/documents` and `/api/clients`.
+- The API routes persist server data in Vercel Blob storage as JSON snapshots.
+- If the API is unavailable, the app switches to browser-local mode for testing.
+- Browser-local test data can be cleared without affecting live server data.
+- Browser-local user accounts and roles are separate from the server-backed document/client data.
 
-## Git / Deployment Notes
+## Output Notes
 
-- This project has been initialized as a local git repository with a `main` branch.
-- The intended public repository URL is `https://github.com/ejbronze/invoice-quote-system`.
-- The app is now structured for straightforward Vercel static hosting with `index.html` at the site root.
-- The deployed app now also depends on Vercel serverless functions in `api/` plus Vercel Blob storage for persistence.
-- Because this is a static HTML/CSS/JS app, it remains compatible with other simple static hosting workflows too.
+- Quotes and invoices use the branded RG letterhead/footer assets from `assets/`.
+- Printed/exported documents remain USD-based even when a line item was entered in DOP.
+- Internal pricing fields never appear in the printed/exported document.
+- PO numbers are omitted from the final preview/output when empty or `N/A`.
+- `Bill To` and `Consignee` are shown side by side in the document output.
 
-## Print Notes
+## Deployment Notes
 
-- The app opens the browser print dialog to generate the PDF.
-- Final PDF appearance can still vary slightly by browser or print settings.
-- The app is tuned so the preview and print output stay closely aligned, but browser print scaling can still affect the final result.
+- The app can run as a static HTML/CSS/JS site with Vercel serverless functions in `api/`.
+- Server persistence requires the Vercel Blob token to be configured.
+- The local role model is currently client-side only, so a future backend auth layer would be needed for true multi-device account management.
 
 ## Future Improvements
 
-- Add clickable edit anchors inside previews so users can jump straight to the matching editor section.
-- Add stronger tag management such as quick-pick suggestions or saved common tags.
-- Support configurable exchange rates instead of a fixed `RD$59 = US$1`.
-- Add optional duplicate-document actions for quickly reusing a previous quote or invoice.
-- Add import/export for saved browser data so documents can be backed up or moved to another device.
+- Move from browser-local roles to real shared authentication and server-backed user management.
+- Add stronger admin reporting for document activity and recent user actions.
+- Add configurable exchange rates instead of the fixed DOP/USD value.
+- Add duplicate-document actions for quickly reusing previous work.

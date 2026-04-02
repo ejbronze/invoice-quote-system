@@ -9,61 +9,99 @@
 <body>
     <div class="access-gate" id="accessGate">
         <div class="access-card">
-            <span class="eyebrow">Admin Verification</span>
-            <h1>Admin Dashboard Access</h1>
-            <p>Enter the admin verification code to open the invoice and quote dashboard.</p>
+            <span class="eyebrow">Workspace Sign In</span>
+            <h1>Open The Dashboard</h1>
+            <p>Sign in with a local account to create, edit, and manage quotes and invoices.</p>
             <form class="access-form" id="accessForm">
-                <label for="accessCode">Verification Code</label>
-                <input type="password" id="accessCode" autocomplete="current-password" placeholder="Enter access code" required>
+                <label for="accessUsername">Username</label>
+                <input type="text" id="accessUsername" autocomplete="username" placeholder="Enter username" required>
+                <label for="accessCode">Password</label>
+                <input type="password" id="accessCode" autocomplete="current-password" placeholder="Enter password" required>
                 <p class="access-error" id="accessError" role="alert" hidden>That code is incorrect. Try again.</p>
-                <button class="btn btn-primary" type="submit">Open Dashboard</button>
+                <button class="btn btn-primary" id="accessSubmitBtn" type="submit">
+                    <span class="access-submit-label">Sign In</span>
+                </button>
             </form>
         </div>
     </div>
 
-    <main class="container app-shell app-shell-locked" id="adminAppShell" aria-hidden="true" hidden>
-        <section class="workspace-shell">
-            <div class="workspace-intro">
-                <div class="hero-copy">
-                    <span class="eyebrow">Document Workspace</span>
-                    <h1>Invoices and Quotes, all in one place.</h1>
-                    <p>Create polished documents, convert quotes into invoices, and keep your history organized without the extra clutter.</p>
-                </div>
-                <div class="hero-actions" aria-label="Primary actions">
-                    <div class="hero-action-grid">
-                        <button class="btn btn-primary" id="newQuoteBtn" type="button">New Quote</button>
-                        <button class="btn btn-success" id="newInvoiceBtn" type="button">New Invoice</button>
-                    </div>
-                    <input id="importBackupInput" type="file" accept=".json,application/json" hidden>
-                    <p class="hero-helper" id="importDocumentStatus">Use JSON backup tools to restore deleted records or move data between environments.</p>
-                </div>
-            </div>
+    <div class="session-loader" id="sessionLoader" hidden aria-hidden="true">
+        <div class="session-loader-card" role="status" aria-live="polite">
+            <div class="session-loader-spinner" aria-hidden="true"></div>
+            <span class="eyebrow">Loading Session</span>
+            <h2>Opening your workspace</h2>
+            <p id="sessionLoaderMessage">Signing in and preparing the dashboard...</p>
+        </div>
+    </div>
 
-            <aside class="overview-panel" aria-label="Workspace snapshot">
-                <div class="overview-panel-head">
-                    <span class="overview-kicker">Workspace Snapshot</span>
-                    <p>Quick counts and value totals, tucked into one neat panel.</p>
+    <main class="container app-shell app-shell-locked" id="adminAppShell" aria-hidden="true" hidden>
+        <section class="app-topbar" aria-label="Session controls">
+            <div class="app-topbar-copy">
+                <span class="app-topbar-kicker">Workspace</span>
+                <strong>Invoice & Quote Dashboard</strong>
+            </div>
+            <div class="app-topbar-actions">
+                <label class="language-picker">
+                    <span class="visually-hidden" id="languagePickerLabel">Language</span>
+                    <select id="languageSelect" aria-labelledby="languagePickerLabel">
+                        <option value="en">English</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Français</option>
+                    </select>
+                </label>
+                <div class="session-badge" id="sessionBadge" hidden></div>
+                <button class="session-trigger" id="endSessionBtn" type="button">
+                    End Session
+                </button>
+            </div>
+        </section>
+
+        <section class="workspace-shell">
+            <div class="workspace-hero">
+                <div class="workspace-hero-main">
+                    <span class="eyebrow">Document Workspace</span>
+                    <div class="workspace-hero-headline">
+                        <div class="hero-copy">
+                            <h1>Quotes and invoices without the clutter.</h1>
+                            <p>Build polished documents, convert quotes fast, and keep your day moving from one clean workspace.</p>
+                        </div>
+                        <div class="hero-side-column">
+                            <div class="overview-panel" aria-label="Workspace snapshot">
+                                <div class="overview-panel-head">
+                                    <span class="overview-kicker">Snapshot</span>
+                                </div>
+                                <div class="overview-grid">
+                                    <article class="stat-card stat-card-mini">
+                                        <span class="stat-label">Documents</span>
+                                        <strong class="stat-value" id="totalDocumentsStat">0</strong>
+                                    </article>
+                                    <article class="stat-card stat-card-mini">
+                                        <span class="stat-label">Quotes</span>
+                                        <strong class="stat-value" id="quoteCountStat">0</strong>
+                                    </article>
+                                    <article class="stat-card stat-card-mini">
+                                        <span class="stat-label">Invoices</span>
+                                        <strong class="stat-value" id="invoiceCountStat">0</strong>
+                                    </article>
+                                    <button class="stat-card stat-card-toggle" id="valueToggleCard" type="button" aria-pressed="false">
+                                        <span class="stat-label" id="totalValueLabel">Pipeline Value</span>
+                                        <strong class="stat-value" id="totalValueStat">$0.00</strong>
+                                        <span class="stat-meta" id="totalValueHint">Tap to view invoiced amount</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="hero-actions" aria-label="Primary actions">
+                                <div class="hero-action-grid">
+                                    <button class="btn btn-primary" id="newQuoteBtn" type="button">New Quote</button>
+                                    <button class="btn btn-success" id="newInvoiceBtn" type="button">New Invoice</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="overview-grid">
-                    <article class="stat-card stat-card-mini">
-                        <span class="stat-label">Total Documents</span>
-                        <strong class="stat-value" id="totalDocumentsStat">0</strong>
-                    </article>
-                    <article class="stat-card stat-card-mini">
-                        <span class="stat-label">Quotes</span>
-                        <strong class="stat-value" id="quoteCountStat">0</strong>
-                    </article>
-                    <article class="stat-card stat-card-mini">
-                        <span class="stat-label">Invoices</span>
-                        <strong class="stat-value" id="invoiceCountStat">0</strong>
-                    </article>
-                    <button class="stat-card stat-card-toggle" id="valueToggleCard" type="button" aria-pressed="false">
-                        <span class="stat-label" id="totalValueLabel">Pipeline Value</span>
-                        <strong class="stat-value" id="totalValueStat">$0.00</strong>
-                        <span class="stat-meta" id="totalValueHint">Tap to view invoiced amount</span>
-                    </button>
-                </div>
-            </aside>
+                <input id="importBackupInput" type="file" accept=".json,application/json" hidden>
+                <p class="hero-helper hero-status" id="importDocumentStatus">Use JSON backup tools to restore deleted records or move data between environments.</p>
+            </div>
         </section>
 
         <section class="dashboard">
@@ -119,6 +157,44 @@
             <div class="modal-body settings-modal-body">
                 <p class="settings-copy">Use CSV import for bulk document creation, or JSON tools for full backup and restore.</p>
                 <div class="settings-grid">
+                <div class="settings-panel">
+                    <div class="settings-panel-header">
+                        <h4>User Management</h4>
+                        <p>Create local accounts, assign roles, reset passwords, and remove users who should not access the workspace.</p>
+                    </div>
+                    <div class="settings-user-form">
+                        <label class="form-group">
+                            <span>Display Name</span>
+                            <input type="text" id="newUserDisplayName" placeholder="For example, David">
+                        </label>
+                        <label class="form-group">
+                            <span>Username</span>
+                            <input type="text" id="newUserUsername" placeholder="For example, david">
+                        </label>
+                        <label class="form-group">
+                            <span>Temporary Password</span>
+                            <input type="text" id="newUserPassword" placeholder="Create a password">
+                        </label>
+                        <label class="form-group">
+                            <span>Role</span>
+                            <select id="newUserRole">
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="settings-actions">
+                        <button class="btn btn-secondary" id="addUserBtn" type="button">Add User</button>
+                    </div>
+                    <div class="user-list" id="userManagementList"></div>
+                </div>
+                <div class="settings-panel">
+                    <div class="settings-panel-header">
+                        <h4>Client Records</h4>
+                        <p>View all saved clients, update their details, or remove outdated entries from the shared client list.</p>
+                    </div>
+                    <div class="client-management-list" id="clientManagementList"></div>
+                </div>
                 <div class="settings-panel">
                     <div class="settings-panel-header">
                         <h4>Editor Preferences</h4>
