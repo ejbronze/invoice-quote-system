@@ -729,6 +729,7 @@ function applyTranslations() {
     elements.newInvoiceBtn.textContent = t("new_invoice");
     if (!elements.importDocumentStatus.dataset.customized) {
         elements.importDocumentStatus.textContent = t("import_status_default");
+        elements.importDocumentStatus.hidden = true;
     }
     setElementText(".overview-kicker", t("snapshot"));
     setElementText(elements.totalDocumentsStat.previousElementSibling, t("documents"));
@@ -2731,7 +2732,9 @@ function renderDocumentsMessage(message) {
 function setImportStatus(message, isError = false) {
     elements.importDocumentStatus.textContent = message;
     elements.importDocumentStatus.classList.toggle("hero-helper-error", isError);
-    elements.importDocumentStatus.dataset.customized = message === t("import_status_default") ? "" : "true";
+    const isDefaultMessage = message === t("import_status_default");
+    elements.importDocumentStatus.dataset.customized = isDefaultMessage ? "" : "true";
+    elements.importDocumentStatus.hidden = isDefaultMessage;
 }
 
 function readLocalDataset(storageKey, fallbackValue) {

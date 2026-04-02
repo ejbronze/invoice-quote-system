@@ -30,6 +30,7 @@ SantoSync is a premium quote-and-invoice workspace for modern trade teams. It co
 │   ├── debug-blob.js
 │   ├── documents.js
 │   ├── legacy-pdf.js
+│   ├── workspace.js
 │   └── upload-legacy-pdf.js
 ├── package.json
 └── README.md
@@ -43,7 +44,8 @@ SantoSync is a premium quote-and-invoice workspace for modern trade teams. It co
 - `js/app.js`: Session handling, local roles, translations, document workflow, exports, client persistence, and admin utilities.
 - `api/documents.js`: Vercel API route for saving and loading quotes and invoices.
 - `api/clients.js`: Vercel API route for saving and loading shared client records.
-- `api/_storage.js`: Shared Vercel Blob helpers for server persistence.
+- `api/workspace.js`: Vercel API route for saving and loading shared workspace state.
+- `api/_storage.js`: Shared Vercel Blob helpers and dataset normalizers for server persistence.
 
 ## Brand System
 
@@ -79,7 +81,7 @@ Saved fields:
 - Website
 - Tax or registration ID
 
-The Company Profile is stored locally in browser storage and is used to populate:
+The Company Profile is stored in the shared workspace dataset when the API is available, and falls back to browser storage during local-only testing. It is used to populate:
 
 - document preview headers
 - print/PDF output
@@ -87,7 +89,7 @@ The Company Profile is stored locally in browser storage and is used to populate
 
 ## Roles
 
-SantoSync currently uses a browser-local role model on each device:
+SantoSync uses a simple username/password role model inside the app:
 
 - `Admin`: Can access settings, company profile, user management, client management, imports/exports, local test tools, issue inbox, and admin-only visibility such as creator attribution.
 - `User`: Can sign in, create quotes/invoices, edit documents, save clients, and use the normal workspace without admin-only controls.
@@ -97,7 +99,7 @@ Default seeded admin account:
 - Username: `admin`
 - Password: `Todos123`
 
-Because this role system is local to the browser, users created on one computer do not automatically sync to another device yet.
+When the app is online with the API available, user accounts are stored in the shared workspace dataset so they can be seen across devices. During local-only testing, they fall back to browser storage.
 
 ## Main Features
 
@@ -108,7 +110,8 @@ Because this role system is local to the browser, users created on one computer 
 - Admin-only company profile management
 - Per-user language preferences for English, Spanish, and French
 - Client profiles that also preserve consignee name and address
-- Local issue reporting with optional screenshot upload
+- Pending items cart with a dedicated create-item popup
+- Issue reporting with optional screenshot upload
 - Admin issue inbox with delete controls
 - Local fallback mode when the API is unavailable
 - JSON backup, restore, and selective export tools
@@ -133,14 +136,16 @@ Server-backed:
 
 - Quotes and invoices through `/api/documents`
 - Shared saved clients through `/api/clients`
+- Shared workspace state through `/api/workspace`
+  - user accounts and roles
+  - issue inbox/reporting
+  - company profile
+  - pending items cart
 
 Browser-local:
 
-- User accounts and roles
 - Current signed-in session
-- Language preference per user
-- Issue inbox/reporting
-- Company profile
+- Local fallback copies of workspace data when the API is unavailable
 - Local fallback test documents/clients when the API is unavailable
 
 ## Local Development
@@ -163,13 +168,13 @@ When the API is unavailable, SantoSync automatically switches to browser-local t
 
 - The app is a static HTML/CSS/JS frontend with Vercel serverless functions in `api/`
 - Persistent server data depends on Vercel Blob configuration
-- Browser-local roles and issue reporting are not yet shared across devices
-- A future backend auth layer would be needed for true multi-device account management
+- Shared workspace data now syncs online through `/api/workspace`
+- The active signed-in session still remains browser-local by design
+- A future backend auth layer would still be needed for stronger account security and password management
 
 ## Future Improvements
 
-- Move roles and auth to a shared backend
-- Move issue reporting and inbox storage to the server
+- Move roles and auth to a stronger shared backend
 - Add a richer company profile page with logo upload and legal footer options
 - Add document activity history and admin reporting
 - Add configurable exchange rates and tax profiles
