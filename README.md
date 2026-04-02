@@ -111,6 +111,7 @@ When the app is online with the API available, user accounts are stored in the s
 
 - Create, edit, delete, and convert quotes and invoices
 - Daily reference numbering using the app’s document naming convention
+- Reference numbering now resolves against the selected local document date and checks existing same-day refs before choosing the next sequence
 - Admin-only user management
 - Admin-only client record management
 - Admin-only company profile management

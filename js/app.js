@@ -3479,6 +3479,30 @@ function getLocalDateInputValue(dateValue = new Date()) {
     return `${year}-${month}-${day}`;
 }
 
+function parseLocalDateValue(dateValue = elements.docDate?.value || new Date()) {
+    if (dateValue instanceof Date) {
+        return new Date(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate());
+    }
+
+    const normalizedValue = String(dateValue || "").trim();
+    const dateOnlyMatch = normalizedValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dateOnlyMatch) {
+        return new Date(
+            Number(dateOnlyMatch[1]),
+            Number(dateOnlyMatch[2]) - 1,
+            Number(dateOnlyMatch[3])
+        );
+    }
+
+    const parsedDate = new Date(normalizedValue || Date.now());
+    if (Number.isNaN(parsedDate.getTime())) {
+        const fallback = new Date();
+        return new Date(fallback.getFullYear(), fallback.getMonth(), fallback.getDate());
+    }
+
+    return parsedDate;
+}
+
 function formatCurrency(amount) {
     return new Intl.NumberFormat(getCurrentLocale(), {
         style: "currency",
@@ -3739,16 +3763,17 @@ function handleKeywordSuggestionClick(event) {
 }
 
 function getRefPrefix(dateValue = elements.docDate?.value || new Date()) {
-    const date = dateValue ? new Date(dateValue) : new Date();
+    const date = parseLocalDateValue(dateValue);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     return `TL-${year}-${month}${day}`;
 }
 
-function getNextRefSequence(dateValue = elements.docDate?.value || new Date()) {
+function getUsedRefNumbers(dateValue = elements.docDate?.value || new Date(), excludeDocumentId = null) {
     const prefix = getRefPrefix(dateValue);
-    const usedNumbers = state.documents
+    return state.documents
+        .filter(doc => excludeDocumentId === null || !isSameDocumentId(doc.id, excludeDocumentId))
         .map(doc => {
             const match = String(doc.refNumber || "").toUpperCase().match(/^TL-\d{4}-\d{4}-(\d+)$/);
             if (!match) {
@@ -3759,6 +3784,10 @@ function getNextRefSequence(dateValue = elements.docDate?.value || new Date()) {
         })
         .filter(number => Number.isInteger(number) && number > 0)
         .sort((left, right) => left - right);
+}
+
+function getNextRefSequence(dateValue = elements.docDate?.value || new Date(), excludeDocumentId = null) {
+    const usedNumbers = getUsedRefNumbers(dateValue, excludeDocumentId);
 
     let nextSequence = 1;
     for (const usedNumber of usedNumbers) {
@@ -3775,11 +3804,22 @@ function getNextRefSequence(dateValue = elements.docDate?.value || new Date()) {
     return String(nextSequence).padStart(2, "0");
 }
 
+function getAvailableRefSequence(dateValue = elements.docDate?.value || new Date(), preferredSequence = "", excludeDocumentId = null) {
+    const usedNumbers = new Set(getUsedRefNumbers(dateValue, excludeDocumentId));
+    const normalizedPreferred = Number.parseInt(String(preferredSequence || "").replace(/\D/g, ""), 10);
+    if (Number.isInteger(normalizedPreferred) && normalizedPreferred > 0 && !usedNumbers.has(normalizedPreferred)) {
+        return String(normalizedPreferred).padStart(2, "0");
+    }
+
+    return getNextRefSequence(dateValue, excludeDocumentId);
+}
+
 function handleRefNumberInput() {
-    const prefix = getRefPrefix();
+    const dateValue = elements.docDate?.value || new Date();
+    const prefix = getRefPrefix(dateValue);
     const digitSuffix = elements.refNumber.value.replace(/\D/g, "").slice(-2);
-    const fallbackSuffix = getNextRefSequence();
-    elements.refNumber.value = `${prefix}-${digitSuffix || fallbackSuffix}`;
+    const fallbackSuffix = getAvailableRefSequence(dateValue, digitSuffix, state.editingDocumentId);
+    elements.refNumber.value = `${prefix}-${fallbackSuffix}`;
     updateEditorSummary();
 }
 
@@ -3793,9 +3833,11 @@ function generateRefNumber() {
         return;
     }
 
-    const prefix = getRefPrefix();
-    const existingMatch = String(elements.refNumber.value).match(new RegExp(`^${prefix}-(\\d{1,2})$`));
-    const suffix = existingMatch ? existingMatch[1].padStart(2, "0") : getNextRefSequence();
+    const dateValue = elements.docDate?.value || new Date();
+    const prefix = getRefPrefix(dateValue);
+    const existingMatch = String(elements.refNumber.value).match(/^TL-\d{4}-\d{4}-(\d{1,2})$/);
+    const preferredSuffix = existingMatch ? existingMatch[1] : "";
+    const suffix = getAvailableRefSequence(dateValue, preferredSuffix, state.editingDocumentId);
     elements.refNumber.value = `${prefix}-${suffix}`;
 }
 
