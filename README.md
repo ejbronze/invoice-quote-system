@@ -1,20 +1,28 @@
-# Veloris
+# SantoSync
 
-Veloris is a premium quote-and-invoice workspace for creating polished commercial documents, storing them through Vercel API routes, and exporting branded PDF-ready output.
+SantoSync is a premium quote-and-invoice workspace for modern trade teams. It combines document creation, client history, per-user preferences, admin tools, and branded export output in one polished operational dashboard.
 
-## Project Structure
+## Brand Identity
+
+- Name: `SantoSync`
+- Positioning: Premium workflow sync for quotes, invoices, and trade operations
+- Core feel: Coordinated, modern, calm, and reliable
+- Developer: Edwin Jaquez
+- Studio: Palmchat Innovations Lab
+- Legal credit: Palmchat Innovations LLC NYC
+
+## Product Structure
 
 ```text
 .
 ├── assets/
-│   ├── david-forman-signature.png
-│   ├── rg-footer-wave.png
-│   └── rg-letterhead.png
+│   └── david-forman-signature.png
 ├── css/
 │   └── styles.css
 ├── index.html
 ├── js/
-│   └── app.js
+│   ├── app.js
+│   └── brand.js
 ├── api/
 │   ├── _storage.js
 │   ├── clients.js
@@ -29,112 +37,140 @@ Veloris is a premium quote-and-invoice workspace for creating polished commercia
 
 ## Core Files
 
-- `index.html`: Sign-in gate, admin tools modal, dashboard, document editor, and preview containers.
-- `css/styles.css`: Dashboard layout, admin tools UI, editor styling, and print/export presentation.
-- `js/app.js`: Session state, local role handling, document/client persistence, modal workflow, and preview/export logic.
-- `api/documents.js`: Vercel endpoint for loading and saving quotes and invoices.
-- `api/clients.js`: Vercel endpoint for loading and saving the shared saved-client list.
-- `api/_storage.js`: Shared Vercel Blob helpers for the API layer.
+- `index.html`: App shell, auth screens, dashboard, editor flow, admin tools, issue reporting, and company profile surface.
+- `css/styles.css`: SantoSync UI system, dashboard layout, document styling, modal patterns, and print/export presentation.
+- `js/brand.js`: Centralized brand config, SantoSync logo SVG system, and theme token application.
+- `js/app.js`: Session handling, local roles, translations, document workflow, exports, client persistence, and admin utilities.
+- `api/documents.js`: Vercel API route for saving and loading quotes and invoices.
+- `api/clients.js`: Vercel API route for saving and loading shared client records.
+- `api/_storage.js`: Shared Vercel Blob helpers for server persistence.
+
+## Brand System
+
+The SantoSync brand is centralized in `js/brand.js`.
+
+It currently defines:
+
+- Brand name and tagline
+- Developer and company credits
+- Hero, onboarding, session, and about copy
+- Primary brand colors
+- Display and UI typography
+- Reusable SVG logo rendering
+
+Logo system:
+
+- Wordmark: SantoSync logotype with product tagline
+- Icon: Rounded square sync mark
+- Monogram: Compact SVG mark used in splash, auth, navbar, and document branding
+- Lockup: Icon plus name/tagline combination for brand surfaces
+
+## Company Profile
+
+Admins can manage a Company Profile inside the app. This profile is used in quote and invoice outputs.
+
+Saved fields:
+
+- Company name
+- Tagline
+- Address
+- Email
+- Phone
+- Website
+- Tax or registration ID
+
+The Company Profile is stored locally in browser storage and is used to populate:
+
+- document preview headers
+- print/PDF output
+- company contact/footer identity in exports
 
 ## Roles
 
-This app now has a simple local role model stored in browser storage on each device:
+SantoSync currently uses a browser-local role model on each device:
 
-- `Admin`: Can use workspace tools, manage users, manage saved clients, import/export backups, use local test utilities, and see who created each quote or invoice.
-- `User`: Can sign in, create and edit quotes/invoices, save clients from the editor flow, and use normal day-to-day document features without admin-only tools.
+- `Admin`: Can access settings, company profile, user management, client management, imports/exports, local test tools, issue inbox, and admin-only visibility such as creator attribution.
+- `User`: Can sign in, create quotes/invoices, edit documents, save clients, and use the normal workspace without admin-only controls.
 
-The seeded default admin account in code is:
+Default seeded admin account:
 
 - Username: `admin`
 - Password: `Todos123`
 
-Because the current role system is browser-local, user accounts created on one device do not automatically appear on another device yet.
+Because this role system is local to the browser, users created on one computer do not automatically sync to another device yet.
 
-## Brand Notes
+## Main Features
 
-- `Veloris` is a coined name intended to suggest velocity, elegance, and reliability.
-- The app now includes a branded splash screen, branded login/session transitions, and an `About Veloris` surface for product and developer context.
-- Developer credit in-app points to Palmchat Innovations Lab / Palmchat Innovations LLC NYC and Edwin Jaquez as the product designer and developer.
+- Create, edit, delete, and convert quotes and invoices
+- Daily reference numbering using the app’s document naming convention
+- Admin-only user management
+- Admin-only client record management
+- Admin-only company profile management
+- Per-user language preferences for English, Spanish, and French
+- Client profiles that also preserve consignee name and address
+- Local issue reporting with optional screenshot upload
+- Admin issue inbox with delete controls
+- Local fallback mode when the API is unavailable
+- JSON backup, restore, and selective export tools
+- CSV template export and CSV import
+- Calculator inside the document editor
+- Branded splash, auth, session-loading, about, and dashboard identity
+- Branded print/PDF preview output with SantoSync company identity
 
-## Current Workflow
+## Document Output Rules
 
-1. Open the app through Vercel or a local web server.
-2. Sign in with a local account.
-3. Use `New Quote` or `New Invoice` from the dashboard.
-4. Move through the six editor steps:
-   - `Type & Info`
-   - `Client Details`
-   - `Line Items`
-   - `Keywords`
-   - `Items Preview`
-   - `Review`
-5. Use the calculator launcher from inside the document editor whenever you need quick math during document entry.
-6. Save the document or use `Save & Preview PDF` on the review step.
-7. From the dashboard, edit, preview, convert, search, sort, filter, or delete saved records.
+- Quotes use `For:` and `Reference No.`
+- Quotes do not render consignee information in final output
+- Invoices can render `Bill To` and `Consignee`
+- PO numbers are omitted when blank or set to `N/A`
+- Printed/exported documents use the active Company Profile identity
+- Internal-only pricing fields never appear in the exported document
+- PDF preview opens first, and printing happens from that preview window
 
-## Features
+## Local Storage vs Server Storage
 
-- Create, edit, delete, and save quotes and invoices.
-- Convert a saved quote into an invoice while keeping the source quote as a locked history record.
-- Save reusable client records and reuse them from the editor.
-- Admin-only client management from the dashboard tools area, including viewing, editing, and deleting saved clients.
-- Admin-only user management for adding local users, resetting passwords, and removing local users.
-- Admin-only document attribution showing which signed-in user created each quote or invoice.
-- Branded `Veloris` splash, login, and session-loading moments to give the product a more premium identity.
-- A streamlined top navbar showing the signed-in user, a hamburger menu for `Settings` and `Sign out`, and an admin-only mailbox icon for incoming issue reports.
-- Search documents by reference number, date, client, type, or keyword.
-- Sort documents by document date or created/exported date.
-- Open the floating calculator from inside the document editor while preparing quotes and invoices. The widget stays above the editor modal so it remains usable during document entry.
-- Export a CSV template and import bulk document rows.
-- Export full JSON backups and import JSON backups.
-- Export selected quotes/invoices as JSON.
-- Fall back to browser-local test mode automatically if the API is unavailable.
-- Clear browser-only local test data without touching server data.
-- Manual or calculated line-item pricing, DOP conversion support, internal pricing toggle, and keyword suggestions.
-- PDF preview window with print/save handled from the preview itself.
-- Footer branding for Palmchat Innovations Lab / Palmchat Innovations LLC NYC with a `Submit / Report Issues` flow for users.
-- An `About Veloris` modal with brand meaning, product context, and developer information for Edwin Jaquez.
-- Issue report modal with optional screenshot attachment and an admin inbox for reviewing submitted bug reports.
+Server-backed:
 
-## Admin Tools
+- Quotes and invoices through `/api/documents`
+- Shared saved clients through `/api/clients`
 
-Admin tools currently live in the dashboard `Tools` modal and include:
+Browser-local:
 
-- User management
-- Client record management
-- Editor preferences
-- CSV import/export tools
-- JSON backup import/export
-- Selective JSON export
-- Local testing utilities
+- User accounts and roles
+- Current signed-in session
+- Language preference per user
+- Issue inbox/reporting
+- Company profile
+- Local fallback test documents/clients when the API is unavailable
 
-## Storage Notes
+## Local Development
 
-- Documents and clients are loaded and saved through `/api/documents` and `/api/clients`.
-- The API routes persist server data in Vercel Blob storage as JSON snapshots.
-- If the API is unavailable, the app switches to browser-local mode for testing.
-- Browser-local test data can be cleared without affecting live server data.
-- Browser-local user accounts and roles are separate from the server-backed document/client data.
-- The issue-report inbox is currently browser-local as well, so reports are not yet shared across devices until a server-backed reporting layer is added.
+Run a static local server for safe UI testing:
 
-## Output Notes
+```bash
+python3 -m http.server 3000
+```
 
-- Quotes and invoices use the branded RG letterhead/footer assets from `assets/`.
-- Printed/exported documents remain USD-based even when a line item was entered in DOP.
-- Internal pricing fields never appear in the printed/exported document.
-- PO numbers are omitted from the final preview/output when empty or `N/A`.
-- Invoice output shows `Bill To` and `Consignee` side by side when applicable.
-- Quote output uses `For:` and `Reference No.` and omits consignee details from the final document.
+Then open:
+
+```text
+http://127.0.0.1:3000
+```
+
+When the API is unavailable, SantoSync automatically switches to browser-local test mode.
 
 ## Deployment Notes
 
-- The app can run as a static HTML/CSS/JS site with Vercel serverless functions in `api/`.
-- Server persistence requires the Vercel Blob token to be configured.
-- The local role model is currently client-side only, so a future backend auth layer would be needed for true multi-device account management.
+- The app is a static HTML/CSS/JS frontend with Vercel serverless functions in `api/`
+- Persistent server data depends on Vercel Blob configuration
+- Browser-local roles and issue reporting are not yet shared across devices
+- A future backend auth layer would be needed for true multi-device account management
 
 ## Future Improvements
 
-- Move from browser-local roles to real shared authentication and server-backed user management.
-- Add stronger admin reporting for document activity and recent user actions.
-- Add configurable exchange rates instead of the fixed DOP/USD value.
-- Add duplicate-document actions for quickly reusing previous work.
+- Move roles and auth to a shared backend
+- Move issue reporting and inbox storage to the server
+- Add a richer company profile page with logo upload and legal footer options
+- Add document activity history and admin reporting
+- Add configurable exchange rates and tax profiles
+- Add reusable brand themes per company/account

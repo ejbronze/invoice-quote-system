@@ -23,7 +23,10 @@ const state = {
     userAccounts: [],
     showInternalPricing: false,
     dataMode: "server",
-    issueReports: []
+    workspaceDataMode: "server",
+    issueReports: [],
+    companyProfile: null,
+    savedItems: []
 };
 
 const DOP_PER_USD = 59;
@@ -39,6 +42,8 @@ const DEFAULT_ADMIN_USER = Object.freeze({
 const USER_ACCOUNTS_STORAGE_KEY = "todosUserAccounts";
 const CURRENT_SESSION_STORAGE_KEY = "todosCurrentSession";
 const ISSUE_REPORTS_STORAGE_KEY = "todosIssueReports";
+const COMPANY_PROFILE_STORAGE_KEY = "santosyncCompanyProfile";
+const SAVED_ITEMS_STORAGE_KEY = "santosyncSavedItems";
 const DEFAULT_ACCESS_ERROR_MESSAGE = "That username or password is incorrect. Try again.";
 const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
 const BRAND_SPLASH_MIN_MS = 1100;
@@ -54,14 +59,39 @@ const LANGUAGE_LOCALES = {
     es: "es-DO",
     fr: "fr-FR"
 };
+const BRAND = window.SANTO_BRAND || {
+    name: "SantoSync",
+    studioName: "Palmchat Innovations Lab",
+    legalName: "Palmchat Innovations LLC NYC",
+    developerName: "Edwin Jaquez",
+    tagline: "Premium workflow sync for quotes, invoices, and trade operations.",
+    heroTitle: "Trade documents, tuned to move with you.",
+    heroCopy: "Build premium quotes and invoices, keep teams aligned, and move client-facing paperwork through one polished operational workspace.",
+    onboardingTitle: "Enter SantoSync",
+    onboardingCopy: "Sign in to prepare polished quotes, confident invoices, and a more unified back-office workflow.",
+    sessionTitle: "Opening SantoSync",
+    sessionMessage: "Signing in and syncing your operational workspace...",
+    aboutMeaning: "SantoSync is a coined product name designed to feel premium, steady, and coordinated.",
+    aboutProduct: "SantoSync is a modern document and operations workspace for teams that need quotes, invoices, company identity, and day-to-day workflow details to stay aligned.",
+    aboutDeveloper: "Created by Edwin Jaquez through Palmchat Innovations Lab under Palmchat Innovations LLC NYC."
+};
+const DEFAULT_COMPANY_PROFILE = Object.freeze({
+    companyName: "SantoSync",
+    tagline: "Premium workflow sync for quotes, invoices, and trade operations.",
+    address: "Santo Domingo, Dominican Republic",
+    email: "hello@santosync.com",
+    phone: "+1 (809) 555-0110",
+    website: "www.santosync.com",
+    taxId: "Registration Pending"
+});
 const TRANSLATIONS = {
     en: {
         language_name: "English",
         role_admin: "Admin",
         role_user: "User",
         login_kicker: "Workspace Sign In",
-        login_title: "Enter Veloris",
-        login_copy: "Sign in with a local account to create, edit, and manage polished quotes and invoices.",
+        login_title: BRAND.onboardingTitle,
+        login_copy: BRAND.onboardingCopy,
         username: "Username",
         username_placeholder: "Enter username",
         password: "Password",
@@ -69,10 +99,10 @@ const TRANSLATIONS = {
         login_error: "That username or password is incorrect. Try again.",
         sign_in: "Sign In",
         session_loader_kicker: "Loading Session",
-        session_loader_title: "Opening Veloris",
-        session_loader_message: "Signing in and preparing your branded workspace...",
+        session_loader_title: BRAND.sessionTitle,
+        session_loader_message: BRAND.sessionMessage,
         workspace: "Workspace",
-        dashboard_title_top: "Veloris",
+        dashboard_title_top: BRAND.name,
         end_session: "End Session",
         sign_out: "Sign out",
         settings: "Settings",
@@ -90,17 +120,50 @@ const TRANSLATIONS = {
         no_issue_reports: "No reports yet.",
         submitted_by: "Submitted by",
         screenshot: "Screenshot",
-        footer_credit_line: "Developed under Palmchat Innovations LLC NYC.",
+        delete_report: "Delete report",
+        report_submitted_success: "Report submitted successfully.",
+        report_required_error: "Add a summary and details before submitting.",
+        report_delete_confirm: "Delete this issue report?",
+        footer_credit_line: `Built by ${BRAND.developerName} at ${BRAND.studioName}, under ${BRAND.legalName}.`,
         footer_report_cta: "Submit / Report Issues",
-        about_veloris: "About Veloris",
-        about_brand_meaning: "A coined name built to suggest velocity, elegance, and reliability. Veloris is meant to feel premium, modern, and calm under pressure.",
-        about_product_copy: "Veloris is a quote-and-invoice workspace designed for polished commercial documents, faster workflows, and a more refined client-facing experience.",
-        about_developer_copy: "Designed and developed by Edwin Jaquez through Palmchat Innovations Lab under Palmchat Innovations LLC NYC, with a focus on premium operational tools for modern trade and logistics teams.",
+        about_veloris: `About ${BRAND.name}`,
+        about_brand_meaning: BRAND.aboutMeaning,
+        about_product_copy: BRAND.aboutProduct,
+        about_developer_copy: BRAND.aboutDeveloper,
+        company_profile: "Company Profile",
+        company_profile_copy: "Business identity details saved here appear in quotes, invoices, and export views.",
+        company_name: "Company Name",
+        company_tagline: "Tagline",
+        company_address: "Address",
+        company_email: "Email",
+        company_phone: "Phone",
+        company_website: "Website",
+        company_tax_id: "Tax / Registration",
+        save_company_profile: "Save Company Profile",
+        company_profile_saved: "Company profile saved.",
+        saved_items: "Pending Items Cart",
+        saved_items_copy: "Keep requested items here until you are ready to pull them into a quote or invoice.",
+        add_saved_item: "Add To Cart",
+        add_saved_item_copy: "Capture items that are not yet tied to a quote or invoice.",
+        saved_items_library: "Cart Items",
+        saved_items_library_copy: "Add an item to the open document, or remove it from the cart if it is no longer pending.",
+        item_description: "Item Description",
+        unit_price_usd: "Unit Price (USD)",
+        total_usd: "Total (USD)",
+        save_item: "Create Cart Item",
+        add_cart_item: "Add New Item To Cart",
+        use_item: "Add To Document",
+        save_for_later: "Move Line Item to Cart",
+        no_saved_items: "No items in the cart yet.",
+        saved_item_added: "Item moved to the cart.",
+        saved_item_used: "Cart item added to this document.",
+        save_item_before_remove: "Move this line item to the cart before removing it?",
+        open_pending_cart: "Open pending items cart",
         menu: "Menu",
         language: "Language",
         hero_kicker: "Document Workspace",
-        hero_title: "Quotes and invoices without the clutter.",
-        hero_copy: "Build polished documents, convert quotes fast, and keep your day moving from one clean workspace.",
+        hero_title: BRAND.heroTitle,
+        hero_copy: BRAND.heroCopy,
         new_quote: "New Quote",
         new_invoice: "New Invoice",
         import_status_default: "Use JSON backup tools to restore deleted records or move data between environments.",
@@ -111,7 +174,10 @@ const TRANSLATIONS = {
         quotes: "Quotes",
         invoices: "Invoices",
         date_label: "Date",
+        quantity: "Quantity",
         total: "Total",
+        status_draft: "Draft",
+        status_logged: "Logged",
         created_by: "Created by",
         converted_source: "Converted Source",
         legacy_pdf_attached: "Legacy PDF Attached",
@@ -124,7 +190,7 @@ const TRANSLATIONS = {
         tap_view_invoiced: "Tap to view invoiced amount",
         tap_view_pipeline: "Tap to view pipeline value",
         documents_heading: "Documents",
-        documents_subtitle: "Click any row to open it, then sort, filter, and manage your quotes and invoices.",
+        documents_subtitle: "Open, sort, filter, and manage every quote and invoice from one coordinated workspace.",
         sort: "Sort",
         search: "Search",
         search_placeholder: "Search by ref, date, client, type, or keyword",
@@ -156,7 +222,7 @@ const TRANSLATIONS = {
         no_clients: "No saved clients yet.",
         edit: "Edit",
         editor_preferences: "Editor Preferences",
-        editor_preferences_copy: "Choose which optional fields should appear while you build quotes and invoices.",
+        editor_preferences_copy: "Choose which optional fields should appear while your team prepares documents.",
         show_internal_pricing: "Show internal pricing fields in line items",
         csv_tools: "CSV Tools",
         csv_tools_copy: "Download the spreadsheet template or import rows to create multiple documents at once.",
@@ -173,7 +239,7 @@ const TRANSLATIONS = {
         local_testing_copy: "Clear browser-only test data without affecting any server data.",
         clear_local_test_data: "Clear Local Test Data",
         export_json_title: "Export JSON",
-        export_json_copy: "Choose the quotes and invoices you want in this export file.",
+        export_json_copy: "Choose the records you want to include in this export file.",
         select_all_documents: "Select all documents",
         download_selected_json: "Download Selected JSON",
         no_documents_export: "No documents available to export.",
@@ -212,8 +278,8 @@ const TRANSLATIONS = {
         role_admin: "Administrador",
         role_user: "Usuario",
         login_kicker: "Ingreso al Espacio",
-        login_title: "Entrar a Veloris",
-        login_copy: "Inicia sesión con una cuenta local para crear, editar y gestionar cotizaciones y facturas con una presentación más refinada.",
+        login_title: `Entrar a ${BRAND.name}`,
+        login_copy: "Inicia sesión con una cuenta local para crear, editar y gestionar cotizaciones y facturas con una presentación premium y sincronizada.",
         username: "Usuario",
         username_placeholder: "Ingresa el usuario",
         password: "Contraseña",
@@ -221,10 +287,10 @@ const TRANSLATIONS = {
         login_error: "Ese usuario o contraseña es incorrecto. Inténtalo de nuevo.",
         sign_in: "Iniciar sesión",
         session_loader_kicker: "Cargando sesión",
-        session_loader_title: "Abriendo Veloris",
-        session_loader_message: "Iniciando sesión y preparando tu espacio de trabajo de marca...",
+        session_loader_title: `Abriendo ${BRAND.name}`,
+        session_loader_message: "Iniciando sesión y preparando tu espacio operativo...",
         workspace: "Espacio",
-        dashboard_title_top: "Veloris",
+        dashboard_title_top: BRAND.name,
         end_session: "Cerrar sesión",
         sign_out: "Cerrar sesión",
         settings: "Configuración",
@@ -242,17 +308,50 @@ const TRANSLATIONS = {
         no_issue_reports: "Aún no hay reportes.",
         submitted_by: "Enviado por",
         screenshot: "Captura",
-        footer_credit_line: "Desarrollado bajo Palmchat Innovations LLC NYC.",
+        delete_report: "Eliminar reporte",
+        report_submitted_success: "Reporte enviado correctamente.",
+        report_required_error: "Agrega un resumen y detalles antes de enviar.",
+        report_delete_confirm: "¿Eliminar este reporte?",
+        footer_credit_line: `Creado por ${BRAND.developerName} en ${BRAND.studioName}, bajo ${BRAND.legalName}.`,
         footer_report_cta: "Enviar / Reportar Problemas",
-        about_veloris: "Sobre Veloris",
-        about_brand_meaning: "Un nombre creado para sugerir velocidad, elegancia y fiabilidad. Veloris está pensado para sentirse premium, moderno y sereno bajo presión.",
-        about_product_copy: "Veloris es un espacio de cotizaciones y facturas pensado para documentos comerciales más pulidos, flujos más rápidos y una experiencia más refinada frente al cliente.",
-        about_developer_copy: "Diseñado y desarrollado por Edwin Jaquez a través de Palmchat Innovations Lab bajo Palmchat Innovations LLC NYC, con enfoque en herramientas operativas premium para equipos modernos de comercio y logística.",
+        about_veloris: `Sobre ${BRAND.name}`,
+        about_brand_meaning: "SantoSync es un nombre creado para sugerir coordinación, elegancia y fiabilidad para flujos comerciales modernos.",
+        about_product_copy: "SantoSync es un espacio de cotizaciones y facturas pensado para documentos pulidos y operaciones mejor alineadas.",
+        about_developer_copy: `Diseñado y desarrollado por ${BRAND.developerName} a través de ${BRAND.studioName}, bajo ${BRAND.legalName}.`,
+        company_profile: "Perfil de Empresa",
+        company_profile_copy: "Los datos empresariales guardados aquí aparecen en cotizaciones, facturas y vistas de exportación.",
+        company_name: "Nombre de la Empresa",
+        company_tagline: "Lema",
+        company_address: "Dirección",
+        company_email: "Correo",
+        company_phone: "Teléfono",
+        company_website: "Sitio web",
+        company_tax_id: "Fiscal / Registro",
+        save_company_profile: "Guardar Perfil de Empresa",
+        company_profile_saved: "Perfil de empresa guardado.",
+        saved_items: "Carrito de Artículos Pendientes",
+        saved_items_copy: "Mantén aquí los artículos solicitados hasta que estés listo para agregarlos a una cotización o factura.",
+        add_saved_item: "Agregar al Carrito",
+        add_saved_item_copy: "Guarda artículos que todavía no estén ligados a un documento.",
+        saved_items_library: "Artículos del Carrito",
+        saved_items_library_copy: "Agrega un artículo al documento abierto, o quítalo del carrito si ya no está pendiente.",
+        item_description: "Descripción del Artículo",
+        unit_price_usd: "Precio Unitario (USD)",
+        total_usd: "Total (USD)",
+        save_item: "Crear Artículo del Carrito",
+        add_cart_item: "Agregar Nuevo Artículo al Carrito",
+        use_item: "Agregar al Documento",
+        save_for_later: "Mover Línea al Carrito",
+        no_saved_items: "Todavía no hay artículos en el carrito.",
+        saved_item_added: "Artículo movido al carrito.",
+        saved_item_used: "Artículo del carrito agregado a este documento.",
+        save_item_before_remove: "¿Mover esta línea al carrito antes de quitarla?",
+        open_pending_cart: "Abrir carrito de artículos pendientes",
         menu: "Menú",
         language: "Idioma",
         hero_kicker: "Espacio de Documentos",
-        hero_title: "Cotizaciones y facturas sin desorden.",
-        hero_copy: "Crea documentos pulidos, convierte cotizaciones rápido y mantén tu día en movimiento desde un solo espacio limpio.",
+        hero_title: "Documentos comerciales, sincronizados con tu ritmo.",
+        hero_copy: "Prepara cotizaciones refinadas, facturas seguras y un flujo diario más coordinado desde un solo espacio elegante.",
         new_quote: "Nueva Cotización",
         new_invoice: "Nueva Factura",
         import_status_default: "Usa las herramientas JSON para restaurar registros eliminados o mover datos entre entornos.",
@@ -263,7 +362,10 @@ const TRANSLATIONS = {
         quotes: "Cotizaciones",
         invoices: "Facturas",
         date_label: "Fecha",
+        quantity: "Cantidad",
         total: "Total",
+        status_draft: "Borrador",
+        status_logged: "Registrado",
         created_by: "Creado por",
         converted_source: "Fuente Convertida",
         legacy_pdf_attached: "PDF heredado adjunto",
@@ -276,7 +378,7 @@ const TRANSLATIONS = {
         tap_view_invoiced: "Toca para ver el monto facturado",
         tap_view_pipeline: "Toca para ver el valor en proceso",
         documents_heading: "Documentos",
-        documents_subtitle: "Haz clic en cualquier fila para abrirla y luego ordenar, filtrar y gestionar tus cotizaciones y facturas.",
+        documents_subtitle: "Abre, ordena, filtra y gestiona cada cotización y factura desde un solo espacio coordinado.",
         sort: "Ordenar",
         search: "Buscar",
         search_placeholder: "Buscar por ref., fecha, cliente, tipo o palabra clave",
@@ -308,7 +410,7 @@ const TRANSLATIONS = {
         no_clients: "Todavía no hay clientes guardados.",
         edit: "Editar",
         editor_preferences: "Preferencias del Editor",
-        editor_preferences_copy: "Elige qué campos opcionales deben aparecer mientras creas cotizaciones y facturas.",
+        editor_preferences_copy: "Elige qué campos opcionales deben mostrarse mientras tu equipo prepara documentos.",
         show_internal_pricing: "Mostrar campos de precios internos en las líneas",
         csv_tools: "Herramientas CSV",
         csv_tools_copy: "Descarga la plantilla o importa filas para crear varios documentos a la vez.",
@@ -325,13 +427,13 @@ const TRANSLATIONS = {
         local_testing_copy: "Borra datos de prueba del navegador sin afectar ningún dato del servidor.",
         clear_local_test_data: "Borrar Datos Locales de Prueba",
         export_json_title: "Exportar JSON",
-        export_json_copy: "Elige las cotizaciones y facturas que deseas en este archivo de exportación.",
+        export_json_copy: "Elige los registros que deseas incluir en este archivo de exportación.",
         select_all_documents: "Seleccionar todos los documentos",
         download_selected_json: "Descargar JSON Seleccionado",
         no_documents_export: "No hay documentos disponibles para exportar.",
         type_info: "Tipo e Información",
         client_details: "Datos del Cliente",
-        line_items: "Líneas",
+        line_items: "Artículos",
         keywords: "Palabras Clave",
         items_preview: "Vista de Líneas",
         review: "Revisión",
@@ -350,7 +452,7 @@ const TRANSLATIONS = {
         choose_or_add_client: "-- Elegir o agregar cliente --",
         other_manual: "Otro (ingreso manual)",
         commercial_snapshot: "Resumen Comercial",
-        items: "Ítems",
+        items: "Artículos",
         subtotal: "Subtotal",
         no_keywords: "Aún no hay palabras clave",
         pdf_options: "Opciones PDF",
@@ -364,8 +466,8 @@ const TRANSLATIONS = {
         role_admin: "Administrateur",
         role_user: "Utilisateur",
         login_kicker: "Connexion à l’Espace",
-        login_title: "Entrer dans Veloris",
-        login_copy: "Connectez-vous avec un compte local pour créer, modifier et gérer des devis et factures avec une présentation plus raffinée.",
+        login_title: `Entrer dans ${BRAND.name}`,
+        login_copy: "Connectez-vous avec un compte local pour créer, modifier et gérer des devis et factures avec une identité plus premium et cohérente.",
         username: "Nom d’utilisateur",
         username_placeholder: "Entrez le nom d’utilisateur",
         password: "Mot de passe",
@@ -373,10 +475,10 @@ const TRANSLATIONS = {
         login_error: "Ce nom d’utilisateur ou mot de passe est incorrect. Réessayez.",
         sign_in: "Se connecter",
         session_loader_kicker: "Chargement de session",
-        session_loader_title: "Ouverture de Veloris",
-        session_loader_message: "Connexion et préparation de votre espace de travail de marque...",
+        session_loader_title: `Ouverture de ${BRAND.name}`,
+        session_loader_message: "Connexion et préparation de votre espace opérationnel...",
         workspace: "Espace",
-        dashboard_title_top: "Veloris",
+        dashboard_title_top: BRAND.name,
         end_session: "Fermer la session",
         sign_out: "Se déconnecter",
         settings: "Paramètres",
@@ -394,17 +496,50 @@ const TRANSLATIONS = {
         no_issue_reports: "Aucun rapport pour le moment.",
         submitted_by: "Envoyé par",
         screenshot: "Capture",
-        footer_credit_line: "Développé sous Palmchat Innovations LLC NYC.",
+        delete_report: "Supprimer le rapport",
+        report_submitted_success: "Rapport envoyé avec succès.",
+        report_required_error: "Ajoutez un résumé et des détails avant l’envoi.",
+        report_delete_confirm: "Supprimer ce rapport ?",
+        footer_credit_line: `Créé par ${BRAND.developerName} via ${BRAND.studioName}, sous ${BRAND.legalName}.`,
         footer_report_cta: "Soumettre / Signaler un Problème",
-        about_veloris: "À propos de Veloris",
-        about_brand_meaning: "Un nom imaginé pour évoquer la vitesse, l’élégance et la fiabilité. Veloris est pensé pour paraître premium, moderne et serein sous pression.",
-        about_product_copy: "Veloris est un espace devis-factures conçu pour des documents commerciaux plus soignés, des flux plus rapides et une expérience client plus raffinée.",
-        about_developer_copy: "Conçu et développé par Edwin Jaquez via Palmchat Innovations Lab sous Palmchat Innovations LLC NYC, avec un accent sur des outils opérationnels premium pour les équipes modernes du commerce et de la logistique.",
+        about_veloris: `À propos de ${BRAND.name}`,
+        about_brand_meaning: "SantoSync est un nom imaginé pour évoquer la coordination, l’élégance et la fiabilité dans les flux commerciaux.",
+        about_product_copy: "SantoSync est un espace devis-factures conçu pour des documents plus soignés et des opérations mieux synchronisées.",
+        about_developer_copy: `Conçu et développé par ${BRAND.developerName} via ${BRAND.studioName}, sous ${BRAND.legalName}.`,
+        company_profile: "Profil Société",
+        company_profile_copy: "Les informations d’identité enregistrées ici apparaissent dans les devis, factures et vues d’export.",
+        company_name: "Nom de la Société",
+        company_tagline: "Signature",
+        company_address: "Adresse",
+        company_email: "Email",
+        company_phone: "Téléphone",
+        company_website: "Site web",
+        company_tax_id: "Fiscal / Enregistrement",
+        save_company_profile: "Enregistrer le Profil Société",
+        company_profile_saved: "Profil société enregistré.",
+        saved_items: "Panier d’Articles en Attente",
+        saved_items_copy: "Gardez ici les articles demandés jusqu’au moment de les ajouter à un devis ou une facture.",
+        add_saved_item: "Ajouter au Panier",
+        add_saved_item_copy: "Conservez ici les articles qui ne sont pas encore liés à un document.",
+        saved_items_library: "Articles du Panier",
+        saved_items_library_copy: "Ajoutez un article au document ouvert, ou retirez-le du panier s’il n’est plus en attente.",
+        item_description: "Description de l’Article",
+        unit_price_usd: "Prix Unitaire (USD)",
+        total_usd: "Total (USD)",
+        save_item: "Créer un Article du Panier",
+        add_cart_item: "Ajouter un Nouvel Article au Panier",
+        use_item: "Ajouter au Document",
+        save_for_later: "Déplacer la Ligne vers le Panier",
+        no_saved_items: "Aucun article dans le panier pour le moment.",
+        saved_item_added: "Article déplacé vers le panier.",
+        saved_item_used: "Article du panier ajouté à ce document.",
+        save_item_before_remove: "Déplacer cette ligne vers le panier avant de la supprimer ?",
+        open_pending_cart: "Ouvrir le panier d’articles en attente",
         menu: "Menu",
         language: "Langue",
         hero_kicker: "Espace Documents",
-        hero_title: "Devis et factures sans encombrement.",
-        hero_copy: "Créez des documents soignés, convertissez les devis rapidement et gardez votre journée fluide depuis un seul espace clair.",
+        hero_title: "Des documents commerciaux au rythme de votre équipe.",
+        hero_copy: "Préparez des devis raffinés, des factures sûres et un flux quotidien mieux synchronisé depuis un seul espace élégant.",
         new_quote: "Nouveau Devis",
         new_invoice: "Nouvelle Facture",
         import_status_default: "Utilisez les outils JSON pour restaurer des enregistrements supprimés ou déplacer des données entre environnements.",
@@ -415,7 +550,10 @@ const TRANSLATIONS = {
         quotes: "Devis",
         invoices: "Factures",
         date_label: "Date",
+        quantity: "Quantité",
         total: "Total",
+        status_draft: "Brouillon",
+        status_logged: "Enregistré",
         created_by: "Créé par",
         converted_source: "Source Convertie",
         legacy_pdf_attached: "PDF hérité joint",
@@ -428,7 +566,7 @@ const TRANSLATIONS = {
         tap_view_invoiced: "Touchez pour voir le montant facturé",
         tap_view_pipeline: "Touchez pour voir la valeur pipeline",
         documents_heading: "Documents",
-        documents_subtitle: "Cliquez sur une ligne pour l’ouvrir, puis triez, filtrez et gérez vos devis et factures.",
+        documents_subtitle: "Ouvrez, triez, filtrez et gérez chaque devis et facture depuis un espace coordonné.",
         sort: "Trier",
         search: "Rechercher",
         search_placeholder: "Rechercher par réf., date, client, type ou mot-clé",
@@ -460,7 +598,7 @@ const TRANSLATIONS = {
         no_clients: "Aucun client enregistré pour le moment.",
         edit: "Modifier",
         editor_preferences: "Préférences de l’Éditeur",
-        editor_preferences_copy: "Choisissez quels champs optionnels doivent apparaître pendant la création des devis et factures.",
+        editor_preferences_copy: "Choisissez quels champs optionnels doivent apparaître pendant la préparation des documents.",
         show_internal_pricing: "Afficher les champs de tarification interne dans les lignes",
         csv_tools: "Outils CSV",
         csv_tools_copy: "Téléchargez le modèle ou importez des lignes pour créer plusieurs documents à la fois.",
@@ -477,7 +615,7 @@ const TRANSLATIONS = {
         local_testing_copy: "Effacez les données de test du navigateur sans affecter les données du serveur.",
         clear_local_test_data: "Effacer les Données Locales de Test",
         export_json_title: "Exporter JSON",
-        export_json_copy: "Choisissez les devis et factures à inclure dans ce fichier d’export.",
+        export_json_copy: "Choisissez les enregistrements à inclure dans ce fichier d’export.",
         select_all_documents: "Sélectionner tous les documents",
         download_selected_json: "Télécharger le JSON Sélectionné",
         no_documents_export: "Aucun document disponible pour l’export.",
@@ -551,6 +689,9 @@ function setElementHtml(selector, value) {
 
 function applyTranslations() {
     document.documentElement.lang = getCurrentLanguage();
+    if (typeof window.applySantoBrandTheme === "function") {
+        window.applySantoBrandTheme(document);
+    }
     elements.languageSelect.value = getCurrentLanguage();
 
     setElementText(".access-card .eyebrow", t("login_kicker"));
@@ -565,6 +706,10 @@ function applyTranslations() {
     setElementText(".session-loader-card .eyebrow", t("session_loader_kicker"));
     setElementText(".session-loader-card h2", t("session_loader_title"));
     elements.sessionLoaderMessage.textContent = t("session_loader_message");
+    setElementText("#brandSplashName", BRAND.name);
+    setElementText("#brandSplashTagline", BRAND.tagline);
+    setElementText("#accessBrandName", BRAND.name);
+    setElementText("#accessBrandTagline", BRAND.tagline);
     setElementText(".app-topbar-kicker", t("workspace"));
     setElementText(".app-topbar-copy strong", t("dashboard_title_top"));
     document.getElementById("languagePickerLabel").textContent = t("language");
@@ -660,14 +805,56 @@ function applyTranslations() {
     elements.submitIssueReportBtn.textContent = t("submit_report");
     setElementText("#issueInboxTitle", t("issue_inbox"));
     setElementText("#issueInboxCopy", t("issue_inbox_copy"));
+    setElementText("#companyProfileTitle", t("company_profile"));
+    setElementText("#companyProfileCopy", t("company_profile_copy"));
+    const companyProfileLabels = elements.companyProfileModal.querySelectorAll(".form-group > span");
+    if (companyProfileLabels.length >= 7) {
+        companyProfileLabels[0].textContent = t("company_name");
+        companyProfileLabels[1].textContent = t("company_tagline");
+        companyProfileLabels[2].textContent = t("company_address");
+        companyProfileLabels[3].textContent = t("company_email");
+        companyProfileLabels[4].textContent = t("company_phone");
+        companyProfileLabels[5].textContent = t("company_website");
+        companyProfileLabels[6].textContent = t("company_tax_id");
+    }
+    elements.companyNameInput.placeholder = t("company_name");
+    elements.companyTaglineInput.placeholder = BRAND.tagline;
+    elements.companyAddressInput.placeholder = "123 Trade Avenue\nSanto Domingo, DR";
+    elements.companyEmailInput.placeholder = "hello@santosync.com";
+    elements.companyPhoneInput.placeholder = "+1 (809) 555-0110";
+    elements.companyWebsiteInput.placeholder = "www.santosync.com";
+    elements.companyTaxIdInput.placeholder = "RNC / EIN / Registration";
+    elements.saveCompanyProfileBtn.textContent = t("save_company_profile");
+    setElementText("#savedItemsTitle", t("saved_items"));
+    setElementText("#savedItemsCopy", t("saved_items_copy"));
+    setElementText("#savedItemsAddTitle", t("add_saved_item"));
+    setElementText("#savedItemsAddCopy", t("add_saved_item_copy"));
+    setElementText("#savedItemCreateTitle", t("save_item"));
+    setElementText("#savedItemCreateCopy", t("add_saved_item_copy"));
+    setElementText("#savedItemsLibraryTitle", t("saved_items_library"));
+    setElementText("#savedItemsLibraryCopy", t("saved_items_library_copy"));
+    setElementText("#savedItemDescriptionLabel", t("item_description"));
+    setElementText("#savedItemQuantityLabel", t("quantity"));
+    setElementText("#savedItemUnitPriceLabel", t("unit_price_usd"));
+    setElementText("#savedItemTotalLabel", t("total_usd"));
+    elements.addSavedItemBtn.textContent = t("save_item");
+    elements.toggleSavedItemsFormBtn.textContent = `+ ${t("add_cart_item")}`;
+    elements.openSavedItemsBtn.setAttribute("aria-label", t("open_pending_cart"));
+    elements.openSavedItemsBtn.setAttribute("title", t("open_pending_cart"));
+    elements.openSavedItemsTopbarBtn.setAttribute("aria-label", t("open_pending_cart"));
+    elements.openSavedItemsTopbarBtn.setAttribute("title", t("open_pending_cart"));
     setElementText("#aboutModalTitle", t("about_veloris"));
+    setElementText("#aboutBrandName", BRAND.name);
     setElementText("#aboutBrandMeaning", t("about_brand_meaning"));
     setElementText("#aboutProductCopy", t("about_product_copy"));
     setElementText("#aboutDeveloperCopy", t("about_developer_copy"));
-    setElementText(".app-footer-copy span", t("footer_credit_line"));
+    setElementText("#footerStudioName", `${BRAND.studioName} - ${BRAND.developerName}`);
+    setElementText("#footerCreditLine", t("footer_credit_line"));
+    elements.openCompanyProfileBtn.textContent = t("company_profile");
     elements.openAboutBtn.textContent = t("about_veloris");
     elements.openIssueReportBtn.textContent = t("footer_report_cta");
 
+    renderBrandAssets();
     updateStaticEditorTranslations();
     updateEditorSummary();
     renderUserManagementList();
@@ -675,7 +862,20 @@ function applyTranslations() {
     renderIssueInbox();
     updateInboxBadge();
     renderExportSelectionList();
+    renderSavedItemsList();
     renderDocuments();
+}
+
+function renderBrandAssets() {
+    if (typeof window.renderSantoLogo !== "function") {
+        return;
+    }
+
+    window.renderSantoLogo(elements.brandSplashLogo, "monogram");
+    window.renderSantoLogo(elements.accessBrandLogo, "monogram");
+    window.renderSantoLogo(elements.sessionLoaderLogo, "monogram");
+    window.renderSantoLogo(elements.topbarBrandLogo, "monogram");
+    window.renderSantoLogo(elements.aboutBrandLogo, "monogram");
 }
 
 function updateStaticEditorTranslations() {
@@ -704,7 +904,7 @@ async function handleLanguageChange(event) {
     if (state.currentUser) {
         state.currentUser.language = state.currentLanguage;
         sessionStorage.setItem(CURRENT_SESSION_STORAGE_KEY, JSON.stringify(state.currentUser));
-        saveUserAccounts(state.userAccounts.map(user =>
+        await saveUserAccounts(state.userAccounts.map(user =>
             user.id === state.currentUser.userId ? { ...user, language: state.currentLanguage } : user
         ));
     }
@@ -721,14 +921,21 @@ function cacheElements() {
     elements.accessSubmitBtn = document.getElementById("accessSubmitBtn");
     elements.accessError = document.getElementById("accessError");
     elements.brandSplash = document.getElementById("brandSplash");
+    elements.brandSplashLogo = document.getElementById("brandSplashLogo");
+    elements.accessBrandLogo = document.getElementById("accessBrandLogo");
+    elements.sessionLoaderLogo = document.getElementById("sessionLoaderLogo");
+    elements.topbarBrandLogo = document.getElementById("topbarBrandLogo");
     elements.sessionLoader = document.getElementById("sessionLoader");
     elements.sessionLoaderMessage = document.getElementById("sessionLoaderMessage");
     elements.settingsModal = document.getElementById("settingsModal");
     elements.sessionBadge = document.getElementById("sessionBadge");
     elements.openInboxBtn = document.getElementById("openInboxBtn");
     elements.inboxCountBadge = document.getElementById("inboxCountBadge");
+    elements.openSavedItemsTopbarBtn = document.getElementById("openSavedItemsTopbarBtn");
+    elements.savedItemsCountBadge = document.getElementById("savedItemsCountBadge");
     elements.navMenuBtn = document.getElementById("navMenuBtn");
     elements.topbarMenu = document.getElementById("topbarMenu");
+    elements.topbarCompanyProfileBtn = document.getElementById("topbarCompanyProfileBtn");
     elements.topbarSettingsBtn = document.getElementById("topbarSettingsBtn");
     elements.topbarSignOutBtn = document.getElementById("topbarSignOutBtn");
     elements.languageSelect = document.getElementById("languageSelect");
@@ -752,7 +959,32 @@ function cacheElements() {
     elements.issueInboxModal = document.getElementById("issueInboxModal");
     elements.closeIssueInboxModalBtn = document.getElementById("closeIssueInboxModalBtn");
     elements.issueInboxList = document.getElementById("issueInboxList");
+    elements.companyProfileModal = document.getElementById("companyProfileModal");
+    elements.savedItemsModal = document.getElementById("savedItemsModal");
+    elements.savedItemCreateModal = document.getElementById("savedItemCreateModal");
+    elements.openCompanyProfileBtn = document.getElementById("openCompanyProfileBtn");
+    elements.openSavedItemsBtn = document.getElementById("openSavedItemsBtn");
+    elements.openSavedItemsInlineCount = document.getElementById("openSavedItemsInlineCount");
+    elements.closeCompanyProfileModalBtn = document.getElementById("closeCompanyProfileModalBtn");
+    elements.closeSavedItemsModalBtn = document.getElementById("closeSavedItemsModalBtn");
+    elements.toggleSavedItemsFormBtn = document.getElementById("toggleSavedItemsFormBtn");
+    elements.closeSavedItemCreateModalBtn = document.getElementById("closeSavedItemCreateModalBtn");
+    elements.companyNameInput = document.getElementById("companyNameInput");
+    elements.companyTaglineInput = document.getElementById("companyTaglineInput");
+    elements.companyAddressInput = document.getElementById("companyAddressInput");
+    elements.companyEmailInput = document.getElementById("companyEmailInput");
+    elements.companyPhoneInput = document.getElementById("companyPhoneInput");
+    elements.companyWebsiteInput = document.getElementById("companyWebsiteInput");
+    elements.companyTaxIdInput = document.getElementById("companyTaxIdInput");
+    elements.saveCompanyProfileBtn = document.getElementById("saveCompanyProfileBtn");
+    elements.savedItemsList = document.getElementById("savedItemsList");
+    elements.savedItemDescriptionInput = document.getElementById("savedItemDescriptionInput");
+    elements.savedItemQuantityInput = document.getElementById("savedItemQuantityInput");
+    elements.savedItemUnitPriceInput = document.getElementById("savedItemUnitPriceInput");
+    elements.savedItemTotalInput = document.getElementById("savedItemTotalInput");
+    elements.addSavedItemBtn = document.getElementById("addSavedItemBtn");
     elements.aboutModal = document.getElementById("aboutModal");
+    elements.aboutBrandLogo = document.getElementById("aboutBrandLogo");
     elements.closeAboutModalBtn = document.getElementById("closeAboutModalBtn");
     elements.showInternalPricingToggle = document.getElementById("showInternalPricingToggle");
     elements.newUserDisplayName = document.getElementById("newUserDisplayName");
@@ -841,7 +1073,9 @@ function bindEvents() {
     });
     elements.languageSelect.addEventListener("change", handleLanguageChange);
     elements.openInboxBtn.addEventListener("click", openIssueInboxModal);
+    elements.openSavedItemsTopbarBtn.addEventListener("click", openSavedItemsModal);
     elements.navMenuBtn.addEventListener("click", toggleTopbarMenu);
+    elements.topbarCompanyProfileBtn.addEventListener("click", openCompanyProfileModal);
     elements.topbarSettingsBtn.addEventListener("click", handleTopbarSettingsClick);
     elements.topbarSignOutBtn.addEventListener("click", handleEndSessionClick);
     elements.openSettingsBtn?.addEventListener("click", openSettingsModal);
@@ -854,16 +1088,28 @@ function bindEvents() {
     elements.selectAllExportsToggle.addEventListener("change", handleSelectAllExportsToggle);
     elements.exportSelectedJsonBtn.addEventListener("click", exportSelectedDocuments);
     elements.openIssueReportBtn.addEventListener("click", openIssueReportModal);
+    elements.openCompanyProfileBtn.addEventListener("click", openCompanyProfileModal);
+    elements.openSavedItemsBtn.addEventListener("click", openSavedItemsModal);
     elements.openAboutBtn.addEventListener("click", openAboutModal);
     elements.closeIssueReportModalBtn.addEventListener("click", closeIssueReportModal);
+    elements.closeCompanyProfileModalBtn.addEventListener("click", closeCompanyProfileModal);
+    elements.closeSavedItemsModalBtn.addEventListener("click", closeSavedItemsModal);
+    elements.closeSavedItemCreateModalBtn.addEventListener("click", closeSavedItemCreateModal);
+    elements.toggleSavedItemsFormBtn.addEventListener("click", openSavedItemCreateModal);
     elements.closeAboutModalBtn.addEventListener("click", closeAboutModal);
     elements.issueScreenshotInput.addEventListener("change", handleIssueScreenshotChange);
     elements.submitIssueReportBtn.addEventListener("click", submitIssueReport);
     elements.closeIssueInboxModalBtn.addEventListener("click", closeIssueInboxModal);
+    elements.saveCompanyProfileBtn.addEventListener("click", saveCompanyProfile);
+    elements.addSavedItemBtn.addEventListener("click", addSavedItemFromModal);
+    elements.savedItemsList.addEventListener("click", handleSavedItemsListClick);
+    elements.savedItemQuantityInput.addEventListener("input", syncSavedItemsTotal);
+    elements.savedItemUnitPriceInput.addEventListener("input", syncSavedItemsTotal);
     elements.clearLocalTestDataBtn.addEventListener("click", clearLocalTestData);
     elements.addUserBtn.addEventListener("click", handleAddUser);
     elements.userManagementList.addEventListener("click", handleUserManagementClick);
     elements.clientManagementList.addEventListener("click", handleClientManagementClick);
+    elements.issueInboxList.addEventListener("click", handleIssueInboxClick);
     elements.valueToggleCard.addEventListener("click", toggleValueView);
     elements.showInternalPricingToggle.addEventListener("change", handleInternalPricingToggleChange);
     elements.importBackupBtn.addEventListener("click", () => {
@@ -931,6 +1177,23 @@ function bindEvents() {
         }
     });
 
+    elements.companyProfileModal.addEventListener("click", event => {
+        if (event.target === elements.companyProfileModal) {
+            closeCompanyProfileModal();
+        }
+    });
+
+    elements.savedItemsModal.addEventListener("click", event => {
+        if (event.target === elements.savedItemsModal) {
+            closeSavedItemsModal();
+        }
+    });
+    elements.savedItemCreateModal.addEventListener("click", event => {
+        if (event.target === elements.savedItemCreateModal) {
+            closeSavedItemCreateModal();
+        }
+    });
+
     elements.aboutModal.addEventListener("click", event => {
         if (event.target === elements.aboutModal) {
             closeAboutModal();
@@ -947,9 +1210,9 @@ function bindEvents() {
     window.addEventListener("scroll", handleSessionActivity, { passive: true });
 }
 
-function init() {
-    state.userAccounts = loadUserAccounts();
-    state.issueReports = loadIssueReports();
+async function init() {
+    loadLocalWorkspaceState();
+    await bootstrapSharedWorkspaceData();
     state.currentUser = getStoredSessionUser();
     state.currentLanguage = state.currentUser?.language || "en";
     applyRoleAccess();
@@ -964,7 +1227,7 @@ function init() {
         return;
     }
 
-    bootstrapAppData();
+    await bootstrapAppData();
     revealBrandSplash();
 }
 
@@ -1200,10 +1463,76 @@ function loadUserAccounts() {
     return users;
 }
 
-function saveUserAccounts(users) {
-    state.userAccounts = normalizeUserAccounts(users);
+function loadLocalWorkspaceState() {
+    state.workspaceDataMode = "local";
+    state.userAccounts = loadUserAccounts();
+    state.issueReports = loadIssueReports();
+    state.companyProfile = loadCompanyProfile();
+    state.savedItems = loadSavedItems();
+}
+
+function cacheWorkspaceStateLocally() {
     writeLocalDataset(USER_ACCOUNTS_STORAGE_KEY, state.userAccounts);
+    writeLocalDataset(ISSUE_REPORTS_STORAGE_KEY, state.issueReports);
+    writeLocalDataset(COMPANY_PROFILE_STORAGE_KEY, state.companyProfile);
+    writeLocalDataset(SAVED_ITEMS_STORAGE_KEY, state.savedItems);
+}
+
+function applyWorkspaceState(payload) {
+    state.userAccounts = normalizeUserAccounts(payload?.userAccounts || []);
+    state.issueReports = normalizeIssueReports(payload?.issueReports || []);
+    state.companyProfile = normalizeCompanyProfile(payload?.companyProfile || DEFAULT_COMPANY_PROFILE);
+    state.savedItems = normalizeSavedItems(payload?.savedItems || []);
+    cacheWorkspaceStateLocally();
     renderUserManagementList();
+    renderIssueInbox();
+    updateInboxBadge();
+    renderSavedItemsList();
+}
+
+async function bootstrapSharedWorkspaceData() {
+    try {
+        const payload = await requestJSON("/api/workspace");
+        state.workspaceDataMode = "server";
+        applyWorkspaceState(payload);
+    } catch (error) {
+        state.workspaceDataMode = "local";
+        loadLocalWorkspaceState();
+    }
+}
+
+async function persistSharedWorkspaceData() {
+    cacheWorkspaceStateLocally();
+
+    if (state.workspaceDataMode === "local") {
+        return;
+    }
+
+    try {
+        const payload = await requestJSON("/api/workspace", {
+            method: "POST",
+            body: JSON.stringify({
+                userAccounts: state.userAccounts,
+                issueReports: state.issueReports,
+                companyProfile: state.companyProfile,
+                savedItems: state.savedItems
+            })
+        });
+
+        state.workspaceDataMode = "server";
+        applyWorkspaceState(payload);
+    } catch (error) {
+        state.workspaceDataMode = "local";
+        cacheWorkspaceStateLocally();
+        setImportStatus("Server save failed, so shared workspace data was saved locally in this browser instead.");
+    }
+}
+
+async function saveUserAccounts(users) {
+    state.userAccounts = normalizeUserAccounts(users);
+    cacheWorkspaceStateLocally();
+    renderUserManagementList();
+    await persistSharedWorkspaceData();
 }
 
 function normalizeIssueReports(reports) {
@@ -1234,11 +1563,81 @@ function loadIssueReports() {
     return reports;
 }
 
-function saveIssueReports(reports) {
+async function saveIssueReports(reports) {
     state.issueReports = normalizeIssueReports(reports);
-    writeLocalDataset(ISSUE_REPORTS_STORAGE_KEY, state.issueReports);
+    cacheWorkspaceStateLocally();
     renderIssueInbox();
     updateInboxBadge();
+    await persistSharedWorkspaceData();
+}
+
+function normalizeCompanyProfile(profile) {
+    return {
+        companyName: String(profile?.companyName || DEFAULT_COMPANY_PROFILE.companyName).trim(),
+        tagline: String(profile?.tagline || DEFAULT_COMPANY_PROFILE.tagline).trim(),
+        address: String(profile?.address || DEFAULT_COMPANY_PROFILE.address).trim(),
+        email: String(profile?.email || DEFAULT_COMPANY_PROFILE.email).trim(),
+        phone: String(profile?.phone || DEFAULT_COMPANY_PROFILE.phone).trim(),
+        website: String(profile?.website || DEFAULT_COMPANY_PROFILE.website).trim(),
+        taxId: String(profile?.taxId || DEFAULT_COMPANY_PROFILE.taxId).trim()
+    };
+}
+
+function loadCompanyProfile() {
+    const profile = normalizeCompanyProfile(readLocalDataset(COMPANY_PROFILE_STORAGE_KEY, DEFAULT_COMPANY_PROFILE));
+    writeLocalDataset(COMPANY_PROFILE_STORAGE_KEY, profile);
+    return profile;
+}
+
+async function saveCompanyProfileState(profile) {
+    state.companyProfile = normalizeCompanyProfile(profile);
+    cacheWorkspaceStateLocally();
+    await persistSharedWorkspaceData();
+}
+
+function normalizeSavedItems(items) {
+    return Array.isArray(items)
+        ? items
+            .filter(item => item && typeof item === "object")
+            .map(item => {
+                const quantity = Number.parseFloat(item.quantity) || 0;
+                const unitPrice = Number.parseFloat(item.unitPrice) || 0;
+                const total = Number.parseFloat(item.total) || (quantity * unitPrice);
+                return {
+                    id: String(item.id || `saved-item-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+                    description: String(item.description || "").trim(),
+                    quantity,
+                    unitPrice,
+                    total,
+                    createdAt: String(item.createdAt || new Date().toISOString())
+                };
+            })
+            .filter(item => item.description)
+        : [];
+}
+
+function loadSavedItems() {
+    const items = normalizeSavedItems(readLocalDataset(SAVED_ITEMS_STORAGE_KEY, []));
+    writeLocalDataset(SAVED_ITEMS_STORAGE_KEY, items);
+    return items;
+}
+
+async function saveSavedItemsState(items) {
+    state.savedItems = normalizeSavedItems(items);
+    cacheWorkspaceStateLocally();
+    renderSavedItemsList();
+    await persistSharedWorkspaceData();
+}
+
+function updateSavedItemsCountBadge() {
+    const count = state.savedItems.length;
+    if (elements.savedItemsCountBadge) {
+        elements.savedItemsCountBadge.textContent = String(count);
+    }
+    if (elements.openSavedItemsInlineCount) {
+        elements.openSavedItemsInlineCount.textContent = String(count);
+        elements.openSavedItemsInlineCount.hidden = count === 0;
+    }
 }
 
 function getStoredSessionUser() {
@@ -1310,8 +1709,12 @@ function applyRoleAccess() {
         ? state.currentUser.displayName
         : "";
     elements.openInboxBtn.hidden = !isAdmin;
+    elements.topbarCompanyProfileBtn.hidden = !isAdmin;
+    elements.openCompanyProfileBtn.hidden = !isAdmin;
     elements.topbarSettingsBtn.hidden = !isAdmin;
     elements.topbarSettingsBtn.setAttribute("aria-hidden", String(!isAdmin));
+    elements.topbarCompanyProfileBtn.setAttribute("aria-hidden", String(!isAdmin));
+    elements.openCompanyProfileBtn.setAttribute("aria-hidden", String(!isAdmin));
     updateInboxBadge();
 
     if (!isAdmin) {
@@ -1361,6 +1764,8 @@ function setSessionLoader(isVisible, message = t("session_loader_message")) {
 
 async function unlockAccess(user) {
     persistCurrentSession(user);
+    await bootstrapSharedWorkspaceData();
+    state.currentUser = getStoredSessionUser() || user;
     await bootstrapAppData();
     applyAccessState(true);
 }
@@ -1475,12 +1880,12 @@ function closeIssueReportModal() {
     elements.issueReportModal.setAttribute("aria-hidden", "true");
 }
 
-function openIssueInboxModal() {
+async function openIssueInboxModal() {
     if (!isAdminSession()) {
         return;
     }
 
-    saveIssueReports(state.issueReports.map(report => ({ ...report, unread: false })));
+    await saveIssueReports(state.issueReports.map(report => ({ ...report, unread: false })));
     elements.issueInboxModal.classList.add("active");
     elements.issueInboxModal.setAttribute("aria-hidden", "false");
 }
@@ -1488,6 +1893,201 @@ function openIssueInboxModal() {
 function closeIssueInboxModal() {
     elements.issueInboxModal.classList.remove("active");
     elements.issueInboxModal.setAttribute("aria-hidden", "true");
+}
+
+function syncCompanyProfileForm() {
+    const profile = state.companyProfile || DEFAULT_COMPANY_PROFILE;
+    elements.companyNameInput.value = profile.companyName;
+    elements.companyTaglineInput.value = profile.tagline;
+    elements.companyAddressInput.value = profile.address;
+    elements.companyEmailInput.value = profile.email;
+    elements.companyPhoneInput.value = profile.phone;
+    elements.companyWebsiteInput.value = profile.website;
+    elements.companyTaxIdInput.value = profile.taxId;
+}
+
+function openCompanyProfileModal() {
+    if (!isAdminSession()) {
+        setImportStatus("Only admin accounts can edit the company profile.", true);
+        return;
+    }
+
+    closeTopbarMenu();
+    syncCompanyProfileForm();
+    elements.companyProfileModal.classList.add("active");
+    elements.companyProfileModal.setAttribute("aria-hidden", "false");
+}
+
+function closeCompanyProfileModal() {
+    elements.companyProfileModal.classList.remove("active");
+    elements.companyProfileModal.setAttribute("aria-hidden", "true");
+}
+
+async function saveCompanyProfile() {
+    await saveCompanyProfileState({
+        companyName: elements.companyNameInput.value,
+        tagline: elements.companyTaglineInput.value,
+        address: elements.companyAddressInput.value,
+        email: elements.companyEmailInput.value,
+        phone: elements.companyPhoneInput.value,
+        website: elements.companyWebsiteInput.value,
+        taxId: elements.companyTaxIdInput.value
+    });
+    closeCompanyProfileModal();
+    renderDocuments();
+    generatePreviews();
+    window.alert(t("company_profile_saved"));
+}
+
+function syncSavedItemsTotal() {
+    const quantity = Number.parseFloat(elements.savedItemQuantityInput.value) || 0;
+    const unitPrice = Number.parseFloat(elements.savedItemUnitPriceInput.value) || 0;
+    elements.savedItemTotalInput.value = formatAmount(quantity * unitPrice);
+}
+
+function openSavedItemsModal() {
+    renderSavedItemsList();
+    syncSavedItemsTotal();
+    elements.savedItemsModal.classList.add("active");
+    elements.savedItemsModal.setAttribute("aria-hidden", "false");
+}
+
+function closeSavedItemsModal() {
+    elements.savedItemsModal.classList.remove("active");
+    elements.savedItemsModal.setAttribute("aria-hidden", "true");
+    closeSavedItemCreateModal();
+}
+
+function openSavedItemCreateModal() {
+    if (!elements.savedItemCreateModal) {
+        return;
+    }
+    elements.savedItemCreateModal.classList.add("active");
+    elements.savedItemCreateModal.setAttribute("aria-hidden", "false");
+    elements.savedItemDescriptionInput.focus();
+}
+
+function closeSavedItemCreateModal() {
+    if (!elements.savedItemCreateModal) {
+        return;
+    }
+    elements.savedItemCreateModal.classList.remove("active");
+    elements.savedItemCreateModal.setAttribute("aria-hidden", "true");
+}
+
+function renderSavedItemsList() {
+    if (!elements.savedItemsList) {
+        return;
+    }
+
+    updateSavedItemsCountBadge();
+
+    if (!state.savedItems.length) {
+        elements.savedItemsList.innerHTML = `<p class="client-list-empty">${escapeHtml(t("no_saved_items"))}</p>`;
+        return;
+    }
+
+    const sortedItems = [...state.savedItems].sort((left, right) => Date.parse(right.createdAt || 0) - Date.parse(left.createdAt || 0));
+    elements.savedItemsList.innerHTML = sortedItems.map(item => `
+        <div class="client-row saved-item-row">
+            <div class="client-row-copy">
+                <strong>${escapeHtml(item.description)}</strong>
+                <span>Qty ${escapeHtml(formatAmount(item.quantity))} · Unit ${escapeHtml(formatCurrency(item.unitPrice))} · Total ${escapeHtml(formatCurrency(item.total))}</span>
+            </div>
+            <div class="client-row-actions">
+                <button class="btn btn-secondary" type="button" data-saved-item-action="use" data-saved-item-id="${escapeHtml(item.id)}">${escapeHtml(t("use_item"))}</button>
+                <button class="btn btn-secondary" type="button" data-saved-item-action="delete" data-saved-item-id="${escapeHtml(item.id)}">${escapeHtml(t("delete"))}</button>
+            </div>
+        </div>
+    `).join("");
+}
+
+function createSavedItem(payload) {
+    const quantity = Number.parseFloat(payload.quantity) || 0;
+    const unitPrice = Number.parseFloat(payload.unitPrice) || 0;
+    const total = Number.parseFloat(payload.total) || (quantity * unitPrice);
+
+    return {
+        id: `saved-item-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        description: String(payload.description || "").trim(),
+        quantity,
+        unitPrice,
+        total,
+        createdAt: new Date().toISOString()
+    };
+}
+
+async function addSavedItem(item) {
+    await saveSavedItemsState([createSavedItem(item), ...state.savedItems]);
+}
+
+async function addSavedItemFromModal() {
+    const description = elements.savedItemDescriptionInput.value.trim();
+    const quantity = Number.parseFloat(elements.savedItemQuantityInput.value) || 0;
+    const unitPrice = Number.parseFloat(elements.savedItemUnitPriceInput.value) || 0;
+    const total = Number.parseFloat(elements.savedItemTotalInput.value) || (quantity * unitPrice);
+
+    if (!description) {
+        window.alert("Enter an item description before adding it to the cart.");
+        return;
+    }
+
+    await addSavedItem({ description, quantity, unitPrice, total });
+    elements.savedItemDescriptionInput.value = "";
+    elements.savedItemQuantityInput.value = "1";
+    elements.savedItemUnitPriceInput.value = "0";
+    elements.savedItemTotalInput.value = "0";
+    closeSavedItemCreateModal();
+    setImportStatus(t("saved_item_added"));
+}
+
+async function removeSavedItem(itemId) {
+    await saveSavedItemsState(state.savedItems.filter(item => item.id !== itemId));
+}
+
+function addSavedItemToEditor(item) {
+    addItem();
+    const lastItem = elements.itemsContainer.querySelector(".item-row:last-child");
+    if (!lastItem) {
+        return;
+    }
+
+    lastItem.querySelector(".item-description").value = item.description;
+    lastItem.querySelector(".item-quantity").value = formatAmount(item.quantity);
+    lastItem.querySelector(".item-manual-unit-toggle").checked = true;
+    lastItem.querySelector(".item-unit-price").value = formatAmount(item.unitPrice);
+    lastItem.querySelector(".item-total-price").value = formatAmount(item.total);
+    updateItemPricing(lastItem);
+    updateItemSummary(lastItem);
+    setExpandedItem(lastItem);
+    updateEditorSummary();
+}
+
+async function handleSavedItemsListClick(event) {
+    const button = event.target.closest("[data-saved-item-action]");
+    if (!button) {
+        return;
+    }
+
+    const item = state.savedItems.find(entry => entry.id === button.dataset.savedItemId);
+    if (!item) {
+        return;
+    }
+
+    if (button.dataset.savedItemAction === "use") {
+        addSavedItemToEditor(item);
+        await removeSavedItem(item.id);
+        setImportStatus(t("saved_item_used"));
+        closeSavedItemsModal();
+        return;
+    }
+
+    if (button.dataset.savedItemAction === "delete") {
+        if (!window.confirm(`Delete saved item "${item.description}"?`)) {
+            return;
+        }
+        await removeSavedItem(item.id);
+    }
 }
 
 function openAboutModal() {
@@ -1565,7 +2165,7 @@ function renderClientManagementList() {
     `).join("");
 }
 
-function handleAddUser() {
+async function handleAddUser() {
     if (!isAdminSession()) {
         setImportStatus("Only admin accounts can manage users.", true);
         return;
@@ -1591,7 +2191,7 @@ function handleAddUser() {
         return;
     }
 
-    saveUserAccounts([
+    await saveUserAccounts([
         ...state.userAccounts,
         {
             id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -1609,7 +2209,7 @@ function handleAddUser() {
     setImportStatus(`Added ${displayName} as a ${role}.`);
 }
 
-function handleUserManagementClick(event) {
+async function handleUserManagementClick(event) {
     const button = event.target.closest("[data-user-action]");
     if (!button || !isAdminSession()) {
         return;
@@ -1628,7 +2228,7 @@ function handleUserManagementClick(event) {
             return;
         }
 
-        saveUserAccounts(state.userAccounts.map(entry =>
+        await saveUserAccounts(state.userAccounts.map(entry =>
             entry.id === user.id ? { ...entry, password: nextPassword.trim() || entry.password } : entry
         ));
         setImportStatus(`Password reset for ${user.displayName}.`);
@@ -1647,12 +2247,12 @@ function handleUserManagementClick(event) {
             return;
         }
 
-        if (!window.confirm(`Remove ${user.displayName} from this device's local user list?`)) {
+        if (!window.confirm(`Remove ${user.displayName} from the shared workspace user list?`)) {
             return;
         }
 
-        saveUserAccounts(state.userAccounts.filter(entry => entry.id !== user.id));
-        setImportStatus(`Removed ${user.displayName} from local access.`);
+        await saveUserAccounts(state.userAccounts.filter(entry => entry.id !== user.id));
+        setImportStatus(`Removed ${user.displayName} from workspace access.`);
     }
 }
 
@@ -1800,6 +2400,7 @@ function renderIssueInbox() {
                     <strong>${escapeHtml(report.subject)}</strong>
                     <span>${escapeHtml(t("submitted_by"))} ${escapeHtml(report.createdBy.displayName || report.createdBy.username || "Unknown")} · ${escapeHtml(formatDateTime(report.createdAt))}</span>
                 </div>
+                <button class="issue-delete-btn" type="button" data-issue-action="delete" data-issue-id="${escapeHtml(report.id)}">${escapeHtml(t("delete_report"))}</button>
             </div>
             <p>${escapeHtml(report.details).replace(/\n/g, "<br>")}</p>
             ${report.screenshotDataUrl
@@ -1810,6 +2411,23 @@ function renderIssueInbox() {
                 : ""}
         </article>
     `).join("");
+}
+
+async function handleIssueInboxClick(event) {
+    const button = event.target.closest("[data-issue-action]");
+    if (!button || !isAdminSession()) {
+        return;
+    }
+
+    if (button.dataset.issueAction !== "delete") {
+        return;
+    }
+
+    if (!window.confirm(t("report_delete_confirm"))) {
+        return;
+    }
+
+    await saveIssueReports(state.issueReports.filter(report => report.id !== button.dataset.issueId));
 }
 
 function handleIssueScreenshotChange() {
@@ -1823,7 +2441,7 @@ async function submitIssueReport() {
 
     if (!subject || !details) {
         elements.issueReportStatus.hidden = false;
-        elements.issueReportStatus.textContent = "Add a summary and details before submitting.";
+        elements.issueReportStatus.textContent = t("report_required_error");
         elements.issueReportStatus.classList.add("hero-helper-error");
         return;
     }
@@ -1840,7 +2458,7 @@ async function submitIssueReport() {
         }
     }
 
-    saveIssueReports([
+    await saveIssueReports([
         {
             id: `issue-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
             subject,
@@ -1861,9 +2479,8 @@ async function submitIssueReport() {
     elements.issueSummaryInput.value = "";
     elements.issueDetailsInput.value = "";
     elements.issueScreenshotInput.value = "";
-    elements.issueReportStatus.hidden = false;
-    elements.issueReportStatus.textContent = "Report submitted successfully.";
-    elements.issueReportStatus.classList.remove("hero-helper-error");
+    closeIssueReportModal();
+    window.alert(t("report_submitted_success"));
 }
 
 function readFileAsDataUrl(file) {
@@ -2029,6 +2646,8 @@ function normalizeDocuments(documents) {
             return;
         }
 
+        doc.status = doc.status === "draft" ? "draft" : "logged";
+
         const refNumber = String(doc.refNumber || "").trim().toUpperCase();
         const isTlReference = /^TL-\d{4}-\d{4}-\d+$/i.test(refNumber);
 
@@ -2168,6 +2787,11 @@ function clearLocalTestData() {
 
     clearLocalDataset(LOCAL_DOCUMENTS_STORAGE_KEY);
     clearLocalDataset(LOCAL_CLIENTS_STORAGE_KEY);
+    clearLocalDataset(USER_ACCOUNTS_STORAGE_KEY);
+    clearLocalDataset(ISSUE_REPORTS_STORAGE_KEY);
+    clearLocalDataset(COMPANY_PROFILE_STORAGE_KEY);
+    clearLocalDataset(SAVED_ITEMS_STORAGE_KEY);
+    loadLocalWorkspaceState();
     loadLocalAppData();
     closeSettingsModal();
     setImportStatus("Local test data cleared from this browser.");
@@ -2606,32 +3230,47 @@ function hasMeaningfulPoNumber(value) {
 
 function getStepContent(step) {
     const isEditing = isExistingDocumentEditMode();
+    const isPrefilled = isPrefilledEditMode();
     const stepContent = {
         1: {
             title: t("type_info"),
-            text: isEditing
+            text: isPrefilled
+                ? "Quick edit the converted document details, reference number, and invoice date."
+                : isEditing
                 ? "Update the saved document details and save right away if this is the only change you need."
                 : "Choose the document type, confirm the date, and set the reference details.",
-            tip: isEditing
+            tip: isPrefilled
+                ? "Use this section for fast admin changes before you finalize the invoice."
+                : isEditing
                 ? "Existing documents can be updated from any step, so you do not have to return to final review for quick fixes."
                 : "Reference details first keeps new documents organized before you move into client and pricing work."
         },
         2: {
             title: t("client_details"),
-            text: isEditing
+            text: isPrefilled
+                ? "Adjust bill-to or consignee details without walking the full workflow again."
+                : isEditing
                 ? "Tighten up the saved client name or address without losing your place in the workflow."
                 : "Select an existing client or enter a new one, then capture the address exactly as it should appear on the document.",
             tip: "Saved clients help you move much faster on repeat work and keep naming consistent."
         },
         3: {
             title: t("line_items"),
-            text: "Add services, pricing, and payment terms. Unit price is derived automatically unless you switch to manual mode.",
-            tip: "Keep item descriptions short and specific. The table stays cleaner when each service is one line item."
+            text: isPrefilled
+                ? "Fine-tune quantities, pricing, notes, and payment terms from one section."
+                : "Add services, pricing, and payment terms. Unit price is derived automatically unless you switch to manual mode.",
+            tip: isPrefilled
+                ? "This is the fastest place to make operational edits before export."
+                : "Keep item descriptions short and specific. The table stays cleaner when each service is one line item."
         },
         4: {
             title: t("keywords"),
-            text: "Add search keywords after the line items are in place, or tap a suggestion generated from your item descriptions.",
-            tip: "Keywords work best when they reflect destinations, service types, equipment, or priorities you will search for later."
+            text: isPrefilled
+                ? "Refresh search keywords only if the services, route, or priorities changed."
+                : "Add search keywords after the line items are in place, or tap a suggestion generated from your item descriptions.",
+            tip: isPrefilled
+                ? "Keywords are optional here, but they help later search stay accurate."
+                : "Keywords work best when they reflect destinations, service types, equipment, or priorities you will search for later."
         },
         5: {
             title: t("items_preview"),
@@ -2640,8 +3279,12 @@ function getStepContent(step) {
         },
         6: {
             title: t("review"),
-            text: "Check the final layout before saving and exporting the PDF.",
-            tip: "This preview mirrors the live document structure, so it is the fastest way to catch layout mistakes before print."
+            text: isPrefilled
+                ? "Start from the final review, then jump only into the sections you want to edit."
+                : "Check the final layout before saving and exporting the PDF.",
+            tip: isPrefilled
+                ? "Use the quick step bar above to edit just the fields that need attention."
+                : "This preview mirrors the live document structure, so it is the fastest way to catch layout mistakes before print."
         }
     };
 
@@ -2689,6 +3332,10 @@ function parseTags(value) {
 
 function isExistingDocumentEditMode() {
     return state.editingDocumentId !== null;
+}
+
+function isPrefilledEditMode() {
+    return state.editingDocumentId !== null || state.convertingFromQuoteId !== null;
 }
 
 function getTotalSteps() {
@@ -2878,7 +3525,7 @@ function openModal(type = "quote") {
     updateModalTitle();
     elements.documentModal.classList.add("active");
     elements.documentModal.setAttribute("aria-hidden", "false");
-    goToStep(isExistingDocumentEditMode() ? getTotalSteps() : 1);
+    goToStep(isPrefilledEditMode() ? getTotalSteps() : 1);
 }
 
 function getActionButtonMarkup(icon, label) {
@@ -2893,6 +3540,7 @@ function closeModal() {
     elements.documentModal.classList.remove("active");
     elements.documentModal.classList.remove("review-mode");
     elements.documentModal.classList.remove("final-preview-mode");
+    elements.documentModal.classList.remove("prefilled-edit-mode");
     elements.documentModal.setAttribute("aria-hidden", "true");
     resetForm();
 }
@@ -2970,13 +3618,18 @@ function prepareNewDocument(type = "quote") {
 
 function goToStep(step) {
     const totalSteps = getTotalSteps();
+    const isPrefilled = isPrefilledEditMode();
     state.currentStep = step;
     elements.documentModal.classList.toggle("review-mode", step === totalSteps);
     elements.documentModal.classList.toggle("final-preview-mode", step === totalSteps);
+    elements.documentModal.classList.toggle("prefilled-edit-mode", isPrefilled);
 
     document.querySelectorAll(".step[data-step]").forEach(el => {
         const stepNumber = Number(el.dataset.step);
         el.classList.remove("active", "completed");
+        if (stepNumber === 5 && isPrefilled) {
+            return;
+        }
         if (stepNumber < step) {
             el.classList.add("completed");
         }
@@ -2990,9 +3643,9 @@ function goToStep(step) {
         el.classList.toggle("active", stepNumber === step);
     });
 
-    elements.prevBtn.style.display = step > 1 ? "block" : "none";
-    elements.nextBtn.style.display = step < totalSteps ? "block" : "none";
-    elements.saveBtn.style.display = (isExistingDocumentEditMode() || step === totalSteps) ? "block" : "none";
+    elements.prevBtn.style.display = isPrefilled ? "none" : (step > 1 ? "block" : "none");
+    elements.nextBtn.style.display = isPrefilled ? "none" : (step < totalSteps ? "block" : "none");
+    elements.saveBtn.style.display = (isPrefilled || step === totalSteps) ? "block" : "none";
     elements.exportPdfBtn.style.display = step === totalSteps ? "block" : "none";
 
     if (step >= totalSteps - 1) {
@@ -3023,7 +3676,11 @@ function handleStepIndicatorClick(event) {
         return;
     }
 
-    if (targetStep > state.currentStep && !isExistingDocumentEditMode()) {
+    if (targetStep === 5 && isPrefilledEditMode()) {
+        return;
+    }
+
+    if (targetStep > state.currentStep && !isPrefilledEditMode()) {
         for (let step = state.currentStep; step < targetStep; step += 1) {
             if (!validateStep(step)) {
                 return;
@@ -3065,7 +3722,16 @@ function addItem() {
                 </span>
                 <span class="item-summary-hint">Click to edit</span>
             </button>
-            <button type="button" class="remove-item" data-remove-item="${itemId}">Remove</button>
+            <div class="item-row-header-actions">
+                <button type="button" class="save-item-later" data-save-item-later="${itemId}" aria-label="${escapeHtml(t("save_for_later"))}" title="${escapeHtml(t("save_for_later"))}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M3.5 5h2.1l1.5 8.2a1.6 1.6 0 0 0 1.6 1.3h7.9a1.6 1.6 0 0 0 1.6-1.2l1.2-5.6H7.1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="10" cy="18.2" r="1.4" fill="currentColor"/>
+                        <circle cx="17.2" cy="18.2" r="1.4" fill="currentColor"/>
+                    </svg>
+                </button>
+                <button type="button" class="remove-item" data-remove-item="${itemId}">Remove</button>
+            </div>
         </div>
         <div class="item-editor">
             <div class="form-group">
@@ -3149,7 +3815,39 @@ function removeItem(id) {
     }
 }
 
+function saveEditorItemForLater(id) {
+    const item = elements.itemsContainer.querySelector(`[data-item-id="${id}"]`);
+    if (!item) {
+        return;
+    }
+
+    const description = item.querySelector(".item-description").value.trim();
+    const quantity = Number.parseFloat(item.querySelector(".item-quantity").value) || 0;
+    const total = Number.parseFloat(item.querySelector(".item-total-price").value) || 0;
+    const unitPrice = parseDecimalInput(item.querySelector(".item-unit-price").value) || 0;
+
+    if (!description) {
+        window.alert("Add an item description before moving it to the cart.");
+        return;
+    }
+
+    addSavedItem({
+        description,
+        quantity,
+        unitPrice,
+        total
+    });
+    removeItem(id);
+    setImportStatus(t("saved_item_added"));
+}
+
 function handleItemContainerClick(event) {
+    const saveForLaterButton = event.target.closest("[data-save-item-later]");
+    if (saveForLaterButton) {
+        saveEditorItemForLater(saveForLaterButton.dataset.saveItemLater);
+        return;
+    }
+
     const removeButton = event.target.closest("[data-remove-item]");
     if (removeButton) {
         removeItem(removeButton.dataset.removeItem);
@@ -3741,10 +4439,14 @@ async function persistDocument(options = {}) {
     const { exportAfterSave = false } = options;
     const isEditing = state.editingDocumentId !== null;
     const existingDocument = isEditing ? getDocumentById(state.editingDocumentId) : null;
+    const nextStatus = exportAfterSave
+        ? "logged"
+        : (existingDocument?.status === "logged" ? "logged" : "draft");
     const doc = {
         ...(existingDocument || {}),
         id: state.editingDocumentId ?? Date.now(),
         type: elements.docType.value,
+        status: nextStatus,
         refNumber: elements.refNumber.value,
         date: elements.docDate.value,
         clientName: elements.clientName.value,
@@ -4041,6 +4743,8 @@ function renderDocuments() {
     elements.documentsGrid.innerHTML = visibleDocuments.map(doc => {
         const date = formatDisplayDate(doc.date);
         const isLockedSourceQuote = Boolean(doc.lockedAfterConversion);
+        const statusLabel = doc.status === "draft" ? t("status_draft") : t("status_logged");
+        const statusClass = doc.status === "draft" ? "draft" : "logged";
         const creatorLabel = isAdminSession() && doc.createdBy?.displayName
             ? `${escapeHtml(doc.createdBy.displayName)}${doc.createdBy.username ? ` (@${escapeHtml(doc.createdBy.username)})` : ""}`
             : "";
@@ -4067,6 +4771,7 @@ function renderDocuments() {
                     </div>
                 </div>
                 <div class="doc-row-badges">
+                    <span class="doc-status-badge ${statusClass}">${escapeHtml(statusLabel)}</span>
                     ${statusBadge}
                     ${legacyBadge}
                     ${getDocumentTagPreviewMarkup(doc)}
