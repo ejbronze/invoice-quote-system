@@ -331,6 +331,7 @@ body::after {
 }
 
 .app-topbar {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -342,16 +343,20 @@ body::after {
     background: var(--surface);
     box-shadow: var(--shadow-md);
     backdrop-filter: blur(16px);
+    overflow: visible;
+    z-index: 25;
 }
 
 .app-topbar-copy {
     min-width: 0;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    gap: 0.7rem;
+    flex-wrap: wrap;
 }
 
 .app-topbar-kicker {
-    display: block;
+    display: none;
     color: var(--text-faint);
     font-size: 0.72rem;
     font-weight: 700;
@@ -360,22 +365,21 @@ body::after {
 }
 
 .app-topbar-copy strong {
-    display: block;
-    margin-top: 0.12rem;
     color: var(--text);
     font-size: 0.92rem;
+    white-space: nowrap;
 }
 
 .session-identity {
     display: inline-flex;
     align-items: center;
-    margin-top: 0.38rem;
     padding: 0.3rem 0.6rem;
     border-radius: 999px;
     background: rgba(240, 245, 255, 0.92);
     color: var(--blue-deep);
     font-size: 0.76rem;
     font-weight: 700;
+    white-space: nowrap;
 }
 
 .app-topbar-actions {
@@ -427,6 +431,7 @@ body::after {
 
 .topbar-menu-wrap {
     position: relative;
+    z-index: 30;
 }
 
 .topbar-menu {
