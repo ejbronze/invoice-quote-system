@@ -603,6 +603,8 @@ body::after {
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+    line-height: 1.25;
+    overflow: visible;
 }
 
 .overview-panel-head p {
@@ -1579,6 +1581,30 @@ body::after {
 
 .modal-header h3 {
     font-size: 1.18rem;
+}
+
+.modal-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.modal-tool-btn {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    padding: 0.55rem 0.9rem;
+    background: rgba(255, 255, 255, 0.12);
+    color: white;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.modal-tool-btn:hover {
+    background: rgba(255, 255, 255, 0.18);
+    transform: translateY(-1px);
 }
 
 .close-btn {

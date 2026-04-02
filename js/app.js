@@ -672,6 +672,7 @@ function cacheElements() {
     elements.exportPdfBtn = document.getElementById("exportPdfBtn");
     elements.newQuoteBtn = document.getElementById("newQuoteBtn");
     elements.newInvoiceBtn = document.getElementById("newInvoiceBtn");
+    elements.calculatorLauncherModal = document.getElementById("calculatorLauncherModal");
     elements.exportCsvTemplateBtn = document.getElementById("exportCsvTemplateBtn");
     elements.importCsvBtn = document.getElementById("importCsvBtn");
     elements.exportBackupBtn = document.getElementById("exportBackupBtn");
@@ -765,6 +766,7 @@ function bindEvents() {
     elements.documentsGrid.addEventListener("keydown", handleDocumentCardKeydown);
     elements.tagSuggestions.addEventListener("click", handleKeywordSuggestionClick);
     elements.calculatorLauncher.addEventListener("click", toggleCalculator);
+    elements.calculatorLauncherModal.addEventListener("click", toggleCalculator);
     elements.calculatorMinimizeBtn.addEventListener("click", hideCalculator);
     elements.calculatorCloseBtn.addEventListener("click", hideCalculator);
     elements.calculatorGrid.addEventListener("click", handleCalculatorButtonClick);
@@ -834,6 +836,7 @@ function showCalculator() {
     elements.calculatorWidget.classList.remove("hidden");
     elements.calculatorWidget.classList.add("is-visible");
     elements.calculatorLauncher.setAttribute("aria-expanded", "true");
+    elements.calculatorLauncherModal.setAttribute("aria-expanded", "true");
 
     if (!elements.calculatorWidget.style.left) {
         elements.calculatorWidget.style.left = `${Math.max(window.innerWidth - 360, 16)}px`;
@@ -848,6 +851,7 @@ function hideCalculator() {
     elements.calculatorWidget.classList.remove("is-visible");
     elements.calculatorWidget.hidden = true;
     elements.calculatorLauncher.setAttribute("aria-expanded", "false");
+    elements.calculatorLauncherModal.setAttribute("aria-expanded", "false");
 }
 
 function handleCalculatorButtonClick(event) {
