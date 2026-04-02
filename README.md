@@ -54,7 +54,7 @@ Because the current role system is browser-local, user accounts created on one d
 
 1. Open the app through Vercel or a local web server.
 2. Sign in with a local account.
-3. Use `New Quote`, `New Invoice`, or the built-in `Calculator` button from the main dashboard action bar.
+3. Use `New Quote`, `New Invoice`, or the calculator launcher from the main dashboard action bar.
 4. Move through the six editor steps:
    - `Type & Info`
    - `Client Details`
@@ -75,7 +75,7 @@ Because the current role system is browser-local, user accounts created on one d
 - Admin-only document attribution showing which signed-in user created each quote or invoice.
 - Search documents by reference number, date, client, type, or keyword.
 - Sort documents by document date or created/exported date.
-- Open the floating calculator directly from the main dashboard action bar while preparing documents.
+- Open the floating calculator from the main dashboard action bar or from inside the document editor while preparing quotes and invoices.
 - Export a CSV template and import bulk document rows.
 - Export full JSON backups and import JSON backups.
 - Export selected quotes/invoices as JSON.
