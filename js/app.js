@@ -1290,6 +1290,9 @@ function renderClientManagementList() {
             <div class="client-row-copy">
                 <strong>${escapeHtml(client.name)}</strong>
                 <span>${escapeHtml(client.address || "No address saved").replace(/\n/g, "<br>")}</span>
+                ${client.consigneeName || client.consigneeAddress
+                    ? `<span><strong>Consignee:</strong> ${escapeHtml(client.consigneeName || "No consignee name saved")}${client.consigneeAddress ? `<br>${escapeHtml(client.consigneeAddress).replace(/\n/g, "<br>")}` : ""}</span>`
+                    : ""}
             </div>
             <div class="client-row-actions">
                 <button class="btn btn-secondary" type="button" data-client-action="edit-client" data-client-id="${escapeHtml(client.id)}">${escapeHtml(t("edit"))}</button>
@@ -1426,6 +1429,16 @@ async function handleClientManagementClick(event) {
             return;
         }
 
+        const nextConsigneeName = window.prompt("Update consignee name:", client.consigneeName || "");
+        if (nextConsigneeName === null) {
+            return;
+        }
+
+        const nextConsigneeAddress = window.prompt("Update consignee address:", client.consigneeAddress || "");
+        if (nextConsigneeAddress === null) {
+            return;
+        }
+
         const duplicateClient = state.clients.find(entry =>
             !isSameDocumentId(entry.id, client.id) && entry.name.toLowerCase() === trimmedName.toLowerCase()
         );
@@ -1437,7 +1450,13 @@ async function handleClientManagementClick(event) {
         try {
             await saveClientsToServer(state.clients.map(entry =>
                 isSameDocumentId(entry.id, client.id)
-                    ? { ...entry, name: trimmedName, address: trimmedAddress }
+                    ? {
+                        ...entry,
+                        name: trimmedName,
+                        address: trimmedAddress,
+                        consigneeName: nextConsigneeName.trim(),
+                        consigneeAddress: nextConsigneeAddress.trim()
+                    }
                     : entry
             ));
         } catch (error) {
@@ -1673,7 +1692,9 @@ function normalizeClients(clients) {
         .map(client => ({
             id: client?.id || `client-${Date.now()}-${Math.random().toString(36).slice(2)}`,
             name: client?.name || "",
-            address: client?.address || ""
+            address: client?.address || "",
+            consigneeName: client?.consigneeName || "",
+            consigneeAddress: client?.consigneeAddress || ""
         }))
         .filter(client => client.name && client.address);
 
@@ -1687,7 +1708,9 @@ function normalizeClients(clients) {
             {
                 id: "ccxpress",
                 name: "CCXpress S.A | Chatelain Cargo Services",
-                address: "42 Airport Road, Port Au Prince, Haiti"
+                address: "42 Airport Road, Port Au Prince, Haiti",
+                consigneeName: "",
+                consigneeAddress: ""
             },
             ...validClients
         ];
@@ -2089,11 +2112,15 @@ async function handleCsvImportSelect(event) {
             const existing = mergedClients.find(client => client.name.toLowerCase() === doc.clientName.toLowerCase());
             if (existing) {
                 existing.address = doc.clientAddress;
+                existing.consigneeName = doc.consigneeName || existing.consigneeName || "";
+                existing.consigneeAddress = doc.consigneeAddress || existing.consigneeAddress || "";
             } else {
                 mergedClients.push({
                     id: `client-${Date.now()}-${Math.random().toString(36).slice(2)}`,
                     name: doc.clientName,
-                    address: doc.clientAddress
+                    address: doc.clientAddress,
+                    consigneeName: doc.consigneeName || "",
+                    consigneeAddress: doc.consigneeAddress || ""
                 });
             }
         });
@@ -2483,6 +2510,7 @@ function getActionButtonMarkup(icon, label) {
 function closeModal() {
     elements.documentModal.classList.remove("active");
     elements.documentModal.classList.remove("review-mode");
+    elements.documentModal.classList.remove("final-preview-mode");
     elements.documentModal.setAttribute("aria-hidden", "true");
     resetForm();
 }
@@ -2562,6 +2590,7 @@ function goToStep(step) {
     const totalSteps = getTotalSteps();
     state.currentStep = step;
     elements.documentModal.classList.toggle("review-mode", step === totalSteps);
+    elements.documentModal.classList.toggle("final-preview-mode", step === totalSteps);
 
     document.querySelectorAll(".step[data-step]").forEach(el => {
         const stepNumber = Number(el.dataset.step);
@@ -3539,6 +3568,25 @@ function getDocumentRefInfo(doc) {
     };
 }
 
+function getDocumentTagPreviewMarkup(doc) {
+    const tags = Array.isArray(doc?.tags) ? doc.tags.filter(Boolean) : [];
+    if (!tags.length) {
+        return "";
+    }
+
+    const visibleTags = tags.slice(0, 5);
+    const hiddenCount = tags.length - visibleTags.length;
+
+    return `
+        <div class="doc-tags">
+            ${visibleTags.map(tag => `<span class="doc-tag">${escapeHtml(tag)}</span>`).join("")}
+            ${hiddenCount > 0
+                ? `<button type="button" class="doc-tag doc-tag-more" data-show-tags="${escapeHtml(String(doc.id))}" aria-label="Show all keywords for ${escapeHtml(doc.refNumber || "this document")}">+${hiddenCount}...</button>`
+                : ""}
+        </div>
+    `;
+}
+
 function getDocumentDateAt(doc) {
     const parsed = Date.parse(doc.date);
     if (!Number.isNaN(parsed)) {
@@ -3605,7 +3653,6 @@ function renderDocuments() {
 
     elements.documentsGrid.innerHTML = visibleDocuments.map(doc => {
         const date = formatDisplayDate(doc.date);
-        const tags = Array.isArray(doc.tags) ? doc.tags : [];
         const isLockedSourceQuote = Boolean(doc.lockedAfterConversion);
         const creatorLabel = isAdminSession() && doc.createdBy?.displayName
             ? `${escapeHtml(doc.createdBy.displayName)}${doc.createdBy.username ? ` (@${escapeHtml(doc.createdBy.username)})` : ""}`
@@ -3635,7 +3682,7 @@ function renderDocuments() {
                 <div class="doc-row-badges">
                     ${statusBadge}
                     ${legacyBadge}
-                    ${tags.length ? `<div class="doc-tags">${tags.map(tag => `<span class="doc-tag">${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
+                    ${getDocumentTagPreviewMarkup(doc)}
                 </div>
                 <div class="doc-row-total">
                     <span class="doc-total-label">${escapeHtml(t("total"))}</span>
@@ -3685,6 +3732,8 @@ function onClientSelectChange() {
     if (!selected || selected === "other") {
         elements.clientName.value = "";
         elements.clientAddress.value = "";
+        elements.consigneeName.value = "";
+        elements.consigneeAddress.value = "";
         updateEditorSummary();
         return;
     }
@@ -3693,6 +3742,8 @@ function onClientSelectChange() {
     if (client) {
         elements.clientName.value = client.name;
         elements.clientAddress.value = client.address;
+        elements.consigneeName.value = client.consigneeName || "";
+        elements.consigneeAddress.value = client.consigneeAddress || "";
     }
 
     updateEditorSummary();
@@ -3701,6 +3752,8 @@ function onClientSelectChange() {
 async function saveClient() {
     const name = elements.clientName.value.trim();
     const address = elements.clientAddress.value.trim();
+    const consigneeName = elements.consigneeName.value.trim();
+    const consigneeAddress = elements.consigneeAddress.value.trim();
 
     if (!name || !address) {
         alert("Enter client name and address before saving.");
@@ -3712,11 +3765,15 @@ async function saveClient() {
 
     if (existing) {
         existing.address = address;
+        existing.consigneeName = consigneeName;
+        existing.consigneeAddress = consigneeAddress;
     } else {
         nextClients.push({
             id: `client-${Date.now()}`,
             name,
-            address
+            address,
+            consigneeName,
+            consigneeAddress
         });
     }
 
@@ -3737,6 +3794,18 @@ async function saveClient() {
 }
 
 async function handleDocumentCardClick(event) {
+    const showTagsButton = event.target.closest("[data-show-tags]");
+    if (showTagsButton) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const doc = getDocumentById(showTagsButton.dataset.showTags);
+        if (doc && Array.isArray(doc.tags) && doc.tags.length) {
+            window.alert(`${doc.refNumber || "Document"} keywords:\n\n${doc.tags.join(", ")}`);
+        }
+        return;
+    }
+
     const actionButton = event.target.closest("[data-action]");
     if (actionButton) {
         event.preventDefault();
@@ -3779,7 +3848,7 @@ function handleDocumentCardKeydown(event) {
     }
 
     const row = event.target.closest("[data-view-id]");
-    if (!row || event.target.closest("[data-action]")) {
+    if (!row || event.target.closest("[data-action]") || event.target.closest("[data-show-tags]")) {
         return;
     }
 
