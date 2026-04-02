@@ -497,9 +497,9 @@ function applyTranslations() {
     setElementText(".app-topbar-copy strong", t("dashboard_title_top"));
     elements.endSessionBtn.textContent = t("end_session");
     document.getElementById("languagePickerLabel").textContent = t("language");
-    elements.languageSelect.options[0].textContent = TRANSLATIONS.en.language_name;
-    elements.languageSelect.options[1].textContent = TRANSLATIONS.es.language_name;
-    elements.languageSelect.options[2].textContent = TRANSLATIONS.fr.language_name;
+    elements.languageSelect.options[0].textContent = "🍔 ENG";
+    elements.languageSelect.options[1].textContent = "🪇 ESP";
+    elements.languageSelect.options[2].textContent = "🥐 FRN";
 
     setElementText(".workspace-hero .eyebrow", t("hero_kicker"));
     setElementText(".hero-copy h1", t("hero_title"));
