@@ -111,12 +111,15 @@ When the app is online with the API available, user accounts are stored in the s
 - Per-user language preferences for English, Spanish, and French
 - Client profiles that also preserve consignee name and address
 - Pending items cart with a dedicated create-item popup
+- Pending items cart with visual item cards, a header action pill, and document-insert controls
 - Issue reporting with optional screenshot upload
 - Admin issue inbox with delete controls
 - Local fallback mode when the API is unavailable
 - JSON backup, restore, and selective export tools
 - CSV template export and CSV import
 - Calculator inside the document editor
+- Compact dashboard actions and snapshot strip
+- Mobile-tuned modal sizing for cart, issue reporting, and document preview/export flows
 - Branded splash, auth, session-loading, about, and dashboard identity
 - Branded print/PDF preview output with SantoSync company identity
 

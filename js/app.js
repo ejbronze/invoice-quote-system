@@ -839,7 +839,12 @@ function applyTranslations() {
     setElementText("#savedItemUnitPriceLabel", t("unit_price_usd"));
     setElementText("#savedItemTotalLabel", t("total_usd"));
     elements.addSavedItemBtn.textContent = t("save_item");
-    elements.toggleSavedItemsFormBtn.textContent = `+ ${t("add_cart_item")}`;
+    const savedItemsToggleText = elements.toggleSavedItemsFormBtn.querySelector(".saved-items-toggle-text");
+    if (savedItemsToggleText) {
+        savedItemsToggleText.textContent = t("add_cart_item");
+    }
+    elements.toggleSavedItemsFormBtn.setAttribute("aria-label", t("add_cart_item"));
+    elements.toggleSavedItemsFormBtn.setAttribute("title", t("add_cart_item"));
     elements.openSavedItemsBtn.setAttribute("aria-label", t("open_pending_cart"));
     elements.openSavedItemsBtn.setAttribute("title", t("open_pending_cart"));
     elements.openSavedItemsTopbarBtn.setAttribute("aria-label", t("open_pending_cart"));
@@ -1982,6 +1987,7 @@ function renderSavedItemsList() {
     }
 
     updateSavedItemsCountBadge();
+    const canUseCartItems = canInsertCartItemIntoEditor();
 
     if (!state.savedItems.length) {
         elements.savedItemsList.innerHTML = `<p class="client-list-empty">${escapeHtml(t("no_saved_items"))}</p>`;
@@ -1990,16 +1996,49 @@ function renderSavedItemsList() {
 
     const sortedItems = [...state.savedItems].sort((left, right) => Date.parse(right.createdAt || 0) - Date.parse(left.createdAt || 0));
     elements.savedItemsList.innerHTML = sortedItems.map(item => `
-        <div class="client-row saved-item-row">
-            <div class="client-row-copy">
-                <strong>${escapeHtml(item.description)}</strong>
-                <span>Qty ${escapeHtml(formatAmount(item.quantity))} · Unit ${escapeHtml(formatCurrency(item.unitPrice))} · Total ${escapeHtml(formatCurrency(item.total))}</span>
+        <article class="saved-item-card">
+            <div class="saved-item-card-layout">
+                <div class="saved-item-thumb" aria-hidden="true">
+                    <div class="saved-item-thumb-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="4.5" y="5" width="15" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                            <circle cx="9" cy="10" r="1.4" fill="currentColor"/>
+                            <path d="M6.8 16l3.6-3.5 2.5 2.2 2.4-2 1.9 3.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <span>Image</span>
+                </div>
+                <div class="saved-item-card-main">
+                    <div class="saved-item-card-top">
+                        <strong>${escapeHtml(item.description)}</strong>
+                        <span class="saved-item-card-date">${escapeHtml(formatDateTime(item.createdAt))}</span>
+                    </div>
+                    <div class="saved-item-card-metrics">
+                        <span class="saved-item-chip">Qty ${escapeHtml(formatAmount(item.quantity))}</span>
+                        <span class="saved-item-chip">Unit ${escapeHtml(formatCurrency(item.unitPrice))}</span>
+                        <span class="saved-item-chip saved-item-chip-strong">Total ${escapeHtml(formatCurrency(item.total))}</span>
+                    </div>
+                </div>
             </div>
-            <div class="client-row-actions">
-                <button class="btn btn-secondary" type="button" data-saved-item-action="use" data-saved-item-id="${escapeHtml(item.id)}">${escapeHtml(t("use_item"))}</button>
+            <div class="client-row-actions saved-item-card-actions">
+                <button
+                    class="saved-item-icon-action"
+                    type="button"
+                    data-saved-item-action="use"
+                    data-saved-item-id="${escapeHtml(item.id)}"
+                    aria-label="${escapeHtml(canUseCartItems ? t("use_item") : "Open a quote or invoice to use this item")}"
+                    title="${escapeHtml(canUseCartItems ? t("use_item") : "Open a quote or invoice to use this item")}"
+                    ${canUseCartItems ? "" : "disabled"}
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 5.5v13" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+                        <path d="M5.5 12h13" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+                        <circle cx="12" cy="12" r="8.2" fill="none" stroke="currentColor" stroke-width="1.6" opacity="0.35"/>
+                    </svg>
+                </button>
                 <button class="btn btn-secondary" type="button" data-saved-item-action="delete" data-saved-item-id="${escapeHtml(item.id)}">${escapeHtml(t("delete"))}</button>
             </div>
-        </div>
+        </article>
     `).join("");
 }
 
@@ -2046,11 +2085,19 @@ async function removeSavedItem(itemId) {
     await saveSavedItemsState(state.savedItems.filter(item => item.id !== itemId));
 }
 
+function canInsertCartItemIntoEditor() {
+    return Boolean(elements.documentModal?.classList.contains("active"));
+}
+
 function addSavedItemToEditor(item) {
+    if (!canInsertCartItemIntoEditor()) {
+        return false;
+    }
+
     addItem();
     const lastItem = elements.itemsContainer.querySelector(".item-row:last-child");
     if (!lastItem) {
-        return;
+        return false;
     }
 
     lastItem.querySelector(".item-description").value = item.description;
@@ -2062,6 +2109,7 @@ function addSavedItemToEditor(item) {
     updateItemSummary(lastItem);
     setExpandedItem(lastItem);
     updateEditorSummary();
+    return true;
 }
 
 async function handleSavedItemsListClick(event) {
@@ -2076,7 +2124,17 @@ async function handleSavedItemsListClick(event) {
     }
 
     if (button.dataset.savedItemAction === "use") {
-        addSavedItemToEditor(item);
+        if (!canInsertCartItemIntoEditor()) {
+            setImportStatus("Open a quote or invoice first, then add cart items into that document.", true);
+            return;
+        }
+
+        const wasInserted = addSavedItemToEditor(item);
+        if (!wasInserted) {
+            setImportStatus("Unable to add that cart item into the current document.", true);
+            return;
+        }
+
         await removeSavedItem(item.id);
         setImportStatus(t("saved_item_used"));
         closeSavedItemsModal();
