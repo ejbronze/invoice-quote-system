@@ -2,7 +2,9 @@ const DEFAULT_CLIENTS = [
     {
         id: "ccxpress",
         name: "CCXpress S.A | Chatelain Cargo Services",
-        address: "42 Airport Road, Port Au Prince, Haiti"
+        address: "42 Airport Road, Port Au Prince, Haiti",
+        consigneeName: "",
+        consigneeAddress: ""
     }
 ];
 
@@ -50,7 +52,9 @@ function normalizeClients(clients) {
         .map(client => ({
             id: client?.id || `client-${Date.now()}-${Math.random().toString(36).slice(2)}`,
             name: client?.name || "",
-            address: client?.address || ""
+            address: client?.address || "",
+            consigneeName: client?.consigneeName || "",
+            consigneeAddress: client?.consigneeAddress || ""
         }))
         .filter(client => client.name && client.address);
 
