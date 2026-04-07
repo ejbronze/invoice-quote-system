@@ -116,7 +116,7 @@ When the app is online with the API available, user accounts are stored in the s
 - Admin-only client record management
 - Admin-only company profile management
 - Per-user language preferences for English, Spanish, and French
-- Client profiles that also preserve consignee name and address
+- Client profiles that preserve bill-to and consignee details, including saved client switching in the editor
 - Pending items cart with a dedicated create-item popup
 - Pending items cart with visual item cards, a header action pill, document-insert controls, direct image upload from the cart list, and cart item image editing
 - Line item image support inside the document editor with a visual add-image tile
@@ -149,6 +149,8 @@ Server-backed:
 
 - Quotes and invoices through `/api/documents`
 - Shared saved clients through `/api/clients`
+  - saved client records persist `name`, `address`, `consigneeName`, and `consigneeAddress`
+  - switching between saved clients restores the saved consignee fields instead of resetting them
 - Shared workspace state through `/api/workspace`
   - user accounts and roles
   - issue inbox/reporting
