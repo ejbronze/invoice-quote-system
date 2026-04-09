@@ -35,6 +35,10 @@
     box-sizing: border-box;
 }
 
+[hidden] {
+    display: none !important;
+}
+
 body {
     font-family: var(--brand-ui-font, "Plus Jakarta Sans"), "Avenir Next", "Segoe UI", sans-serif;
     background:
@@ -1013,7 +1017,7 @@ body::after {
 }
 
 .workspace-hero {
-    padding: 0.85rem 0.95rem 0.8rem;
+    padding: 0.78rem 0.95rem 0.72rem;
     background:
         radial-gradient(circle at top right, rgba(66, 99, 235, 0.14), transparent 28%),
         radial-gradient(circle at left bottom, rgba(29, 191, 140, 0.1), transparent 24%),
@@ -1027,14 +1031,14 @@ body::after {
 
 .workspace-hero-headline {
     display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
-    gap: 0.8rem;
-    align-items: start;
+    grid-template-columns: minmax(0, 1fr) minmax(430px, 0.96fr);
+    gap: 0.7rem;
+    align-items: center;
 }
 
 .hero-side-column {
     display: grid;
-    gap: 0.55rem;
+    align-items: center;
 }
 
 .eyebrow {
@@ -1049,7 +1053,11 @@ body::after {
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
+}
+
+.hero-copy {
+    min-width: 0;
 }
 
 .hero-copy h1 {
@@ -1057,12 +1065,12 @@ body::after {
     font-size: clamp(1.35rem, 2.4vw, 2.1rem);
     line-height: 0.98;
     color: var(--text);
-    margin-bottom: 0.35rem;
-    max-width: 16ch;
+    margin-bottom: 0.18rem;
+    max-width: none;
 }
 
 .hero-copy p {
-    max-width: 34rem;
+    max-width: none;
     color: var(--text-soft);
     font-size: 0.8rem;
     line-height: 1.35;
@@ -1075,7 +1083,6 @@ body::after {
 }
 
 .dashboard-actions-row {
-    margin-bottom: 0.7rem;
     display: flex;
     justify-content: flex-end;
 }
@@ -1246,7 +1253,7 @@ body::after {
 
 .overview-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.22fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.36fr);
     gap: 0.4rem;
 }
 
@@ -1284,6 +1291,8 @@ body::after {
     text-transform: uppercase;
     margin-bottom: 0.32rem;
     text-align: center;
+    line-height: 1.2;
+    max-width: 100%;
 }
 
 .stat-value {
@@ -1344,15 +1353,26 @@ body::after {
     width: 100%;
     min-height: 66px;
     min-width: 0;
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
     background:
         linear-gradient(135deg, rgba(66, 99, 235, 0.12), rgba(29, 191, 140, 0.08)),
         rgba(255, 255, 255, 0.94);
     transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
+.stat-card-toggle .stat-label {
+    font-size: clamp(0.56rem, 0.8vw, 0.64rem);
+    white-space: normal;
+    text-wrap: balance;
+}
+
 .stat-card-toggle .stat-value {
-    font-size: clamp(1.05rem, 1.6vw, 1.18rem);
+    font-size: clamp(0.92rem, 1.35vw, 1.16rem);
     white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: clip;
 }
 
 .stat-card-toggle:hover {
@@ -1386,11 +1406,14 @@ body::after {
 .stat-meta {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.35rem;
     margin-top: 0.4rem;
     color: var(--text-soft);
-    font-size: 0.74rem;
+    font-size: clamp(0.62rem, 0.82vw, 0.74rem);
     font-weight: 700;
+    text-align: center;
+    flex-wrap: wrap;
 }
 
 .stat-meta::before {
@@ -1456,8 +1479,8 @@ body::after {
     display: flex;
     align-items: end;
     gap: 0.6rem;
-    margin-bottom: 0.7rem;
-    padding: 0 0 0.65rem;
+    margin-bottom: 0.45rem;
+    padding: 0 0 0.5rem;
     border-bottom: 1px solid rgba(115, 130, 180, 0.12);
 }
 
@@ -1614,7 +1637,16 @@ body::after {
     display: flex;
     gap: 0.55rem;
     flex-wrap: wrap;
-    margin-bottom: 0.7rem;
+    margin-bottom: 0;
+}
+
+.documents-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.55rem;
 }
 
 .filter-chip {
@@ -3733,6 +3765,7 @@ body.print-window {
 .signature-block,
 .date-block {
     flex: 1;
+    position: relative;
 }
 
 .signature-row,
@@ -3832,6 +3865,16 @@ body.print-window {
     height: auto;
     object-fit: contain;
     z-index: 1;
+}
+
+.signature-stamp {
+    position: absolute;
+    width: 2in;
+    height: 2in;
+    object-fit: contain;
+    opacity: 0.78;
+    pointer-events: none;
+    z-index: 6;
 }
 
 .signature-line .line-fill {
@@ -4089,6 +4132,11 @@ body.print-window {
         grid-template-columns: 1fr;
     }
 
+    .hero-side-column,
+    .documents-toolbar {
+        justify-content: stretch;
+    }
+
     .overview-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 0.35rem;
@@ -4100,6 +4148,7 @@ body.print-window {
     }
 
     .dashboard-topbar,
+    .documents-toolbar,
     .line-items-header,
     .modal-footer,
     .modal-footer-nav,
@@ -4114,6 +4163,19 @@ body.print-window {
 
     .dashboard-topbar {
         gap: 0.65rem;
+    }
+
+    .dashboard-actions-row {
+        justify-content: stretch;
+    }
+
+    .dashboard-actions-row .hero-action-grid {
+        width: 100%;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dashboard-actions-row .hero-action-grid .btn {
+        width: 100%;
     }
 
     .documents-grid {

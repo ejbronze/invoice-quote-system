@@ -26,6 +26,7 @@ const state = {
     workspaceDataMode: "server",
     issueReports: [],
     companyProfile: null,
+    exchangeRateUsdToDop: 59,
     savedItems: [],
     editingSavedItemId: null,
     pendingSavedItemImageUploadId: null,
@@ -285,6 +286,8 @@ const TRANSLATIONS = {
         pdf_options: "PDF Options",
         include_signature: "Include signature on export",
         include_signature_help: "Turn this off for unsigned quotes or invoices before opening the PDF preview.",
+        include_stamp: "Include stamp on export",
+        include_stamp_help: "Adds a small company stamp overlay near the signature without changing the document layout.",
         workflow_tip: "Workflow Tip",
         workflow_tip_copy: "Keep line items concise and use keywords like destination, service type, or priority to make search much easier later."
     },
@@ -484,6 +487,8 @@ const TRANSLATIONS = {
         pdf_options: "Opciones PDF",
         include_signature: "Incluir firma al exportar",
         include_signature_help: "Desactiva esto para cotizaciones o facturas sin firma antes de abrir la vista PDF.",
+        include_stamp: "Incluir sello al exportar",
+        include_stamp_help: "Agrega un pequeño sello de la empresa cerca de la firma sin cambiar el diseño del documento.",
         workflow_tip: "Consejo de Flujo",
         workflow_tip_copy: "Mantén las líneas concisas y usa palabras clave como destino, tipo de servicio o prioridad para facilitar la búsqueda."
     },
@@ -683,6 +688,8 @@ const TRANSLATIONS = {
         pdf_options: "Options PDF",
         include_signature: "Inclure la signature à l’export",
         include_signature_help: "Désactivez ceci pour des devis ou factures non signés avant d’ouvrir l’aperçu PDF.",
+        include_stamp: "Inclure le tampon à l’export",
+        include_stamp_help: "Ajoute un petit tampon de l’entreprise près de la signature sans modifier la mise en page du document.",
         workflow_tip: "Conseil de Flux",
         workflow_tip_copy: "Gardez les lignes concises et utilisez des mots-clés comme destination, type de service ou priorité pour faciliter la recherche."
     }
@@ -704,6 +711,11 @@ function getCurrentLocale() {
     return LANGUAGE_LOCALES[getCurrentLanguage()] || "en-US";
 }
 
+function getUsdToDopRate() {
+    const rate = Number(state.exchangeRateUsdToDop);
+    return Number.isFinite(rate) && rate > 0 ? rate : DOP_PER_USD;
+}
+
 function t(key, vars = {}) {
     const language = getCurrentLanguage();
     const template = TRANSLATIONS[language]?.[key] ?? TRANSLATIONS.en[key] ?? key;
@@ -721,6 +733,31 @@ function setElementHtml(selector, value) {
     const element = typeof selector === "string" ? document.querySelector(selector) : selector;
     if (element) {
         element.innerHTML = value;
+    }
+}
+
+function updateHeroOperationalSummary() {
+    setElementText(".hero-copy h1", formatPrintedDate(new Date()));
+    setElementText(".hero-copy p", `USD 1.00 = DOP ${formatAmount(getUsdToDopRate())}`);
+}
+
+function updateExchangeRateCopy() {
+    updateHeroOperationalSummary();
+    elements.itemsContainer.querySelectorAll(".item-currency-mode .field-help").forEach(helpText => {
+        helpText.textContent = `Converts pesos back to USD using RD$${formatAmount(getUsdToDopRate())} = US$1.`;
+    });
+}
+
+async function refreshExchangeRate() {
+    try {
+        const payload = await requestJSON("/api/exchange-rate");
+        const rate = Number(payload?.rate);
+        if (Number.isFinite(rate) && rate > 0) {
+            state.exchangeRateUsdToDop = rate;
+            updateExchangeRateCopy();
+        }
+    } catch (error) {
+        updateExchangeRateCopy();
     }
 }
 
@@ -760,8 +797,7 @@ function applyTranslations() {
     elements.languageSelect.options[2].textContent = "🥐 FRN";
 
     setElementText(".workspace-hero .eyebrow", t("hero_kicker"));
-    setElementText(".hero-copy h1", t("hero_title"));
-    setElementText(".hero-copy p", t("hero_copy"));
+    updateHeroOperationalSummary();
     elements.newQuoteBtn.textContent = t("new_quote");
     elements.newInvoiceBtn.textContent = t("new_invoice");
     if (!elements.importDocumentStatus.dataset.customized) {
@@ -940,6 +976,8 @@ function updateStaticEditorTranslations() {
     setElementText(document.querySelectorAll('.sidebar-card .sidebar-label')[4], t("workflow_tip"));
     setElementText(document.querySelector('#includeSignature + span'), t("include_signature"));
     setElementText(document.querySelector('#includeSignature').closest('.sidebar-card').querySelector('.field-help'), t("include_signature_help"));
+    setElementText(document.querySelector('#includeStamp + span'), t("include_stamp"));
+    setElementText(document.querySelector('#includeStamp').closest('.sidebar-card').querySelectorAll('.field-help')[1], t("include_stamp_help"));
     elements.prevBtn.textContent = t("previous");
     elements.nextBtn.textContent = t("next");
 }
@@ -1062,6 +1100,7 @@ function cacheElements() {
     elements.notes = document.getElementById("notes");
     elements.paymentTerms = document.getElementById("paymentTerms");
     elements.includeSignature = document.getElementById("includeSignature");
+    elements.includeStamp = document.getElementById("includeStamp");
     elements.itemsContainer = document.getElementById("itemsContainer");
     elements.lineItemsPreviewContainer = document.getElementById("lineItemsPreviewContainer");
     elements.previewContainer = document.getElementById("previewContainer");
@@ -1270,27 +1309,22 @@ async function init() {
     await bootstrapSharedWorkspaceData();
     state.currentUser = getStoredSessionUser();
     state.currentLanguage = state.currentUser?.language || "en";
-    applyRoleAccess();
     applyAccessState(hasActiveSession());
     setAccessLoading(false);
     setSessionLoader(false);
     applyTranslations();
     hydrateEditorPreferences();
     updateCalculatorDisplay();
+    void refreshExchangeRate();
     if (!hasActiveSession()) {
-        revealBrandSplash();
         return;
     }
 
+    setSessionLoader(true);
     await bootstrapAppData();
-    revealBrandSplash();
-}
-
-function revealBrandSplash() {
-    window.setTimeout(() => {
-        elements.brandSplash.classList.add("is-hidden");
-        elements.brandSplash.setAttribute("aria-hidden", "true");
-    }, BRAND_SPLASH_MIN_MS);
+    applyRoleAccess();
+    applyAccessState(true);
+    setSessionLoader(false);
 }
 
 function toggleCalculator() {
@@ -1820,9 +1854,11 @@ function setSessionLoader(isVisible, message = t("session_loader_message")) {
 
 async function unlockAccess(user) {
     persistCurrentSession(user);
+    state.currentUser = user;
     await bootstrapSharedWorkspaceData();
     state.currentUser = getStoredSessionUser() || user;
     await bootstrapAppData();
+    applyRoleAccess();
     applyAccessState(true);
 }
 
@@ -3392,6 +3428,7 @@ function buildDocumentFromCsvRow(row, indexMap) {
         notes: csvValue(row, indexMap, "notes"),
         paymentTerms: csvValue(row, indexMap, "paymentTerms") || DEFAULT_PAYMENT_TERMS,
         includeSignature: false,
+        includeStamp: false,
         printedAt: new Date().toISOString(),
         subtotal: total,
         total,
@@ -3968,6 +4005,7 @@ function resetForm() {
     elements.notes.value = "";
     elements.paymentTerms.value = DEFAULT_PAYMENT_TERMS;
     elements.includeSignature.checked = true;
+    elements.includeStamp.checked = false;
     elements.itemsContainer.innerHTML = "";
     state.itemCounter = 0;
     addItem();
@@ -3992,6 +4030,7 @@ function prepareNewDocument(type = "quote") {
     elements.notes.value = "";
     elements.paymentTerms.value = DEFAULT_PAYMENT_TERMS;
     elements.includeSignature.checked = true;
+    elements.includeStamp.checked = false;
     elements.docType.value = type;
     setToday();
     updateModalTitle();
@@ -4183,7 +4222,7 @@ function addItem() {
                         <input type="checkbox" class="item-dop-toggle">
                         <span>Enter total in DOP</span>
                     </label>
-                    <small class="field-help">Converts pesos back to USD using RD$${DOP_PER_USD} = US$1.</small>
+                    <small class="field-help">Converts pesos back to USD using RD$${formatAmount(getUsdToDopRate())} = US$1.</small>
                 </div>
             </div>
             <div class="form-row item-dop-row" style="display: none;">
@@ -4426,14 +4465,14 @@ function updateItemPricing(row, options = {}) {
             unitPriceInput.value = manualUnitPrice.toFixed(2);
         }
         totalPriceInput.value = (manualUnitPrice * quantity).toFixed(2);
-        dopTotalPriceInput.value = (manualUnitPrice * quantity * DOP_PER_USD).toFixed(2);
+        dopTotalPriceInput.value = (manualUnitPrice * quantity * getUsdToDopRate()).toFixed(2);
     } else {
         if (isUsingDopTotal) {
             const dopTotal = parseFloat(dopTotalPriceInput.value) || 0;
-            totalPrice = dopTotal / DOP_PER_USD;
+            totalPrice = dopTotal / getUsdToDopRate();
             totalPriceInput.value = totalPrice.toFixed(2);
         } else {
-            dopTotalPriceInput.value = (totalPrice * DOP_PER_USD).toFixed(2);
+            dopTotalPriceInput.value = (totalPrice * getUsdToDopRate()).toFixed(2);
         }
         const derivedUnitPrice = quantity > 0 ? totalPrice / quantity : 0;
         unitPriceInput.value = derivedUnitPrice.toFixed(2);
@@ -4605,6 +4644,23 @@ function getSignatureUrl() {
     return url.href;
 }
 
+function getStampUrl() {
+    const url = new URL("assets/gonzalez-logistics-stamp.svg", window.location.href);
+    url.searchParams.set("v", "20260408-1");
+    return url.href;
+}
+
+function getStampStyle() {
+    const offsets = [
+        { x: -6, y: -2, rotate: -9 },
+        { x: 8, y: -4, rotate: 7 },
+        { x: 2, y: 3, rotate: -4 },
+        { x: -10, y: 5, rotate: 10 }
+    ];
+    const choice = offsets[Math.floor(Math.random() * offsets.length)];
+    return `left: calc(50% + ${choice.x}px); bottom: ${choice.y}px; transform: translateX(-50%) rotate(${choice.rotate}deg);`;
+}
+
 function getFooterWaveUrl() {
     return new URL("assets/rg-footer-wave.png", window.location.href).href;
 }
@@ -4651,6 +4707,7 @@ function buildDocumentData() {
         notes: elements.notes.value,
         paymentTerms: elements.paymentTerms.value,
         includeSignature: elements.includeSignature.checked,
+        includeStamp: elements.includeStamp.checked,
         printedAt: elements.docDate.value ? `${elements.docDate.value}T12:00:00.000Z` : new Date().toISOString(),
         subtotal,
         total: subtotal,
@@ -4758,6 +4815,14 @@ function buildDocumentMarkup(doc) {
                             </span>
                         </span>
                     </div>
+                    ${doc.includeStamp ? `
+                    <img
+                        class="signature-stamp"
+                        src="${escapeHtml(getStampUrl())}"
+                        alt="Company stamp"
+                        style="${escapeHtml(getStampStyle())}"
+                    >
+                    ` : ""}
                 </div>
             </div>
             `}
@@ -4952,6 +5017,7 @@ async function persistDocument(options = {}) {
         notes: elements.notes.value,
         paymentTerms: elements.paymentTerms.value,
         includeSignature: elements.includeSignature.checked,
+        includeStamp: elements.includeStamp.checked,
         createdBy: existingDocument?.createdBy || (state.currentUser ? {
             userId: state.currentUser.userId,
             username: state.currentUser.username,
@@ -5535,6 +5601,7 @@ function populateFormFromDocument(doc) {
     elements.notes.value = doc.notes || "";
     elements.paymentTerms.value = doc.paymentTerms || DEFAULT_PAYMENT_TERMS;
     elements.includeSignature.checked = doc.includeSignature !== false;
+    elements.includeStamp.checked = Boolean(doc.includeStamp);
 
     elements.itemsContainer.innerHTML = "";
     state.itemCounter = 0;
@@ -5546,7 +5613,7 @@ function populateFormFromDocument(doc) {
         lastItem.querySelector(".item-quantity").value = item.quantity ?? 0;
         lastItem.querySelector(".item-total-price").value = item.totalPrice ?? ((parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0)).toFixed(2);
         lastItem.querySelector(".item-dop-toggle").checked = Boolean(item.usesDopTotal);
-        lastItem.querySelector(".item-total-price-dop").value = item.totalPriceDop ?? (((parseFloat(item.totalPrice) || ((parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0))) * DOP_PER_USD).toFixed(2));
+        lastItem.querySelector(".item-total-price-dop").value = item.totalPriceDop ?? (((parseFloat(item.totalPrice) || ((parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0))) * getUsdToDopRate()).toFixed(2));
         lastItem.querySelector(".item-manual-unit-toggle").checked = Boolean(item.manualUnitPrice);
         lastItem.querySelector(".item-unit-price").value = item.unitPrice ?? item.price ?? 0;
         lastItem.querySelector(".item-internal-cost").value = item.internalCost ?? 0;

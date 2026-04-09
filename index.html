@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <div class="brand-splash" id="brandSplash" aria-hidden="true">
+    <div class="brand-splash" id="brandSplash" aria-hidden="true" hidden>
         <div class="brand-splash-card">
             <div class="brand-mark brand-mark-large" id="brandSplashLogo" aria-hidden="true"></div>
             <span class="eyebrow" id="brandSplashName">SantoSync</span>
@@ -163,17 +163,19 @@
                 </label>
             </div>
 
-            <div class="dashboard-actions-row" aria-label="Primary actions">
-                <div class="hero-action-grid">
-                    <button class="btn btn-primary" id="newQuoteBtn" type="button">New Quote</button>
-                    <button class="btn btn-success" id="newInvoiceBtn" type="button">New Invoice</button>
+            <div class="documents-toolbar">
+                <div class="filter-row" role="tablist" aria-label="Document filters">
+                    <button class="filter-chip active" id="filterAllBtn" type="button" data-filter="all">All</button>
+                    <button class="filter-chip" id="filterQuotesBtn" type="button" data-filter="quote">Quotes</button>
+                    <button class="filter-chip" id="filterInvoicesBtn" type="button" data-filter="invoice">Invoices</button>
                 </div>
-            </div>
 
-            <div class="filter-row" role="tablist" aria-label="Document filters">
-                <button class="filter-chip active" id="filterAllBtn" type="button" data-filter="all">All</button>
-                <button class="filter-chip" id="filterQuotesBtn" type="button" data-filter="quote">Quotes</button>
-                <button class="filter-chip" id="filterInvoicesBtn" type="button" data-filter="invoice">Invoices</button>
+                <div class="dashboard-actions-row" aria-label="Primary actions">
+                    <div class="hero-action-grid">
+                        <button class="btn btn-primary" id="newQuoteBtn" type="button">New Quote</button>
+                        <button class="btn btn-success" id="newInvoiceBtn" type="button">New Invoice</button>
+                    </div>
+                </div>
             </div>
 
             <div class="documents-grid" id="documentsGrid">
@@ -687,6 +689,11 @@
                                 <span>Include signature on export</span>
                             </label>
                             <small class="field-help">Turn this off for unsigned quotes or invoices before opening the PDF preview.</small>
+                            <label class="checkbox-row checkbox-row-block">
+                                <input type="checkbox" id="includeStamp">
+                                <span>Include stamp on export</span>
+                            </label>
+                            <small class="field-help">Adds a small company stamp overlay near the signature without changing the document layout.</small>
                         </section>
 
                         <section class="sidebar-card sidebar-card-muted">
