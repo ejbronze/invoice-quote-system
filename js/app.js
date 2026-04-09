@@ -5266,10 +5266,18 @@ function getStampUrl() {
 
 function getStampStyle() {
     const offsets = [
-        { x: -6, y: -2, rotate: -9 },
-        { x: 8, y: -4, rotate: 7 },
-        { x: 2, y: 3, rotate: -4 },
-        { x: -10, y: 5, rotate: 10 }
+        { x: -22, y: 4, rotate: -13 },
+        { x: 26, y: -5, rotate: 9 },
+        { x: -8, y: 20, rotate: -7 },
+        { x: 32, y: 8, rotate: 15 },
+        { x: -28, y: -3, rotate: -11 },
+        { x: 16, y: 26, rotate: 6 },
+        { x: -12, y: -7, rotate: -17 },
+        { x: 22, y: 32, rotate: 12 },
+        { x: -18, y: 14, rotate: -9 },
+        { x: 6, y: -9, rotate: 19 },
+        { x: 34, y: 18, rotate: -14 },
+        { x: -30, y: 10, rotate: 8 },
     ];
     const choice = offsets[Math.floor(Math.random() * offsets.length)];
     return `left: calc(50% + ${choice.x}px); bottom: ${choice.y}px; transform: translateX(-50%) rotate(${choice.rotate}deg);`;
@@ -5325,7 +5333,7 @@ function buildDocumentData() {
     };
 }
 
-function buildDocumentMarkup(doc) {
+function buildDocumentMarkup(doc, stampStyle) {
     const documentTitle = doc.type === "quote" ? "Quote" : "Invoice";
     const referenceLabel = doc.type === "quote" ? "Reference No." : `${documentTitle} Reference`;
     const primaryPartyLabel = doc.type === "quote" ? "For:" : "Bill To:";
@@ -5430,7 +5438,7 @@ function buildDocumentMarkup(doc) {
                         class="signature-stamp"
                         src="${escapeHtml(getStampUrl())}"
                         alt="Company stamp"
-                        style="${escapeHtml(getStampStyle())}"
+                        style="${escapeHtml(stampStyle || getStampStyle())}"
                     >
                     ` : ""}
                 </div>
@@ -5544,6 +5552,8 @@ function openPrintWindow(doc) {
         return;
     }
 
+    const stampStyle = getStampStyle();
+
     printWindow.document.write(`
         <!DOCTYPE html>
         <html lang="en">
@@ -5582,7 +5592,65 @@ function openPrintWindow(doc) {
                     color: #28415b;
                 }
 
+                /* Apply print layout to the screen preview so it matches the printed output */
+                .document-sheet {
+                    box-shadow: none;
+                    max-width: none;
+                    width: 100%;
+                    margin: 0;
+                    min-height: 100vh;
+                    padding: 0.42in 0 28mm;
+                    box-sizing: border-box;
+                }
+
+                .document-body {
+                    padding: 0 0.42in;
+                }
+
+                .document-meta {
+                    display: grid;
+                    grid-template-columns: minmax(0, 1fr) auto;
+                    align-items: start;
+                }
+
+                .document-parties {
+                    display: grid !important;
+                    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+                    align-items: start;
+                    gap: 0.85rem 1rem !important;
+                }
+
+                .party-card {
+                    min-width: 0;
+                    break-inside: avoid;
+                }
+
+                .po-card {
+                    grid-column: 1 / -1 !important;
+                    justify-self: start;
+                }
+
+                .issued-to-value {
+                    padding-left: 1.8rem !important;
+                }
+
+                .compact-party-value {
+                    padding-left: 0 !important;
+                }
+
+                .document-bottom {
+                    display: grid;
+                    grid-template-columns: minmax(0, 1fr) 280px;
+                    align-items: start;
+                }
+
+                .document-totals {
+                    width: 280px;
+                    justify-self: end;
+                }
+
                 @media print {
+                    @page { size: auto; margin: 0; }
                     .pdf-preview-toolbar {
                         display: none !important;
                     }
@@ -5594,7 +5662,7 @@ function openPrintWindow(doc) {
                 <button class="secondary" type="button" onclick="window.close()">Close Preview</button>
                 <button type="button" onclick="window.print()">Print or Save as PDF</button>
             </div>
-            <div id="previewContainer" class="preview-container">${buildDocumentMarkup(doc)}</div>
+            <div id="previewContainer" class="preview-container">${buildDocumentMarkup(doc, stampStyle)}</div>
         </body>
         </html>
     `);
