@@ -116,6 +116,8 @@ function normalizeIssueReports(reports) {
                 screenshotDataUrl: typeof report.screenshotDataUrl === "string" ? report.screenshotDataUrl : "",
                 createdAt: String(report.createdAt || new Date().toISOString()),
                 unread: report.unread !== false,
+                status: report.status === "closed" ? "closed" : "open",
+                adminNotes: String(report.adminNotes || "").trim(),
                 createdBy: {
                     userId: String(report.createdBy?.userId || ""),
                     username: String(report.createdBy?.username || ""),
@@ -152,10 +154,31 @@ function normalizeSavedItems(items) {
                     quantity,
                     unitPrice,
                     total,
+                    itemImageDataUrl: typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl : "",
                     createdAt: String(item.createdAt || new Date().toISOString())
                 };
             })
             .filter(item => item.description)
+        : [];
+}
+
+function normalizeCatalogItems(items) {
+    return Array.isArray(items)
+        ? items
+            .filter(item => item && typeof item === "object")
+            .map(item => ({
+                id: String(item.id || `catalog-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+                name: String(item.name || "").trim(),
+                details: String(item.details || "").trim(),
+                notes: String(item.notes || "").trim(),
+                price: Number.parseFloat(item.price) || 0,
+                dateUpdated: String(item.dateUpdated || new Date().toISOString()),
+                category: String(item.category || "").trim(),
+                brand: String(item.brand || "").trim(),
+                unitSize: String(item.unitSize || "").trim(),
+                vendor: String(item.vendor || "").trim()
+            }))
+            .filter(item => item.name)
         : [];
 }
 
@@ -164,7 +187,8 @@ function normalizeWorkspaceState(payload) {
         userAccounts: normalizeUserAccounts(payload?.userAccounts || []),
         issueReports: normalizeIssueReports(payload?.issueReports || []),
         companyProfile: normalizeCompanyProfile(payload?.companyProfile || DEFAULT_COMPANY_PROFILE),
-        savedItems: normalizeSavedItems(payload?.savedItems || [])
+        savedItems: normalizeSavedItems(payload?.savedItems || []),
+        catalogItems: normalizeCatalogItems(payload?.catalogItems || [])
     };
 }
 
@@ -241,6 +265,7 @@ module.exports = {
     normalizeCompanyProfile,
     normalizeDocuments,
     normalizeIssueReports,
+    normalizeCatalogItems,
     normalizeSavedItems,
     normalizeUserAccounts,
     normalizeWorkspaceState,

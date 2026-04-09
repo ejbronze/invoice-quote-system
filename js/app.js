@@ -1169,6 +1169,20 @@ function cacheElements() {
     elements.openCatalogItemModalBtn = document.getElementById("openCatalogItemModalBtn");
     elements.catalogItemModal = document.getElementById("catalogItemModal");
     elements.closeCatalogItemModalBtn = document.getElementById("closeCatalogItemModalBtn");
+    elements.catalogDetailsModal = document.getElementById("catalogDetailsModal");
+    elements.closeCatalogDetailsModalBtn = document.getElementById("closeCatalogDetailsModalBtn");
+    elements.catalogDetailsTitle = document.getElementById("catalogDetailsTitle");
+    elements.catalogDetailsImage = document.getElementById("catalogDetailsImage");
+    elements.catalogDetailsFallback = document.getElementById("catalogDetailsFallback");
+    elements.catalogDetailsName = document.getElementById("catalogDetailsName");
+    elements.catalogDetailsMeta = document.getElementById("catalogDetailsMeta");
+    elements.catalogDetailsPrice = document.getElementById("catalogDetailsPrice");
+    elements.catalogDetailsCategory = document.getElementById("catalogDetailsCategory");
+    elements.catalogDetailsBrand = document.getElementById("catalogDetailsBrand");
+    elements.catalogDetailsUnitSize = document.getElementById("catalogDetailsUnitSize");
+    elements.catalogDetailsVendor = document.getElementById("catalogDetailsVendor");
+    elements.catalogDetailsText = document.getElementById("catalogDetailsText");
+    elements.catalogDetailsNotes = document.getElementById("catalogDetailsNotes");
     elements.catalogItemNameInput = document.getElementById("catalogItemNameInput");
     elements.catalogItemPriceInput = document.getElementById("catalogItemPriceInput");
     elements.catalogItemCategoryInput = document.getElementById("catalogItemCategoryInput");
@@ -1321,6 +1335,7 @@ function bindEvents() {
     elements.backToDocumentsBtn.addEventListener("click", () => setActivePage("documents"));
     elements.openCatalogItemModalBtn.addEventListener("click", openCatalogItemModal);
     elements.closeCatalogItemModalBtn.addEventListener("click", closeCatalogItemModal);
+    elements.closeCatalogDetailsModalBtn.addEventListener("click", closeCatalogDetailsModal);
     elements.saveCatalogItemBtn.addEventListener("click", saveCatalogItemFromModal);
     elements.catalogGrid.addEventListener("click", handleCatalogGridClick);
     elements.closeAboutModalBtn.addEventListener("click", closeAboutModal);
@@ -1449,6 +1464,11 @@ function bindEvents() {
     elements.catalogItemModal.addEventListener("click", event => {
         if (event.target === elements.catalogItemModal) {
             closeCatalogItemModal();
+        }
+    });
+    elements.catalogDetailsModal.addEventListener("click", event => {
+        if (event.target === elements.catalogDetailsModal) {
+            closeCatalogDetailsModal();
         }
     });
 
@@ -2191,9 +2211,47 @@ function closeCatalogItemModal() {
     state.editingCatalogItemId = null;
 }
 
+function openCatalogDetailsModal(item) {
+    if (!item || !elements.catalogDetailsModal) {
+        return;
+    }
+
+    const fallbackLabel = (item.name || "Item").trim().slice(0, 2).toUpperCase() || "IT";
+    setElementText("#catalogDetailsTitle", item.name || "Catalog Item");
+    setElementText("#catalogDetailsName", item.name || "Untitled item");
+    setElementText("#catalogDetailsMeta", `${t(`source_${item.sourceKey}`)} · ${formatDateTime(item.dateUpdated)}`);
+    setElementText("#catalogDetailsPrice", formatCurrency(item.price || 0));
+    setElementText("#catalogDetailsCategory", item.category || "—");
+    setElementText("#catalogDetailsBrand", item.brand || "—");
+    setElementText("#catalogDetailsUnitSize", item.unitSize || "—");
+    setElementText("#catalogDetailsVendor", item.vendor || "—");
+    setElementText("#catalogDetailsText", item.details || "—");
+    setElementText("#catalogDetailsNotes", item.notes || "—");
+    setElementText("#catalogDetailsFallback", fallbackLabel);
+
+    if (item.imageDataUrl) {
+        elements.catalogDetailsImage.src = item.imageDataUrl;
+        elements.catalogDetailsImage.hidden = false;
+        elements.catalogDetailsFallback.hidden = true;
+    } else {
+        elements.catalogDetailsImage.hidden = true;
+        elements.catalogDetailsImage.removeAttribute("src");
+        elements.catalogDetailsFallback.hidden = false;
+    }
+
+    elements.catalogDetailsModal.classList.add("active");
+    elements.catalogDetailsModal.setAttribute("aria-hidden", "false");
+}
+
+function closeCatalogDetailsModal() {
+    elements.catalogDetailsModal.classList.remove("active");
+    elements.catalogDetailsModal.setAttribute("aria-hidden", "true");
+}
+
 function getCatalogEntries() {
     const manualEntries = state.catalogItems.map(item => ({
         ...item,
+        imageDataUrl: typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl : "",
         sourceKey: "manual"
     }));
 
@@ -2208,6 +2266,7 @@ function getCatalogEntries() {
         brand: "",
         unitSize: item.quantity ? `Qty ${formatAmount(item.quantity)}` : "",
         vendor: "",
+        imageDataUrl: typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl : "",
         sourceKey: "cart"
     }));
 
@@ -2222,6 +2281,7 @@ function getCatalogEntries() {
         brand: "",
         unitSize: item.quantity ? `Qty ${formatAmount(item.quantity)}` : "",
         vendor: doc.clientName || "",
+        imageDataUrl: typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl : "",
         sourceKey: "document"
     })));
 
@@ -2249,27 +2309,32 @@ function renderCatalog() {
 
     elements.catalogGrid.innerHTML = entries.map(item => `
         <article class="catalog-card">
-            <div class="catalog-card-head">
-                <div>
-                    <strong>${escapeHtml(item.name)}</strong>
-                    <span>${escapeHtml(t(`source_${item.sourceKey}`))} · ${escapeHtml(formatDateTime(item.dateUpdated))}</span>
+            <button class="catalog-card-trigger" type="button" data-catalog-action="open" data-catalog-id="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.name)}">
+                <div class="catalog-card-bubble" aria-hidden="true">
+                    ${item.imageDataUrl
+                        ? `<img src="${escapeHtml(item.imageDataUrl)}" alt="${escapeHtml(item.name)}">`
+                        : `<span>${escapeHtml((item.name || "Item").trim().slice(0, 2).toUpperCase() || "IT")}</span>`}
                 </div>
-                ${item.sourceKey === "manual" ? `<button class="catalog-edit-btn" type="button" data-catalog-action="edit" data-catalog-id="${escapeHtml(item.id)}">${escapeHtml(t("edit"))}</button>` : ""}
-            </div>
-            <div class="catalog-card-meta">
-                <span><strong>${escapeHtml(t("price"))}</strong> ${escapeHtml(formatCurrency(item.price || 0))}</span>
-                <span><strong>${escapeHtml(t("category"))}</strong> ${escapeHtml(item.category || "—")}</span>
-                <span><strong>${escapeHtml(t("brand"))}</strong> ${escapeHtml(item.brand || "—")}</span>
-                <span><strong>${escapeHtml(t("unit_size"))}</strong> ${escapeHtml(item.unitSize || "—")}</span>
-                <span><strong>${escapeHtml(t("vendor"))}</strong> ${escapeHtml(item.vendor || "—")}</span>
-            </div>
-            <p class="catalog-card-details">${escapeHtml(item.details || "—")}</p>
-            <p class="catalog-card-notes">${escapeHtml(item.notes || "—")}</p>
+                <div class="catalog-card-copy">
+                    <strong>${escapeHtml(item.name)}</strong>
+                    <span>${escapeHtml(t(`source_${item.sourceKey}`))}</span>
+                </div>
+            </button>
+            ${item.sourceKey === "manual" ? `<button class="catalog-edit-btn" type="button" data-catalog-action="edit" data-catalog-id="${escapeHtml(item.id)}">${escapeHtml(t("edit"))}</button>` : ""}
         </article>
     `).join("");
 }
 
 function handleCatalogGridClick(event) {
+    const openButton = event.target.closest("[data-catalog-action=\"open\"]");
+    if (openButton) {
+        const item = getCatalogEntries().find(entry => entry.id === openButton.dataset.catalogId);
+        if (item) {
+            openCatalogDetailsModal(item);
+        }
+        return;
+    }
+
     const editButton = event.target.closest("[data-catalog-action=\"edit\"]");
     if (!editButton) {
         return;
@@ -2289,6 +2354,7 @@ function handleCatalogGridClick(event) {
     elements.catalogItemVendorInput.value = item.vendor || "";
     elements.catalogItemDetailsInput.value = item.details || "";
     elements.catalogItemNotesInput.value = item.notes || "";
+    closeCatalogDetailsModal();
     elements.catalogItemModal.classList.add("active");
     elements.catalogItemModal.setAttribute("aria-hidden", "false");
     applyTranslations();
@@ -2522,7 +2588,7 @@ async function handleSavedItemImageInputChange() {
         }
 
         try {
-            const itemImageDataUrl = await readFileAsDataUrl(file);
+            const itemImageDataUrl = await readImageFileAsDataUrl(file);
             await saveSavedItemsState(state.savedItems.map(item =>
                 item.id === state.pendingSavedItemImageUploadId
                     ? { ...item, itemImageDataUrl }
@@ -2546,7 +2612,7 @@ async function handleSavedItemImageInputChange() {
     }
 
     try {
-        elements.savedItemCreateModal.dataset.itemImageDataUrl = await readFileAsDataUrl(file);
+        elements.savedItemCreateModal.dataset.itemImageDataUrl = await readImageFileAsDataUrl(file);
         syncSavedItemImageUI();
     } catch (error) {
         clearSavedItemImageSelection();
@@ -2555,13 +2621,6 @@ async function handleSavedItemImageInputChange() {
 }
 
 function handleImageUploadTriggerClick(event) {
-    const savedItemUploadTrigger = event.target.closest(".saved-item-image-upload-btn");
-    if (savedItemUploadTrigger && elements.savedItemImageInput) {
-        event.preventDefault();
-        elements.savedItemImageInput.click();
-        return;
-    }
-
     const itemUploadTrigger = event.target.closest(".item-image-upload-btn");
     if (itemUploadTrigger) {
         const itemRow = itemUploadTrigger.closest(".item-row");
@@ -2662,18 +2721,16 @@ function renderSavedItemsList() {
                                 <circle cx="9" cy="10" r="1.4" fill="currentColor"/>
                                 <path d="M6.8 16l3.6-3.5 2.5 2.2 2.4-2 1.9 3.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
-                        </div>
-                        <span>Image</span>`}
+                        </div>`}
                 </div>
                 <div class="saved-item-card-main">
                     <div class="saved-item-card-top">
                         <strong>${escapeHtml(item.description)}</strong>
-                        <span class="saved-item-card-date">${escapeHtml(formatDateTime(item.createdAt))}</span>
+                        <span class="saved-item-card-date">${escapeHtml(formatAmount(item.quantity))} · ${escapeHtml(formatCurrency(item.total))}</span>
                     </div>
                     <div class="saved-item-card-metrics">
-                        <span class="saved-item-chip">Qty ${escapeHtml(formatAmount(item.quantity))}</span>
                         <span class="saved-item-chip">Unit ${escapeHtml(formatCurrency(item.unitPrice))}</span>
-                        <span class="saved-item-chip saved-item-chip-strong">Total ${escapeHtml(formatCurrency(item.total))}</span>
+                        <span class="saved-item-chip">${escapeHtml(formatDateTime(item.createdAt))}</span>
                     </div>
                 </div>
             </div>
@@ -3171,7 +3228,9 @@ function renderIssueInbox() {
                     ${report.unread ? `<span class="issue-fresh-pill">${escapeHtml(t("new_report"))}</span>` : ""}
                 </div>
             </div>
-            <p>${escapeHtml(report.details).replace(/\n/g, "<br>")}</p>
+            ${report.status === "closed"
+                ? `<div class="issue-card-collapsed-copy">${escapeHtml(report.adminNotes || report.details).replace(/\n/g, "<br>")}</div>`
+                : `<p>${escapeHtml(report.details).replace(/\n/g, "<br>")}</p>
             ${report.screenshotDataUrl
                 ? `<a class="issue-screenshot-link" href="${escapeHtml(report.screenshotDataUrl)}" target="_blank" rel="noreferrer">
                     <span>${escapeHtml(t("screenshot"))}</span>
@@ -3181,9 +3240,9 @@ function renderIssueInbox() {
             <div class="issue-notes-block">
                 <label class="issue-notes-label" for="issueNotes-${escapeHtml(report.id)}">${escapeHtml(t("issue_admin_notes"))}</label>
                 <textarea class="issue-notes-input" id="issueNotes-${escapeHtml(report.id)}" data-issue-notes="${escapeHtml(report.id)}" placeholder="${escapeHtml(t("issue_admin_notes_placeholder"))}" rows="3">${escapeHtml(report.adminNotes || "")}</textarea>
-            </div>
+            </div>`}
             <div class="issue-card-actions">
-                <button class="issue-action-btn" type="button" data-issue-action="save-notes" data-issue-id="${escapeHtml(report.id)}">${escapeHtml(t("save_notes"))}</button>
+                ${report.status === "closed" ? "" : `<button class="issue-action-btn" type="button" data-issue-action="save-notes" data-issue-id="${escapeHtml(report.id)}">${escapeHtml(t("save_notes"))}</button>`}
                 <button class="issue-action-btn issue-action-btn-secondary" type="button" data-issue-action="${report.status === "closed" ? "reopen" : "close"}" data-issue-id="${escapeHtml(report.id)}">${escapeHtml(report.status === "closed" ? t("reopen_report") : t("close_report"))}</button>
                 <button class="issue-action-btn issue-action-btn-danger" type="button" data-issue-action="delete" data-issue-id="${escapeHtml(report.id)}">${escapeHtml(t("delete_report"))}</button>
             </div>
@@ -3296,6 +3355,52 @@ function readFileAsDataUrl(file) {
         reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
         reader.onerror = () => reject(new Error("Unable to read screenshot."));
         reader.readAsDataURL(file);
+    });
+}
+
+function readImageFileAsDataUrl(file, { maxDimension = 1200, quality = 0.82 } = {}) {
+    if (!file || !String(file.type || "").startsWith("image/")) {
+        return readFileAsDataUrl(file);
+    }
+
+    return new Promise((resolve, reject) => {
+        const objectUrl = URL.createObjectURL(file);
+        const image = new Image();
+
+        image.onload = () => {
+            try {
+                const longestSide = Math.max(image.naturalWidth || 0, image.naturalHeight || 0);
+                const scale = longestSide > maxDimension ? maxDimension / longestSide : 1;
+                const width = Math.max(1, Math.round((image.naturalWidth || 1) * scale));
+                const height = Math.max(1, Math.round((image.naturalHeight || 1) * scale));
+                const canvas = document.createElement("canvas");
+                canvas.width = width;
+                canvas.height = height;
+                const context = canvas.getContext("2d");
+
+                if (!context) {
+                    URL.revokeObjectURL(objectUrl);
+                    readFileAsDataUrl(file).then(resolve).catch(reject);
+                    return;
+                }
+
+                context.drawImage(image, 0, 0, width, height);
+                const normalizedType = file.type === "image/png" ? "image/png" : "image/jpeg";
+                const result = canvas.toDataURL(normalizedType, normalizedType === "image/png" ? undefined : quality);
+                URL.revokeObjectURL(objectUrl);
+                resolve(result);
+            } catch (error) {
+                URL.revokeObjectURL(objectUrl);
+                reject(new Error("Unable to process image."));
+            }
+        };
+
+        image.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error("Unable to read image."));
+        };
+
+        image.src = objectUrl;
     });
 }
 
@@ -3557,7 +3662,14 @@ function readLocalDataset(storageKey, fallbackValue) {
 }
 
 function writeLocalDataset(storageKey, value) {
-    window.localStorage.setItem(storageKey, JSON.stringify(value));
+    try {
+        window.localStorage.setItem(storageKey, JSON.stringify(value));
+    } catch (error) {
+        if (error?.name === "QuotaExceededError") {
+            throw new Error("Local storage is full. Try a smaller image.");
+        }
+        throw error;
+    }
 }
 
 function clearLocalDataset(storageKey) {

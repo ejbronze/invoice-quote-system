@@ -52,20 +52,10 @@
                                 <stop offset="52%" stop-color="#1459d9"/>
                                 <stop offset="100%" stop-color="#17b889"/>
                             </linearGradient>
-                            <linearGradient id="loaderLogoStrokeA" x1="12%" y1="14%" x2="88%" y2="86%">
-                                <stop offset="0%" stop-color="#ffffff"/>
-                                <stop offset="100%" stop-color="#d7fff0"/>
-                            </linearGradient>
-                            <linearGradient id="loaderLogoStrokeB" x1="88%" y1="14%" x2="12%" y2="86%">
-                                <stop offset="0%" stop-color="#cce1ff"/>
-                                <stop offset="100%" stop-color="#ffffff"/>
-                            </linearGradient>
                         </defs>
-                        <rect x="8" y="8" width="64" height="64" rx="22" fill="url(#loaderLogoGradient)"/>
-                        <path d="M46 21c-7.8 0-13 3.9-13 9.1 0 3.7 2.6 6.1 7.7 7.5l7.2 1.9c3.7 1 5.2 2.1 5.2 4.1 0 2.7-2.8 4.4-7.4 4.4-4.9 0-8.6-1.5-12.2-4.8" fill="none" stroke="url(#loaderLogoStrokeA)" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M34 59c7.8 0 13-3.9 13-9.1 0-3.7-2.6-6.1-7.7-7.5l-7.2-1.9c-3.7-1-5.2-2.1-5.2-4.1 0-2.7 2.8-4.4 7.4-4.4 4.9 0 8.6 1.5 12.2 4.8" fill="none" stroke="url(#loaderLogoStrokeB)" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="27" cy="36.5" r="2.7" fill="#dffbf2"/>
-                        <circle cx="53" cy="43.5" r="2.7" fill="#ffffff"/>
+                        <rect x="8" y="8" width="64" height="64" rx="20" fill="url(#loaderLogoGradient)"/>
+                        <path d="M50,21 C50,13 22,13 22,30 C22,44 58,46 58,59" fill="none" stroke="rgba(255,255,255,0.96)" stroke-width="7" stroke-linecap="round"/>
+                        <path d="M30,59 C30,67 58,67 58,50 C58,36 22,34 22,21" fill="none" stroke="rgba(215,255,240,0.78)" stroke-width="7" stroke-linecap="round"/>
                     </svg>
                 </div>
                 <div class="session-loader-spinner"></div>
@@ -87,20 +77,10 @@
                                 <stop offset="52%" stop-color="#1459d9"/>
                                 <stop offset="100%" stop-color="#17b889"/>
                             </linearGradient>
-                            <linearGradient id="topbarLogoStrokeA" x1="12%" y1="14%" x2="88%" y2="86%">
-                                <stop offset="0%" stop-color="#ffffff"/>
-                                <stop offset="100%" stop-color="#d7fff0"/>
-                            </linearGradient>
-                            <linearGradient id="topbarLogoStrokeB" x1="88%" y1="14%" x2="12%" y2="86%">
-                                <stop offset="0%" stop-color="#cce1ff"/>
-                                <stop offset="100%" stop-color="#ffffff"/>
-                            </linearGradient>
                         </defs>
-                        <rect x="8" y="8" width="64" height="64" rx="22" fill="url(#topbarLogoGradient)"/>
-                        <path d="M46 21c-7.8 0-13 3.9-13 9.1 0 3.7 2.6 6.1 7.7 7.5l7.2 1.9c3.7 1 5.2 2.1 5.2 4.1 0 2.7-2.8 4.4-7.4 4.4-4.9 0-8.6-1.5-12.2-4.8" fill="none" stroke="url(#topbarLogoStrokeA)" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M34 59c7.8 0 13-3.9 13-9.1 0-3.7-2.6-6.1-7.7-7.5l-7.2-1.9c-3.7-1-5.2-2.1-5.2-4.1 0-2.7 2.8-4.4 7.4-4.4 4.9 0 8.6 1.5 12.2 4.8" fill="none" stroke="url(#topbarLogoStrokeB)" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="27" cy="36.5" r="2.7" fill="#dffbf2"/>
-                        <circle cx="53" cy="43.5" r="2.7" fill="#ffffff"/>
+                        <rect x="8" y="8" width="64" height="64" rx="20" fill="url(#topbarLogoGradient)"/>
+                        <path d="M50,21 C50,13 22,13 22,30 C22,44 58,46 58,59" fill="none" stroke="rgba(255,255,255,0.96)" stroke-width="7" stroke-linecap="round"/>
+                        <path d="M30,59 C30,67 58,67 58,50 C58,36 22,34 22,21" fill="none" stroke="rgba(215,255,240,0.78)" stroke-width="7" stroke-linecap="round"/>
                     </svg>
                 </div>
                 <span class="app-topbar-kicker">Workspace</span>
@@ -826,7 +806,7 @@
                     <div class="saved-item-create-media">
                         <div class="form-group saved-item-image-group">
                             <div class="saved-item-image-uploader">
-                                <label class="saved-item-image-upload-btn" aria-label="Upload item image" title="Upload item image">
+                                <label class="saved-item-image-upload-btn" for="savedItemImageInput" aria-label="Upload item image" title="Upload item image">
                                     <input type="file" id="savedItemImageInput" accept="image/*" hidden>
                                     <span class="saved-item-image-upload-art" aria-hidden="true">
                                         <svg viewBox="0 0 24 24">
@@ -924,6 +904,57 @@
                 </div>
                 <div class="settings-actions">
                     <button class="btn btn-secondary" id="saveCatalogItemBtn" type="button">Save Catalog Item</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal settings-modal" id="catalogDetailsModal" aria-hidden="true">
+        <div class="modal-content settings-modal-content catalog-details-modal-content">
+            <div class="modal-header">
+                <h3 id="catalogDetailsTitle">Catalog Item</h3>
+                <button class="close-btn" id="closeCatalogDetailsModalBtn" type="button" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body settings-modal-body catalog-details-body">
+                <div class="catalog-details-hero">
+                    <div class="catalog-details-bubble" id="catalogDetailsBubble" aria-hidden="true">
+                        <img id="catalogDetailsImage" alt="Catalog item image" hidden>
+                        <div class="catalog-details-bubble-fallback" id="catalogDetailsFallback">Item</div>
+                    </div>
+                    <div class="catalog-details-copy">
+                        <h4 id="catalogDetailsName">Item Name</h4>
+                        <p id="catalogDetailsMeta">Manual · Updated recently</p>
+                    </div>
+                </div>
+                <div class="catalog-details-grid">
+                    <div class="catalog-details-stat">
+                        <span>Price</span>
+                        <strong id="catalogDetailsPrice">$0.00</strong>
+                    </div>
+                    <div class="catalog-details-stat">
+                        <span>Category</span>
+                        <strong id="catalogDetailsCategory">—</strong>
+                    </div>
+                    <div class="catalog-details-stat">
+                        <span>Brand</span>
+                        <strong id="catalogDetailsBrand">—</strong>
+                    </div>
+                    <div class="catalog-details-stat">
+                        <span>Unit Size</span>
+                        <strong id="catalogDetailsUnitSize">—</strong>
+                    </div>
+                    <div class="catalog-details-stat">
+                        <span>Vendor</span>
+                        <strong id="catalogDetailsVendor">—</strong>
+                    </div>
+                </div>
+                <div class="catalog-details-section">
+                    <span>Details</span>
+                    <p id="catalogDetailsText">—</p>
+                </div>
+                <div class="catalog-details-section">
+                    <span>Notes</span>
+                    <p id="catalogDetailsNotes">—</p>
                 </div>
             </div>
         </div>
