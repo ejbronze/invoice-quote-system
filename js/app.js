@@ -24,14 +24,18 @@ const state = {
     showInternalPricing: false,
     dataMode: "server",
     workspaceDataMode: "server",
+    activePage: "documents",
     issueReports: [],
     companyProfile: null,
     exchangeRateUsdToDop: 59,
     savedItems: [],
+    catalogItems: [],
     editingSavedItemId: null,
+    editingCatalogItemId: null,
     pendingSavedItemImageUploadId: null,
     openItemMenuId: null,
-    openDocumentMenuId: null
+    openDocumentMenuId: null,
+    draftAutosaveTimerId: null
 };
 
 const DOP_PER_USD = 59;
@@ -49,6 +53,7 @@ const CURRENT_SESSION_STORAGE_KEY = "todosCurrentSession";
 const ISSUE_REPORTS_STORAGE_KEY = "todosIssueReports";
 const COMPANY_PROFILE_STORAGE_KEY = "santosyncCompanyProfile";
 const SAVED_ITEMS_STORAGE_KEY = "santosyncSavedItems";
+const CATALOG_ITEMS_STORAGE_KEY = "santosyncCatalogItems";
 const DEFAULT_ACCESS_ERROR_MESSAGE = "That username or password is incorrect. Try again.";
 const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
 const BRAND_SPLASH_MIN_MS = 1100;
@@ -111,7 +116,7 @@ const TRANSLATIONS = {
         end_session: "End Session",
         sign_out: "Sign out",
         settings: "Settings",
-        issue_inbox: "Issue Inbox",
+        issue_inbox: "Service Reports",
         report_issue: "Report an Issue",
         issue_report_copy: "Share a bug, broken workflow, or visual issue and attach a screenshot if it helps explain the problem.",
         issue_summary: "Issue Summary",
@@ -121,11 +126,40 @@ const TRANSLATIONS = {
         attach_screenshot: "Attach Screenshot",
         attach_screenshot_help: "Optional. A screenshot can make layout and bug reports much easier to review.",
         submit_report: "Submit Report",
-        issue_inbox_copy: "Bug reports from the footer form appear here for admins to review.",
+        issue_inbox_copy: "Bug reports and service logs appear here for admins to review, annotate, and close when resolved.",
         no_issue_reports: "No reports yet.",
         submitted_by: "Submitted by",
         screenshot: "Screenshot",
         delete_report: "Delete report",
+        issue_open: "Open",
+        issue_closed: "Closed",
+        close_report: "Close report",
+        reopen_report: "Reopen report",
+        issue_admin_notes: "Admin Notes",
+        issue_admin_notes_placeholder: "Add internal notes, follow-up details, or a resolution summary.",
+        save_notes: "Save notes",
+        issue_notes_saved: "Notes saved.",
+        new_report: "New",
+        catalog: "Catalog",
+        catalog_heading: "Catalog",
+        catalog_copy: "Review every item captured from quotes, invoices, and the cart, and add manual catalog records for future use.",
+        add_catalog_item: "Add Catalog Item",
+        no_catalog_items: "No catalog items yet.",
+        item_name: "Item Name",
+        price: "Price",
+        item_details: "Details",
+        item_notes: "Notes",
+        date_updated: "Date Updated",
+        category: "Category",
+        brand: "Brand",
+        unit_size: "Unit Size",
+        vendor: "Vendor",
+        source: "Source",
+        source_manual: "Manual",
+        source_cart: "Cart",
+        source_document: "Document",
+        save_catalog_item: "Save Catalog Item",
+        update_catalog_item: "Update Catalog Item",
         report_submitted_success: "Report submitted successfully.",
         report_required_error: "Add a summary and details before submitting.",
         report_delete_confirm: "Delete this issue report?",
@@ -199,6 +233,7 @@ const TRANSLATIONS = {
         payment_unpaid: "Unpaid",
         mark_as_paid: "Mark As Paid",
         mark_as_unpaid: "Mark As Unpaid",
+        local_mode: "LOCAL MODE",
         pipeline_value: "Pipeline Value",
         amount_invoiced: "Amount Invoiced",
         income_received: "Income Received",
@@ -312,7 +347,7 @@ const TRANSLATIONS = {
         end_session: "Cerrar sesión",
         sign_out: "Cerrar sesión",
         settings: "Configuración",
-        issue_inbox: "Bandeja de Incidencias",
+        issue_inbox: "Reportes de Servicio",
         report_issue: "Reportar un Problema",
         issue_report_copy: "Comparte un error, una falla del flujo o un problema visual y adjunta una captura si ayuda a explicar lo ocurrido.",
         issue_summary: "Resumen del Problema",
@@ -322,11 +357,40 @@ const TRANSLATIONS = {
         attach_screenshot: "Adjuntar Captura",
         attach_screenshot_help: "Opcional. Una captura puede facilitar mucho la revisión del problema.",
         submit_report: "Enviar Reporte",
-        issue_inbox_copy: "Los reportes enviados desde el pie de página aparecen aquí para que los administradores los revisen.",
+        issue_inbox_copy: "Los reportes y registros de servicio aparecen aquí para que los administradores los revisen, agreguen notas y los cierren al resolverse.",
         no_issue_reports: "Aún no hay reportes.",
         submitted_by: "Enviado por",
         screenshot: "Captura",
         delete_report: "Eliminar reporte",
+        issue_open: "Abierto",
+        issue_closed: "Cerrado",
+        close_report: "Cerrar reporte",
+        reopen_report: "Reabrir reporte",
+        issue_admin_notes: "Notas del Admin",
+        issue_admin_notes_placeholder: "Agrega notas internas, seguimiento o un resumen de resolución.",
+        save_notes: "Guardar notas",
+        issue_notes_saved: "Notas guardadas.",
+        new_report: "Nuevo",
+        catalog: "Catálogo",
+        catalog_heading: "Catálogo",
+        catalog_copy: "Revisa cada artículo capturado desde cotizaciones, facturas y el carrito, y agrega registros manuales para uso futuro.",
+        add_catalog_item: "Agregar Artículo al Catálogo",
+        no_catalog_items: "Aún no hay artículos en el catálogo.",
+        item_name: "Nombre del Artículo",
+        price: "Precio",
+        item_details: "Detalles",
+        item_notes: "Notas",
+        date_updated: "Fecha Actualizada",
+        category: "Categoría",
+        brand: "Marca",
+        unit_size: "Tamaño de Unidad",
+        vendor: "Proveedor",
+        source: "Origen",
+        source_manual: "Manual",
+        source_cart: "Carrito",
+        source_document: "Documento",
+        save_catalog_item: "Guardar Artículo del Catálogo",
+        update_catalog_item: "Actualizar Artículo del Catálogo",
         report_submitted_success: "Reporte enviado correctamente.",
         report_required_error: "Agrega un resumen y detalles antes de enviar.",
         report_delete_confirm: "¿Eliminar este reporte?",
@@ -400,6 +464,7 @@ const TRANSLATIONS = {
         payment_unpaid: "No Pagada",
         mark_as_paid: "Marcar como Pagada",
         mark_as_unpaid: "Marcar como No Pagada",
+        local_mode: "MODO LOCAL",
         pipeline_value: "Valor en Proceso",
         amount_invoiced: "Monto Facturado",
         income_received: "Ingresos Recibidos",
@@ -513,7 +578,7 @@ const TRANSLATIONS = {
         end_session: "Fermer la session",
         sign_out: "Se déconnecter",
         settings: "Paramètres",
-        issue_inbox: "Boîte des Incidents",
+        issue_inbox: "Rapports de Service",
         report_issue: "Signaler un Problème",
         issue_report_copy: "Partagez un bug, un flux cassé ou un problème visuel et joignez une capture si cela aide à expliquer le souci.",
         issue_summary: "Résumé du Problème",
@@ -523,11 +588,40 @@ const TRANSLATIONS = {
         attach_screenshot: "Joindre une Capture",
         attach_screenshot_help: "Optionnel. Une capture peut rendre les rapports bien plus faciles à examiner.",
         submit_report: "Envoyer le Rapport",
-        issue_inbox_copy: "Les rapports envoyés depuis le pied de page apparaissent ici pour examen par les administrateurs.",
+        issue_inbox_copy: "Les rapports et journaux de service apparaissent ici pour que les administrateurs puissent les examiner, ajouter des notes et les clôturer.",
         no_issue_reports: "Aucun rapport pour le moment.",
         submitted_by: "Envoyé par",
         screenshot: "Capture",
         delete_report: "Supprimer le rapport",
+        issue_open: "Ouvert",
+        issue_closed: "Clôturé",
+        close_report: "Clôturer le rapport",
+        reopen_report: "Rouvrir le rapport",
+        issue_admin_notes: "Notes Admin",
+        issue_admin_notes_placeholder: "Ajoutez des notes internes, un suivi ou un résumé de résolution.",
+        save_notes: "Enregistrer les notes",
+        issue_notes_saved: "Notes enregistrées.",
+        new_report: "Nouveau",
+        catalog: "Catalogue",
+        catalog_heading: "Catalogue",
+        catalog_copy: "Consultez chaque article issu des devis, factures et du panier, et ajoutez des fiches catalogue manuelles pour plus tard.",
+        add_catalog_item: "Ajouter au Catalogue",
+        no_catalog_items: "Aucun article dans le catalogue pour le moment.",
+        item_name: "Nom de l’Article",
+        price: "Prix",
+        item_details: "Détails",
+        item_notes: "Notes",
+        date_updated: "Date de Mise à Jour",
+        category: "Catégorie",
+        brand: "Marque",
+        unit_size: "Taille Unitaire",
+        vendor: "Fournisseur",
+        source: "Source",
+        source_manual: "Manuel",
+        source_cart: "Panier",
+        source_document: "Document",
+        save_catalog_item: "Enregistrer l’Article",
+        update_catalog_item: "Mettre à Jour l’Article",
         report_submitted_success: "Rapport envoyé avec succès.",
         report_required_error: "Ajoutez un résumé et des détails avant l’envoi.",
         report_delete_confirm: "Supprimer ce rapport ?",
@@ -601,6 +695,7 @@ const TRANSLATIONS = {
         payment_unpaid: "Non Payee",
         mark_as_paid: "Marquer comme Payee",
         mark_as_unpaid: "Marquer comme Non Payee",
+        local_mode: "MODE LOCAL",
         pipeline_value: "Valeur Pipeline",
         amount_invoiced: "Montant Facturé",
         income_received: "Revenus Reçus",
@@ -789,9 +884,12 @@ function applyTranslations() {
     document.getElementById("languagePickerLabel").textContent = t("language");
     elements.openInboxBtn.setAttribute("aria-label", t("issue_inbox"));
     elements.openInboxBtn.setAttribute("title", t("issue_inbox"));
+    setElementText("#openInboxLabel", t("issue_inbox"));
     elements.navMenuBtn.setAttribute("aria-label", t("menu"));
+    elements.topbarCatalogBtn.textContent = t("catalog");
     elements.topbarSettingsBtn.textContent = t("settings");
     elements.topbarSignOutBtn.textContent = t("sign_out");
+    updateRuntimeModeBadge();
     elements.languageSelect.options[0].textContent = "🍔 ENG";
     elements.languageSelect.options[1].textContent = "🪇 ESP";
     elements.languageSelect.options[2].textContent = "🥐 FRN";
@@ -820,6 +918,20 @@ function applyTranslations() {
     }
     setElementText(".dashboard-topbar h2", t("documents_heading"));
     setElementText(".dashboard-subtitle", t("documents_subtitle"));
+    setElementText("#catalogHeading", t("catalog_heading"));
+    setElementText("#catalogCopy", t("catalog_copy"));
+    setElementText("#backToDocumentsBtn", t("documents"));
+    setElementText("#openCatalogItemModalBtn", t("add_catalog_item"));
+    setElementText("#catalogItemModalTitle", state.editingCatalogItemId ? t("update_catalog_item") : t("add_catalog_item"));
+    setElementText("#catalogItemNameLabel", t("item_name"));
+    setElementText("#catalogItemPriceLabel", t("unit_price_usd"));
+    setElementText("#catalogItemCategoryLabel", t("category"));
+    setElementText("#catalogItemBrandLabel", t("brand"));
+    setElementText("#catalogItemUnitSizeLabel", t("unit_size"));
+    setElementText("#catalogItemVendorLabel", t("vendor"));
+    setElementText("#catalogItemDetailsLabel", t("item_details"));
+    setElementText("#catalogItemNotesLabel", t("item_notes"));
+    elements.saveCatalogItemBtn.textContent = state.editingCatalogItemId ? t("update_catalog_item") : t("save_catalog_item");
     setElementText(document.querySelector('.sort-field .search-label'), t("sort"));
     setElementText(document.querySelector('.search-field .search-label'), t("search"));
     elements.documentSearch.placeholder = t("search_placeholder");
@@ -947,6 +1059,8 @@ function applyTranslations() {
     renderExportSelectionList();
     renderSavedItemsList();
     renderDocuments();
+    renderCatalog();
+    applyPageState();
 }
 
 function renderBrandAssets() {
@@ -1012,6 +1126,7 @@ function cacheElements() {
     elements.topbarBrandLogo = document.getElementById("topbarBrandLogo");
     elements.sessionLoader = document.getElementById("sessionLoader");
     elements.sessionLoaderMessage = document.getElementById("sessionLoaderMessage");
+    elements.runtimeModeBadge = document.getElementById("runtimeModeBadge");
     elements.settingsModal = document.getElementById("settingsModal");
     elements.sessionBadge = document.getElementById("sessionBadge");
     elements.openInboxBtn = document.getElementById("openInboxBtn");
@@ -1020,6 +1135,7 @@ function cacheElements() {
     elements.savedItemsCountBadge = document.getElementById("savedItemsCountBadge");
     elements.navMenuBtn = document.getElementById("navMenuBtn");
     elements.topbarMenu = document.getElementById("topbarMenu");
+    elements.topbarCatalogBtn = document.getElementById("topbarCatalogBtn");
     elements.topbarCompanyProfileBtn = document.getElementById("topbarCompanyProfileBtn");
     elements.topbarSettingsBtn = document.getElementById("topbarSettingsBtn");
     elements.topbarSignOutBtn = document.getElementById("topbarSignOutBtn");
@@ -1047,6 +1163,21 @@ function cacheElements() {
     elements.companyProfileModal = document.getElementById("companyProfileModal");
     elements.savedItemsModal = document.getElementById("savedItemsModal");
     elements.savedItemCreateModal = document.getElementById("savedItemCreateModal");
+    elements.catalogPage = document.getElementById("catalogPage");
+    elements.catalogGrid = document.getElementById("catalogGrid");
+    elements.backToDocumentsBtn = document.getElementById("backToDocumentsBtn");
+    elements.openCatalogItemModalBtn = document.getElementById("openCatalogItemModalBtn");
+    elements.catalogItemModal = document.getElementById("catalogItemModal");
+    elements.closeCatalogItemModalBtn = document.getElementById("closeCatalogItemModalBtn");
+    elements.catalogItemNameInput = document.getElementById("catalogItemNameInput");
+    elements.catalogItemPriceInput = document.getElementById("catalogItemPriceInput");
+    elements.catalogItemCategoryInput = document.getElementById("catalogItemCategoryInput");
+    elements.catalogItemBrandInput = document.getElementById("catalogItemBrandInput");
+    elements.catalogItemUnitSizeInput = document.getElementById("catalogItemUnitSizeInput");
+    elements.catalogItemVendorInput = document.getElementById("catalogItemVendorInput");
+    elements.catalogItemDetailsInput = document.getElementById("catalogItemDetailsInput");
+    elements.catalogItemNotesInput = document.getElementById("catalogItemNotesInput");
+    elements.saveCatalogItemBtn = document.getElementById("saveCatalogItemBtn");
     elements.openCompanyProfileBtn = document.getElementById("openCompanyProfileBtn");
     elements.openSavedItemsBtn = document.getElementById("openSavedItemsBtn");
     elements.openSavedItemsInlineCount = document.getElementById("openSavedItemsInlineCount");
@@ -1165,6 +1296,7 @@ function bindEvents() {
     elements.openInboxBtn.addEventListener("click", openIssueInboxModal);
     elements.openSavedItemsTopbarBtn.addEventListener("click", openSavedItemsModal);
     elements.navMenuBtn.addEventListener("click", toggleTopbarMenu);
+    elements.topbarCatalogBtn.addEventListener("click", openCatalogPage);
     elements.topbarCompanyProfileBtn.addEventListener("click", openCompanyProfileModal);
     elements.topbarSettingsBtn.addEventListener("click", handleTopbarSettingsClick);
     elements.topbarSignOutBtn.addEventListener("click", handleEndSessionClick);
@@ -1186,6 +1318,11 @@ function bindEvents() {
     elements.closeSavedItemsModalBtn.addEventListener("click", closeSavedItemsModal);
     elements.closeSavedItemCreateModalBtn.addEventListener("click", closeSavedItemCreateModal);
     elements.toggleSavedItemsFormBtn.addEventListener("click", openSavedItemCreateModal);
+    elements.backToDocumentsBtn.addEventListener("click", () => setActivePage("documents"));
+    elements.openCatalogItemModalBtn.addEventListener("click", openCatalogItemModal);
+    elements.closeCatalogItemModalBtn.addEventListener("click", closeCatalogItemModal);
+    elements.saveCatalogItemBtn.addEventListener("click", saveCatalogItemFromModal);
+    elements.catalogGrid.addEventListener("click", handleCatalogGridClick);
     elements.closeAboutModalBtn.addEventListener("click", closeAboutModal);
     elements.issueScreenshotInput.addEventListener("change", handleIssueScreenshotChange);
     elements.submitIssueReportBtn.addEventListener("click", submitIssueReport);
@@ -1241,6 +1378,28 @@ function bindEvents() {
         button.addEventListener("click", () => setActiveFilter(button.dataset.filter));
     });
 
+    [
+        elements.docType,
+        elements.refNumber,
+        elements.docDate,
+        elements.clientName,
+        elements.clientAddress,
+        elements.consigneeName,
+        elements.consigneeAddress,
+        elements.poNumber,
+        elements.docTags,
+        elements.notes,
+        elements.paymentTerms,
+        elements.includeSignature,
+        elements.includeStamp
+    ].forEach(field => {
+        if (!field) {
+            return;
+        }
+        field.addEventListener("input", queueDraftAutosave);
+        field.addEventListener("change", queueDraftAutosave);
+    });
+
     elements.documentModal.addEventListener("click", event => {
         if (event.target === elements.documentModal) {
             closeModal();
@@ -1285,6 +1444,11 @@ function bindEvents() {
     elements.savedItemCreateModal.addEventListener("click", event => {
         if (event.target === elements.savedItemCreateModal) {
             closeSavedItemCreateModal();
+        }
+    });
+    elements.catalogItemModal.addEventListener("click", event => {
+        if (event.target === elements.catalogItemModal) {
+            closeCatalogItemModal();
         }
     });
 
@@ -1558,6 +1722,8 @@ function loadLocalWorkspaceState() {
     state.issueReports = loadIssueReports();
     state.companyProfile = loadCompanyProfile();
     state.savedItems = loadSavedItems();
+    state.catalogItems = loadCatalogItems();
+    updateRuntimeModeBadge();
 }
 
 function cacheWorkspaceStateLocally() {
@@ -1565,6 +1731,7 @@ function cacheWorkspaceStateLocally() {
     writeLocalDataset(ISSUE_REPORTS_STORAGE_KEY, state.issueReports);
     writeLocalDataset(COMPANY_PROFILE_STORAGE_KEY, state.companyProfile);
     writeLocalDataset(SAVED_ITEMS_STORAGE_KEY, state.savedItems);
+    writeLocalDataset(CATALOG_ITEMS_STORAGE_KEY, state.catalogItems);
 }
 
 function applyWorkspaceState(payload) {
@@ -1572,11 +1739,14 @@ function applyWorkspaceState(payload) {
     state.issueReports = normalizeIssueReports(payload?.issueReports || []);
     state.companyProfile = normalizeCompanyProfile(payload?.companyProfile || DEFAULT_COMPANY_PROFILE);
     state.savedItems = normalizeSavedItems(payload?.savedItems || []);
+    state.catalogItems = normalizeCatalogItems(payload?.catalogItems || []);
     cacheWorkspaceStateLocally();
+    updateRuntimeModeBadge();
     renderUserManagementList();
     renderIssueInbox();
     updateInboxBadge();
     renderSavedItemsList();
+    renderCatalog();
 }
 
 async function bootstrapSharedWorkspaceData() {
@@ -1588,12 +1758,14 @@ async function bootstrapSharedWorkspaceData() {
         state.workspaceDataMode = "local";
         loadLocalWorkspaceState();
     }
+    updateRuntimeModeBadge();
 }
 
 async function persistSharedWorkspaceData() {
     cacheWorkspaceStateLocally();
 
     if (state.workspaceDataMode === "local") {
+        updateRuntimeModeBadge();
         return;
     }
 
@@ -1604,7 +1776,8 @@ async function persistSharedWorkspaceData() {
                 userAccounts: state.userAccounts,
                 issueReports: state.issueReports,
                 companyProfile: state.companyProfile,
-                savedItems: state.savedItems
+                savedItems: state.savedItems,
+                catalogItems: state.catalogItems
             })
         });
 
@@ -1615,6 +1788,7 @@ async function persistSharedWorkspaceData() {
         cacheWorkspaceStateLocally();
         setImportStatus("Server save failed, so shared workspace data was saved locally in this browser instead.");
     }
+    updateRuntimeModeBadge();
 }
 
 async function saveUserAccounts(users) {
@@ -1636,6 +1810,8 @@ function normalizeIssueReports(reports) {
                 screenshotDataUrl: typeof report.screenshotDataUrl === "string" ? report.screenshotDataUrl : "",
                 createdAt: report.createdAt || new Date().toISOString(),
                 unread: report.unread !== false,
+                status: report.status === "closed" ? "closed" : "open",
+                adminNotes: String(report.adminNotes || "").trim(),
                 createdBy: {
                     userId: String(report.createdBy?.userId || ""),
                     username: String(report.createdBy?.username || ""),
@@ -1684,6 +1860,39 @@ async function saveCompanyProfileState(profile) {
     await persistSharedWorkspaceData();
 }
 
+function normalizeCatalogItems(items) {
+    return Array.isArray(items)
+        ? items
+            .filter(item => item && typeof item === "object")
+            .map(item => ({
+                id: String(item.id || `catalog-${Date.now()}-${Math.random().toString(36).slice(2)}`),
+                name: String(item.name || "").trim(),
+                details: String(item.details || "").trim(),
+                notes: String(item.notes || "").trim(),
+                price: Number.parseFloat(item.price) || 0,
+                dateUpdated: item.dateUpdated || new Date().toISOString(),
+                category: String(item.category || "").trim(),
+                brand: String(item.brand || "").trim(),
+                unitSize: String(item.unitSize || "").trim(),
+                vendor: String(item.vendor || "").trim()
+            }))
+            .filter(item => item.name)
+        : [];
+}
+
+function loadCatalogItems() {
+    const items = normalizeCatalogItems(readLocalDataset(CATALOG_ITEMS_STORAGE_KEY, []));
+    writeLocalDataset(CATALOG_ITEMS_STORAGE_KEY, items);
+    return items;
+}
+
+async function saveCatalogItems(items) {
+    state.catalogItems = normalizeCatalogItems(items);
+    cacheWorkspaceStateLocally();
+    renderCatalog();
+    await persistSharedWorkspaceData();
+}
+
 function normalizeSavedItems(items) {
     return Array.isArray(items)
         ? items
@@ -1716,6 +1925,7 @@ async function saveSavedItemsState(items) {
     state.savedItems = normalizeSavedItems(items);
     cacheWorkspaceStateLocally();
     renderSavedItemsList();
+    renderCatalog();
     await persistSharedWorkspaceData();
 }
 
@@ -1728,6 +1938,16 @@ function updateSavedItemsCountBadge() {
         elements.openSavedItemsInlineCount.textContent = String(count);
         elements.openSavedItemsInlineCount.hidden = count === 0;
     }
+}
+
+function updateRuntimeModeBadge() {
+    if (!elements.runtimeModeBadge) {
+        return;
+    }
+
+    const isLocalMode = state.dataMode === "local" || state.workspaceDataMode === "local";
+    elements.runtimeModeBadge.hidden = !isLocalMode;
+    elements.runtimeModeBadge.textContent = t("local_mode");
 }
 
 function getStoredSessionUser() {
@@ -1928,6 +2148,179 @@ function toggleTopbarMenu() {
 function closeTopbarMenu() {
     elements.topbarMenu.hidden = true;
     elements.navMenuBtn.setAttribute("aria-expanded", "false");
+}
+
+function setActivePage(page) {
+    state.activePage = page === "catalog" ? "catalog" : "documents";
+    applyPageState();
+    closeTopbarMenu();
+}
+
+function applyPageState() {
+    if (elements.catalogPage) {
+        elements.catalogPage.hidden = state.activePage !== "catalog";
+    }
+    if (elements.documentsGrid?.closest(".dashboard")) {
+        elements.documentsGrid.closest(".dashboard").hidden = state.activePage !== "documents";
+    }
+}
+
+function openCatalogPage() {
+    setActivePage("catalog");
+    renderCatalog();
+}
+
+function openCatalogItemModal() {
+    state.editingCatalogItemId = null;
+    elements.catalogItemNameInput.value = "";
+    elements.catalogItemPriceInput.value = "0";
+    elements.catalogItemCategoryInput.value = "";
+    elements.catalogItemBrandInput.value = "";
+    elements.catalogItemUnitSizeInput.value = "";
+    elements.catalogItemVendorInput.value = "";
+    elements.catalogItemDetailsInput.value = "";
+    elements.catalogItemNotesInput.value = "";
+    elements.catalogItemModal.classList.add("active");
+    elements.catalogItemModal.setAttribute("aria-hidden", "false");
+    applyTranslations();
+}
+
+function closeCatalogItemModal() {
+    elements.catalogItemModal.classList.remove("active");
+    elements.catalogItemModal.setAttribute("aria-hidden", "true");
+    state.editingCatalogItemId = null;
+}
+
+function getCatalogEntries() {
+    const manualEntries = state.catalogItems.map(item => ({
+        ...item,
+        sourceKey: "manual"
+    }));
+
+    const cartEntries = state.savedItems.map(item => ({
+        id: `cart-${item.id}`,
+        name: item.description || "Untitled item",
+        details: item.description || "",
+        notes: "",
+        price: Number(item.unitPrice || 0),
+        dateUpdated: item.createdAt || new Date().toISOString(),
+        category: "",
+        brand: "",
+        unitSize: item.quantity ? `Qty ${formatAmount(item.quantity)}` : "",
+        vendor: "",
+        sourceKey: "cart"
+    }));
+
+    const documentEntries = state.documents.flatMap(doc => (Array.isArray(doc.items) ? doc.items : []).map((item, index) => ({
+        id: `doc-${doc.id}-${index}`,
+        name: item.description || `Item ${index + 1}`,
+        details: item.description || "",
+        notes: doc.notes || "",
+        price: Number(item.unitPrice || item.price || 0),
+        dateUpdated: doc.printedAt || doc.date || new Date().toISOString(),
+        category: "",
+        brand: "",
+        unitSize: item.quantity ? `Qty ${formatAmount(item.quantity)}` : "",
+        vendor: doc.clientName || "",
+        sourceKey: "document"
+    })));
+
+    return [...manualEntries, ...cartEntries, ...documentEntries]
+        .sort((left, right) => Date.parse(right.dateUpdated || 0) - Date.parse(left.dateUpdated || 0));
+}
+
+function renderCatalog() {
+    if (!elements.catalogGrid) {
+        return;
+    }
+
+    const entries = getCatalogEntries();
+    if (!entries.length) {
+        elements.catalogGrid.innerHTML = `
+            <div class="empty-state">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h10"></path>
+                </svg>
+                <p>${escapeHtml(t("no_catalog_items"))}</p>
+            </div>
+        `;
+        return;
+    }
+
+    elements.catalogGrid.innerHTML = entries.map(item => `
+        <article class="catalog-card">
+            <div class="catalog-card-head">
+                <div>
+                    <strong>${escapeHtml(item.name)}</strong>
+                    <span>${escapeHtml(t(`source_${item.sourceKey}`))} · ${escapeHtml(formatDateTime(item.dateUpdated))}</span>
+                </div>
+                ${item.sourceKey === "manual" ? `<button class="catalog-edit-btn" type="button" data-catalog-action="edit" data-catalog-id="${escapeHtml(item.id)}">${escapeHtml(t("edit"))}</button>` : ""}
+            </div>
+            <div class="catalog-card-meta">
+                <span><strong>${escapeHtml(t("price"))}</strong> ${escapeHtml(formatCurrency(item.price || 0))}</span>
+                <span><strong>${escapeHtml(t("category"))}</strong> ${escapeHtml(item.category || "—")}</span>
+                <span><strong>${escapeHtml(t("brand"))}</strong> ${escapeHtml(item.brand || "—")}</span>
+                <span><strong>${escapeHtml(t("unit_size"))}</strong> ${escapeHtml(item.unitSize || "—")}</span>
+                <span><strong>${escapeHtml(t("vendor"))}</strong> ${escapeHtml(item.vendor || "—")}</span>
+            </div>
+            <p class="catalog-card-details">${escapeHtml(item.details || "—")}</p>
+            <p class="catalog-card-notes">${escapeHtml(item.notes || "—")}</p>
+        </article>
+    `).join("");
+}
+
+function handleCatalogGridClick(event) {
+    const editButton = event.target.closest("[data-catalog-action=\"edit\"]");
+    if (!editButton) {
+        return;
+    }
+
+    const item = state.catalogItems.find(entry => entry.id === editButton.dataset.catalogId);
+    if (!item) {
+        return;
+    }
+
+    state.editingCatalogItemId = item.id;
+    elements.catalogItemNameInput.value = item.name || "";
+    elements.catalogItemPriceInput.value = String(item.price || 0);
+    elements.catalogItemCategoryInput.value = item.category || "";
+    elements.catalogItemBrandInput.value = item.brand || "";
+    elements.catalogItemUnitSizeInput.value = item.unitSize || "";
+    elements.catalogItemVendorInput.value = item.vendor || "";
+    elements.catalogItemDetailsInput.value = item.details || "";
+    elements.catalogItemNotesInput.value = item.notes || "";
+    elements.catalogItemModal.classList.add("active");
+    elements.catalogItemModal.setAttribute("aria-hidden", "false");
+    applyTranslations();
+}
+
+async function saveCatalogItemFromModal() {
+    const name = elements.catalogItemNameInput.value.trim();
+    if (!name) {
+        window.alert("Enter an item name before saving.");
+        return;
+    }
+
+    const item = {
+        id: state.editingCatalogItemId || `catalog-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        name,
+        details: elements.catalogItemDetailsInput.value.trim(),
+        notes: elements.catalogItemNotesInput.value.trim(),
+        price: Number.parseFloat(elements.catalogItemPriceInput.value) || 0,
+        dateUpdated: new Date().toISOString(),
+        category: elements.catalogItemCategoryInput.value.trim(),
+        brand: elements.catalogItemBrandInput.value.trim(),
+        unitSize: elements.catalogItemUnitSizeInput.value.trim(),
+        vendor: elements.catalogItemVendorInput.value.trim()
+    };
+
+    const nextItems = state.editingCatalogItemId
+        ? state.catalogItems.map(entry => entry.id === state.editingCatalogItemId ? item : entry)
+        : [item, ...state.catalogItems];
+
+    await saveCatalogItems(nextItems);
+    closeCatalogItemModal();
+    setActivePage("catalog");
 }
 
 function syncItemActionMenus() {
@@ -2398,9 +2791,9 @@ function addSavedItemToEditor(item) {
 
     lastItem.querySelector(".item-description").value = item.description;
     lastItem.querySelector(".item-quantity").value = formatAmount(item.quantity);
-    lastItem.querySelector(".item-manual-unit-toggle").checked = true;
     lastItem.querySelector(".item-unit-price").value = formatAmount(item.unitPrice);
     lastItem.querySelector(".item-total-price").value = formatAmount(item.total);
+    lastItem.dataset.priceDriver = "unit";
     lastItem.dataset.itemImageDataUrl = item.itemImageDataUrl || "";
     updateItemPricing(lastItem);
     syncItemImageUI(lastItem);
@@ -2745,9 +3138,9 @@ function closeExportModal() {
 }
 
 function updateInboxBadge() {
-    const unreadCount = isAdminSession() ? state.issueReports.filter(report => report.unread).length : 0;
-    elements.inboxCountBadge.hidden = unreadCount === 0;
-    elements.inboxCountBadge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
+    const openCount = isAdminSession() ? state.issueReports.filter(report => report.status !== "closed").length : 0;
+    elements.inboxCountBadge.hidden = openCount === 0;
+    elements.inboxCountBadge.textContent = openCount > 99 ? "99+" : String(openCount);
 }
 
 function renderIssueInbox() {
@@ -2767,13 +3160,16 @@ function renderIssueInbox() {
 
     const reports = [...state.issueReports].sort((left, right) => Date.parse(right.createdAt || 0) - Date.parse(left.createdAt || 0));
     elements.issueInboxList.innerHTML = reports.map(report => `
-        <article class="issue-card${report.unread ? " issue-card-unread" : ""}">
+        <article class="issue-card${report.unread ? " issue-card-unread" : ""}${report.status === "closed" ? " issue-card-closed" : ""}" data-issue-id="${escapeHtml(report.id)}">
             <div class="issue-card-header">
-                <div>
+                <div class="issue-card-header-copy">
                     <strong>${escapeHtml(report.subject)}</strong>
                     <span>${escapeHtml(t("submitted_by"))} ${escapeHtml(report.createdBy.displayName || report.createdBy.username || "Unknown")} · ${escapeHtml(formatDateTime(report.createdAt))}</span>
                 </div>
-                <button class="issue-delete-btn" type="button" data-issue-action="delete" data-issue-id="${escapeHtml(report.id)}">${escapeHtml(t("delete_report"))}</button>
+                <div class="issue-card-status-wrap">
+                    <span class="issue-status-pill issue-status-pill-${report.status}">${escapeHtml(report.status === "closed" ? t("issue_closed") : t("issue_open"))}</span>
+                    ${report.unread ? `<span class="issue-fresh-pill">${escapeHtml(t("new_report"))}</span>` : ""}
+                </div>
             </div>
             <p>${escapeHtml(report.details).replace(/\n/g, "<br>")}</p>
             ${report.screenshotDataUrl
@@ -2782,6 +3178,15 @@ function renderIssueInbox() {
                     <img src="${escapeHtml(report.screenshotDataUrl)}" alt="${escapeHtml(report.screenshotName || t("screenshot"))}">
                 </a>`
                 : ""}
+            <div class="issue-notes-block">
+                <label class="issue-notes-label" for="issueNotes-${escapeHtml(report.id)}">${escapeHtml(t("issue_admin_notes"))}</label>
+                <textarea class="issue-notes-input" id="issueNotes-${escapeHtml(report.id)}" data-issue-notes="${escapeHtml(report.id)}" placeholder="${escapeHtml(t("issue_admin_notes_placeholder"))}" rows="3">${escapeHtml(report.adminNotes || "")}</textarea>
+            </div>
+            <div class="issue-card-actions">
+                <button class="issue-action-btn" type="button" data-issue-action="save-notes" data-issue-id="${escapeHtml(report.id)}">${escapeHtml(t("save_notes"))}</button>
+                <button class="issue-action-btn issue-action-btn-secondary" type="button" data-issue-action="${report.status === "closed" ? "reopen" : "close"}" data-issue-id="${escapeHtml(report.id)}">${escapeHtml(report.status === "closed" ? t("reopen_report") : t("close_report"))}</button>
+                <button class="issue-action-btn issue-action-btn-danger" type="button" data-issue-action="delete" data-issue-id="${escapeHtml(report.id)}">${escapeHtml(t("delete_report"))}</button>
+            </div>
         </article>
     `).join("");
 }
@@ -2792,7 +3197,34 @@ async function handleIssueInboxClick(event) {
         return;
     }
 
-    if (button.dataset.issueAction !== "delete") {
+    const issueId = button.dataset.issueId;
+    const action = button.dataset.issueAction;
+
+    if (!issueId || !action) {
+        return;
+    }
+
+    if (action === "save-notes") {
+        const issueCard = button.closest("[data-issue-id]");
+        const notesInput = issueCard?.querySelector("[data-issue-notes]");
+        const adminNotes = notesInput ? notesInput.value.trim() : "";
+        await saveIssueReports(state.issueReports.map(report => (
+            report.id === issueId ? { ...report, adminNotes, unread: false } : report
+        )));
+        window.alert(t("issue_notes_saved"));
+        return;
+    }
+
+    if (action === "close" || action === "reopen") {
+        await saveIssueReports(state.issueReports.map(report => (
+            report.id === issueId
+                ? { ...report, status: action === "close" ? "closed" : "open", unread: false }
+                : report
+        )));
+        return;
+    }
+
+    if (action !== "delete") {
         return;
     }
 
@@ -2800,7 +3232,7 @@ async function handleIssueInboxClick(event) {
         return;
     }
 
-    await saveIssueReports(state.issueReports.filter(report => report.id !== button.dataset.issueId));
+    await saveIssueReports(state.issueReports.filter(report => report.id !== issueId));
 }
 
 function handleIssueScreenshotChange() {
@@ -2840,6 +3272,8 @@ async function submitIssueReport() {
             screenshotDataUrl,
             createdAt: new Date().toISOString(),
             unread: true,
+            status: "open",
+            adminNotes: "",
             createdBy: {
                 userId: state.currentUser?.userId || "",
                 username: state.currentUser?.username || "",
@@ -3135,6 +3569,7 @@ function loadLocalAppData() {
     const clients = normalizeClients(readLocalDataset(LOCAL_CLIENTS_STORAGE_KEY, []));
 
     state.dataMode = "local";
+    updateRuntimeModeBadge();
     state.documents = documents;
     state.clients = clients;
     renderClientOptions();
@@ -3187,6 +3622,7 @@ async function bootstrapAppData() {
         ]);
 
         state.dataMode = "server";
+        updateRuntimeModeBadge();
         state.documents = normalizeDocuments(documentsResponse.documents);
         state.clients = normalizeClients(clientsResponse.clients);
         renderClientOptions();
@@ -3204,6 +3640,7 @@ async function saveDocumentsToServer(documents) {
     if (state.dataMode === "local") {
         state.documents = normalizeDocuments(documents);
         writeLocalDataset(LOCAL_DOCUMENTS_STORAGE_KEY, state.documents);
+        updateRuntimeModeBadge();
         return;
     }
 
@@ -3214,9 +3651,11 @@ async function saveDocumentsToServer(documents) {
         });
 
         state.dataMode = "server";
+        updateRuntimeModeBadge();
         state.documents = normalizeDocuments(payload.documents);
     } catch (error) {
         state.dataMode = "local";
+        updateRuntimeModeBadge();
         state.documents = normalizeDocuments(documents);
         writeLocalDataset(LOCAL_DOCUMENTS_STORAGE_KEY, state.documents);
         setImportStatus("Server save failed, so changes were saved locally in this browser instead.");
@@ -3227,6 +3666,7 @@ async function saveClientsToServer(clients) {
     if (state.dataMode === "local") {
         state.clients = normalizeClients(clients);
         writeLocalDataset(LOCAL_CLIENTS_STORAGE_KEY, state.clients);
+        updateRuntimeModeBadge();
         return;
     }
 
@@ -3237,9 +3677,11 @@ async function saveClientsToServer(clients) {
         });
 
         state.dataMode = "server";
+        updateRuntimeModeBadge();
         state.clients = normalizeClients(payload.clients);
     } catch (error) {
         state.dataMode = "local";
+        updateRuntimeModeBadge();
         state.clients = normalizeClients(clients);
         writeLocalDataset(LOCAL_CLIENTS_STORAGE_KEY, state.clients);
         setImportStatus("Server save failed, so clients were saved locally in this browser instead.");
@@ -3955,6 +4397,7 @@ function getActionButtonMarkup(icon, label) {
 }
 
 function closeModal() {
+    clearDraftAutosaveTimer();
     elements.documentModal.classList.remove("active");
     elements.documentModal.classList.remove("review-mode");
     elements.documentModal.classList.remove("final-preview-mode");
@@ -3993,6 +4436,7 @@ function updateModalTitle() {
 }
 
 function resetForm() {
+    clearDraftAutosaveTimer();
     state.editingDocumentId = null;
     state.convertingFromQuoteId = null;
     elements.clientSelect.value = "";
@@ -4015,6 +4459,7 @@ function resetForm() {
 }
 
 function prepareNewDocument(type = "quote") {
+    clearDraftAutosaveTimer();
     state.editingDocumentId = null;
     state.convertingFromQuoteId = null;
     elements.itemsContainer.innerHTML = "";
@@ -4125,6 +4570,62 @@ function validateStep(step) {
     return true;
 }
 
+function clearDraftAutosaveTimer() {
+    if (state.draftAutosaveTimerId) {
+        window.clearTimeout(state.draftAutosaveTimerId);
+        state.draftAutosaveTimerId = null;
+    }
+}
+
+function hasMeaningfulDraftContent() {
+    if (state.editingDocumentId !== null) {
+        return true;
+    }
+
+    const simpleFields = [
+        elements.clientName?.value,
+        elements.clientAddress?.value,
+        elements.consigneeName?.value,
+        elements.consigneeAddress?.value,
+        elements.poNumber?.value,
+        elements.notes?.value,
+        elements.docTags?.value
+    ];
+
+    if (simpleFields.some(value => String(value || "").trim())) {
+        return true;
+    }
+
+    return Array.from(elements.itemsContainer.querySelectorAll(".item-row")).some(row => {
+        const description = row.querySelector(".item-description")?.value.trim();
+        const total = parseFloat(row.querySelector(".item-total-price")?.value) || 0;
+        const quantity = parseFloat(row.querySelector(".item-quantity")?.value) || 0;
+        const image = row.dataset.itemImageDataUrl || "";
+        return Boolean(description || total > 0 || quantity > 1 || image);
+    });
+}
+
+function queueDraftAutosave() {
+    if (!elements.documentModal?.classList.contains("active")) {
+        return;
+    }
+
+    clearDraftAutosaveTimer();
+    if (!hasMeaningfulDraftContent()) {
+        return;
+    }
+
+    state.draftAutosaveTimerId = window.setTimeout(() => {
+        state.draftAutosaveTimerId = null;
+        void persistDocument({
+            exportAfterSave: false,
+            silent: true,
+            keepOpen: true,
+            forceDraft: true
+        });
+    }, 900);
+}
+
 function addItem() {
     state.itemCounter += 1;
     const itemId = String(state.itemCounter);
@@ -4132,15 +4633,21 @@ function addItem() {
     const itemDiv = document.createElement("div");
     itemDiv.className = "item-row expanded";
     itemDiv.dataset.itemId = itemId;
+    itemDiv.dataset.priceDriver = "total";
     itemDiv.innerHTML = `
         <div class="item-row-header">
             <button type="button" class="item-summary-toggle" data-toggle-item="${itemId}" aria-expanded="true">
-                <span class="item-number">Item #${state.itemCounter}</span>
+                <span class="item-summary-thumb" aria-hidden="true">
+                    <img class="item-summary-thumb-img" alt="">
+                    <span class="item-summary-thumb-fallback">${state.itemCounter}</span>
+                </span>
                 <span class="item-summary-copy">
-                    <span class="item-summary-title">New line item</span>
+                    <span class="item-summary-title-row">
+                        <span class="item-number">Item #${state.itemCounter}</span>
+                        <span class="item-summary-title">New line item</span>
+                    </span>
                     <span class="item-summary-meta">Qty 1 | Unit $0.00 | Total $0.00</span>
                 </span>
-                <span class="item-summary-hint">Click to edit</span>
             </button>
             <div class="item-row-header-actions">
                 <div class="item-actions-menu-wrap">
@@ -4163,72 +4670,54 @@ function addItem() {
             </div>
         </div>
         <div class="item-editor">
-            <div class="form-group">
-                <label>Description</label>
-                <textarea class="item-description" rows="2" placeholder="Item description..."></textarea>
-            </div>
-            <div class="form-group item-image-group">
-                <div class="item-image-uploader">
-                    <label class="item-image-upload-btn" aria-label="${escapeHtml(t("upload_item_image"))}" title="${escapeHtml(t("upload_item_image"))}">
-                        <input type="file" class="item-image-input" accept="image/*" hidden>
-                        <span class="item-image-upload-art" aria-hidden="true">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M5 7.5A2.5 2.5 0 0 1 7.5 5h9A2.5 2.5 0 0 1 19 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 16.5z" fill="none" stroke="currentColor" stroke-width="1.7"/>
-                                <path d="M8 15l2.4-2.4a1 1 0 0 1 1.4 0l1.1 1.1 2.1-2.1a1 1 0 0 1 1.4 0L19 14.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                                <circle cx="10" cy="9.5" r="1.2" fill="currentColor"/>
+            <div class="item-editor-grid">
+                <div class="item-editor-main">
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea class="item-description" rows="2" placeholder="Item description..."></textarea>
+                    </div>
+                    <div class="form-row item-pricing-row">
+                        <div class="form-group">
+                            <label>Quantity</label>
+                            <input type="number" class="item-quantity" value="1" min="0" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Unit Price (USD)</label>
+                            <input type="number" class="item-unit-price" value="0.00" min="0" step="0.01" inputmode="decimal">
+                        </div>
+                        <div class="form-group item-total-price-usd-group">
+                            <label>Total Price (USD)</label>
+                            <input type="number" class="item-total-price" value="0.00" min="0" step="0.01">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group item-image-group">
+                    <div class="item-image-uploader">
+                        <label class="item-image-upload-btn" aria-label="${escapeHtml(t("upload_item_image"))}" title="${escapeHtml(t("upload_item_image"))}">
+                            <input type="file" class="item-image-input" accept="image/*" hidden>
+                            <span class="item-image-upload-art" aria-hidden="true">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M5 7.5A2.5 2.5 0 0 1 7.5 5h9A2.5 2.5 0 0 1 19 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 16.5z" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                    <path d="M8 15l2.4-2.4a1 1 0 0 1 1.4 0l1.1 1.1 2.1-2.1a1 1 0 0 1 1.4 0L19 14.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <circle cx="10" cy="9.5" r="1.2" fill="currentColor"/>
+                                </svg>
+                            </span>
+                            <span class="item-image-upload-copy">
+                                <strong>${escapeHtml(t("item_image"))}</strong>
+                                <small>Add image</small>
+                            </span>
+                        </label>
+                        <button type="button" class="item-image-remove-btn" hidden aria-label="${escapeHtml(t("remove_item_image"))}" title="${escapeHtml(t("remove_item_image"))}">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M6 7h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                <path d="M9.5 7V5.6c0-.4.3-.6.6-.6h3.8c.3 0 .6.2.6.6V7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                <path d="M8.2 7l.7 10.2c0 .4.3.8.8.8h4.6c.4 0 .7-.3.8-.8L16 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
-                        </span>
-                        <span class="item-image-upload-copy">
-                            <strong>${escapeHtml(t("item_image"))}</strong>
-                            <small>Add image</small>
-                        </span>
-                    </label>
-                    <button type="button" class="item-image-remove-btn" hidden aria-label="${escapeHtml(t("remove_item_image"))}" title="${escapeHtml(t("remove_item_image"))}">
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M6 7h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                            <path d="M9.5 7V5.6c0-.4.3-.6.6-.6h3.8c.3 0 .6.2.6.6V7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                            <path d="M8.2 7l.7 10.2c0 .4.3.8.8.8h4.6c.4 0 .7-.3.8-.8L16 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="item-image-preview" hidden>
-                    <img class="item-image-preview-img" alt="Item preview">
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Quantity</label>
-                    <input type="number" class="item-quantity" value="1" min="0" step="1">
-                </div>
-                <div class="form-group item-total-price-usd-group">
-                    <label>Total Price (USD)</label>
-                    <input type="number" class="item-total-price" value="0" min="0" step="0.01">
-                </div>
-                <div class="form-group">
-                    <label>Unit Price (USD)</label>
-                    <input type="text" class="item-unit-price" value="0.00" inputmode="decimal" placeholder="0.00" readonly>
-                </div>
-            </div>
-            <div class="item-pricing-options">
-                <div class="item-pricing-option">
-                    <label class="checkbox-row checkbox-row-block">
-                        <input type="checkbox" class="item-manual-unit-toggle">
-                        <span>Enter unit price manually</span>
-                    </label>
-                    <small class="field-help">Leave this off to auto-calculate the unit price from quantity and total.</small>
-                </div>
-                <div class="item-pricing-option item-currency-mode">
-                    <label class="checkbox-row checkbox-row-block">
-                        <input type="checkbox" class="item-dop-toggle">
-                        <span>Enter total in DOP</span>
-                    </label>
-                    <small class="field-help">Converts pesos back to USD using RD$${formatAmount(getUsdToDopRate())} = US$1.</small>
-                </div>
-            </div>
-            <div class="form-row item-dop-row" style="display: none;">
-                <div class="form-group item-total-price-dop-group">
-                    <label>Total Price (DOP)</label>
-                    <input type="number" class="item-total-price-dop" value="0" min="0" step="0.01">
+                        </button>
+                    </div>
+                    <div class="item-image-preview" hidden>
+                        <img class="item-image-preview-img" alt="Item preview">
+                    </div>
                 </div>
             </div>
             <div class="item-internal-panel">
@@ -4258,6 +4747,7 @@ function addItem() {
     updateItemPricing(itemDiv);
     setExpandedItem(itemDiv);
     syncItemActionMenus();
+    queueDraftAutosave();
 }
 
 function removeItem(id) {
@@ -4276,6 +4766,7 @@ function removeItem(id) {
                 setExpandedItem(nextItem);
             }
         }
+        queueDraftAutosave();
     }
 }
 
@@ -4304,6 +4795,7 @@ function saveEditorItemForLater(id) {
     });
     removeItem(id);
     setImportStatus(t("saved_item_added"));
+    queueDraftAutosave();
 }
 
 async function handleItemContainerClick(event) {
@@ -4380,6 +4872,7 @@ async function handleItemImageInputChange(event) {
     try {
         itemRow.dataset.itemImageDataUrl = await readFileAsDataUrl(file);
         syncItemImageUI(itemRow);
+        queueDraftAutosave();
     } catch (error) {
         itemRow.dataset.itemImageDataUrl = "";
         imageInput.value = "";
@@ -4412,70 +4905,76 @@ function syncItemImageUI(row) {
         row.classList.remove("has-item-image");
         uploadButtonCopy.textContent = "Add image";
     }
+
+    const summaryThumbImage = row.querySelector(".item-summary-thumb-img");
+    const summaryThumbFallback = row.querySelector(".item-summary-thumb-fallback");
+    if (summaryThumbImage && summaryThumbFallback) {
+        if (imageDataUrl) {
+            summaryThumbImage.src = imageDataUrl;
+            summaryThumbImage.hidden = false;
+            summaryThumbFallback.hidden = true;
+        } else {
+            summaryThumbImage.removeAttribute("src");
+            summaryThumbImage.hidden = true;
+            summaryThumbFallback.hidden = false;
+        }
+    }
 }
 
 function handleItemsChange(event) {
     const activeRow = event?.target?.closest?.(".item-row") || null;
-    const shouldPreserveManualUnitInput = Boolean(
-        event
-        && event.type === "input"
-        && event.target?.classList?.contains("item-unit-price")
-    );
+    const isInputEvent = event?.type === "input";
+    const activeTarget = event?.target || null;
+
+    if (activeRow && activeTarget?.classList?.contains("item-unit-price")) {
+        activeRow.dataset.priceDriver = "unit";
+    } else if (activeRow && activeTarget?.classList?.contains("item-total-price")) {
+        activeRow.dataset.priceDriver = "total";
+    }
 
     elements.itemsContainer.querySelectorAll(".item-row").forEach(row => {
         updateItemPricing(row, {
-            preserveManualUnitInput: shouldPreserveManualUnitInput && row === activeRow
+            sourceField: row === activeRow ? (
+                activeTarget?.classList?.contains("item-unit-price")
+                    ? "unit"
+                    : activeTarget?.classList?.contains("item-total-price")
+                        ? "total"
+                        : activeTarget?.classList?.contains("item-quantity")
+                            ? "quantity"
+                            : null
+            ) : null,
+            preserveActiveInput: isInputEvent && row === activeRow
         });
         updateItemSummary(row);
     });
     calculateTotals();
     updateEditorSummary();
+    queueDraftAutosave();
 }
 
 function updateItemPricing(row, options = {}) {
-    const { preserveManualUnitInput = false } = options;
+    const { sourceField = null, preserveActiveInput = false } = options;
     const quantity = parseFloat(row.querySelector(".item-quantity").value) || 0;
     const totalPriceInput = row.querySelector(".item-total-price");
-    const totalPriceUsdGroup = row.querySelector(".item-total-price-usd-group");
     const unitPriceInput = row.querySelector(".item-unit-price");
-    const dopToggle = row.querySelector(".item-dop-toggle");
-    const dopRow = row.querySelector(".item-dop-row");
-    const dopTotalPriceInput = row.querySelector(".item-total-price-dop");
-    const manualToggle = row.querySelector(".item-manual-unit-toggle");
-
     let totalPrice = parseFloat(totalPriceInput.value) || 0;
-    const isManual = manualToggle.checked;
-    const usesDopTotal = dopToggle.checked;
+    let unitPrice = parseDecimalInput(unitPriceInput.value);
+    const driver = sourceField === "quantity"
+        ? (row.dataset.priceDriver || "total")
+        : (sourceField || row.dataset.priceDriver || "total");
 
-    if (isManual && usesDopTotal) {
-        dopToggle.checked = false;
-    }
+    row.dataset.priceDriver = driver;
 
-    const isUsingDopTotal = dopToggle.checked;
-    dopRow.style.display = isUsingDopTotal ? "grid" : "none";
-    if (totalPriceUsdGroup) {
-        totalPriceUsdGroup.style.display = isUsingDopTotal ? "none" : "block";
-    }
-    unitPriceInput.readOnly = !isManual;
-    totalPriceInput.readOnly = isUsingDopTotal;
-
-    if (isManual) {
-        const manualUnitPrice = parseDecimalInput(unitPriceInput.value);
-        if (!preserveManualUnitInput) {
-            unitPriceInput.value = manualUnitPrice.toFixed(2);
-        }
-        totalPriceInput.value = (manualUnitPrice * quantity).toFixed(2);
-        dopTotalPriceInput.value = (manualUnitPrice * quantity * getUsdToDopRate()).toFixed(2);
-    } else {
-        if (isUsingDopTotal) {
-            const dopTotal = parseFloat(dopTotalPriceInput.value) || 0;
-            totalPrice = dopTotal / getUsdToDopRate();
+    if (driver === "unit") {
+        totalPrice = unitPrice * quantity;
+        if (!preserveActiveInput || sourceField !== "total") {
             totalPriceInput.value = totalPrice.toFixed(2);
-        } else {
-            dopTotalPriceInput.value = (totalPrice * getUsdToDopRate()).toFixed(2);
         }
-        const derivedUnitPrice = quantity > 0 ? totalPrice / quantity : 0;
-        unitPriceInput.value = derivedUnitPrice.toFixed(2);
+    } else {
+        unitPrice = quantity > 0 ? totalPrice / quantity : 0;
+        if (!preserveActiveInput || sourceField !== "unit") {
+            unitPriceInput.value = unitPrice.toFixed(2);
+        }
     }
 
     updateItemInternalMetrics(row);
@@ -4486,17 +4985,13 @@ function updateItemSummary(row) {
     const quantity = parseFloat(row.querySelector(".item-quantity").value) || 0;
     const totalPrice = parseFloat(row.querySelector(".item-total-price").value) || 0;
     const unitPrice = parseDecimalInput(row.querySelector(".item-unit-price").value);
-    const usesDopTotal = row.querySelector(".item-dop-toggle").checked;
-    const dopTotalPrice = parseFloat(row.querySelector(".item-total-price-dop").value) || 0;
     const upchargePercent = row.querySelector(".item-upcharge-percent").value;
     const title = description || "New line item";
     const compactTitle = title.length > 72 ? `${title.slice(0, 69)}...` : title;
-    const totalLabel = usesDopTotal
-        ? `Total ${formatCurrency(totalPrice)} from RD$${formatAmount(dopTotalPrice)}`
-        : `Total ${formatCurrency(totalPrice)}`;
+    const summaryMeta = `Qty ${quantity || 0} | Unit ${formatCurrency(unitPrice)} | Total ${formatCurrency(totalPrice)}${state.showInternalPricing ? ` | Upcharge ${upchargePercent}` : ""}`;
 
     row.querySelector(".item-summary-title").textContent = compactTitle;
-    row.querySelector(".item-summary-meta").textContent = `Qty ${quantity || 0} | Unit ${formatCurrency(unitPrice)} | ${totalLabel} | Upcharge ${upchargePercent}`;
+    row.querySelector(".item-summary-meta").textContent = summaryMeta;
 }
 
 function documentHasItemImages(doc) {
@@ -4575,6 +5070,10 @@ function updateItemInternalMetrics(row) {
 function refreshItemOrdering() {
     elements.itemsContainer.querySelectorAll(".item-row").forEach((row, index) => {
         row.querySelector(".item-number").textContent = `Item #${index + 1}`;
+        const thumbFallback = row.querySelector(".item-summary-thumb-fallback");
+        if (thumbFallback) {
+            thumbFallback.textContent = String(index + 1);
+        }
         updateItemSummary(row);
     });
 }
@@ -4588,6 +5087,9 @@ function setExpandedItem(targetRow) {
             toggle.setAttribute("aria-expanded", String(isTarget));
         }
     });
+    if (targetRow) {
+        targetRow.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
 }
 
 function calculateTotals() {
@@ -4645,8 +5147,8 @@ function getSignatureUrl() {
 }
 
 function getStampUrl() {
-    const url = new URL("assets/gonzalez-logistics-stamp.svg", window.location.href);
-    url.searchParams.set("v", "20260408-1");
+    const url = new URL("assets/gonzalez-logistics-stamp.png", window.location.href);
+    url.searchParams.set("v", "20260408-2");
     return url.href;
 }
 
@@ -4671,24 +5173,20 @@ function buildDocumentData() {
     elements.itemsContainer.querySelectorAll(".item-row").forEach((row, index) => {
         const quantity = parseFloat(row.querySelector(".item-quantity").value) || 0;
         const totalPrice = parseFloat(row.querySelector(".item-total-price").value) || 0;
-        const isManualUnitPrice = row.querySelector(".item-manual-unit-toggle").checked;
-        const usesDopTotal = row.querySelector(".item-dop-toggle").checked;
-        const totalPriceDop = parseFloat(row.querySelector(".item-total-price-dop").value) || 0;
         const internalCost = parseFloat(row.querySelector(".item-internal-cost").value) || 0;
-        const unitPrice = isManualUnitPrice
-            ? parseDecimalInput(row.querySelector(".item-unit-price").value)
-            : (quantity > 0 ? totalPrice / quantity : 0);
+        const unitPrice = parseDecimalInput(row.querySelector(".item-unit-price").value);
         items.push({
             itemNo: index + 1,
             description: row.querySelector(".item-description").value.trim(),
             quantity: row.querySelector(".item-quantity").value || "-",
             unitPrice: unitPrice.toFixed(2),
             totalPrice: totalPrice.toFixed(2),
-            totalPriceDop: totalPriceDop.toFixed(2),
+            totalPriceDop: "0.00",
             internalCost: internalCost.toFixed(2),
             upchargePercent: internalCost > 0 ? (((totalPrice - internalCost) / internalCost) * 100).toFixed(2) : "0.00",
-            usesDopTotal,
-            manualUnitPrice: isManualUnitPrice
+            usesDopTotal: false,
+            manualUnitPrice: row.dataset.priceDriver === "unit",
+            itemImageDataUrl: row.dataset.itemImageDataUrl || ""
         });
     });
 
@@ -4992,12 +5490,17 @@ function openPrintWindow(doc) {
 }
 
 async function persistDocument(options = {}) {
-    const { exportAfterSave = false } = options;
+    const {
+        exportAfterSave = false,
+        silent = false,
+        keepOpen = false,
+        forceDraft = false
+    } = options;
     const isEditing = state.editingDocumentId !== null;
     const existingDocument = isEditing ? getDocumentById(state.editingDocumentId) : null;
     const nextStatus = exportAfterSave
         ? "logged"
-        : (existingDocument?.status === "logged" ? "logged" : "draft");
+        : (forceDraft ? "draft" : (existingDocument?.status === "logged" ? "logged" : "draft"));
     const doc = {
         ...(existingDocument || {}),
         id: state.editingDocumentId ?? Date.now(),
@@ -5033,23 +5536,19 @@ async function persistDocument(options = {}) {
     elements.itemsContainer.querySelectorAll(".item-row").forEach(row => {
         const qty = parseFloat(row.querySelector(".item-quantity").value) || 0;
         const totalPrice = parseFloat(row.querySelector(".item-total-price").value) || 0;
-        const usesDopTotal = row.querySelector(".item-dop-toggle").checked;
-        const totalPriceDop = parseFloat(row.querySelector(".item-total-price-dop").value) || 0;
         const internalCost = parseFloat(row.querySelector(".item-internal-cost").value) || 0;
-        const manualUnitPrice = row.querySelector(".item-manual-unit-toggle").checked
-            ? parseDecimalInput(row.querySelector(".item-unit-price").value)
-            : null;
+        const unitPrice = parseDecimalInput(row.querySelector(".item-unit-price").value);
         doc.items.push({
             description: row.querySelector(".item-description").value,
             quantity: qty,
-            price: manualUnitPrice ?? (qty > 0 ? totalPrice / qty : 0),
-            unitPrice: manualUnitPrice ?? (qty > 0 ? totalPrice / qty : 0),
+            price: unitPrice,
+            unitPrice,
             totalPrice,
-            totalPriceDop,
+            totalPriceDop: 0,
             internalCost,
             upchargePercent: internalCost > 0 ? (((totalPrice - internalCost) / internalCost) * 100) : 0,
-            usesDopTotal,
-            manualUnitPrice: manualUnitPrice !== null,
+            usesDopTotal: false,
+            manualUnitPrice: row.dataset.priceDriver === "unit",
             itemImageDataUrl: row.dataset.itemImageDataUrl || ""
         });
     });
@@ -5079,21 +5578,33 @@ async function persistDocument(options = {}) {
 
     try {
         await saveDocumentsToServer(nextDocuments);
-        closeModal();
+        state.editingDocumentId = doc.id;
         renderDocuments();
     } catch (error) {
-        alert(`Unable to save this ${doc.type} to the server.\n\n${error.message}`);
+        if (!silent) {
+            alert(`Unable to save this ${doc.type} to the server.\n\n${error.message}`);
+        }
         return;
     }
 
+    if (keepOpen) {
+        updateEditorSummary();
+        return;
+    }
+
+    closeModal();
     const actionLabel = isEditing ? "updated" : "saved";
     if (exportAfterSave) {
         openPrintWindow(doc);
-        alert(`${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.\n\nA PDF preview has opened in a new window. Print only if you want to from there.`);
+        if (!silent) {
+            alert(`${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.\n\nA PDF preview has opened in a new window. Print only if you want to from there.`);
+        }
         return;
     }
 
-    alert(`${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.`);
+    if (!silent) {
+        alert(`${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.`);
+    }
 }
 
 async function saveDocumentOnly() {
@@ -5295,6 +5806,7 @@ function getDocumentById(id) {
 
 function renderDocuments() {
     updateOverviewStats();
+    renderCatalog();
 
     const visibleDocuments = getFilteredDocuments();
 
@@ -5344,7 +5856,7 @@ function renderDocuments() {
         const rowAriaLabel = `${doc.type} ${doc.refNumber || "document"} for ${doc.clientName || "unknown client"}`;
 
         return `
-            <div class="document-row document-row-${doc.type}${isLockedSourceQuote ? " document-row-locked" : ""}"${cardViewId}${isLockedSourceQuote ? "" : ' tabindex="0" role="button"'} aria-label="${escapeHtml(rowAriaLabel)}">
+            <div class="document-row document-row-${doc.type}${doc.status === "draft" ? " document-row-draft" : ""}${isLockedSourceQuote ? " document-row-locked" : ""}"${cardViewId}${isLockedSourceQuote ? "" : ' tabindex="0" role="button"'} aria-label="${escapeHtml(rowAriaLabel)}">
                 <div class="doc-row-main">
                     <div class="doc-row-primary">
                         <span class="doc-type ${doc.type}">${escapeHtml(doc.type === "quote" ? t("quote_singular") : t("invoice_singular"))}</span>
@@ -5612,10 +6124,8 @@ function populateFormFromDocument(doc) {
         lastItem.querySelector(".item-description").value = item.description || "";
         lastItem.querySelector(".item-quantity").value = item.quantity ?? 0;
         lastItem.querySelector(".item-total-price").value = item.totalPrice ?? ((parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0)).toFixed(2);
-        lastItem.querySelector(".item-dop-toggle").checked = Boolean(item.usesDopTotal);
-        lastItem.querySelector(".item-total-price-dop").value = item.totalPriceDop ?? (((parseFloat(item.totalPrice) || ((parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0))) * getUsdToDopRate()).toFixed(2));
-        lastItem.querySelector(".item-manual-unit-toggle").checked = Boolean(item.manualUnitPrice);
         lastItem.querySelector(".item-unit-price").value = item.unitPrice ?? item.price ?? 0;
+        lastItem.dataset.priceDriver = item.manualUnitPrice ? "unit" : "total";
         lastItem.querySelector(".item-internal-cost").value = item.internalCost ?? 0;
         lastItem.dataset.itemImageDataUrl = item.itemImageDataUrl || "";
         updateItemPricing(lastItem);

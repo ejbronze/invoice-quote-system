@@ -6,7 +6,7 @@ Version: `1.0.0`
 
 ## Version 1.0.0 Summary
 
-This version brings SantoSync into a more complete shared-workspace release. The app now supports server-backed shared workspace data for online use, invoice payment tracking, a three-state commercial snapshot card, stronger quote-versus-invoice card styling, compact overflow menus for document and line-item actions, a more refined pending-items cart flow, per-item image handling across the editor and cart, compact export thumbnails for imaged line items, admin issue inbox controls, stronger mobile modal behavior, and a cleaner branded dashboard shell. The quote/invoice workflow, cart behavior, document preview/export flow, and admin tooling all remain intact while the product identity and UI structure are more polished and easier to navigate.
+This version brings SantoSync into a more complete shared-workspace release. The app now supports server-backed shared workspace data for online use, invoice payment tracking, a three-state commercial snapshot card, stronger quote-versus-invoice card styling, compact overflow menus for document and line-item actions, a more refined pending-items cart flow, per-item image handling across the editor and cart, a dedicated catalog page, compact export thumbnails for imaged line items, admin issue inbox controls, stronger mobile modal behavior, and a cleaner branded dashboard shell. The quote/invoice workflow, cart behavior, catalog flow, document preview/export flow, and admin tooling all remain intact while the product identity and UI structure are more polished and easier to navigate.
 
 ## Brand Identity
 
@@ -23,6 +23,7 @@ This version brings SantoSync into a more complete shared-workspace release. The
 .
 ├── assets/
 │   └── david-forman-signature.png
+│   └── gonzalez-logistics-stamp.png
 ├── css/
 │   └── styles.css
 ├── index.html
@@ -45,9 +46,9 @@ This version brings SantoSync into a more complete shared-workspace release. The
 ## Core Files
 
 - `index.html`: App shell, auth screens, dashboard, editor flow, admin tools, issue reporting, and company profile surface.
-- `css/styles.css`: SantoSync UI system, dashboard layout, document styling, modal patterns, and print/export presentation.
+- `css/styles.css`: SantoSync UI system, dashboard layout, catalog and cart layouts, document styling, modal patterns, and print/export presentation.
 - `js/brand.js`: Centralized brand config, SantoSync logo SVG system, and theme token application.
-- `js/app.js`: Session handling, local roles, translations, document workflow, exports, client persistence, and admin utilities.
+- `js/app.js`: Session handling, local roles, translations, document workflow, catalog/cart behavior, exports, client persistence, and admin utilities.
 - `api/documents.js`: Vercel API route for saving and loading quotes and invoices.
 - `api/clients.js`: Vercel API route for saving and loading shared client records.
 - `api/workspace.js`: Vercel API route for saving and loading shared workspace state.
@@ -118,7 +119,8 @@ When the app is online with the API available, user accounts are stored in the s
 - Per-user language preferences for English, Spanish, and French
 - Client profiles that preserve bill-to and consignee details, including saved client switching in the editor
 - Pending items cart with a dedicated create-item popup
-- Pending items cart with visual item cards, a header action pill, document-insert controls, direct image upload from the cart list, and cart item image editing
+- Pending items cart with visual item cards, a header action pill, document-insert controls, direct image upload from the cart list, compact cart item editing, and cart item image editing
+- Catalog page that aggregates items captured from quotes, invoices, and cart records, with support for manually added catalog entries
 - Line item image support inside the document editor with a visual add-image tile
 - Compact overflow menus for line-item editor actions instead of persistent inline action buttons
 - Issue reporting with optional screenshot upload
@@ -148,7 +150,7 @@ When the app is online with the API available, user accounts are stored in the s
 - Internal-only pricing fields never appear in the exported document
 - PDF preview opens first, and printing happens from that preview window
 - Optional signature support is available at export time
-- Optional company stamp overlay can be rendered near the signature as a visual export effect
+- Optional company stamp overlay can be rendered near the signature as a visual export effect using the bundled Gonzalez Logistics stamp asset
 
 ## Local Storage vs Server Storage
 
@@ -164,6 +166,7 @@ Server-backed:
   - company profile
   - pending items cart
   - cart item images and related shared cart metadata
+  - catalog items and related catalog metadata
 
 Browser-local:
 
@@ -203,6 +206,7 @@ Notes:
 - Persistent server data depends on Vercel Blob configuration
 - Shared workspace data now syncs online through `/api/workspace`
 - The active signed-in session still remains browser-local by design
+- The bundled signature and stamp assets are served from `assets/` for PDF preview/export consistency
 - A future backend auth layer would still be needed for stronger account security and password management
 
 ## Future Improvements
