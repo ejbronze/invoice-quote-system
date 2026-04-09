@@ -28,7 +28,9 @@ const state = {
     companyProfile: null,
     savedItems: [],
     editingSavedItemId: null,
-    pendingSavedItemImageUploadId: null
+    pendingSavedItemImageUploadId: null,
+    openItemMenuId: null,
+    openDocumentMenuId: null
 };
 
 const DOP_PER_USD = 59;
@@ -192,9 +194,15 @@ const TRANSLATIONS = {
         open_pdf_preview: "Open PDF Preview",
         view_pdf: "View PDF",
         convert_to_invoice: "Convert to Invoice",
+        payment_paid: "Paid",
+        payment_unpaid: "Unpaid",
+        mark_as_paid: "Mark As Paid",
+        mark_as_unpaid: "Mark As Unpaid",
         pipeline_value: "Pipeline Value",
         amount_invoiced: "Amount Invoiced",
+        income_received: "Income Received",
         tap_view_invoiced: "Tap to view invoiced amount",
+        tap_view_income: "Tap to view income received",
         tap_view_pipeline: "Tap to view pipeline value",
         documents_heading: "Documents",
         documents_subtitle: "Open, sort, filter, and manage every quote and invoice from one coordinated workspace.",
@@ -385,9 +393,15 @@ const TRANSLATIONS = {
         open_pdf_preview: "Abrir Vista PDF",
         view_pdf: "Ver PDF",
         convert_to_invoice: "Convertir en Factura",
+        payment_paid: "Pagada",
+        payment_unpaid: "No Pagada",
+        mark_as_paid: "Marcar como Pagada",
+        mark_as_unpaid: "Marcar como No Pagada",
         pipeline_value: "Valor en Proceso",
         amount_invoiced: "Monto Facturado",
+        income_received: "Ingresos Recibidos",
         tap_view_invoiced: "Toca para ver el monto facturado",
+        tap_view_income: "Toca para ver los ingresos recibidos",
         tap_view_pipeline: "Toca para ver el valor en proceso",
         documents_heading: "Documentos",
         documents_subtitle: "Abre, ordena, filtra y gestiona cada cotización y factura desde un solo espacio coordinado.",
@@ -578,9 +592,15 @@ const TRANSLATIONS = {
         open_pdf_preview: "Ouvrir l’aperçu PDF",
         view_pdf: "Voir le PDF",
         convert_to_invoice: "Convertir en Facture",
+        payment_paid: "Payee",
+        payment_unpaid: "Non Payee",
+        mark_as_paid: "Marquer comme Payee",
+        mark_as_unpaid: "Marquer comme Non Payee",
         pipeline_value: "Valeur Pipeline",
         amount_invoiced: "Montant Facturé",
+        income_received: "Revenus Reçus",
         tap_view_invoiced: "Touchez pour voir le montant facturé",
+        tap_view_income: "Touchez pour voir les revenus reçus",
         tap_view_pipeline: "Touchez pour voir la valeur pipeline",
         documents_heading: "Documents",
         documents_subtitle: "Ouvrez, triez, filtrez et gérez chaque devis et facture depuis un espace coordonné.",
@@ -754,6 +774,9 @@ function applyTranslations() {
     setElementText(elements.invoiceCountStat.previousElementSibling, t("invoices"));
     if (state.valueView === "invoiced") {
         elements.totalValueLabel.textContent = t("amount_invoiced");
+        elements.totalValueHint.textContent = t("tap_view_income");
+    } else if (state.valueView === "income") {
+        elements.totalValueLabel.textContent = t("income_received");
         elements.totalValueHint.textContent = t("tap_view_pipeline");
     } else {
         elements.totalValueLabel.textContent = t("pipeline_value");
@@ -1871,6 +1894,32 @@ function closeTopbarMenu() {
     elements.navMenuBtn.setAttribute("aria-expanded", "false");
 }
 
+function syncItemActionMenus() {
+    elements.itemsContainer.querySelectorAll("[data-item-menu]").forEach(menu => {
+        const isOpen = menu.dataset.itemMenu === state.openItemMenuId;
+        menu.hidden = !isOpen;
+        menu.style.display = isOpen ? "grid" : "none";
+    });
+    elements.itemsContainer.querySelectorAll("[data-toggle-item-menu]").forEach(button => {
+        button.setAttribute("aria-expanded", String(button.dataset.toggleItemMenu === state.openItemMenuId));
+    });
+}
+
+function syncDocumentActionMenus() {
+    elements.documentsGrid.querySelectorAll("[data-document-menu]").forEach(menu => {
+        const isOpen = menu.dataset.documentMenu === state.openDocumentMenuId;
+        menu.hidden = !isOpen;
+        menu.style.display = isOpen ? "grid" : "none";
+        const row = menu.closest(".document-row");
+        if (row) {
+            row.classList.toggle("has-open-menu", isOpen);
+        }
+    });
+    elements.documentsGrid.querySelectorAll("[data-toggle-document-menu]").forEach(button => {
+        button.setAttribute("aria-expanded", String(button.dataset.toggleDocumentMenu === state.openDocumentMenuId));
+    });
+}
+
 function handleTopbarSettingsClick() {
     closeTopbarMenu();
     openSettingsModal();
@@ -1879,6 +1928,16 @@ function handleTopbarSettingsClick() {
 function handleGlobalClick(event) {
     if (!event.target.closest(".topbar-menu-wrap")) {
         closeTopbarMenu();
+    }
+
+    if (!event.target.closest(".item-actions-menu-wrap") && state.openItemMenuId !== null) {
+        state.openItemMenuId = null;
+        syncItemActionMenus();
+    }
+
+    if (!event.target.closest(".doc-actions-menu-wrap") && state.openDocumentMenuId !== null) {
+        state.openDocumentMenuId = null;
+        syncDocumentActionMenus();
     }
 }
 
@@ -4045,14 +4104,23 @@ function addItem() {
                 <span class="item-summary-hint">Click to edit</span>
             </button>
             <div class="item-row-header-actions">
-                <button type="button" class="save-item-later" data-save-item-later="${itemId}" aria-label="${escapeHtml(t("save_for_later"))}" title="${escapeHtml(t("save_for_later"))}">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M3.5 5h2.1l1.5 8.2a1.6 1.6 0 0 0 1.6 1.3h7.9a1.6 1.6 0 0 0 1.6-1.2l1.2-5.6H7.1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="10" cy="18.2" r="1.4" fill="currentColor"/>
-                        <circle cx="17.2" cy="18.2" r="1.4" fill="currentColor"/>
-                    </svg>
-                </button>
-                <button type="button" class="remove-item" data-remove-item="${itemId}">Remove</button>
+                <div class="item-actions-menu-wrap">
+                    <button
+                        type="button"
+                        class="item-menu-toggle"
+                        data-toggle-item-menu="${itemId}"
+                        aria-expanded="false"
+                        aria-haspopup="menu"
+                        aria-label="${escapeHtml(t("menu"))}"
+                        title="${escapeHtml(t("menu"))}"
+                    >
+                        <span></span><span></span><span></span>
+                    </button>
+                    <div class="item-actions-menu" data-item-menu="${itemId}" hidden style="display: none;">
+                        <button type="button" class="item-actions-menu-btn" data-save-item-later="${itemId}">${escapeHtml(t("save_for_later"))}</button>
+                        <button type="button" class="item-actions-menu-btn item-actions-menu-btn-danger" data-remove-item="${itemId}">${escapeHtml(t("delete"))}</button>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="item-editor">
@@ -4150,14 +4218,19 @@ function addItem() {
     syncItemImageUI(itemDiv);
     updateItemPricing(itemDiv);
     setExpandedItem(itemDiv);
+    syncItemActionMenus();
 }
 
 function removeItem(id) {
     const item = elements.itemsContainer.querySelector(`[data-item-id="${id}"]`);
     if (item) {
+        if (state.openItemMenuId === String(id)) {
+            state.openItemMenuId = null;
+        }
         const shouldExpandNeighbor = item.classList.contains("expanded");
         item.remove();
         refreshItemOrdering();
+        syncItemActionMenus();
         if (shouldExpandNeighbor) {
             const nextItem = elements.itemsContainer.querySelector(".item-row");
             if (nextItem) {
@@ -4195,14 +4268,31 @@ function saveEditorItemForLater(id) {
 }
 
 async function handleItemContainerClick(event) {
+    const menuToggleButton = event.target.closest("[data-toggle-item-menu]");
+    if (menuToggleButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        const itemId = String(menuToggleButton.dataset.toggleItemMenu);
+        state.openItemMenuId = state.openItemMenuId === itemId ? null : itemId;
+        syncItemActionMenus();
+        elements.itemsContainer.querySelectorAll("[data-toggle-item-menu]").forEach(button => {
+            button.setAttribute("aria-expanded", String(button.dataset.toggleItemMenu === state.openItemMenuId));
+        });
+        return;
+    }
+
     const saveForLaterButton = event.target.closest("[data-save-item-later]");
     if (saveForLaterButton) {
+        state.openItemMenuId = null;
+        syncItemActionMenus();
         saveEditorItemForLater(saveForLaterButton.dataset.saveItemLater);
         return;
     }
 
     const removeButton = event.target.closest("[data-remove-item]");
     if (removeButton) {
+        state.openItemMenuId = null;
+        syncItemActionMenus();
         removeItem(removeButton.dataset.removeItem);
         return;
     }
@@ -4848,6 +4938,9 @@ async function persistDocument(options = {}) {
         id: state.editingDocumentId ?? Date.now(),
         type: elements.docType.value,
         status: nextStatus,
+        paymentStatus: elements.docType.value === "invoice"
+            ? (existingDocument?.paymentStatus || "unpaid")
+            : null,
         refNumber: elements.refNumber.value,
         date: elements.docDate.value,
         clientName: elements.clientName.value,
@@ -4988,21 +5081,42 @@ function updateOverviewStats() {
     const invoicedValue = state.documents
         .filter(doc => doc.type === "invoice")
         .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
-    const showingInvoiced = state.valueView === "invoiced";
-    const totalValue = showingInvoiced ? invoicedValue : pipelineValue;
+    const incomeValue = state.documents
+        .filter(doc => doc.type === "invoice" && doc.paymentStatus === "paid")
+        .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
+    const totalValue = state.valueView === "invoiced"
+        ? invoicedValue
+        : state.valueView === "income"
+            ? incomeValue
+            : pipelineValue;
+    const currentLabelKey = state.valueView === "invoiced"
+        ? "amount_invoiced"
+        : state.valueView === "income"
+            ? "income_received"
+            : "pipeline_value";
+    const nextHintKey = state.valueView === "pipeline"
+        ? "tap_view_invoiced"
+        : state.valueView === "invoiced"
+            ? "tap_view_income"
+            : "tap_view_pipeline";
 
     elements.totalDocumentsStat.textContent = String(state.documents.length);
     elements.quoteCountStat.textContent = String(quoteCount);
     elements.invoiceCountStat.textContent = String(invoiceCount);
     elements.totalValueStat.textContent = formatCurrency(totalValue);
-    elements.totalValueLabel.textContent = showingInvoiced ? t("amount_invoiced") : t("pipeline_value");
-    elements.totalValueHint.textContent = showingInvoiced ? t("tap_view_pipeline") : t("tap_view_invoiced");
-    elements.valueToggleCard.setAttribute("aria-pressed", String(showingInvoiced));
-    elements.valueToggleCard.classList.toggle("is-invoiced", showingInvoiced);
+    elements.totalValueLabel.textContent = t(currentLabelKey);
+    elements.totalValueHint.textContent = t(nextHintKey);
+    elements.valueToggleCard.setAttribute("aria-pressed", String(state.valueView !== "pipeline"));
+    elements.valueToggleCard.classList.toggle("is-invoiced", state.valueView === "invoiced");
+    elements.valueToggleCard.classList.toggle("is-income", state.valueView === "income");
 }
 
 function toggleValueView() {
-    state.valueView = state.valueView === "pipeline" ? "invoiced" : "pipeline";
+    state.valueView = state.valueView === "pipeline"
+        ? "invoiced"
+        : state.valueView === "invoiced"
+            ? "income"
+            : "pipeline";
     updateOverviewStats();
     elements.valueToggleCard.classList.remove("is-pulsing");
     void elements.valueToggleCard.offsetWidth;
@@ -5147,6 +5261,7 @@ function renderDocuments() {
         const isLockedSourceQuote = Boolean(doc.lockedAfterConversion);
         const statusLabel = doc.status === "draft" ? t("status_draft") : t("status_logged");
         const statusClass = doc.status === "draft" ? "draft" : "logged";
+        const paymentStatus = doc.type === "invoice" ? (doc.paymentStatus === "paid" ? "paid" : "unpaid") : null;
         const creatorLabel = isAdminSession() && doc.createdBy?.displayName
             ? `${escapeHtml(doc.createdBy.displayName)}${doc.createdBy.username ? ` (@${escapeHtml(doc.createdBy.username)})` : ""}`
             : "";
@@ -5157,20 +5272,13 @@ function renderDocuments() {
         const legacyBadge = doc.legacyPdfUrl
             ? `<span class="doc-lock-badge">${escapeHtml(t("legacy_pdf_attached"))}</span>`
             : "";
+        const paymentBadge = paymentStatus
+            ? `<span class="doc-payment-badge ${paymentStatus}">${escapeHtml(t(paymentStatus === "paid" ? "payment_paid" : "payment_unpaid"))}</span>`
+            : "";
         const rowAriaLabel = `${doc.type} ${doc.refNumber || "document"} for ${doc.clientName || "unknown client"}`;
 
         return `
-            <div class="document-row${isLockedSourceQuote ? " document-row-locked" : ""}"${cardViewId}${isLockedSourceQuote ? "" : ' tabindex="0" role="button"'} aria-label="${escapeHtml(rowAriaLabel)}">
-                <div class="doc-status-indicator ${statusClass}" aria-label="${escapeHtml(statusLabel)}" title="${escapeHtml(statusLabel)}">
-                    ${doc.status === "draft"
-                        ? `<span class="doc-status-dot" aria-hidden="true"></span>`
-                        : `<span class="doc-status-check" aria-hidden="true">
-                            <svg viewBox="0 0 16 16">
-                                <path d="M3.2 8.5l3 3.1 6.4-6.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                        </span>`}
-                    <span class="visually-hidden">${escapeHtml(statusLabel)}</span>
-                </div>
+            <div class="document-row document-row-${doc.type}${isLockedSourceQuote ? " document-row-locked" : ""}"${cardViewId}${isLockedSourceQuote ? "" : ' tabindex="0" role="button"'} aria-label="${escapeHtml(rowAriaLabel)}">
                 <div class="doc-row-main">
                     <div class="doc-row-primary">
                         <span class="doc-type ${doc.type}">${escapeHtml(doc.type === "quote" ? t("quote_singular") : t("invoice_singular"))}</span>
@@ -5185,22 +5293,43 @@ function renderDocuments() {
                 <div class="doc-row-badges">
                     ${statusBadge}
                     ${legacyBadge}
-                    ${getDocumentTagPreviewMarkup(doc)}
+                    <span class="doc-status-badge ${statusClass}">${escapeHtml(statusLabel)}</span>
+                    ${paymentBadge}
                 </div>
                 <div class="doc-row-total">
                     <span class="doc-total-label">${escapeHtml(t("total"))}</span>
                     <div class="doc-total">${formatCurrency(doc.total || 0)}</div>
                 </div>
                 <div class="doc-actions">
-                    ${isLockedSourceQuote ? `<span class="doc-lock-note">${escapeHtml(t("locked_after_conversion"))}</span>` : `<button type="button" class="doc-action-btn" data-action="edit" data-id="${doc.id}">${escapeHtml(t("edit"))}</button>`}
-                    ${isLockedSourceQuote ? "" : `<button type="button" class="doc-action-btn" data-action="export-pdf" data-id="${doc.id}">${escapeHtml(t("open_pdf_preview"))}</button>`}
-                    ${doc.legacyPdfUrl ? `<button type="button" class="doc-action-btn" data-action="view-pdf" data-id="${doc.id}">${escapeHtml(t("view_pdf"))}</button>` : ""}
-                    ${doc.type === "quote" && !isLockedSourceQuote ? `<button type="button" class="doc-action-btn" data-action="convert" data-id="${doc.id}">${escapeHtml(t("convert_to_invoice"))}</button>` : ""}
-                    ${isLockedSourceQuote ? "" : `<button type="button" class="doc-action-btn doc-action-btn-danger" data-action="delete" data-id="${doc.id}">${escapeHtml(t("delete"))}</button>`}
+                    ${isLockedSourceQuote ? `<span class="doc-lock-note">${escapeHtml(t("locked_after_conversion"))}</span>` : `
+                        <div class="doc-actions-menu-wrap">
+                            <button
+                                type="button"
+                                class="doc-menu-toggle"
+                                data-toggle-document-menu="${doc.id}"
+                                aria-expanded="false"
+                                aria-haspopup="menu"
+                                aria-label="${escapeHtml(t("menu"))}"
+                                title="${escapeHtml(t("menu"))}"
+                            >
+                                <span></span><span></span><span></span>
+                            </button>
+                            <div class="doc-actions-menu" data-document-menu="${doc.id}" hidden style="display: none;">
+                                <button type="button" class="doc-actions-menu-btn" data-action="edit" data-id="${doc.id}">${escapeHtml(t("edit"))}</button>
+                                <button type="button" class="doc-actions-menu-btn" data-action="export-pdf" data-id="${doc.id}">${escapeHtml(t("open_pdf_preview"))}</button>
+                                ${doc.legacyPdfUrl ? `<button type="button" class="doc-actions-menu-btn" data-action="view-pdf" data-id="${doc.id}">${escapeHtml(t("view_pdf"))}</button>` : ""}
+                                ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="toggle-paid" data-id="${doc.id}">${escapeHtml(t(paymentStatus === "paid" ? "mark_as_unpaid" : "mark_as_paid"))}</button>` : ""}
+                                ${doc.type === "quote" ? `<button type="button" class="doc-actions-menu-btn" data-action="convert" data-id="${doc.id}">${escapeHtml(t("convert_to_invoice"))}</button>` : ""}
+                                <button type="button" class="doc-actions-menu-btn doc-actions-menu-btn-danger" data-action="delete" data-id="${doc.id}">${escapeHtml(t("delete"))}</button>
+                            </div>
+                        </div>
+                    `}
                 </div>
             </div>
         `;
     }).join("");
+
+    syncDocumentActionMenus();
 }
 
 function handleSearchInput(event) {
@@ -5297,6 +5426,16 @@ async function saveClient() {
 }
 
 async function handleDocumentCardClick(event) {
+    const menuToggleButton = event.target.closest("[data-toggle-document-menu]");
+    if (menuToggleButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        const docId = String(menuToggleButton.dataset.toggleDocumentMenu);
+        state.openDocumentMenuId = state.openDocumentMenuId === docId ? null : docId;
+        syncDocumentActionMenus();
+        return;
+    }
+
     const showTagsButton = event.target.closest("[data-show-tags]");
     if (showTagsButton) {
         event.preventDefault();
@@ -5324,6 +5463,8 @@ async function handleDocumentCardClick(event) {
             if (doc) {
                 openPrintWindow(doc);
             }
+        } else if (action === "toggle-paid") {
+            await toggleDocumentPaid(docId);
         } else if (action === "delete") {
             await deleteDocument(docId);
         } else if (action === "convert") {
@@ -5351,12 +5492,34 @@ function handleDocumentCardKeydown(event) {
     }
 
     const row = event.target.closest("[data-view-id]");
-    if (!row || event.target.closest("[data-action]") || event.target.closest("[data-show-tags]")) {
+    if (!row || event.target.closest("[data-action]") || event.target.closest("[data-show-tags]") || event.target.closest("[data-toggle-document-menu]")) {
         return;
     }
 
     event.preventDefault();
     editDocument(row.dataset.viewId);
+}
+
+async function toggleDocumentPaid(id) {
+    const doc = getDocumentById(id);
+    if (!doc || doc.type !== "invoice") {
+        return;
+    }
+
+    const nextStatus = doc.paymentStatus === "paid" ? "unpaid" : "paid";
+    const nextDocuments = state.documents.map(entry => (
+        isSameDocumentId(entry.id, id)
+            ? { ...entry, paymentStatus: nextStatus }
+            : entry
+    ));
+
+    try {
+        await saveDocumentsToServer(nextDocuments);
+        state.openDocumentMenuId = null;
+        renderDocuments();
+    } catch (error) {
+        alert(`Unable to update invoice payment status.\n\n${error.message}`);
+    }
 }
 
 function populateFormFromDocument(doc) {
@@ -5409,6 +5572,7 @@ function editDocument(id) {
 
     state.editingDocumentId = id;
     state.convertingFromQuoteId = null;
+    state.openDocumentMenuId = null;
     openModal(doc.type);
     populateFormFromDocument(doc);
     updateModalTitle();
@@ -5436,6 +5600,7 @@ async function deleteDocument(id) {
 
     try {
         await saveDocumentsToServer(nextDocuments);
+        state.openDocumentMenuId = null;
         renderDocuments();
     } catch (error) {
         alert(`Unable to delete this ${docLabel} from the server.\n\n${error.message}`);
@@ -5455,6 +5620,7 @@ function convertQuoteToInvoice(id) {
 
     state.editingDocumentId = null;
     state.convertingFromQuoteId = id;
+    state.openDocumentMenuId = null;
     openModal("invoice");
     populateFormFromDocument({ ...doc, type: "invoice", date: getLocalDateInputValue() });
     elements.docType.value = "invoice";
