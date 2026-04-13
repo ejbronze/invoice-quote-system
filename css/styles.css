@@ -3934,6 +3934,9 @@ body::after {
     border: 1px solid var(--line);
     border-radius: 16px;
     overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
 }
 
 .line-items-review-sheet {

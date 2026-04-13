@@ -1486,6 +1486,9 @@ function bindEvents() {
     document.addEventListener("input", handleSessionActivity);
     window.addEventListener("focus", handleSessionActivity);
     window.addEventListener("scroll", handleSessionActivity, { passive: true });
+    window.addEventListener("resize", () => {
+        window.requestAnimationFrame(syncActivePreviewScale);
+    });
 }
 
 async function init() {
@@ -2194,6 +2197,10 @@ function syncModalOpenState() {
     document.body.classList.toggle("modal-open", Boolean(document.querySelector(".modal.active")));
 }
 
+function isMobileViewport() {
+    return window.matchMedia("(max-width: 768px)").matches;
+}
+
 function setModalState(modal, isOpen) {
     if (!modal) {
         return;
@@ -2222,6 +2229,38 @@ function resetDocumentModalViewport(step) {
     if (activePreview) {
         activePreview.scrollTop = 0;
         activePreview.scrollLeft = 0;
+    }
+}
+
+function syncActivePreviewScale() {
+    if (!elements.documentModal?.classList.contains("active")) {
+        return;
+    }
+
+    const activePreview = elements.documentModal.querySelector(".form-step.active .preview-container");
+    const sheet = activePreview?.querySelector(".document-sheet");
+    if (!activePreview || !sheet) {
+        return;
+    }
+
+    sheet.style.transform = "";
+    sheet.style.transformOrigin = "";
+
+    if (!isMobileViewport() || state.currentStep < getTotalSteps()) {
+        return;
+    }
+
+    const modalBody = elements.documentModal.querySelector(".modal-body");
+    const stepIndicatorHeight = elements.stepIndicator?.offsetHeight || 0;
+    const availableWidth = Math.max(activePreview.clientWidth - 8, 1);
+    const availableHeight = Math.max((modalBody?.clientHeight || window.innerHeight) - stepIndicatorHeight - 24, 1);
+    const sheetWidth = Math.max(sheet.offsetWidth, 1);
+    const sheetHeight = Math.max(sheet.offsetHeight, 1);
+    const scale = Math.min(availableWidth / sheetWidth, availableHeight / sheetHeight, 1);
+
+    if (scale < 0.999) {
+        sheet.style.transform = `scale(${scale})`;
+        sheet.style.transformOrigin = "top center";
     }
 }
 
@@ -4609,7 +4648,7 @@ function goToStep(step) {
     const isPrefilled = isPrefilledEditMode();
     state.currentStep = step;
     elements.documentModal.classList.toggle("review-mode", step === totalSteps);
-    elements.documentModal.classList.toggle("final-preview-mode", step === totalSteps);
+    elements.documentModal.classList.toggle("final-preview-mode", step === totalSteps && !isMobileViewport());
     elements.documentModal.classList.toggle("prefilled-edit-mode", isPrefilled);
 
     document.querySelectorAll(".step[data-step]").forEach(el => {
@@ -4642,6 +4681,7 @@ function goToStep(step) {
 
     updateEditorSummary();
     resetDocumentModalViewport(step);
+    window.requestAnimationFrame(syncActivePreviewScale);
 }
 
 function nextStep() {
