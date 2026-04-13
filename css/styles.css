@@ -4638,13 +4638,38 @@ body.print-window {
     }
 
     .app-topbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: start;
         gap: 0.55rem;
         padding: 0.62rem 0.72rem;
     }
 
+    .app-topbar-copy {
+        min-width: 0;
+        align-self: center;
+    }
+
     .app-topbar-actions {
-        justify-content: flex-end;
+        display: grid;
+        grid-template-columns: repeat(2, auto);
+        justify-content: end;
+        align-content: start;
         gap: 0.45rem;
+        flex-wrap: nowrap;
+    }
+
+    .mailbox-trigger {
+        width: 2.45rem;
+        min-width: 0;
+        height: 2.45rem;
+        padding: 0;
+        justify-content: center;
+        border-radius: 50%;
+    }
+
+    .mailbox-trigger-label {
+        display: none;
     }
 
     .topbar-menu-wrap {
@@ -4874,6 +4899,24 @@ body.print-window {
         width: 2.45rem;
         height: 2.45rem;
         border-radius: 50%;
+    }
+
+    .language-picker {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .language-picker select {
+        width: 6.85rem;
+        min-width: 0;
+        padding-left: 0.72rem;
+        padding-right: 1.9rem;
+        font-size: 0.76rem;
+    }
+
+    .mailbox-count {
+        top: -0.2rem;
+        right: -0.1rem;
     }
 
     .search-field {
