@@ -4545,6 +4545,10 @@ body.print-window {
         gap: 0.8rem;
     }
 
+    .modal.review-mode .modal-layout {
+        grid-template-columns: 1fr !important;
+    }
+
     .access-card {
         padding: 1.45rem;
     }
@@ -4564,8 +4568,17 @@ body.print-window {
         gap: 0.65rem;
     }
 
+    .modal.review-mode .step-intro {
+        display: none;
+    }
+
     .modal.review-mode .editor-sidebar .sidebar-card:last-child {
         grid-column: 1 / -1;
+    }
+
+    .modal.review-mode .form-step.active {
+        margin-bottom: 0;
+        min-width: 0;
     }
 
     .app-topbar {
@@ -4686,7 +4699,18 @@ body.print-window {
     }
 
     .modal.final-preview-mode .modal-layout {
+        grid-template-columns: 1fr !important;
         gap: 0;
+    }
+
+    .modal.final-preview-mode .editor-panel,
+    .modal.review-mode .editor-panel {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .modal.final-preview-mode .step-intro {
+        display: none !important;
     }
 
     .modal.final-preview-mode .form-step.active[data-step="6"] {
@@ -4696,6 +4720,8 @@ body.print-window {
         box-shadow: none;
         padding: 0;
         margin: 0;
+        min-width: 0;
+        width: 100%;
     }
 
     .modal.final-preview-mode .preview-container {
@@ -4706,6 +4732,7 @@ body.print-window {
         height: 100%;
         min-height: 0;
         overflow: auto;
+        width: 100%;
     }
 
     .modal.final-preview-mode .document-sheet {
