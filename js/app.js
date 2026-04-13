@@ -1373,6 +1373,7 @@ function bindEvents() {
     elements.saveBtn.addEventListener("click", saveDocumentOnly);
     elements.exportPdfBtn.addEventListener("click", saveAndExportDocument);
     elements.stepIndicator.addEventListener("click", handleStepIndicatorClick);
+    elements.previewContainer.addEventListener("click", handlePreviewContainerClick);
     elements.documentsGrid.addEventListener("click", handleDocumentCardClick);
     elements.itemsContainer.addEventListener("click", handleItemContainerClick);
     elements.itemsContainer.addEventListener("input", handleItemsChange);
@@ -5583,7 +5584,30 @@ function generatePreviews() {
     if (elements.lineItemsPreviewContainer) {
         elements.lineItemsPreviewContainer.innerHTML = buildLineItemsPreviewMarkup(doc);
     }
-    elements.previewContainer.innerHTML = buildDocumentMarkup(doc);
+    elements.previewContainer.innerHTML = shouldUseMobilePreviewLauncher()
+        ? buildMobilePreviewLauncherMarkup(doc)
+        : buildDocumentMarkup(doc);
+}
+
+function shouldUseMobilePreviewLauncher() {
+    return isMobileViewport() && state.currentStep === getTotalSteps();
+}
+
+function buildMobilePreviewLauncherMarkup(doc) {
+    const documentLabel = doc.type === "quote" ? "quote" : "invoice";
+
+    return `
+        <div class="mobile-preview-launcher-card">
+            <span class="mobile-preview-launcher-kicker">Print-ready preview</span>
+            <h6>Open the ${escapeHtml(documentLabel)} in a separate preview.</h6>
+            <p>The preview uses the same layout and content that will be printed or saved as PDF.</p>
+            <div class="mobile-preview-launcher-meta">
+                <span>${escapeHtml(doc.refNumber || "Reference pending")}</span>
+                <span>${escapeHtml(formatDisplayDate(doc.date) || "Date pending")}</span>
+            </div>
+            <button class="btn btn-secondary" type="button" data-open-preview-window="true">Open Print Preview</button>
+        </div>
+    `;
 }
 
 function getPrintStylesMarkup() {
@@ -5597,15 +5621,71 @@ function getPrintStylesMarkup() {
     }).join("\n");
 }
 
-function openPrintWindow(doc) {
+function createPrintWindow(doc) {
     const printWindow = window.open("", "_blank", "width=1024,height=900");
     if (!printWindow) {
         alert("Please allow pop-ups to export the PDF.");
-        return;
+        return null;
+    }
+
+    const documentTitle = `${doc.type === "quote" ? "Quote" : "Invoice"} ${doc.refNumber || "Preview"}`;
+    printWindow.document.open();
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${escapeHtml(documentTitle)}</title>
+            <style>
+                body {
+                    margin: 0;
+                    min-height: 100vh;
+                    display: grid;
+                    place-items: center;
+                    background: #eef3fb;
+                    color: #1f2937;
+                    font-family: Arial, sans-serif;
+                }
+
+                .print-preview-loading {
+                    display: grid;
+                    gap: 0.7rem;
+                    justify-items: center;
+                    padding: 2rem;
+                    text-align: center;
+                }
+
+                .print-preview-loading strong {
+                    font-size: 1rem;
+                }
+
+                .print-preview-loading span {
+                    color: #5b6b81;
+                    font-size: 0.92rem;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="print-preview-loading">
+                <strong>Preparing preview</strong>
+                <span>${escapeHtml(documentTitle)}</span>
+            </div>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    return printWindow;
+}
+
+function openPrintWindow(doc, existingWindow = null) {
+    const printWindow = existingWindow || createPrintWindow(doc);
+    if (!printWindow) {
+        return null;
     }
 
     const stampStyle = getStampStyle();
-
+    printWindow.document.open();
     printWindow.document.write(`
         <!DOCTYPE html>
         <html lang="en">
@@ -5719,6 +5799,17 @@ function openPrintWindow(doc) {
         </html>
     `);
     printWindow.document.close();
+    printWindow.focus();
+    return printWindow;
+}
+
+function handlePreviewContainerClick(event) {
+    const previewButton = event.target.closest("[data-open-preview-window]");
+    if (!previewButton) {
+        return;
+    }
+
+    openPrintWindow(buildDocumentData());
 }
 
 async function persistDocument(options = {}) {
@@ -5726,7 +5817,8 @@ async function persistDocument(options = {}) {
         exportAfterSave = false,
         silent = false,
         keepOpen = false,
-        forceDraft = false
+        forceDraft = false,
+        previewWindow = null
     } = options;
     const isEditing = state.editingDocumentId !== null;
     const existingDocument = isEditing ? getDocumentById(state.editingDocumentId) : null;
@@ -5813,6 +5905,9 @@ async function persistDocument(options = {}) {
         state.editingDocumentId = doc.id;
         renderDocuments();
     } catch (error) {
+        if (previewWindow && !previewWindow.closed) {
+            previewWindow.close();
+        }
         if (!silent) {
             alert(`Unable to save this ${doc.type} to the server.\n\n${error.message}`);
         }
@@ -5827,7 +5922,7 @@ async function persistDocument(options = {}) {
     closeModal();
     const actionLabel = isEditing ? "updated" : "saved";
     if (exportAfterSave) {
-        openPrintWindow(doc);
+        openPrintWindow(doc, previewWindow);
         if (!silent) {
             alert(`${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.\n\nA PDF preview has opened in a new window. Print only if you want to from there.`);
         }
@@ -5850,7 +5945,11 @@ async function saveAndExportDocument() {
     if (!validateDocumentForSave()) {
         return;
     }
-    await persistDocument({ exportAfterSave: true });
+    const previewWindow = createPrintWindow(buildDocumentData());
+    await persistDocument({
+        exportAfterSave: true,
+        previewWindow
+    });
 }
 
 function validateDocumentForSave() {
