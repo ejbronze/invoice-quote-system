@@ -30,12 +30,15 @@ const state = {
     exchangeRateUsdToDop: 59,
     savedItems: [],
     catalogItems: [],
+    sessionLogs: [],
+    activityLogs: [],
     editingSavedItemId: null,
     editingCatalogItemId: null,
     pendingSavedItemImageUploadId: null,
     openItemMenuId: null,
     openDocumentMenuId: null,
-    draftAutosaveTimerId: null
+    draftAutosaveTimerId: null,
+    editingManagedUserId: null
 };
 
 const DOP_PER_USD = 59;
@@ -44,9 +47,23 @@ const DEFAULT_ADMIN_USER = Object.freeze({
     id: "admin-root",
     username: "admin",
     displayName: "Admin",
+    email: "admin@santosync.com",
     password: "Todos123",
     role: "admin",
-    language: "en"
+    language: "en",
+    accessLevel: "workspace",
+    parentUserId: ""
+});
+const DEFAULT_OWNER_USER = Object.freeze({
+    id: "owner-root",
+    username: "erjaquez",
+    displayName: "Edwin Jaquez",
+    email: "erjaquez@gmail.com",
+    password: "Britney10!",
+    role: "owner",
+    language: "en",
+    accessLevel: "owner",
+    parentUserId: ""
 });
 const USER_ACCOUNTS_STORAGE_KEY = "todosUserAccounts";
 const CURRENT_SESSION_STORAGE_KEY = "todosCurrentSession";
@@ -54,6 +71,8 @@ const ISSUE_REPORTS_STORAGE_KEY = "todosIssueReports";
 const COMPANY_PROFILE_STORAGE_KEY = "santosyncCompanyProfile";
 const SAVED_ITEMS_STORAGE_KEY = "santosyncSavedItems";
 const CATALOG_ITEMS_STORAGE_KEY = "santosyncCatalogItems";
+const SESSION_LOGS_STORAGE_KEY = "santosyncSessionLogs";
+const ACTIVITY_LOGS_STORAGE_KEY = "santosyncActivityLogs";
 const DEFAULT_ACCESS_ERROR_MESSAGE = "That username or password is incorrect. Try again.";
 const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
 const BRAND_SPLASH_MIN_MS = 1100;
@@ -92,7 +111,9 @@ const DEFAULT_COMPANY_PROFILE = Object.freeze({
     email: "hello@santosync.com",
     phone: "+1 (809) 555-0110",
     website: "www.santosync.com",
-    taxId: "Registration Pending"
+    taxId: "Registration Pending",
+    signatureDataUrl: "",
+    stampDataUrl: ""
 });
 const TRANSLATIONS = {
     en: {
@@ -102,8 +123,8 @@ const TRANSLATIONS = {
         login_kicker: "Workspace Sign In",
         login_title: BRAND.onboardingTitle,
         login_copy: BRAND.onboardingCopy,
-        username: "Username",
-        username_placeholder: "Enter username",
+        username: "Username or Email",
+        username_placeholder: "Enter username or email",
         password: "Password",
         password_placeholder: "Enter password",
         login_error: "That username or password is incorrect. Try again.",
@@ -333,8 +354,8 @@ const TRANSLATIONS = {
         login_kicker: "Ingreso al Espacio",
         login_title: `Entrar a ${BRAND.name}`,
         login_copy: "Inicia sesión con una cuenta local para crear, editar y gestionar cotizaciones y facturas con una presentación premium y sincronizada.",
-        username: "Usuario",
-        username_placeholder: "Ingresa el usuario",
+        username: "Usuario o correo",
+        username_placeholder: "Ingresa usuario o correo",
         password: "Contraseña",
         password_placeholder: "Ingresa la contraseña",
         login_error: "Ese usuario o contraseña es incorrecto. Inténtalo de nuevo.",
@@ -564,8 +585,8 @@ const TRANSLATIONS = {
         login_kicker: "Connexion à l’Espace",
         login_title: `Entrer dans ${BRAND.name}`,
         login_copy: "Connectez-vous avec un compte local pour créer, modifier et gérer des devis et factures avec une identité plus premium et cohérente.",
-        username: "Nom d’utilisateur",
-        username_placeholder: "Entrez le nom d’utilisateur",
+        username: "Identifiant ou e-mail",
+        username_placeholder: "Entrez l’identifiant ou l’e-mail",
         password: "Mot de passe",
         password_placeholder: "Entrez le mot de passe",
         login_error: "Ce nom d’utilisateur ou mot de passe est incorrect. Réessayez.",
@@ -1127,6 +1148,7 @@ function cacheElements() {
     elements.sessionLoader = document.getElementById("sessionLoader");
     elements.sessionLoaderMessage = document.getElementById("sessionLoaderMessage");
     elements.runtimeModeBadge = document.getElementById("runtimeModeBadge");
+    elements.workspaceShell = document.querySelector(".workspace-shell");
     elements.settingsModal = document.getElementById("settingsModal");
     elements.sessionBadge = document.getElementById("sessionBadge");
     elements.openInboxBtn = document.getElementById("openInboxBtn");
@@ -1135,6 +1157,7 @@ function cacheElements() {
     elements.savedItemsCountBadge = document.getElementById("savedItemsCountBadge");
     elements.navMenuBtn = document.getElementById("navMenuBtn");
     elements.topbarMenu = document.getElementById("topbarMenu");
+    elements.topbarAccountAdminBtn = document.getElementById("topbarAccountAdminBtn");
     elements.topbarCatalogBtn = document.getElementById("topbarCatalogBtn");
     elements.topbarCompanyProfileBtn = document.getElementById("topbarCompanyProfileBtn");
     elements.topbarSettingsBtn = document.getElementById("topbarSettingsBtn");
@@ -1164,6 +1187,38 @@ function cacheElements() {
     elements.savedItemsModal = document.getElementById("savedItemsModal");
     elements.savedItemCreateModal = document.getElementById("savedItemCreateModal");
     elements.catalogPage = document.getElementById("catalogPage");
+    elements.accountAdminPage = document.getElementById("accountAdminPage");
+    elements.accountAdminWorkspaceBtn = document.getElementById("accountAdminWorkspaceBtn");
+    elements.accountAdminCatalogBtn = document.getElementById("accountAdminCatalogBtn");
+    elements.accountAdminOwnerName = document.getElementById("accountAdminOwnerName");
+    elements.accountAdminOwnerMeta = document.getElementById("accountAdminOwnerMeta");
+    elements.accountAdminOwnerBadge = document.getElementById("accountAdminOwnerBadge");
+    elements.accountUserCountStat = document.getElementById("accountUserCountStat");
+    elements.accountSubaccountCountStat = document.getElementById("accountSubaccountCountStat");
+    elements.accountSessionCountStat = document.getElementById("accountSessionCountStat");
+    elements.accountActivityCountStat = document.getElementById("accountActivityCountStat");
+    elements.accountAdminUserList = document.getElementById("accountAdminUserList");
+    elements.accountAdminFormTitle = document.getElementById("accountAdminFormTitle");
+    elements.accountAdminDisplayNameInput = document.getElementById("accountAdminDisplayNameInput");
+    elements.accountAdminUsernameInput = document.getElementById("accountAdminUsernameInput");
+    elements.accountAdminEmailInput = document.getElementById("accountAdminEmailInput");
+    elements.accountAdminPasswordInput = document.getElementById("accountAdminPasswordInput");
+    elements.accountAdminRoleSelect = document.getElementById("accountAdminRoleSelect");
+    elements.accountAdminAccessLevelSelect = document.getElementById("accountAdminAccessLevelSelect");
+    elements.accountAdminParentSelect = document.getElementById("accountAdminParentSelect");
+    elements.accountAdminSaveBtn = document.getElementById("accountAdminSaveBtn");
+    elements.accountAdminCancelEditBtn = document.getElementById("accountAdminCancelEditBtn");
+    elements.accountSignatureInput = document.getElementById("accountSignatureInput");
+    elements.accountStampInput = document.getElementById("accountStampInput");
+    elements.accountSignaturePreview = document.getElementById("accountSignaturePreview");
+    elements.accountStampPreview = document.getElementById("accountStampPreview");
+    elements.accountSignatureFallback = document.getElementById("accountSignatureFallback");
+    elements.accountStampFallback = document.getElementById("accountStampFallback");
+    elements.saveBrandAssetsBtn = document.getElementById("saveBrandAssetsBtn");
+    elements.clearSignatureAssetBtn = document.getElementById("clearSignatureAssetBtn");
+    elements.clearStampAssetBtn = document.getElementById("clearStampAssetBtn");
+    elements.accountSessionLogList = document.getElementById("accountSessionLogList");
+    elements.accountActivityLogList = document.getElementById("accountActivityLogList");
     elements.catalogGrid = document.getElementById("catalogGrid");
     elements.backToDocumentsBtn = document.getElementById("backToDocumentsBtn");
     elements.openCatalogItemModalBtn = document.getElementById("openCatalogItemModalBtn");
@@ -1310,6 +1365,7 @@ function bindEvents() {
     elements.openInboxBtn.addEventListener("click", openIssueInboxModal);
     elements.openSavedItemsTopbarBtn.addEventListener("click", openSavedItemsModal);
     elements.navMenuBtn.addEventListener("click", toggleTopbarMenu);
+    elements.topbarAccountAdminBtn?.addEventListener("click", openAccountAdminPage);
     elements.topbarCatalogBtn.addEventListener("click", openCatalogPage);
     elements.topbarCompanyProfileBtn.addEventListener("click", openCompanyProfileModal);
     elements.topbarSettingsBtn.addEventListener("click", handleTopbarSettingsClick);
@@ -1333,6 +1389,8 @@ function bindEvents() {
     elements.closeSavedItemCreateModalBtn.addEventListener("click", closeSavedItemCreateModal);
     elements.toggleSavedItemsFormBtn.addEventListener("click", openSavedItemCreateModal);
     elements.backToDocumentsBtn.addEventListener("click", () => setActivePage("documents"));
+    elements.accountAdminWorkspaceBtn?.addEventListener("click", () => setActivePage("documents"));
+    elements.accountAdminCatalogBtn?.addEventListener("click", openCatalogPage);
     elements.openCatalogItemModalBtn.addEventListener("click", openCatalogItemModal);
     elements.closeCatalogItemModalBtn.addEventListener("click", closeCatalogItemModal);
     elements.closeCatalogDetailsModalBtn.addEventListener("click", closeCatalogDetailsModal);
@@ -1353,6 +1411,14 @@ function bindEvents() {
     elements.clearLocalTestDataBtn.addEventListener("click", clearLocalTestData);
     elements.addUserBtn.addEventListener("click", handleAddUser);
     elements.userManagementList.addEventListener("click", handleUserManagementClick);
+    elements.accountAdminSaveBtn?.addEventListener("click", handleAccountAdminSaveUser);
+    elements.accountAdminCancelEditBtn?.addEventListener("click", resetAccountAdminForm);
+    elements.accountAdminUserList?.addEventListener("click", handleAccountAdminUserListClick);
+    elements.accountSignatureInput?.addEventListener("change", handleBrandAssetSelection);
+    elements.accountStampInput?.addEventListener("change", handleBrandAssetSelection);
+    elements.clearSignatureAssetBtn?.addEventListener("click", () => clearBrandAsset("signature"));
+    elements.clearStampAssetBtn?.addEventListener("click", () => clearBrandAsset("stamp"));
+    elements.saveBrandAssetsBtn?.addEventListener("click", saveBrandAssets);
     elements.clientManagementList.addEventListener("click", handleClientManagementClick);
     elements.issueInboxList.addEventListener("click", handleIssueInboxClick);
     elements.valueToggleCard.addEventListener("click", toggleValueView);
@@ -1510,6 +1576,10 @@ async function init() {
 
     setSessionLoader(true);
     await bootstrapAppData();
+    if (isOwnerSession()) {
+        resetAccountAdminForm();
+    }
+    setActivePage(isOwnerSession() ? "accountAdmin" : "documents");
     applyRoleAccess();
     applyAccessState(true);
     setSessionLoader(false);
@@ -1701,22 +1771,37 @@ function normalizeUserAccounts(users) {
                 id: String(user.id || `user-${Date.now()}-${Math.random().toString(36).slice(2)}`),
                 username: String(user.username || "").trim().toLowerCase(),
                 displayName: String(user.displayName || user.username || "").trim(),
+                email: String(user.email || "").trim().toLowerCase(),
                 password: String(user.password || ""),
-                role: user.role === "admin" ? "admin" : "user",
-                language: TRANSLATIONS[user.language] ? user.language : "en"
+                role: ["owner", "admin"].includes(user.role) ? user.role : "user",
+                language: TRANSLATIONS[user.language] ? user.language : "en",
+                accessLevel: ["owner", "workspace", "operations", "review"].includes(user.accessLevel) ? user.accessLevel : "workspace",
+                parentUserId: String(user.parentUserId || "").trim(),
+                lastLoginAt: String(user.lastLoginAt || "").trim()
             }))
             .filter(user => user.username && user.displayName && user.password)
         : [];
 
     const mergedUsers = [];
     const usernameSet = new Set();
+    const emailSet = new Set();
     normalizedUsers.forEach(user => {
         if (usernameSet.has(user.username)) {
             return;
         }
+        if (user.email && emailSet.has(user.email)) {
+            return;
+        }
         usernameSet.add(user.username);
+        if (user.email) {
+            emailSet.add(user.email);
+        }
         mergedUsers.push(user);
     });
+
+    if (!mergedUsers.some(user => user.email === DEFAULT_OWNER_USER.email)) {
+        mergedUsers.unshift({ ...DEFAULT_OWNER_USER });
+    }
 
     if (!mergedUsers.some(user => user.username === DEFAULT_ADMIN_USER.username)) {
         mergedUsers.unshift({ ...DEFAULT_ADMIN_USER });
@@ -1726,8 +1811,29 @@ function normalizeUserAccounts(users) {
             ...mergedUsers[adminIndex],
             id: mergedUsers[adminIndex].id || DEFAULT_ADMIN_USER.id,
             displayName: mergedUsers[adminIndex].displayName || DEFAULT_ADMIN_USER.displayName,
+            email: mergedUsers[adminIndex].email || DEFAULT_ADMIN_USER.email,
             password: mergedUsers[adminIndex].password || DEFAULT_ADMIN_USER.password,
-            role: "admin"
+            role: "admin",
+            accessLevel: mergedUsers[adminIndex].accessLevel || DEFAULT_ADMIN_USER.accessLevel,
+            parentUserId: "",
+            lastLoginAt: mergedUsers[adminIndex].lastLoginAt || ""
+        };
+    }
+
+    const ownerIndex = mergedUsers.findIndex(user => user.email === DEFAULT_OWNER_USER.email);
+    if (ownerIndex >= 0) {
+        mergedUsers[ownerIndex] = {
+            ...mergedUsers[ownerIndex],
+            id: mergedUsers[ownerIndex].id || DEFAULT_OWNER_USER.id,
+            username: mergedUsers[ownerIndex].username || DEFAULT_OWNER_USER.username,
+            displayName: mergedUsers[ownerIndex].displayName || DEFAULT_OWNER_USER.displayName,
+            email: DEFAULT_OWNER_USER.email,
+            password: mergedUsers[ownerIndex].password || DEFAULT_OWNER_USER.password,
+            role: "owner",
+            accessLevel: "owner",
+            parentUserId: "",
+            language: TRANSLATIONS[mergedUsers[ownerIndex].language] ? mergedUsers[ownerIndex].language : "en",
+            lastLoginAt: mergedUsers[ownerIndex].lastLoginAt || ""
         };
     }
 
@@ -1747,6 +1853,8 @@ function loadLocalWorkspaceState() {
     state.companyProfile = loadCompanyProfile();
     state.savedItems = loadSavedItems();
     state.catalogItems = loadCatalogItems();
+    state.sessionLogs = loadSessionLogs();
+    state.activityLogs = loadActivityLogs();
     updateRuntimeModeBadge();
 }
 
@@ -1756,6 +1864,8 @@ function cacheWorkspaceStateLocally() {
     writeLocalDataset(COMPANY_PROFILE_STORAGE_KEY, state.companyProfile);
     writeLocalDataset(SAVED_ITEMS_STORAGE_KEY, state.savedItems);
     writeLocalDataset(CATALOG_ITEMS_STORAGE_KEY, state.catalogItems);
+    writeLocalDataset(SESSION_LOGS_STORAGE_KEY, state.sessionLogs);
+    writeLocalDataset(ACTIVITY_LOGS_STORAGE_KEY, state.activityLogs);
 }
 
 function applyWorkspaceState(payload) {
@@ -1764,6 +1874,8 @@ function applyWorkspaceState(payload) {
     state.companyProfile = normalizeCompanyProfile(payload?.companyProfile || DEFAULT_COMPANY_PROFILE);
     state.savedItems = normalizeSavedItems(payload?.savedItems || []);
     state.catalogItems = normalizeCatalogItems(payload?.catalogItems || []);
+    state.sessionLogs = normalizeSessionLogs(payload?.sessionLogs || []);
+    state.activityLogs = normalizeActivityLogs(payload?.activityLogs || []);
     cacheWorkspaceStateLocally();
     updateRuntimeModeBadge();
     renderUserManagementList();
@@ -1771,6 +1883,7 @@ function applyWorkspaceState(payload) {
     updateInboxBadge();
     renderSavedItemsList();
     renderCatalog();
+    renderAccountAdminPage();
 }
 
 async function bootstrapSharedWorkspaceData() {
@@ -1801,7 +1914,9 @@ async function persistSharedWorkspaceData() {
                 issueReports: state.issueReports,
                 companyProfile: state.companyProfile,
                 savedItems: state.savedItems,
-                catalogItems: state.catalogItems
+                catalogItems: state.catalogItems,
+                sessionLogs: state.sessionLogs,
+                activityLogs: state.activityLogs
             })
         });
 
@@ -1819,6 +1934,7 @@ async function saveUserAccounts(users) {
     state.userAccounts = normalizeUserAccounts(users);
     cacheWorkspaceStateLocally();
     renderUserManagementList();
+    renderAccountAdminPage();
     await persistSharedWorkspaceData();
 }
 
@@ -1868,8 +1984,122 @@ function normalizeCompanyProfile(profile) {
         email: String(profile?.email || DEFAULT_COMPANY_PROFILE.email).trim(),
         phone: String(profile?.phone || DEFAULT_COMPANY_PROFILE.phone).trim(),
         website: String(profile?.website || DEFAULT_COMPANY_PROFILE.website).trim(),
-        taxId: String(profile?.taxId || DEFAULT_COMPANY_PROFILE.taxId).trim()
+        taxId: String(profile?.taxId || DEFAULT_COMPANY_PROFILE.taxId).trim(),
+        signatureDataUrl: typeof profile?.signatureDataUrl === "string" ? profile.signatureDataUrl : "",
+        stampDataUrl: typeof profile?.stampDataUrl === "string" ? profile.stampDataUrl : ""
     };
+}
+
+function normalizeSessionLogs(logs) {
+    return Array.isArray(logs)
+        ? logs
+            .filter(log => log && typeof log === "object")
+            .map(log => ({
+                id: String(log.id || `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+                userId: String(log.userId || ""),
+                username: String(log.username || "").trim(),
+                displayName: String(log.displayName || log.username || "Unknown").trim(),
+                startedAt: String(log.startedAt || new Date().toISOString()),
+                endedAt: String(log.endedAt || "").trim(),
+                status: log.status === "closed" ? "closed" : "open",
+                reason: String(log.reason || "").trim(),
+                loginMethod: String(log.loginMethod || "local").trim()
+            }))
+        : [];
+}
+
+function loadSessionLogs() {
+    const logs = normalizeSessionLogs(readLocalDataset(SESSION_LOGS_STORAGE_KEY, []));
+    writeLocalDataset(SESSION_LOGS_STORAGE_KEY, logs);
+    return logs;
+}
+
+function normalizeActivityLogs(logs) {
+    return Array.isArray(logs)
+        ? logs
+            .filter(log => log && typeof log === "object")
+            .map(log => ({
+                id: String(log.id || `activity-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+                userId: String(log.userId || ""),
+                username: String(log.username || "").trim(),
+                displayName: String(log.displayName || log.username || "System").trim(),
+                action: String(log.action || "updated workspace").trim(),
+                details: String(log.details || "").trim(),
+                createdAt: String(log.createdAt || new Date().toISOString())
+            }))
+        : [];
+}
+
+function loadActivityLogs() {
+    const logs = normalizeActivityLogs(readLocalDataset(ACTIVITY_LOGS_STORAGE_KEY, []));
+    writeLocalDataset(ACTIVITY_LOGS_STORAGE_KEY, logs);
+    return logs;
+}
+
+function recordActivity(action, details) {
+    if (!state.currentUser) {
+        return;
+    }
+
+    state.activityLogs = normalizeActivityLogs([
+        {
+            id: `activity-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            userId: state.currentUser.userId,
+            username: state.currentUser.username,
+            displayName: state.currentUser.displayName,
+            action,
+            details,
+            createdAt: new Date().toISOString()
+        },
+        ...state.activityLogs
+    ]).slice(0, 100);
+
+    cacheWorkspaceStateLocally();
+    renderAccountAdminPage();
+    void persistSharedWorkspaceData();
+}
+
+async function startSessionLog(user) {
+    const sessionLog = {
+        id: `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        userId: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        startedAt: new Date().toISOString(),
+        endedAt: "",
+        status: "open",
+        reason: "",
+        loginMethod: user.email ? "email / local" : "local"
+    };
+
+    state.sessionLogs = normalizeSessionLogs([sessionLog, ...state.sessionLogs]).slice(0, 100);
+    state.userAccounts = state.userAccounts.map(entry =>
+        entry.id === user.id ? { ...entry, lastLoginAt: sessionLog.startedAt } : entry
+    );
+    cacheWorkspaceStateLocally();
+    await persistSharedWorkspaceData();
+    return sessionLog.id;
+}
+
+async function closeSessionLog(reason = "Signed out") {
+    const sessionLogId = state.currentUser?.sessionLogId;
+    if (!sessionLogId) {
+        return;
+    }
+
+    state.sessionLogs = normalizeSessionLogs(state.sessionLogs.map(log =>
+        log.id === sessionLogId
+            ? {
+                ...log,
+                endedAt: new Date().toISOString(),
+                status: "closed",
+                reason
+            }
+            : log
+    ));
+    cacheWorkspaceStateLocally();
+    renderAccountAdminPage();
+    await persistSharedWorkspaceData();
 }
 
 function loadCompanyProfile() {
@@ -1881,6 +2111,7 @@ function loadCompanyProfile() {
 async function saveCompanyProfileState(profile) {
     state.companyProfile = normalizeCompanyProfile(profile);
     cacheWorkspaceStateLocally();
+    renderAccountAdminPage();
     await persistSharedWorkspaceData();
 }
 
@@ -1996,7 +2227,10 @@ function getStoredSessionUser() {
             username: user.username,
             displayName: user.displayName,
             role: user.role,
-            language: TRANSLATIONS[user.language] ? user.language : "en"
+            language: TRANSLATIONS[user.language] ? user.language : "en",
+            email: user.email || "",
+            accessLevel: user.accessLevel || "workspace",
+            sessionLogId: String(session.sessionLogId || "")
         };
     } catch (error) {
         return null;
@@ -2007,8 +2241,12 @@ function hasActiveSession() {
     return Boolean(state.currentUser);
 }
 
+function isOwnerSession() {
+    return state.currentUser?.role === "owner";
+}
+
 function isAdminSession() {
-    return state.currentUser?.role === "admin";
+    return ["owner", "admin"].includes(state.currentUser?.role);
 }
 
 function persistCurrentSession(user) {
@@ -2017,7 +2255,10 @@ function persistCurrentSession(user) {
         username: user.username,
         displayName: user.displayName,
         role: user.role,
-        language: user.language || "en"
+        language: user.language || "en",
+        email: user.email || "",
+        accessLevel: user.accessLevel || "workspace",
+        sessionLogId: user.sessionLogId || ""
     };
     sessionStorage.setItem(CURRENT_SESSION_STORAGE_KEY, JSON.stringify(state.currentUser));
     applyRoleAccess();
@@ -2031,6 +2272,7 @@ function clearCurrentSession() {
 
 function applyRoleAccess() {
     const isAdmin = isAdminSession();
+    const isOwner = isOwnerSession();
     const hasSession = hasActiveSession();
 
     if (elements.openSettingsBtn) {
@@ -2043,9 +2285,11 @@ function applyRoleAccess() {
         ? state.currentUser.displayName
         : "";
     elements.openInboxBtn.hidden = !isAdmin;
+    elements.topbarAccountAdminBtn.hidden = !isOwner;
     elements.topbarCompanyProfileBtn.hidden = !isAdmin;
     elements.openCompanyProfileBtn.hidden = !isAdmin;
     elements.topbarSettingsBtn.hidden = !isAdmin;
+    elements.topbarAccountAdminBtn?.setAttribute("aria-hidden", String(!isOwner));
     elements.topbarSettingsBtn.setAttribute("aria-hidden", String(!isAdmin));
     elements.topbarCompanyProfileBtn.setAttribute("aria-hidden", String(!isAdmin));
     elements.openCompanyProfileBtn.setAttribute("aria-hidden", String(!isAdmin));
@@ -2056,9 +2300,15 @@ function applyRoleAccess() {
         closeIssueInboxModal();
     }
 
+    if (!isOwner && state.activePage === "accountAdmin") {
+        state.activePage = "documents";
+    }
+
     renderUserManagementList();
     renderClientManagementList();
     renderIssueInbox();
+    renderAccountAdminPage();
+    applyPageState();
 }
 
 function applyAccessState(isUnlocked) {
@@ -2097,11 +2347,14 @@ function setSessionLoader(isVisible, message = t("session_loader_message")) {
 }
 
 async function unlockAccess(user) {
-    persistCurrentSession(user);
-    state.currentUser = user;
+    const sessionLogId = await startSessionLog(user);
+    persistCurrentSession({ ...user, sessionLogId });
+    state.currentUser = { ...user, sessionLogId };
     await bootstrapSharedWorkspaceData();
-    state.currentUser = getStoredSessionUser() || user;
+    state.currentUser = getStoredSessionUser() || { ...user, sessionLogId };
+    recordActivity("signed in", "Opened the SantoSync workspace.");
     await bootstrapAppData();
+    setActivePage(isOwnerSession() ? "accountAdmin" : "documents");
     applyRoleAccess();
     applyAccessState(true);
 }
@@ -2133,8 +2386,10 @@ function handleSessionActivity() {
     resetInactivityTimer();
 }
 
-function endSession(message = "", { showMessage = false } = {}) {
+async function endSession(message = "", { showMessage = false } = {}) {
     clearInactivityTimer();
+    await closeSessionLog(message || "Signed out");
+    recordActivity("signed out", message || "Ended the current session.");
     clearCurrentSession();
     closeModal();
     closeSettingsModal();
@@ -2152,13 +2407,13 @@ function endSession(message = "", { showMessage = false } = {}) {
 }
 
 function signOutForInactivity() {
-    endSession("Signed out after 5 minutes of inactivity. Sign in again to continue.", {
+    void endSession("Signed out after 5 minutes of inactivity. Sign in again to continue.", {
         showMessage: true
     });
 }
 
 function handleEndSessionClick() {
-    endSession("Session ended. Sign in again to open the dashboard.", {
+    void endSession("Session ended. Sign in again to open the dashboard.", {
         showMessage: true
     });
 }
@@ -2175,7 +2430,7 @@ function closeTopbarMenu() {
 }
 
 function setActivePage(page) {
-    state.activePage = page === "catalog" ? "catalog" : "documents";
+    state.activePage = ["catalog", "accountAdmin"].includes(page) ? page : "documents";
     applyPageState();
     closeTopbarMenu();
 }
@@ -2183,6 +2438,12 @@ function setActivePage(page) {
 function applyPageState() {
     if (elements.catalogPage) {
         elements.catalogPage.hidden = state.activePage !== "catalog";
+    }
+    if (elements.accountAdminPage) {
+        elements.accountAdminPage.hidden = state.activePage !== "accountAdmin";
+    }
+    if (elements.workspaceShell) {
+        elements.workspaceShell.hidden = state.activePage === "accountAdmin";
     }
     if (elements.documentsGrid?.closest(".dashboard")) {
         elements.documentsGrid.closest(".dashboard").hidden = state.activePage !== "documents";
@@ -2192,6 +2453,17 @@ function applyPageState() {
 function openCatalogPage() {
     setActivePage("catalog");
     renderCatalog();
+}
+
+function openAccountAdminPage() {
+    if (!isOwnerSession()) {
+        setImportStatus("Only the owner account can open Account Admin.", true);
+        return;
+    }
+
+    resetAccountAdminForm();
+    setActivePage("accountAdmin");
+    renderAccountAdminPage();
 }
 
 function syncModalOpenState() {
@@ -2582,6 +2854,7 @@ async function saveCompanyProfile() {
         website: elements.companyWebsiteInput.value,
         taxId: elements.companyTaxIdInput.value
     });
+    recordActivity("updated company profile", "Edited the SantoSync business identity settings.");
     closeCompanyProfileModal();
     renderDocuments();
     generatePreviews();
@@ -2978,6 +3251,305 @@ function closeAboutModal() {
     setModalState(elements.aboutModal, false);
 }
 
+function getManagedUserLabel(userId) {
+    if (!userId) {
+        return "Direct account";
+    }
+    const parent = state.userAccounts.find(entry => entry.id === userId);
+    return parent ? `Sub-account of ${parent.displayName}` : "Direct account";
+}
+
+function syncAccountAdminParentOptions() {
+    if (!elements.accountAdminParentSelect) {
+        return;
+    }
+
+    const currentEditingId = state.editingManagedUserId;
+    const options = ['<option value="">Direct account for SantoSync</option>']
+        .concat(state.userAccounts
+            .filter(user => user.id !== currentEditingId && user.role !== "owner")
+            .map(user => `<option value="${escapeHtml(user.id)}">${escapeHtml(user.displayName)}${user.email ? ` • ${escapeHtml(user.email)}` : ""}</option>`));
+    elements.accountAdminParentSelect.innerHTML = options.join("");
+}
+
+function resetAccountAdminForm() {
+    state.editingManagedUserId = null;
+    if (!elements.accountAdminDisplayNameInput) {
+        return;
+    }
+
+    elements.accountAdminFormTitle.textContent = "Add Workspace Account";
+    elements.accountAdminDisplayNameInput.value = "";
+    elements.accountAdminUsernameInput.value = "";
+    elements.accountAdminEmailInput.value = "";
+    elements.accountAdminPasswordInput.value = "";
+    elements.accountAdminRoleSelect.value = "user";
+    elements.accountAdminAccessLevelSelect.value = "workspace";
+    syncAccountAdminParentOptions();
+    elements.accountAdminParentSelect.value = "";
+    elements.accountAdminCancelEditBtn.hidden = true;
+}
+
+function syncBrandAssetPreviews() {
+    const signatureUrl = state.companyProfile?.signatureDataUrl || "";
+    const stampUrl = state.companyProfile?.stampDataUrl || "";
+
+    if (elements.accountSignaturePreview && elements.accountSignatureFallback) {
+        elements.accountSignaturePreview.hidden = !signatureUrl;
+        elements.accountSignatureFallback.hidden = Boolean(signatureUrl);
+        if (signatureUrl) {
+            elements.accountSignaturePreview.src = signatureUrl;
+        } else {
+            elements.accountSignaturePreview.removeAttribute("src");
+        }
+    }
+
+    if (elements.accountStampPreview && elements.accountStampFallback) {
+        elements.accountStampPreview.hidden = !stampUrl;
+        elements.accountStampFallback.hidden = Boolean(stampUrl);
+        if (stampUrl) {
+            elements.accountStampPreview.src = stampUrl;
+        } else {
+            elements.accountStampPreview.removeAttribute("src");
+        }
+    }
+}
+
+function renderAccountAdminPage() {
+    if (!elements.accountAdminPage) {
+        return;
+    }
+
+    if (!isOwnerSession()) {
+        elements.accountAdminPage.hidden = true;
+        return;
+    }
+
+    const managedUsers = state.userAccounts.filter(user => user.role !== "owner");
+    const subaccountCount = managedUsers.filter(user => user.parentUserId).length;
+    const recentSessions = state.sessionLogs.slice(0, 8);
+    const recentActivities = state.activityLogs.slice(0, 10);
+
+    elements.accountAdminOwnerName.textContent = state.currentUser?.displayName || "SantoSync Owner";
+    elements.accountAdminOwnerMeta.textContent = state.currentUser?.email || DEFAULT_OWNER_USER.email;
+    elements.accountAdminOwnerBadge.textContent = "Owner";
+    elements.accountUserCountStat.textContent = String(managedUsers.length);
+    elements.accountSubaccountCountStat.textContent = String(subaccountCount);
+    elements.accountSessionCountStat.textContent = String(recentSessions.length);
+    elements.accountActivityCountStat.textContent = String(recentActivities.length);
+
+    const sortedUsers = [...managedUsers].sort((left, right) => {
+        if (Boolean(left.parentUserId) !== Boolean(right.parentUserId)) {
+            return left.parentUserId ? 1 : -1;
+        }
+        return left.displayName.localeCompare(right.displayName);
+    });
+
+    elements.accountAdminUserList.innerHTML = sortedUsers.length
+        ? sortedUsers.map(user => `
+            <article class="account-admin-user-card${user.parentUserId ? " subaccount" : ""}">
+                <div class="account-admin-user-copy">
+                    <strong>${escapeHtml(user.displayName)}</strong>
+                    <span class="account-admin-user-meta">@${escapeHtml(user.username)}${user.email ? ` • ${escapeHtml(user.email)}` : ""}</span>
+                    <div class="account-admin-user-tags">
+                        <span class="account-admin-user-tag">${escapeHtml(user.role === "admin" ? "Admin" : "User")}</span>
+                        <span class="account-admin-user-tag">${escapeHtml(user.accessLevel || "workspace")}</span>
+                        <span class="account-admin-user-tag">${escapeHtml(getManagedUserLabel(user.parentUserId))}</span>
+                        ${user.lastLoginAt ? `<span class="account-admin-user-tag">Last login ${escapeHtml(formatDateTime(user.lastLoginAt))}</span>` : ""}
+                    </div>
+                </div>
+                <div class="account-admin-user-actions">
+                    <button class="btn btn-secondary" type="button" data-account-action="edit" data-user-id="${escapeHtml(user.id)}">Edit</button>
+                    <button class="btn btn-secondary" type="button" data-account-action="reset-password" data-user-id="${escapeHtml(user.id)}">Reset Password</button>
+                    <button class="btn btn-secondary" type="button" data-account-action="delete" data-user-id="${escapeHtml(user.id)}"${user.username === "admin" ? " disabled" : ""}>Delete</button>
+                </div>
+            </article>
+        `).join("")
+        : `<p class="user-list-empty">No registered accounts yet.</p>`;
+
+    elements.accountSessionLogList.innerHTML = recentSessions.length
+        ? recentSessions.map(log => `
+            <article class="account-admin-feed-card">
+                <strong>${escapeHtml(log.displayName)}</strong>
+                <span class="account-admin-feed-meta">${escapeHtml(log.username)} • ${escapeHtml(log.status === "open" ? "Active session" : "Closed session")}</span>
+                <span class="account-admin-feed-meta">Started ${escapeHtml(formatDateTime(log.startedAt))}${log.endedAt ? ` • Ended ${escapeHtml(formatDateTime(log.endedAt))}` : ""}</span>
+                ${log.reason ? `<span class="account-admin-feed-meta">${escapeHtml(log.reason)}</span>` : ""}
+            </article>
+        `).join("")
+        : `<p class="user-list-empty">No login sessions recorded yet.</p>`;
+
+    elements.accountActivityLogList.innerHTML = recentActivities.length
+        ? recentActivities.map(log => `
+            <article class="account-admin-feed-card">
+                <strong>${escapeHtml(log.action)}</strong>
+                <span class="account-admin-feed-meta">${escapeHtml(log.displayName)} • ${escapeHtml(formatDateTime(log.createdAt))}</span>
+                <span class="account-admin-feed-meta">${escapeHtml(log.details || "")}</span>
+            </article>
+        `).join("")
+        : `<p class="user-list-empty">No workspace activity recorded yet.</p>`;
+
+    syncAccountAdminParentOptions();
+    syncBrandAssetPreviews();
+}
+
+async function handleAccountAdminSaveUser() {
+    if (!isOwnerSession()) {
+        setImportStatus("Only the owner account can manage registered accounts.", true);
+        return;
+    }
+
+    const displayName = elements.accountAdminDisplayNameInput.value.trim();
+    const username = elements.accountAdminUsernameInput.value.trim().toLowerCase();
+    const email = elements.accountAdminEmailInput.value.trim().toLowerCase();
+    const password = elements.accountAdminPasswordInput.value.trim();
+    const role = elements.accountAdminRoleSelect.value === "admin" ? "admin" : "user";
+    const accessLevel = elements.accountAdminAccessLevelSelect.value;
+    const parentUserId = elements.accountAdminParentSelect.value;
+
+    if (!displayName || !username || !email || !password) {
+        window.alert("Enter a display name, username, email, and password before saving this account.");
+        return;
+    }
+
+    const duplicateUser = state.userAccounts.find(user =>
+        user.id !== state.editingManagedUserId && (user.username === username || user.email === email)
+    );
+    if (duplicateUser) {
+        window.alert("That username or email is already in use.");
+        return;
+    }
+
+    const nextUsers = state.editingManagedUserId
+        ? state.userAccounts.map(user => user.id === state.editingManagedUserId
+            ? { ...user, displayName, username, email, password, role, accessLevel, parentUserId }
+            : user)
+        : [
+            ...state.userAccounts,
+            {
+                id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                displayName,
+                username,
+                email,
+                password,
+                role,
+                accessLevel,
+                parentUserId
+            }
+        ];
+
+    await saveUserAccounts(nextUsers);
+    recordActivity(state.editingManagedUserId ? "updated account" : "created account", `${displayName} was ${state.editingManagedUserId ? "updated" : "added"} in Account Admin.`);
+    resetAccountAdminForm();
+    setImportStatus(`${displayName} saved to SantoSync account management.`);
+}
+
+async function handleAccountAdminUserListClick(event) {
+    const button = event.target.closest("[data-account-action]");
+    if (!button || !isOwnerSession()) {
+        return;
+    }
+
+    const userId = button.dataset.userId;
+    const action = button.dataset.accountAction;
+    const user = state.userAccounts.find(entry => entry.id === userId);
+    if (!user) {
+        return;
+    }
+
+    if (action === "edit") {
+        state.editingManagedUserId = user.id;
+        elements.accountAdminFormTitle.textContent = `Edit ${user.displayName}`;
+        elements.accountAdminDisplayNameInput.value = user.displayName;
+        elements.accountAdminUsernameInput.value = user.username;
+        elements.accountAdminEmailInput.value = user.email || "";
+        elements.accountAdminPasswordInput.value = user.password;
+        elements.accountAdminRoleSelect.value = user.role === "admin" ? "admin" : "user";
+        elements.accountAdminAccessLevelSelect.value = user.accessLevel || "workspace";
+        syncAccountAdminParentOptions();
+        elements.accountAdminParentSelect.value = user.parentUserId || "";
+        elements.accountAdminCancelEditBtn.hidden = false;
+        return;
+    }
+
+    if (action === "reset-password") {
+        const nextPassword = window.prompt(`Enter a new password for ${user.displayName}:`, user.password || "");
+        if (!nextPassword) {
+            return;
+        }
+
+        await saveUserAccounts(state.userAccounts.map(entry =>
+            entry.id === user.id ? { ...entry, password: nextPassword.trim() || entry.password } : entry
+        ));
+        recordActivity("reset password", `Reset the password for ${user.displayName}.`);
+        setImportStatus(`Password reset for ${user.displayName}.`);
+        return;
+    }
+
+    if (action === "delete") {
+        if (!window.confirm(`Remove ${user.displayName} from SantoSync account management?`)) {
+            return;
+        }
+
+        await saveUserAccounts(state.userAccounts.filter(entry => entry.id !== user.id && entry.parentUserId !== user.id));
+        recordActivity("deleted account", `Removed ${user.displayName} and any direct sub-accounts.`);
+        resetAccountAdminForm();
+        setImportStatus(`Removed ${user.displayName} from SantoSync.`);
+    }
+}
+
+async function handleBrandAssetSelection(event) {
+    const input = event.target;
+    const file = input.files?.[0];
+    if (!file) {
+        return;
+    }
+
+    try {
+        const dataUrl = await readFileAsDataUrl(file);
+        if (input === elements.accountSignatureInput) {
+            state.companyProfile = normalizeCompanyProfile({
+                ...state.companyProfile,
+                signatureDataUrl: dataUrl
+            });
+        }
+        if (input === elements.accountStampInput) {
+            state.companyProfile = normalizeCompanyProfile({
+                ...state.companyProfile,
+                stampDataUrl: dataUrl
+            });
+        }
+        syncBrandAssetPreviews();
+    } catch (error) {
+        window.alert(error.message || "Unable to read image.");
+    }
+}
+
+function clearBrandAsset(type) {
+    state.companyProfile = normalizeCompanyProfile({
+        ...state.companyProfile,
+        signatureDataUrl: type === "signature" ? "" : state.companyProfile?.signatureDataUrl,
+        stampDataUrl: type === "stamp" ? "" : state.companyProfile?.stampDataUrl
+    });
+    if (type === "signature" && elements.accountSignatureInput) {
+        elements.accountSignatureInput.value = "";
+    }
+    if (type === "stamp" && elements.accountStampInput) {
+        elements.accountStampInput.value = "";
+    }
+    syncBrandAssetPreviews();
+}
+
+async function saveBrandAssets() {
+    if (!isOwnerSession()) {
+        return;
+    }
+
+    await saveCompanyProfileState(state.companyProfile);
+    recordActivity("updated branding assets", "Changed the signature or stamp used for generated documents.");
+    generatePreviews();
+    setImportStatus("Branding assets saved for document generation.");
+}
+
 function renderUserManagementList() {
     if (!elements.userManagementList) {
         return;
@@ -2988,14 +3560,16 @@ function renderUserManagementList() {
         return;
     }
 
-    if (!state.userAccounts.length) {
+    const manageableUsers = state.userAccounts.filter(user => user.role !== "owner");
+
+    if (!manageableUsers.length) {
         elements.userManagementList.innerHTML = `<p class="user-list-empty">${escapeHtml(t("no_users"))}</p>`;
         return;
     }
 
-    elements.userManagementList.innerHTML = state.userAccounts.map(user => {
+    elements.userManagementList.innerHTML = manageableUsers.map(user => {
         const isCurrentUser = state.currentUser?.userId === user.id;
-        const isOnlyAdmin = user.role === "admin" && state.userAccounts.filter(entry => entry.role === "admin").length === 1;
+        const isOnlyAdmin = user.role === "admin" && manageableUsers.filter(entry => entry.role === "admin").length === 1;
         return `
             <article class="user-row">
                 <div class="user-row-copy">
@@ -3079,6 +3653,7 @@ async function handleAddUser() {
             role
         }
     ]);
+    recordActivity("created user", `Added ${displayName} from the workspace tools.`);
 
     elements.newUserDisplayName.value = "";
     elements.newUserUsername.value = "";
@@ -3096,7 +3671,7 @@ async function handleUserManagementClick(event) {
     const userId = button.dataset.userId;
     const action = button.dataset.userAction;
     const user = state.userAccounts.find(entry => entry.id === userId);
-    if (!user) {
+    if (!user || user.role === "owner") {
         return;
     }
 
@@ -3109,6 +3684,7 @@ async function handleUserManagementClick(event) {
         await saveUserAccounts(state.userAccounts.map(entry =>
             entry.id === user.id ? { ...entry, password: nextPassword.trim() || entry.password } : entry
         ));
+        recordActivity("reset password", `Reset the password for ${user.displayName}.`);
         setImportStatus(`Password reset for ${user.displayName}.`);
         return;
     }
@@ -3130,6 +3706,7 @@ async function handleUserManagementClick(event) {
         }
 
         await saveUserAccounts(state.userAccounts.filter(entry => entry.id !== user.id));
+        recordActivity("deleted user", `Removed ${user.displayName} from the workspace user list.`);
         setImportStatus(`Removed ${user.displayName} from workspace access.`);
     }
 }
@@ -3557,7 +4134,7 @@ async function handleAccessSubmit(event) {
     const submittedUsername = elements.accessUsername.value.trim().toLowerCase();
     const submittedCode = elements.accessCode.value.trim();
     const matchingUser = state.userAccounts.find(user =>
-        user.username === submittedUsername && user.password === submittedCode
+        (user.username === submittedUsername || user.email === submittedUsername) && user.password === submittedCode
     );
     const isValid = Boolean(matchingUser);
     elements.accessError.textContent = DEFAULT_ACCESS_ERROR_MESSAGE;
@@ -5306,12 +5883,18 @@ function getLetterheadUrl() {
 }
 
 function getSignatureUrl() {
+    if (state.companyProfile?.signatureDataUrl) {
+        return state.companyProfile.signatureDataUrl;
+    }
     const url = new URL("assets/david-forman-signature.png", window.location.href);
     url.searchParams.set("v", "20260328-1434");
     return url.href;
 }
 
 function getStampUrl() {
+    if (state.companyProfile?.stampDataUrl) {
+        return state.companyProfile.stampDataUrl;
+    }
     const url = new URL("assets/gonzalez-logistics-stamp.png", window.location.href);
     url.searchParams.set("v", "20260408-2");
     return url.href;
@@ -5855,6 +6438,10 @@ async function persistDocument(options = {}) {
         await saveDocumentsToServer(nextDocuments);
         state.editingDocumentId = doc.id;
         renderDocuments();
+        recordActivity(
+            exportAfterSave ? "exported document" : (isEditing ? "updated document" : "created document"),
+            `${doc.type === "quote" ? "Quote" : "Invoice"} ${doc.refNumber} for ${doc.clientName || "unknown client"}.`
+        );
     } catch (error) {
         if (previewWindow && !previewWindow.closed) {
             previewWindow.close();

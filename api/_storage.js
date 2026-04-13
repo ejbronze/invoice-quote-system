@@ -12,9 +12,26 @@ const DEFAULT_ADMIN_USER = Object.freeze({
     id: "admin-root",
     username: "admin",
     displayName: "Admin",
+    email: "admin@santosync.com",
     password: "Todos123",
     role: "admin",
-    language: "en"
+    language: "en",
+    accessLevel: "workspace",
+    parentUserId: "",
+    lastLoginAt: ""
+});
+
+const DEFAULT_OWNER_USER = Object.freeze({
+    id: "owner-root",
+    username: "erjaquez",
+    displayName: "Edwin Jaquez",
+    email: "erjaquez@gmail.com",
+    password: "Britney10!",
+    role: "owner",
+    language: "en",
+    accessLevel: "owner",
+    parentUserId: "",
+    lastLoginAt: ""
 });
 
 const DEFAULT_COMPANY_PROFILE = Object.freeze({
@@ -24,7 +41,9 @@ const DEFAULT_COMPANY_PROFILE = Object.freeze({
     email: "hello@santosync.com",
     phone: "+1 (809) 555-0110",
     website: "www.santosync.com",
-    taxId: "Registration Pending"
+    taxId: "Registration Pending",
+    signatureDataUrl: "",
+    stampDataUrl: ""
 });
 
 function getBlobToken() {
@@ -69,23 +88,39 @@ function normalizeUserAccounts(users) {
     const source = Array.isArray(users) ? users : [];
     const mergedUsers = [];
     const usernameSet = new Set();
+    const emailSet = new Set();
 
     source.forEach(user => {
         const username = String(user?.username || "").trim().toLowerCase();
         if (!username || usernameSet.has(username)) {
             return;
         }
+        const email = String(user?.email || "").trim().toLowerCase();
+        if (email && emailSet.has(email)) {
+            return;
+        }
 
         usernameSet.add(username);
+        if (email) {
+            emailSet.add(email);
+        }
         mergedUsers.push({
             id: String(user?.id || `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
             username,
+            email,
             displayName: String(user?.displayName || username).trim() || username,
             password: String(user?.password || ""),
-            role: user?.role === "admin" ? "admin" : "user",
-            language: ["en", "es", "fr"].includes(user?.language) ? user.language : "en"
+            role: ["owner", "admin"].includes(user?.role) ? user.role : "user",
+            language: ["en", "es", "fr"].includes(user?.language) ? user.language : "en",
+            accessLevel: ["owner", "workspace", "operations", "review"].includes(user?.accessLevel) ? user.accessLevel : "workspace",
+            parentUserId: String(user?.parentUserId || "").trim(),
+            lastLoginAt: String(user?.lastLoginAt || "").trim()
         });
     });
+
+    if (!mergedUsers.some(user => user.email === DEFAULT_OWNER_USER.email)) {
+        mergedUsers.unshift({ ...DEFAULT_OWNER_USER });
+    }
 
     if (!mergedUsers.some(user => user.username === DEFAULT_ADMIN_USER.username)) {
         mergedUsers.unshift({ ...DEFAULT_ADMIN_USER });
@@ -95,9 +130,30 @@ function normalizeUserAccounts(users) {
             ...mergedUsers[adminIndex],
             id: mergedUsers[adminIndex].id || DEFAULT_ADMIN_USER.id,
             displayName: mergedUsers[adminIndex].displayName || DEFAULT_ADMIN_USER.displayName,
+            email: mergedUsers[adminIndex].email || DEFAULT_ADMIN_USER.email,
             password: mergedUsers[adminIndex].password || DEFAULT_ADMIN_USER.password,
             role: "admin",
-            language: ["en", "es", "fr"].includes(mergedUsers[adminIndex].language) ? mergedUsers[adminIndex].language : "en"
+            language: ["en", "es", "fr"].includes(mergedUsers[adminIndex].language) ? mergedUsers[adminIndex].language : "en",
+            accessLevel: mergedUsers[adminIndex].accessLevel || DEFAULT_ADMIN_USER.accessLevel,
+            parentUserId: "",
+            lastLoginAt: mergedUsers[adminIndex].lastLoginAt || ""
+        };
+    }
+
+    const ownerIndex = mergedUsers.findIndex(user => user.email === DEFAULT_OWNER_USER.email);
+    if (ownerIndex >= 0) {
+        mergedUsers[ownerIndex] = {
+            ...mergedUsers[ownerIndex],
+            id: mergedUsers[ownerIndex].id || DEFAULT_OWNER_USER.id,
+            username: mergedUsers[ownerIndex].username || DEFAULT_OWNER_USER.username,
+            displayName: mergedUsers[ownerIndex].displayName || DEFAULT_OWNER_USER.displayName,
+            email: DEFAULT_OWNER_USER.email,
+            password: mergedUsers[ownerIndex].password || DEFAULT_OWNER_USER.password,
+            role: "owner",
+            language: ["en", "es", "fr"].includes(mergedUsers[ownerIndex].language) ? mergedUsers[ownerIndex].language : "en",
+            accessLevel: "owner",
+            parentUserId: "",
+            lastLoginAt: mergedUsers[ownerIndex].lastLoginAt || ""
         };
     }
 
@@ -136,8 +192,44 @@ function normalizeCompanyProfile(profile) {
         email: String(profile?.email || DEFAULT_COMPANY_PROFILE.email).trim(),
         phone: String(profile?.phone || DEFAULT_COMPANY_PROFILE.phone).trim(),
         website: String(profile?.website || DEFAULT_COMPANY_PROFILE.website).trim(),
-        taxId: String(profile?.taxId || DEFAULT_COMPANY_PROFILE.taxId).trim()
+        taxId: String(profile?.taxId || DEFAULT_COMPANY_PROFILE.taxId).trim(),
+        signatureDataUrl: typeof profile?.signatureDataUrl === "string" ? profile.signatureDataUrl : "",
+        stampDataUrl: typeof profile?.stampDataUrl === "string" ? profile.stampDataUrl : ""
     };
+}
+
+function normalizeSessionLogs(logs) {
+    return Array.isArray(logs)
+        ? logs
+            .filter(log => log && typeof log === "object")
+            .map(log => ({
+                id: String(log.id || `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+                userId: String(log.userId || ""),
+                username: String(log.username || "").trim(),
+                displayName: String(log.displayName || log.username || "Unknown").trim(),
+                startedAt: String(log.startedAt || new Date().toISOString()),
+                endedAt: String(log.endedAt || "").trim(),
+                status: log.status === "closed" ? "closed" : "open",
+                reason: String(log.reason || "").trim(),
+                loginMethod: String(log.loginMethod || "local").trim()
+            }))
+        : [];
+}
+
+function normalizeActivityLogs(logs) {
+    return Array.isArray(logs)
+        ? logs
+            .filter(log => log && typeof log === "object")
+            .map(log => ({
+                id: String(log.id || `activity-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+                userId: String(log.userId || ""),
+                username: String(log.username || "").trim(),
+                displayName: String(log.displayName || log.username || "System").trim(),
+                action: String(log.action || "updated workspace").trim(),
+                details: String(log.details || "").trim(),
+                createdAt: String(log.createdAt || new Date().toISOString())
+            }))
+        : [];
 }
 
 function normalizeSavedItems(items) {
@@ -188,7 +280,9 @@ function normalizeWorkspaceState(payload) {
         issueReports: normalizeIssueReports(payload?.issueReports || []),
         companyProfile: normalizeCompanyProfile(payload?.companyProfile || DEFAULT_COMPANY_PROFILE),
         savedItems: normalizeSavedItems(payload?.savedItems || []),
-        catalogItems: normalizeCatalogItems(payload?.catalogItems || [])
+        catalogItems: normalizeCatalogItems(payload?.catalogItems || []),
+        sessionLogs: normalizeSessionLogs(payload?.sessionLogs || []),
+        activityLogs: normalizeActivityLogs(payload?.activityLogs || [])
     };
 }
 

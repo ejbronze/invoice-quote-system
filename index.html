@@ -120,6 +120,7 @@
                         </svg>
                     </button>
                     <div class="topbar-menu" id="topbarMenu" hidden>
+                        <button class="topbar-menu-item" id="topbarAccountAdminBtn" type="button" hidden>Account Admin</button>
                         <button class="topbar-menu-item" id="topbarCatalogBtn" type="button">Catalog</button>
                         <button class="topbar-menu-item" id="topbarCompanyProfileBtn" type="button">Company Profile</button>
                         <button class="topbar-menu-item" id="topbarSettingsBtn" type="button">Settings</button>
@@ -237,6 +238,156 @@
                     </svg>
                     <p>No catalog items yet.</p>
                 </div>
+            </div>
+        </section>
+
+        <section class="account-admin-page" id="accountAdminPage" hidden>
+            <div class="dashboard-topbar">
+                <div>
+                    <h2>Account Admin</h2>
+                    <p class="dashboard-subtitle">Manage SantoSync accounts, sub-accounts, session reporting, activity history, and document branding from one owner dashboard.</p>
+                </div>
+                <div class="dashboard-actions-row" aria-label="Account admin actions">
+                    <div class="hero-action-grid">
+                        <button class="btn btn-secondary" id="accountAdminWorkspaceBtn" type="button">Workspace</button>
+                        <button class="btn btn-primary" id="accountAdminCatalogBtn" type="button">Catalog</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="account-admin-grid">
+                <section class="settings-panel account-admin-panel account-admin-hero-panel">
+                    <div class="account-admin-owner-card">
+                        <div>
+                            <span class="overview-kicker">Owner Access</span>
+                            <h3 id="accountAdminOwnerName">SantoSync Owner</h3>
+                            <p id="accountAdminOwnerMeta">Signed in as owner</p>
+                        </div>
+                        <div class="account-admin-owner-badge" id="accountAdminOwnerBadge">Owner</div>
+                    </div>
+                    <div class="account-admin-stats">
+                        <article class="stat-card stat-card-mini">
+                            <span class="stat-label">Registered Users</span>
+                            <strong class="stat-value" id="accountUserCountStat">0</strong>
+                        </article>
+                        <article class="stat-card stat-card-mini">
+                            <span class="stat-label">Sub-Accounts</span>
+                            <strong class="stat-value" id="accountSubaccountCountStat">0</strong>
+                        </article>
+                        <article class="stat-card stat-card-mini">
+                            <span class="stat-label">Recent Sessions</span>
+                            <strong class="stat-value" id="accountSessionCountStat">0</strong>
+                        </article>
+                        <article class="stat-card stat-card-mini">
+                            <span class="stat-label">Activity Events</span>
+                            <strong class="stat-value" id="accountActivityCountStat">0</strong>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="settings-panel account-admin-panel">
+                    <div class="settings-panel-header">
+                        <h4>Registered Accounts</h4>
+                        <p>Review everyone attached to SantoSync, edit their names and access, and assign sub-accounts to a parent account.</p>
+                    </div>
+                    <div class="account-admin-list" id="accountAdminUserList"></div>
+                </section>
+
+                <section class="settings-panel account-admin-panel">
+                    <div class="settings-panel-header">
+                        <h4 id="accountAdminFormTitle">Add Workspace Account</h4>
+                        <p>Create a direct account or assign it under an existing user as a sub-account.</p>
+                    </div>
+                    <div class="settings-grid report-grid">
+                        <label class="form-group">
+                            <span>Display Name</span>
+                            <input type="text" id="accountAdminDisplayNameInput" placeholder="SantoSync Admin">
+                        </label>
+                        <label class="form-group">
+                            <span>Username</span>
+                            <input type="text" id="accountAdminUsernameInput" placeholder="admin">
+                        </label>
+                        <label class="form-group">
+                            <span>Email</span>
+                            <input type="email" id="accountAdminEmailInput" placeholder="admin@santosync.com">
+                        </label>
+                        <label class="form-group">
+                            <span>Password</span>
+                            <input type="text" id="accountAdminPasswordInput" placeholder="Create a password">
+                        </label>
+                        <label class="form-group">
+                            <span>Role</span>
+                            <select id="accountAdminRoleSelect">
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </label>
+                        <label class="form-group">
+                            <span>Access Level</span>
+                            <select id="accountAdminAccessLevelSelect">
+                                <option value="workspace">Workspace</option>
+                                <option value="operations">Operations</option>
+                                <option value="review">Review Only</option>
+                            </select>
+                        </label>
+                        <label class="form-group report-field-wide">
+                            <span>Parent Account</span>
+                            <select id="accountAdminParentSelect">
+                                <option value="">Direct account for SantoSync</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" id="accountAdminSaveBtn" type="button">Save Account</button>
+                        <button class="btn btn-secondary" id="accountAdminCancelEditBtn" type="button" hidden>Cancel Edit</button>
+                    </div>
+                </section>
+
+                <section class="settings-panel account-admin-panel">
+                    <div class="settings-panel-header">
+                        <h4>Document Branding</h4>
+                        <p>Update the signature and stamp used when SantoSync generates final document output.</p>
+                    </div>
+                    <div class="account-branding-grid">
+                        <div class="account-branding-card">
+                            <div class="account-branding-preview" id="accountSignaturePreviewWrap">
+                                <img id="accountSignaturePreview" alt="Signature preview" hidden>
+                                <div class="account-branding-empty" id="accountSignatureFallback">Signature</div>
+                            </div>
+                            <label class="btn btn-secondary account-branding-upload" for="accountSignatureInput">Upload Signature</label>
+                            <input type="file" id="accountSignatureInput" accept="image/*" hidden>
+                            <button class="btn btn-secondary" id="clearSignatureAssetBtn" type="button">Clear Signature</button>
+                        </div>
+                        <div class="account-branding-card">
+                            <div class="account-branding-preview" id="accountStampPreviewWrap">
+                                <img id="accountStampPreview" alt="Stamp preview" hidden>
+                                <div class="account-branding-empty" id="accountStampFallback">Stamp</div>
+                            </div>
+                            <label class="btn btn-secondary account-branding-upload" for="accountStampInput">Upload Stamp</label>
+                            <input type="file" id="accountStampInput" accept="image/*" hidden>
+                            <button class="btn btn-secondary" id="clearStampAssetBtn" type="button">Clear Stamp</button>
+                        </div>
+                    </div>
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" id="saveBrandAssetsBtn" type="button">Save Branding Assets</button>
+                    </div>
+                </section>
+
+                <section class="settings-panel account-admin-panel">
+                    <div class="settings-panel-header">
+                        <h4>Login Session Reports</h4>
+                        <p>Track recent sign-ins, sign-outs, and who has been active in the workspace.</p>
+                    </div>
+                    <div class="account-admin-feed" id="accountSessionLogList"></div>
+                </section>
+
+                <section class="settings-panel account-admin-panel">
+                    <div class="settings-panel-header">
+                        <h4>Workspace Activity</h4>
+                        <p>Review recent account edits, exports, branding changes, and other logged actions.</p>
+                    </div>
+                    <div class="account-admin-feed" id="accountActivityLogList"></div>
+                </section>
             </div>
         </section>
 
