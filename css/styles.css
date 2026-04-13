@@ -4036,6 +4036,71 @@ body.print-window {
     overflow: hidden;
 }
 
+.print-preview-sheet {
+    box-shadow: none;
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    padding: 0.42in 0 28mm;
+    box-sizing: border-box;
+}
+
+.print-preview-sheet .document-body {
+    padding: 0 0.42in;
+}
+
+.print-preview-sheet .document-meta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+}
+
+.print-preview-sheet .document-parties {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 0.85rem 1rem;
+}
+
+.print-preview-sheet .party-card {
+    min-width: 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+
+.print-preview-sheet .po-card {
+    grid-column: 1 / -1;
+    justify-self: start;
+    text-align: left;
+}
+
+.print-preview-sheet .issued-to-value {
+    padding-left: 1.8rem;
+}
+
+.print-preview-sheet .compact-party-value {
+    padding-left: 0;
+}
+
+.print-preview-sheet .document-bottom {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    align-items: start;
+}
+
+.print-preview-sheet .document-totals {
+    width: 280px;
+    justify-self: end;
+}
+
+.preview-container .print-preview-sheet {
+    min-height: auto;
+}
+
+body.print-window .print-preview-sheet {
+    min-height: 100vh;
+}
+
 .letterhead {
     margin-bottom: 1.1rem;
 }

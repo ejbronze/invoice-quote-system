@@ -5386,7 +5386,8 @@ function buildDocumentData() {
     };
 }
 
-function buildDocumentMarkup(doc, stampStyle) {
+function buildDocumentMarkup(doc, stampStyle, options = {}) {
+    const { printPreview = false } = options;
     const documentTitle = doc.type === "quote" ? "Quote" : "Invoice";
     const referenceLabel = doc.type === "quote" ? "Reference No." : `${documentTitle} Reference`;
     const primaryPartyLabel = doc.type === "quote" ? "For:" : "Bill To:";
@@ -5395,9 +5396,12 @@ function buildDocumentMarkup(doc, stampStyle) {
     const safeNotes = doc.notes && doc.notes.trim()
         ? escapeHtml(doc.notes.trim())
         : "<em>*No additional notes provided.</em>";
+    const sheetClassName = ["document-sheet", printPreview ? "print-preview-sheet" : ""]
+        .filter(Boolean)
+        .join(" ");
 
     return `
-        <div class="document-sheet">
+        <div class="${sheetClassName}">
             <div class="letterhead">
                 <img class="letterhead-image" src="${escapeHtml(getLetterheadUrl())}" alt="Todos Logistics letterhead">
             </div>
@@ -5586,7 +5590,7 @@ function generatePreviews() {
     }
     elements.previewContainer.innerHTML = shouldUseMobilePreviewLauncher()
         ? buildMobilePreviewLauncherMarkup(doc)
-        : buildDocumentMarkup(doc);
+        : buildDocumentMarkup(doc, null, { printPreview: true });
 }
 
 function shouldUseMobilePreviewLauncher() {
@@ -5724,61 +5728,8 @@ function openPrintWindow(doc, existingWindow = null) {
                     color: #28415b;
                 }
 
-                /* Apply print layout to the screen preview so it matches the printed output */
-                .document-sheet {
-                    box-shadow: none;
-                    max-width: none;
-                    width: 100%;
-                    margin: 0;
+                .print-preview-sheet {
                     min-height: 100vh;
-                    padding: 0.42in 0 28mm;
-                    box-sizing: border-box;
-                }
-
-                .document-body {
-                    padding: 0 0.42in;
-                }
-
-                .document-meta {
-                    display: grid;
-                    grid-template-columns: minmax(0, 1fr) auto;
-                    align-items: start;
-                }
-
-                .document-parties {
-                    display: grid !important;
-                    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
-                    align-items: start;
-                    gap: 0.85rem 1rem !important;
-                }
-
-                .party-card {
-                    min-width: 0;
-                    break-inside: avoid;
-                }
-
-                .po-card {
-                    grid-column: 1 / -1 !important;
-                    justify-self: start;
-                }
-
-                .issued-to-value {
-                    padding-left: 1.8rem !important;
-                }
-
-                .compact-party-value {
-                    padding-left: 0 !important;
-                }
-
-                .document-bottom {
-                    display: grid;
-                    grid-template-columns: minmax(0, 1fr) 280px;
-                    align-items: start;
-                }
-
-                .document-totals {
-                    width: 280px;
-                    justify-self: end;
                 }
 
                 @media print {
@@ -5794,7 +5745,7 @@ function openPrintWindow(doc, existingWindow = null) {
                 <button class="secondary" type="button" onclick="window.close()">Close Preview</button>
                 <button type="button" onclick="window.print()">Print or Save as PDF</button>
             </div>
-            <div id="previewContainer" class="preview-container">${buildDocumentMarkup(doc, stampStyle)}</div>
+            <div id="previewContainer" class="preview-container">${buildDocumentMarkup(doc, stampStyle, { printPreview: true })}</div>
         </body>
         </html>
     `);
