@@ -51,6 +51,10 @@ body {
     position: relative;
 }
 
+body.modal-open {
+    overflow: hidden;
+}
+
 body::before,
 body::after {
     content: "";
@@ -4504,25 +4508,28 @@ body.print-window {
     }
 
     .modal {
-        padding: 0.35rem;
+        padding: 0;
+        align-items: flex-end;
     }
 
     .modal-content {
         width: 100%;
-        height: calc(100vh - 0.7rem);
-        max-height: calc(100vh - 0.7rem);
-        border-radius: 18px;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 18px 18px 0 0;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
     }
 
     .settings-modal-content,
     .nested-modal-content {
         width: 100%;
-        height: calc(100vh - 0.7rem);
-        max-height: calc(100vh - 0.7rem);
+        height: 100dvh;
+        max-height: 100dvh;
     }
 
     .modal-header {
-        padding: 0.9rem 0.95rem;
+        padding: calc(0.7rem + env(safe-area-inset-top, 0px)) 0.95rem 0.8rem;
         position: sticky;
         top: 0;
         z-index: 2;
@@ -4530,6 +4537,7 @@ body.print-window {
 
     .modal-body {
         padding: 0.78rem 0.82rem;
+        overscroll-behavior: contain;
     }
 
     .modal-layout {
@@ -4548,6 +4556,16 @@ body.print-window {
     .editor-sidebar {
         position: static;
         order: -1;
+    }
+
+    .modal.review-mode .editor-sidebar {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.65rem;
+    }
+
+    .modal.review-mode .editor-sidebar .sidebar-card:last-child {
+        grid-column: 1 / -1;
     }
 
     .app-topbar {
@@ -4801,10 +4819,13 @@ body.print-window {
     }
 
     .step-indicator {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 0.7rem 0.55rem;
+        display: flex;
+        gap: 0.55rem;
         margin-bottom: 1rem;
+        overflow-x: auto;
+        padding-bottom: 0.2rem;
+        scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch;
     }
 
     .step-indicator::before {
@@ -4812,11 +4833,13 @@ body.print-window {
     }
 
     .step {
+        flex: 0 0 102px;
         gap: 0.35rem;
         padding: 0.55rem 0.3rem;
         border: 1px solid #d7e2ec;
         border-radius: 16px;
         background: linear-gradient(180deg, rgba(248, 251, 255, 0.96) 0%, rgba(242, 247, 252, 0.95) 100%);
+        scroll-snap-align: start;
     }
 
     .step.active,
@@ -4831,8 +4854,8 @@ body.print-window {
 
     .step-label {
         max-width: none;
-    font-size: 0.68rem;
-}
+        font-size: 0.68rem;
+    }
 
     .step-intro {
         padding: 0.8rem 0.85rem;
@@ -4873,6 +4896,46 @@ body.print-window {
         align-items: stretch;
     }
 
+    .item-row {
+        padding: 0.78rem 0.78rem 0.82rem;
+        border-radius: 16px;
+    }
+
+    .item-row-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .item-row-header-actions {
+        justify-content: flex-end;
+    }
+
+    .item-summary-toggle {
+        align-items: flex-start;
+    }
+
+    .item-summary-thumb {
+        width: 2.2rem;
+        height: 2.2rem;
+        flex-basis: 2.2rem;
+    }
+
+    .item-editor-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .item-image-group {
+        margin-bottom: 0;
+    }
+
+    .document-settings-panel,
+    .keyword-step-panel,
+    .item-internal-panel {
+        padding-left: 0.8rem;
+        padding-right: 0.8rem;
+    }
+
     .doc-row-total,
     .doc-actions {
         justify-content: flex-start;
@@ -4887,13 +4950,18 @@ body.print-window {
     .preview-container {
         padding: 0.75rem;
         overflow-x: auto;
+        overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        scroll-snap-type: x proximity;
     }
 
     .document-sheet {
-        min-width: 680px;
+        min-width: 420px;
+        width: max(420px, 100%);
         padding: 1.4rem 1.15rem 4.5rem;
         box-shadow: 0 8px 20px rgba(23, 43, 77, 0.08);
+        scroll-snap-align: start;
     }
 
     .line-items-review-header {
@@ -4988,27 +5056,50 @@ body.print-window {
         padding-left: 0.9rem;
         padding-right: 0.9rem;
     }
+
+    .modal-footer {
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
+        padding-bottom: calc(0.95rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .modal-footer-nav > *,
+    .modal-footer-actions > * {
+        width: 100%;
+    }
+
+    .export-list,
+    .issue-inbox-list,
+    .client-management-list,
+    .user-list {
+        padding-bottom: 0.2rem;
+    }
+
+    .export-row,
+    .issue-card,
+    .user-row,
+    .client-row,
+    .catalog-details-stat {
+        border-radius: 16px;
+    }
 }
 
 @media (max-width: 560px) {
-    .modal {
-        padding: 0.2rem;
-    }
-
     .modal-content {
-        height: calc(100vh - 0.4rem);
-        max-height: calc(100vh - 0.4rem);
-        border-radius: 16px;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 16px 16px 0 0;
     }
 
     .settings-modal-content,
     .nested-modal-content {
-        height: calc(100vh - 0.4rem);
-        max-height: calc(100vh - 0.4rem);
+        height: 100dvh;
+        max-height: 100dvh;
     }
 
     .step-indicator {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
     }
 
     .line-items-header {
@@ -5024,13 +5115,39 @@ body.print-window {
     }
 
     .document-sheet {
-        min-width: 500px;
+        min-width: 360px;
+        width: max(360px, 100%);
         padding: 1rem 0.88rem 3.6rem;
     }
 
     .modal.final-preview-mode .document-sheet {
-        min-width: 480px;
+        min-width: 360px;
         padding: 0.88rem 0.82rem 3.2rem;
+    }
+
+    .modal.review-mode .editor-sidebar {
+        grid-template-columns: 1fr;
+    }
+
+    .item-summary-toggle {
+        gap: 0.55rem;
+    }
+
+    .item-summary-title {
+        font-size: 0.86rem;
+    }
+
+    .item-summary-meta {
+        font-size: 0.74rem;
+    }
+
+    .item-image-uploader {
+        align-items: stretch;
+        flex-wrap: wrap;
+    }
+
+    .item-image-upload-btn {
+        flex: 1 1 auto;
     }
 
     .document-title {

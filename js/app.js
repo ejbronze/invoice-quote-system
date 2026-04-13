@@ -2190,6 +2190,41 @@ function openCatalogPage() {
     renderCatalog();
 }
 
+function syncModalOpenState() {
+    document.body.classList.toggle("modal-open", Boolean(document.querySelector(".modal.active")));
+}
+
+function setModalState(modal, isOpen) {
+    if (!modal) {
+        return;
+    }
+
+    modal.classList.toggle("active", isOpen);
+    modal.setAttribute("aria-hidden", isOpen ? "false" : "true");
+
+    const modalBody = modal.querySelector(".modal-body");
+    if (isOpen && modalBody) {
+        modalBody.scrollTop = 0;
+    }
+
+    syncModalOpenState();
+}
+
+function resetDocumentModalViewport(step) {
+    const modalBody = elements.documentModal?.querySelector(".modal-body");
+    if (modalBody) {
+        modalBody.scrollTop = 0;
+    }
+
+    const activePreview = step >= 5
+        ? elements.documentModal?.querySelector(`.form-step.active .preview-container`)
+        : null;
+    if (activePreview) {
+        activePreview.scrollTop = 0;
+        activePreview.scrollLeft = 0;
+    }
+}
+
 function openCatalogItemModal() {
     state.editingCatalogItemId = null;
     elements.catalogItemNameInput.value = "";
@@ -2200,14 +2235,12 @@ function openCatalogItemModal() {
     elements.catalogItemVendorInput.value = "";
     elements.catalogItemDetailsInput.value = "";
     elements.catalogItemNotesInput.value = "";
-    elements.catalogItemModal.classList.add("active");
-    elements.catalogItemModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.catalogItemModal, true);
     applyTranslations();
 }
 
 function closeCatalogItemModal() {
-    elements.catalogItemModal.classList.remove("active");
-    elements.catalogItemModal.setAttribute("aria-hidden", "true");
+    setModalState(elements.catalogItemModal, false);
     state.editingCatalogItemId = null;
 }
 
@@ -2239,13 +2272,11 @@ function openCatalogDetailsModal(item) {
         elements.catalogDetailsFallback.hidden = false;
     }
 
-    elements.catalogDetailsModal.classList.add("active");
-    elements.catalogDetailsModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.catalogDetailsModal, true);
 }
 
 function closeCatalogDetailsModal() {
-    elements.catalogDetailsModal.classList.remove("active");
-    elements.catalogDetailsModal.setAttribute("aria-hidden", "true");
+    setModalState(elements.catalogDetailsModal, false);
 }
 
 function getCatalogEntries() {
@@ -2355,8 +2386,7 @@ function handleCatalogGridClick(event) {
     elements.catalogItemDetailsInput.value = item.details || "";
     elements.catalogItemNotesInput.value = item.notes || "";
     closeCatalogDetailsModal();
-    elements.catalogItemModal.classList.add("active");
-    elements.catalogItemModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.catalogItemModal, true);
     applyTranslations();
 }
 
@@ -2445,26 +2475,22 @@ function openSettingsModal() {
     syncEditorPreferenceControls();
     renderUserManagementList();
     renderClientManagementList();
-    elements.settingsModal.classList.add("active");
-    elements.settingsModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.settingsModal, true);
 }
 
 function closeSettingsModal() {
-    elements.settingsModal.classList.remove("active");
-    elements.settingsModal.setAttribute("aria-hidden", "true");
+    setModalState(elements.settingsModal, false);
 }
 
 function openIssueReportModal() {
     elements.issueReportStatus.hidden = true;
     elements.issueReportStatus.textContent = "";
     elements.issueReportStatus.classList.remove("hero-helper-error");
-    elements.issueReportModal.classList.add("active");
-    elements.issueReportModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.issueReportModal, true);
 }
 
 function closeIssueReportModal() {
-    elements.issueReportModal.classList.remove("active");
-    elements.issueReportModal.setAttribute("aria-hidden", "true");
+    setModalState(elements.issueReportModal, false);
 }
 
 async function openIssueInboxModal() {
@@ -2473,13 +2499,11 @@ async function openIssueInboxModal() {
     }
 
     await saveIssueReports(state.issueReports.map(report => ({ ...report, unread: false })));
-    elements.issueInboxModal.classList.add("active");
-    elements.issueInboxModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.issueInboxModal, true);
 }
 
 function closeIssueInboxModal() {
-    elements.issueInboxModal.classList.remove("active");
-    elements.issueInboxModal.setAttribute("aria-hidden", "true");
+    setModalState(elements.issueInboxModal, false);
 }
 
 function syncCompanyProfileForm() {
@@ -2501,13 +2525,11 @@ function openCompanyProfileModal() {
 
     closeTopbarMenu();
     syncCompanyProfileForm();
-    elements.companyProfileModal.classList.add("active");
-    elements.companyProfileModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.companyProfileModal, true);
 }
 
 function closeCompanyProfileModal() {
-    elements.companyProfileModal.classList.remove("active");
-    elements.companyProfileModal.setAttribute("aria-hidden", "true");
+    setModalState(elements.companyProfileModal, false);
 }
 
 async function saveCompanyProfile() {
@@ -2635,13 +2657,11 @@ function handleImageUploadTriggerClick(event) {
 function openSavedItemsModal() {
     renderSavedItemsList();
     syncSavedItemsTotal();
-    elements.savedItemsModal.classList.add("active");
-    elements.savedItemsModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.savedItemsModal, true);
 }
 
 function closeSavedItemsModal() {
-    elements.savedItemsModal.classList.remove("active");
-    elements.savedItemsModal.setAttribute("aria-hidden", "true");
+    setModalState(elements.savedItemsModal, false);
     closeSavedItemCreateModal();
 }
 
@@ -2660,8 +2680,7 @@ function openSavedItemCreateModal() {
     elements.savedItemTotalInput.value = "0";
     applyTranslations();
     syncSavedItemImageUI();
-    elements.savedItemCreateModal.classList.add("active");
-    elements.savedItemCreateModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.savedItemCreateModal, true);
     elements.savedItemDescriptionInput.focus();
 }
 
@@ -2680,8 +2699,7 @@ function openSavedItemEditModal(item) {
     elements.savedItemTotalInput.value = formatAmount(item.total || 0);
     applyTranslations();
     syncSavedItemImageUI();
-    elements.savedItemCreateModal.classList.add("active");
-    elements.savedItemCreateModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.savedItemCreateModal, true);
     elements.savedItemDescriptionInput.focus();
 }
 
@@ -2691,8 +2709,7 @@ function closeSavedItemCreateModal() {
     }
     state.editingSavedItemId = null;
     elements.savedItemCreateModal.dataset.itemImageDataUrl = "";
-    elements.savedItemCreateModal.classList.remove("active");
-    elements.savedItemCreateModal.setAttribute("aria-hidden", "true");
+    setModalState(elements.savedItemCreateModal, false);
 }
 
 function renderSavedItemsList() {
@@ -2914,13 +2931,11 @@ async function handleSavedItemsListClick(event) {
 }
 
 function openAboutModal() {
-    elements.aboutModal.classList.add("active");
-    elements.aboutModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.aboutModal, true);
 }
 
 function closeAboutModal() {
-    elements.aboutModal.classList.remove("active");
-    elements.aboutModal.setAttribute("aria-hidden", "true");
+    setModalState(elements.aboutModal, false);
 }
 
 function renderUserManagementList() {
@@ -3185,13 +3200,11 @@ function openExportModal() {
 
     closeSettingsModal();
     renderExportSelectionList();
-    elements.exportModal.classList.add("active");
-    elements.exportModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.exportModal, true);
 }
 
 function closeExportModal() {
-    elements.exportModal.classList.remove("active");
-    elements.exportModal.setAttribute("aria-hidden", "true");
+    setModalState(elements.exportModal, false);
 }
 
 function updateInboxBadge() {
@@ -4495,8 +4508,7 @@ function openModal(type = "quote") {
     state.currentDocType = type;
     elements.docType.value = type;
     updateModalTitle();
-    elements.documentModal.classList.add("active");
-    elements.documentModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.documentModal, true);
     goToStep(isPrefilledEditMode() ? getTotalSteps() : 1);
 }
 
@@ -4510,11 +4522,10 @@ function getActionButtonMarkup(icon, label) {
 
 function closeModal() {
     clearDraftAutosaveTimer();
-    elements.documentModal.classList.remove("active");
+    setModalState(elements.documentModal, false);
     elements.documentModal.classList.remove("review-mode");
     elements.documentModal.classList.remove("final-preview-mode");
     elements.documentModal.classList.remove("prefilled-edit-mode");
-    elements.documentModal.setAttribute("aria-hidden", "true");
     resetForm();
 }
 
@@ -4630,6 +4641,7 @@ function goToStep(step) {
     }
 
     updateEditorSummary();
+    resetDocumentModalViewport(step);
 }
 
 function nextStep() {
