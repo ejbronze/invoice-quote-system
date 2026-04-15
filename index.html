@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <div class="brand-splash" id="brandSplash" aria-hidden="true">
+    <div class="brand-splash" id="brandSplash" aria-hidden="true" hidden>
         <div class="brand-splash-card">
             <div class="brand-mark brand-mark-large" id="brandSplashLogo" aria-hidden="true"></div>
             <span class="eyebrow" id="brandSplashName">SantoSync</span>
@@ -44,7 +44,20 @@
     <div class="session-loader" id="sessionLoader" hidden aria-hidden="true">
         <div class="session-loader-card" role="status" aria-live="polite">
             <div class="session-loader-brand" aria-hidden="true">
-                <div class="brand-mark brand-mark-large" id="sessionLoaderLogo"></div>
+                <div class="brand-mark brand-mark-large" id="sessionLoaderLogo">
+                    <svg viewBox="0 0 80 80" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="loaderLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#0c3fa6"/>
+                                <stop offset="52%" stop-color="#1459d9"/>
+                                <stop offset="100%" stop-color="#17b889"/>
+                            </linearGradient>
+                        </defs>
+                        <rect x="8" y="8" width="64" height="64" rx="20" fill="url(#loaderLogoGradient)"/>
+                        <path d="M50,21 C50,13 22,13 22,30 C22,44 58,46 58,59" fill="none" stroke="rgba(255,255,255,0.96)" stroke-width="7" stroke-linecap="round"/>
+                        <path d="M30,59 C30,67 58,67 58,50 C58,36 22,34 22,21" fill="none" stroke="rgba(215,255,240,0.78)" stroke-width="7" stroke-linecap="round"/>
+                    </svg>
+                </div>
                 <div class="session-loader-spinner"></div>
             </div>
             <span class="eyebrow">Loading Session</span>
@@ -56,18 +69,33 @@
     <main class="container app-shell app-shell-locked" id="adminAppShell" aria-hidden="true" hidden>
         <section class="app-topbar" aria-label="Session controls">
             <div class="app-topbar-copy">
-                <div class="brand-mark brand-mark-topbar" id="topbarBrandLogo" aria-hidden="true"></div>
+                <div class="brand-mark brand-mark-topbar" id="topbarBrandLogo" aria-hidden="true">
+                    <svg viewBox="0 0 80 80" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="topbarLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#0c3fa6"/>
+                                <stop offset="52%" stop-color="#1459d9"/>
+                                <stop offset="100%" stop-color="#17b889"/>
+                            </linearGradient>
+                        </defs>
+                        <rect x="8" y="8" width="64" height="64" rx="20" fill="url(#topbarLogoGradient)"/>
+                        <path d="M50,21 C50,13 22,13 22,30 C22,44 58,46 58,59" fill="none" stroke="rgba(255,255,255,0.96)" stroke-width="7" stroke-linecap="round"/>
+                        <path d="M30,59 C30,67 58,67 58,50 C58,36 22,34 22,21" fill="none" stroke="rgba(215,255,240,0.78)" stroke-width="7" stroke-linecap="round"/>
+                    </svg>
+                </div>
                 <span class="app-topbar-kicker">Workspace</span>
                 <strong>SantoSync</strong>
                 <span class="environment-badge" id="environmentBadge" hidden></span>
+                <span class="session-badge" id="runtimeModeBadge" hidden>LOCAL MODE</span>
                 <span class="session-identity" id="sessionBadge" hidden></span>
             </div>
             <div class="app-topbar-actions">
-                <button class="mailbox-trigger" id="openInboxBtn" type="button" aria-label="Open issue inbox" hidden>
+                <button class="mailbox-trigger" id="openInboxBtn" type="button" aria-label="Open service reports" hidden>
                     <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                        <path d="M5 8l6.1 5a1.5 1.5 0 0 0 1.8 0L19 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M7 4.8h8.5a2 2 0 0 1 2 2V19.2H8.6a2.8 2.8 0 0 1-2.8-2.8V6.9a2.1 2.1 0 0 1 2.1-2.1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                        <path d="M9.2 9.1h5.8M9.2 12.5h5.8M9.2 15.9h3.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                     </svg>
+                    <span class="mailbox-trigger-label" id="openInboxLabel">Reports</span>
                     <span class="mailbox-count" id="inboxCountBadge" hidden>0</span>
                 </button>
                 <button class="cart-trigger" id="openSavedItemsTopbarBtn" type="button" aria-label="Open pending items cart">
@@ -93,6 +121,8 @@
                         </svg>
                     </button>
                     <div class="topbar-menu" id="topbarMenu" hidden>
+                        <button class="topbar-menu-item" id="topbarAccountAdminBtn" type="button" hidden>Account Admin</button>
+                        <button class="topbar-menu-item" id="topbarCatalogBtn" type="button">Catalog</button>
                         <button class="topbar-menu-item" id="topbarCompanyProfileBtn" type="button">Company Profile</button>
                         <button class="topbar-menu-item" id="topbarSettingsBtn" type="button">Settings</button>
                         <button class="topbar-menu-item" id="topbarSignOutBtn" type="button">Sign out</button>
@@ -164,17 +194,20 @@
                 </label>
             </div>
 
-            <div class="dashboard-actions-row" aria-label="Primary actions">
-                <div class="hero-action-grid">
-                    <button class="btn btn-primary" id="newQuoteBtn" type="button">New Quote</button>
-                    <button class="btn btn-success" id="newInvoiceBtn" type="button">New Invoice</button>
+            <div class="documents-toolbar">
+                <div class="filter-row" role="tablist" aria-label="Document filters">
+                    <button class="filter-chip active" id="filterAllBtn" type="button" data-filter="all">All</button>
+                    <button class="filter-chip" id="filterQuotesBtn" type="button" data-filter="quote">Quotes</button>
+                    <button class="filter-chip" id="filterInvoicesBtn" type="button" data-filter="invoice">Invoices</button>
                 </div>
-            </div>
 
-            <div class="filter-row" role="tablist" aria-label="Document filters">
-                <button class="filter-chip active" id="filterAllBtn" type="button" data-filter="all">All</button>
-                <button class="filter-chip" id="filterQuotesBtn" type="button" data-filter="quote">Quotes</button>
-                <button class="filter-chip" id="filterInvoicesBtn" type="button" data-filter="invoice">Invoices</button>
+                <div class="dashboard-actions-row" aria-label="Primary actions">
+                    <div class="hero-action-grid">
+                        <button class="btn btn-secondary" id="openInvoiceReportsBtn" type="button">Invoice Reports</button>
+                        <button class="btn btn-primary" id="newQuoteBtn" type="button">New Quote</button>
+                        <button class="btn btn-success" id="newInvoiceBtn" type="button">New Invoice</button>
+                    </div>
+                </div>
             </div>
 
             <div class="documents-grid" id="documentsGrid">
@@ -184,6 +217,179 @@
                     </svg>
                     <p>No documents yet. Create your first quote or invoice!</p>
                 </div>
+            </div>
+        </section>
+
+        <section class="catalog-page" id="catalogPage" hidden>
+            <div class="dashboard-topbar">
+                <div>
+                    <h2 id="catalogHeading">Catalog</h2>
+                    <p class="dashboard-subtitle" id="catalogCopy">Review every item captured from quotes, invoices, and the cart, and add manual catalog records for future use.</p>
+                </div>
+                <div class="dashboard-actions-row" aria-label="Catalog actions">
+                    <div class="hero-action-grid">
+                        <button class="btn btn-secondary" id="backToDocumentsBtn" type="button">Documents</button>
+                        <button class="btn btn-primary" id="openCatalogItemModalBtn" type="button">Add Catalog Item</button>
+                    </div>
+                </div>
+            </div>
+            <div class="catalog-grid" id="catalogGrid">
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h10"></path>
+                    </svg>
+                    <p>No catalog items yet.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="account-admin-page" id="accountAdminPage" hidden>
+            <div class="dashboard-topbar">
+                <div>
+                    <h2>Account Admin</h2>
+                    <p class="dashboard-subtitle">Manage SantoSync accounts, sub-accounts, session reporting, activity history, and document branding from one owner dashboard.</p>
+                </div>
+                <div class="dashboard-actions-row" aria-label="Account admin actions">
+                    <div class="hero-action-grid">
+                        <button class="btn btn-secondary" id="accountAdminWorkspaceBtn" type="button">Workspace</button>
+                        <button class="btn btn-primary" id="accountAdminCatalogBtn" type="button">Catalog</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="account-admin-grid">
+                <section class="settings-panel account-admin-panel account-admin-hero-panel">
+                    <div class="account-admin-owner-card">
+                        <div>
+                            <span class="overview-kicker">Owner Access</span>
+                            <h3 id="accountAdminOwnerName">SantoSync Owner</h3>
+                            <p id="accountAdminOwnerMeta">Signed in as owner</p>
+                        </div>
+                        <div class="account-admin-owner-badge" id="accountAdminOwnerBadge">Owner</div>
+                    </div>
+                    <div class="account-admin-stats">
+                        <article class="stat-card stat-card-mini">
+                            <span class="stat-label">Registered Users</span>
+                            <strong class="stat-value" id="accountUserCountStat">0</strong>
+                        </article>
+                        <article class="stat-card stat-card-mini">
+                            <span class="stat-label">Sub-Accounts</span>
+                            <strong class="stat-value" id="accountSubaccountCountStat">0</strong>
+                        </article>
+                        <article class="stat-card stat-card-mini">
+                            <span class="stat-label">Recent Sessions</span>
+                            <strong class="stat-value" id="accountSessionCountStat">0</strong>
+                        </article>
+                        <article class="stat-card stat-card-mini">
+                            <span class="stat-label">Activity Events</span>
+                            <strong class="stat-value" id="accountActivityCountStat">0</strong>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="settings-panel account-admin-panel">
+                    <div class="settings-panel-header">
+                        <h4>Registered Accounts</h4>
+                        <p>Review everyone attached to SantoSync, edit their names and access, and assign sub-accounts to a parent account.</p>
+                    </div>
+                    <div class="account-admin-list" id="accountAdminUserList"></div>
+                </section>
+
+                <section class="settings-panel account-admin-panel">
+                    <div class="settings-panel-header">
+                        <h4 id="accountAdminFormTitle">Add Workspace Account</h4>
+                        <p>Create a direct account or assign it under an existing user as a sub-account.</p>
+                    </div>
+                    <div class="settings-grid report-grid">
+                        <label class="form-group">
+                            <span>Display Name</span>
+                            <input type="text" id="accountAdminDisplayNameInput" placeholder="SantoSync Admin">
+                        </label>
+                        <label class="form-group">
+                            <span>Username</span>
+                            <input type="text" id="accountAdminUsernameInput" placeholder="admin">
+                        </label>
+                        <label class="form-group">
+                            <span>Email</span>
+                            <input type="email" id="accountAdminEmailInput" placeholder="admin@santosync.com">
+                        </label>
+                        <label class="form-group">
+                            <span>Password</span>
+                            <input type="text" id="accountAdminPasswordInput" placeholder="Create a password">
+                        </label>
+                        <label class="form-group">
+                            <span>Role</span>
+                            <select id="accountAdminRoleSelect">
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </label>
+                        <label class="form-group">
+                            <span>Access Level</span>
+                            <select id="accountAdminAccessLevelSelect">
+                                <option value="workspace">Workspace</option>
+                                <option value="operations">Operations</option>
+                                <option value="review">Review Only</option>
+                            </select>
+                        </label>
+                        <label class="form-group report-field-wide">
+                            <span>Parent Account</span>
+                            <select id="accountAdminParentSelect">
+                                <option value="">Direct account for SantoSync</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" id="accountAdminSaveBtn" type="button">Save Account</button>
+                        <button class="btn btn-secondary" id="accountAdminCancelEditBtn" type="button" hidden>Cancel Edit</button>
+                    </div>
+                </section>
+
+                <section class="settings-panel account-admin-panel">
+                    <div class="settings-panel-header">
+                        <h4>Document Branding</h4>
+                        <p>Update the signature and stamp used when SantoSync generates final document output.</p>
+                    </div>
+                    <div class="account-branding-grid">
+                        <div class="account-branding-card">
+                            <div class="account-branding-preview" id="accountSignaturePreviewWrap">
+                                <img id="accountSignaturePreview" alt="Signature preview" hidden>
+                                <div class="account-branding-empty" id="accountSignatureFallback">Signature</div>
+                            </div>
+                            <label class="btn btn-secondary account-branding-upload" for="accountSignatureInput">Upload Signature</label>
+                            <input type="file" id="accountSignatureInput" accept="image/*" hidden>
+                            <button class="btn btn-secondary" id="clearSignatureAssetBtn" type="button">Clear Signature</button>
+                        </div>
+                        <div class="account-branding-card">
+                            <div class="account-branding-preview" id="accountStampPreviewWrap">
+                                <img id="accountStampPreview" alt="Stamp preview" hidden>
+                                <div class="account-branding-empty" id="accountStampFallback">Stamp</div>
+                            </div>
+                            <label class="btn btn-secondary account-branding-upload" for="accountStampInput">Upload Stamp</label>
+                            <input type="file" id="accountStampInput" accept="image/*" hidden>
+                            <button class="btn btn-secondary" id="clearStampAssetBtn" type="button">Clear Stamp</button>
+                        </div>
+                    </div>
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" id="saveBrandAssetsBtn" type="button">Save Branding Assets</button>
+                    </div>
+                </section>
+
+                <section class="settings-panel account-admin-panel">
+                    <div class="settings-panel-header">
+                        <h4>Login Session Reports</h4>
+                        <p>Track recent sign-ins, sign-outs, and who has been active in the workspace.</p>
+                    </div>
+                    <div class="account-admin-feed" id="accountSessionLogList"></div>
+                </section>
+
+                <section class="settings-panel account-admin-panel">
+                    <div class="settings-panel-header">
+                        <h4>Workspace Activity</h4>
+                        <p>Review recent account edits, exports, branding changes, and other logged actions.</p>
+                    </div>
+                    <div class="account-admin-feed" id="accountActivityLogList"></div>
+                </section>
             </div>
         </section>
 
@@ -426,13 +632,43 @@
     <div class="modal settings-modal" id="issueInboxModal" aria-hidden="true">
         <div class="modal-content settings-modal-content inbox-modal-content">
             <div class="modal-header">
-                <h3 id="issueInboxTitle">Issue Inbox</h3>
+                <h3 id="issueInboxTitle">Service Reports</h3>
                 <button class="close-btn" id="closeIssueInboxModalBtn" type="button" aria-label="Close">x</button>
             </div>
             <div class="modal-body settings-modal-body">
-                <p class="settings-copy" id="issueInboxCopy">Bug reports from the footer form appear here for admins to review.</p>
+                <p class="settings-copy" id="issueInboxCopy">Bug reports and service logs appear here for admins to review, annotate, and close when resolved.</p>
                 <div class="issue-inbox-list" id="issueInboxList">
                     <p class="export-empty">No reports yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal settings-modal" id="invoiceReportsModal" aria-hidden="true">
+        <div class="modal-content settings-modal-content inbox-modal-content invoice-reports-modal-content">
+            <div class="modal-header">
+                <h3 id="invoiceReportsTitle">Invoice Reports</h3>
+                <button class="close-btn" id="closeInvoiceReportsModalBtn" type="button" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body settings-modal-body">
+                <p class="settings-copy" id="invoiceReportsCopy">Review invoice totals by client, switch between paid and pending invoices, and keep the list sorted by client.</p>
+                <div class="invoice-reports-toolbar">
+                    <label class="sort-field invoice-reports-sort-field">
+                        <span class="search-label" id="invoiceReportsSortLabel">Sort</span>
+                        <select id="invoiceReportSort">
+                            <option value="client_asc">Client: A to Z</option>
+                            <option value="client_desc">Client: Z to A</option>
+                        </select>
+                    </label>
+                    <div class="filter-row invoice-report-filter-row" role="tablist" aria-label="Invoice report filters">
+                        <button class="filter-chip active" id="invoiceReportFilterAllBtn" type="button" data-invoice-report-filter="all">All</button>
+                        <button class="filter-chip" id="invoiceReportFilterPaidBtn" type="button" data-invoice-report-filter="paid">Paid</button>
+                        <button class="filter-chip" id="invoiceReportFilterPendingBtn" type="button" data-invoice-report-filter="pending">Pending</button>
+                    </div>
+                </div>
+                <div class="invoice-report-summary" id="invoiceReportSummary"></div>
+                <div class="invoice-report-list" id="invoiceReportList">
+                    <p class="export-empty">No invoices yet.</p>
                 </div>
             </div>
         </div>
@@ -692,6 +928,7 @@
                                 <span>Include stamp on export</span>
                             </label>
                             <small class="field-help">Turn this off for unsigned quotes or invoices before opening the PDF preview.</small>
+                            <small class="field-help">Adds a small company stamp overlay near the signature without changing the document layout.</small>
                         </section>
 
                         <section class="sidebar-card sidebar-card-muted">
@@ -746,54 +983,58 @@
                 <h3 id="savedItemCreateTitle">Create Cart Item</h3>
                 <button class="close-btn" id="closeSavedItemCreateModalBtn" type="button" aria-label="Close">x</button>
             </div>
-            <div class="modal-body settings-modal-body">
-                <p class="settings-copy" id="savedItemCreateCopy">Capture a new pending item, then add it to a quote or invoice when you are ready.</p>
-                <div class="settings-grid">
-                    <label class="form-group report-field-wide">
-                        <span id="savedItemDescriptionLabel">Item Description</span>
-                        <textarea id="savedItemDescriptionInput" rows="2" placeholder="Forklift unloading service"></textarea>
-                    </label>
-                    <div class="form-group report-field-wide saved-item-image-group">
-                        <div class="saved-item-image-uploader">
-                            <label class="saved-item-image-upload-btn" aria-label="Upload item image" title="Upload item image">
-                                <input type="file" id="savedItemImageInput" accept="image/*" hidden>
-                                <span class="saved-item-image-upload-art" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24">
-                                        <path d="M5 7.5A2.5 2.5 0 0 1 7.5 5h9A2.5 2.5 0 0 1 19 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 16.5z" fill="none" stroke="currentColor" stroke-width="1.7"/>
-                                        <path d="M8 15l2.4-2.4a1 1 0 0 1 1.4 0l1.1 1.1 2.1-2.1a1 1 0 0 1 1.4 0L19 14.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                                        <circle cx="10" cy="9.5" r="1.2" fill="currentColor"/>
+            <div class="modal-body settings-modal-body saved-item-create-body">
+                <p class="settings-copy saved-item-create-copy" id="savedItemCreateCopy">Capture a new pending item, then add it to a quote or invoice when you are ready.</p>
+                <div class="saved-item-create-layout">
+                    <div class="saved-item-create-media">
+                        <div class="form-group saved-item-image-group">
+                            <div class="saved-item-image-uploader">
+                                <label class="saved-item-image-upload-btn" for="savedItemImageInput" aria-label="Upload item image" title="Upload item image">
+                                    <input type="file" id="savedItemImageInput" accept="image/*" hidden>
+                                    <span class="saved-item-image-upload-art" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M5 7.5A2.5 2.5 0 0 1 7.5 5h9A2.5 2.5 0 0 1 19 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 16.5z" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                            <path d="M8 15l2.4-2.4a1 1 0 0 1 1.4 0l1.1 1.1 2.1-2.1a1 1 0 0 1 1.4 0L19 14.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <circle cx="10" cy="9.5" r="1.2" fill="currentColor"/>
+                                        </svg>
+                                    </span>
+                                    <span class="saved-item-image-upload-copy">
+                                        <strong>Item Image</strong>
+                                        <small>Add image</small>
+                                    </span>
+                                </label>
+                                <button class="saved-item-image-remove-btn" id="savedItemImageRemoveBtn" type="button" hidden aria-label="Remove item image" title="Remove item image">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M6 7h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                        <path d="M9.5 7V5.6c0-.4.3-.6.6-.6h3.8c.3 0 .6.2.6.6V7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                        <path d="M8.2 7l.7 10.2c0 .4.3.8.8.8h4.6c.4 0 .7-.3.8-.8L16 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
-                                </span>
-                                <span class="saved-item-image-upload-copy">
-                                    <strong>Item Image</strong>
-                                    <small>Add image</small>
-                                </span>
-                            </label>
-                            <button class="saved-item-image-remove-btn" id="savedItemImageRemoveBtn" type="button" hidden aria-label="Remove item image" title="Remove item image">
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M6 7h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                    <path d="M9.5 7V5.6c0-.4.3-.6.6-.6h3.8c.3 0 .6.2.6.6V7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                    <path d="M8.2 7l.7 10.2c0 .4.3.8.8.8h4.6c.4 0 .7-.3.8-.8L16 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                        </div>
-                        <div class="saved-item-image-preview" id="savedItemImagePreview" hidden>
-                            <img id="savedItemImagePreviewImg" alt="Saved item preview">
+                                </button>
+                            </div>
+                            <div class="saved-item-image-preview" id="savedItemImagePreview" hidden>
+                                <img id="savedItemImagePreviewImg" alt="Saved item preview">
+                            </div>
                         </div>
                     </div>
-                    <div class="form-row">
-                        <label class="form-group">
-                            <span id="savedItemQuantityLabel">Quantity</span>
-                            <input type="number" id="savedItemQuantityInput" min="0" step="1" value="1">
+                    <div class="saved-item-create-fields">
+                        <label class="form-group report-field-wide">
+                            <span id="savedItemDescriptionLabel">Item Description</span>
+                            <textarea id="savedItemDescriptionInput" rows="3" placeholder="Forklift unloading service"></textarea>
                         </label>
-                        <label class="form-group">
-                            <span id="savedItemUnitPriceLabel">Unit Price (USD)</span>
-                            <input type="number" id="savedItemUnitPriceInput" min="0" step="0.01" value="0">
-                        </label>
-                        <label class="form-group">
-                            <span id="savedItemTotalLabel">Total (USD)</span>
-                            <input type="number" id="savedItemTotalInput" min="0" step="0.01" value="0" readonly>
-                        </label>
+                        <div class="saved-item-create-metrics">
+                            <label class="form-group">
+                                <span id="savedItemQuantityLabel">Quantity</span>
+                                <input type="number" id="savedItemQuantityInput" min="0" step="1" value="1">
+                            </label>
+                            <label class="form-group">
+                                <span id="savedItemUnitPriceLabel">Unit Price (USD)</span>
+                                <input type="number" id="savedItemUnitPriceInput" min="0" step="0.01" value="0">
+                            </label>
+                            <label class="form-group">
+                                <span id="savedItemTotalLabel">Total (USD)</span>
+                                <input type="number" id="savedItemTotalInput" min="0" step="0.01" value="0" readonly>
+                            </label>
+                        </div>
                     </div>
                 </div>
                 <div class="settings-actions">
@@ -812,6 +1053,105 @@
             <div class="modal-body settings-modal-body">
                 <div class="saved-item-image-modal-stage">
                     <img id="savedItemImageModalImg" alt="Saved item image preview">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal settings-modal" id="catalogItemModal" aria-hidden="true">
+        <div class="modal-content settings-modal-content">
+            <div class="modal-header">
+                <h3 id="catalogItemModalTitle">Add Catalog Item</h3>
+                <button class="close-btn" id="closeCatalogItemModalBtn" type="button" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body settings-modal-body">
+                <div class="settings-grid report-grid">
+                    <label class="form-group">
+                        <span id="catalogItemNameLabel">Item Name</span>
+                        <input type="text" id="catalogItemNameInput" placeholder="Forklift unloading service">
+                    </label>
+                    <label class="form-group">
+                        <span id="catalogItemPriceLabel">Unit Price (USD)</span>
+                        <input type="number" id="catalogItemPriceInput" min="0" step="0.01" value="0">
+                    </label>
+                    <label class="form-group">
+                        <span id="catalogItemCategoryLabel">Category</span>
+                        <input type="text" id="catalogItemCategoryInput" placeholder="Handling">
+                    </label>
+                    <label class="form-group">
+                        <span id="catalogItemBrandLabel">Brand</span>
+                        <input type="text" id="catalogItemBrandInput" placeholder="In-house">
+                    </label>
+                    <label class="form-group">
+                        <span id="catalogItemUnitSizeLabel">Unit Size</span>
+                        <input type="text" id="catalogItemUnitSizeInput" placeholder="Per container">
+                    </label>
+                    <label class="form-group">
+                        <span id="catalogItemVendorLabel">Vendor</span>
+                        <input type="text" id="catalogItemVendorInput" placeholder="Gonzalez Logistics">
+                    </label>
+                    <label class="form-group report-field-wide">
+                        <span id="catalogItemDetailsLabel">Details</span>
+                        <textarea id="catalogItemDetailsInput" rows="3" placeholder="Describe the item, service scope, or included materials."></textarea>
+                    </label>
+                    <label class="form-group report-field-wide">
+                        <span id="catalogItemNotesLabel">Notes</span>
+                        <textarea id="catalogItemNotesInput" rows="3" placeholder="Internal notes, prep details, preferred vendor notes, or packaging information."></textarea>
+                    </label>
+                </div>
+                <div class="settings-actions">
+                    <button class="btn btn-secondary" id="saveCatalogItemBtn" type="button">Save Catalog Item</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal settings-modal" id="catalogDetailsModal" aria-hidden="true">
+        <div class="modal-content settings-modal-content catalog-details-modal-content">
+            <div class="modal-header">
+                <h3 id="catalogDetailsTitle">Catalog Item</h3>
+                <button class="close-btn" id="closeCatalogDetailsModalBtn" type="button" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body settings-modal-body catalog-details-body">
+                <div class="catalog-details-hero">
+                    <div class="catalog-details-bubble" id="catalogDetailsBubble" aria-hidden="true">
+                        <img id="catalogDetailsImage" alt="Catalog item image" hidden>
+                        <div class="catalog-details-bubble-fallback" id="catalogDetailsFallback">Item</div>
+                    </div>
+                    <div class="catalog-details-copy">
+                        <h4 id="catalogDetailsName">Item Name</h4>
+                        <p id="catalogDetailsMeta">Manual · Updated recently</p>
+                    </div>
+                </div>
+                <div class="catalog-details-grid">
+                    <div class="catalog-details-stat">
+                        <span>Price</span>
+                        <strong id="catalogDetailsPrice">$0.00</strong>
+                    </div>
+                    <div class="catalog-details-stat">
+                        <span>Category</span>
+                        <strong id="catalogDetailsCategory">—</strong>
+                    </div>
+                    <div class="catalog-details-stat">
+                        <span>Brand</span>
+                        <strong id="catalogDetailsBrand">—</strong>
+                    </div>
+                    <div class="catalog-details-stat">
+                        <span>Unit Size</span>
+                        <strong id="catalogDetailsUnitSize">—</strong>
+                    </div>
+                    <div class="catalog-details-stat">
+                        <span>Vendor</span>
+                        <strong id="catalogDetailsVendor">—</strong>
+                    </div>
+                </div>
+                <div class="catalog-details-section">
+                    <span>Details</span>
+                    <p id="catalogDetailsText">—</p>
+                </div>
+                <div class="catalog-details-section">
+                    <span>Notes</span>
+                    <p id="catalogDetailsNotes">—</p>
                 </div>
             </div>
         </div>

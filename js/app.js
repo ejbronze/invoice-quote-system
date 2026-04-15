@@ -25,13 +25,21 @@ const state = {
     dataMode: "server",
     workspaceDataMode: "server",
     runtimeMode: "unknown",
+    activePage: "documents",
     issueReports: [],
     companyProfile: null,
+    exchangeRateUsdToDop: 59,
     savedItems: [],
+    catalogItems: [],
+    sessionLogs: [],
+    activityLogs: [],
     editingSavedItemId: null,
+    editingCatalogItemId: null,
     pendingSavedItemImageUploadId: null,
-    openItemActionMenuId: null,
-    openDocumentActionMenuId: null,
+    openItemMenuId: null,
+    openDocumentMenuId: null,
+    draftAutosaveTimerId: null,
+    editingManagedUserId: null,
     highlightedSavedItemId: null
 };
 
@@ -41,15 +49,32 @@ const DEFAULT_ADMIN_USER = Object.freeze({
     id: "admin-root",
     username: "admin",
     displayName: "Admin",
+    email: "admin@santosync.com",
     password: "Todos123",
     role: "admin",
-    language: "en"
+    language: "en",
+    accessLevel: "workspace",
+    parentUserId: ""
+});
+const DEFAULT_OWNER_USER = Object.freeze({
+    id: "owner-root",
+    username: "erjaquez",
+    displayName: "Edwin Jaquez",
+    email: "erjaquez@gmail.com",
+    password: "Britney10!",
+    role: "owner",
+    language: "en",
+    accessLevel: "owner",
+    parentUserId: ""
 });
 const USER_ACCOUNTS_STORAGE_KEY = "todosUserAccounts";
 const CURRENT_SESSION_STORAGE_KEY = "todosCurrentSession";
 const ISSUE_REPORTS_STORAGE_KEY = "todosIssueReports";
 const COMPANY_PROFILE_STORAGE_KEY = "santosyncCompanyProfile";
 const SAVED_ITEMS_STORAGE_KEY = "santosyncSavedItems";
+const CATALOG_ITEMS_STORAGE_KEY = "santosyncCatalogItems";
+const SESSION_LOGS_STORAGE_KEY = "santosyncSessionLogs";
+const ACTIVITY_LOGS_STORAGE_KEY = "santosyncActivityLogs";
 const DEFAULT_ACCESS_ERROR_MESSAGE = "That username or password is incorrect. Try again.";
 const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
 const BRAND_SPLASH_MIN_MS = 1100;
@@ -88,7 +113,9 @@ const DEFAULT_COMPANY_PROFILE = Object.freeze({
     email: "hello@santosync.com",
     phone: "+1 (809) 555-0110",
     website: "www.santosync.com",
-    taxId: "Registration Pending"
+    taxId: "Registration Pending",
+    signatureDataUrl: "",
+    stampDataUrl: ""
 });
 const TRANSLATIONS = {
     en: {
@@ -98,8 +125,8 @@ const TRANSLATIONS = {
         login_kicker: "Workspace Sign In",
         login_title: BRAND.onboardingTitle,
         login_copy: BRAND.onboardingCopy,
-        username: "Username",
-        username_placeholder: "Enter username",
+        username: "Username or Email",
+        username_placeholder: "Enter username or email",
         password: "Password",
         password_placeholder: "Enter password",
         login_error: "That username or password is incorrect. Try again.",
@@ -112,7 +139,7 @@ const TRANSLATIONS = {
         end_session: "End Session",
         sign_out: "Sign out",
         settings: "Settings",
-        issue_inbox: "Issue Inbox",
+        issue_inbox: "Service Reports",
         report_issue: "Report an Issue",
         issue_report_copy: "Share a bug, broken workflow, or visual issue and attach a screenshot if it helps explain the problem.",
         issue_summary: "Issue Summary",
@@ -122,11 +149,40 @@ const TRANSLATIONS = {
         attach_screenshot: "Attach Screenshot",
         attach_screenshot_help: "Optional. A screenshot can make layout and bug reports much easier to review.",
         submit_report: "Submit Report",
-        issue_inbox_copy: "Bug reports from the footer form appear here for admins to review.",
+        issue_inbox_copy: "Bug reports and service logs appear here for admins to review, annotate, and close when resolved.",
         no_issue_reports: "No reports yet.",
         submitted_by: "Submitted by",
         screenshot: "Screenshot",
         delete_report: "Delete report",
+        issue_open: "Open",
+        issue_closed: "Closed",
+        close_report: "Close report",
+        reopen_report: "Reopen report",
+        issue_admin_notes: "Admin Notes",
+        issue_admin_notes_placeholder: "Add internal notes, follow-up details, or a resolution summary.",
+        save_notes: "Save notes",
+        issue_notes_saved: "Notes saved.",
+        new_report: "New",
+        catalog: "Catalog",
+        catalog_heading: "Catalog",
+        catalog_copy: "Review every item captured from quotes, invoices, and the cart, and add manual catalog records for future use.",
+        add_catalog_item: "Add Catalog Item",
+        no_catalog_items: "No catalog items yet.",
+        item_name: "Item Name",
+        price: "Price",
+        item_details: "Details",
+        item_notes: "Notes",
+        date_updated: "Date Updated",
+        category: "Category",
+        brand: "Brand",
+        unit_size: "Unit Size",
+        vendor: "Vendor",
+        source: "Source",
+        source_manual: "Manual",
+        source_cart: "Cart",
+        source_document: "Document",
+        save_catalog_item: "Save Catalog Item",
+        update_catalog_item: "Update Catalog Item",
         report_submitted_success: "Report submitted successfully.",
         report_required_error: "Add a summary and details before submitting.",
         report_delete_confirm: "Delete this issue report?",
@@ -177,6 +233,8 @@ const TRANSLATIONS = {
         hero_copy: BRAND.heroCopy,
         new_quote: "New Quote",
         new_invoice: "New Invoice",
+        invoice_reports: "Invoice Reports",
+        invoice_reports_copy: "Review invoice totals by client, switch between paid and pending invoices, and keep the list sorted by client.",
         import_status_default: "Use JSON backup tools to restore deleted records or move data between environments.",
         snapshot: "Snapshot",
         documents: "Documents",
@@ -189,8 +247,6 @@ const TRANSLATIONS = {
         total: "Total",
         status_draft: "Draft",
         status_logged: "Logged",
-        payment_paid: "Paid",
-        payment_unpaid: "Unpaid",
         created_by: "Created by",
         converted_source: "Converted Source",
         legacy_pdf_attached: "Legacy PDF Attached",
@@ -198,12 +254,18 @@ const TRANSLATIONS = {
         open_pdf_preview: "Open PDF Preview",
         view_pdf: "View PDF",
         convert_to_invoice: "Convert to Invoice",
+        payment_paid: "Paid",
+        payment_unpaid: "Unpaid",
+        mark_as_paid: "Mark As Paid",
+        mark_as_unpaid: "Mark As Unpaid",
+        report_pending: "Pending",
+        local_mode: "LOCAL MODE",
         pipeline_value: "Pipeline Value",
         amount_invoiced: "Amount Invoiced",
         income_received: "Income Received",
         tap_view_invoiced: "Tap to view invoiced amount",
-        tap_view_pipeline: "Tap to view pipeline value",
         tap_view_income: "Tap to view income received",
+        tap_view_pipeline: "Tap to view pipeline value",
         documents_heading: "Documents",
         documents_subtitle: "Open, sort, filter, and manage every quote and invoice from one coordinated workspace.",
         sort: "Sort",
@@ -213,6 +275,8 @@ const TRANSLATIONS = {
         sort_date_asc: "Date: Oldest First",
         sort_created_desc: "Created: Newest First",
         sort_created_asc: "Created: Oldest First",
+        sort_client_asc: "Client: A to Z",
+        sort_client_desc: "Client: Z to A",
         filter_all: "All",
         no_date: "No date",
         unknown_client: "Unknown client",
@@ -286,8 +350,20 @@ const TRANSLATIONS = {
         include_signature: "Include signature on export",
         include_signature_help: "Turn this off for unsigned quotes or invoices before opening the PDF preview.",
         include_stamp: "Include stamp on export",
+        include_stamp_help: "Adds a small company stamp overlay near the signature without changing the document layout.",
         workflow_tip: "Workflow Tip",
-        workflow_tip_copy: "Keep line items concise and use keywords like destination, service type, or priority to make search much easier later."
+        workflow_tip_copy: "Keep line items concise and use keywords like destination, service type, or priority to make search much easier later.",
+        report_client: "Client",
+        report_status: "Status",
+        report_ref: "Reference",
+        report_date: "Date",
+        report_total: "Total",
+        report_total_invoices: "Invoices",
+        report_total_clients: "Clients",
+        report_total_paid: "Paid",
+        report_total_pending: "Pending",
+        report_no_invoices: "No invoices yet.",
+        report_no_matches: "No invoices match this report filter."
     },
     es: {
         language_name: "Español",
@@ -296,8 +372,8 @@ const TRANSLATIONS = {
         login_kicker: "Ingreso al Espacio",
         login_title: `Entrar a ${BRAND.name}`,
         login_copy: "Inicia sesión con una cuenta local para crear, editar y gestionar cotizaciones y facturas con una presentación premium y sincronizada.",
-        username: "Usuario",
-        username_placeholder: "Ingresa el usuario",
+        username: "Usuario o correo",
+        username_placeholder: "Ingresa usuario o correo",
         password: "Contraseña",
         password_placeholder: "Ingresa la contraseña",
         login_error: "Ese usuario o contraseña es incorrecto. Inténtalo de nuevo.",
@@ -310,7 +386,7 @@ const TRANSLATIONS = {
         end_session: "Cerrar sesión",
         sign_out: "Cerrar sesión",
         settings: "Configuración",
-        issue_inbox: "Bandeja de Incidencias",
+        issue_inbox: "Reportes de Servicio",
         report_issue: "Reportar un Problema",
         issue_report_copy: "Comparte un error, una falla del flujo o un problema visual y adjunta una captura si ayuda a explicar lo ocurrido.",
         issue_summary: "Resumen del Problema",
@@ -320,11 +396,40 @@ const TRANSLATIONS = {
         attach_screenshot: "Adjuntar Captura",
         attach_screenshot_help: "Opcional. Una captura puede facilitar mucho la revisión del problema.",
         submit_report: "Enviar Reporte",
-        issue_inbox_copy: "Los reportes enviados desde el pie de página aparecen aquí para que los administradores los revisen.",
+        issue_inbox_copy: "Los reportes y registros de servicio aparecen aquí para que los administradores los revisen, agreguen notas y los cierren al resolverse.",
         no_issue_reports: "Aún no hay reportes.",
         submitted_by: "Enviado por",
         screenshot: "Captura",
         delete_report: "Eliminar reporte",
+        issue_open: "Abierto",
+        issue_closed: "Cerrado",
+        close_report: "Cerrar reporte",
+        reopen_report: "Reabrir reporte",
+        issue_admin_notes: "Notas del Admin",
+        issue_admin_notes_placeholder: "Agrega notas internas, seguimiento o un resumen de resolución.",
+        save_notes: "Guardar notas",
+        issue_notes_saved: "Notas guardadas.",
+        new_report: "Nuevo",
+        catalog: "Catálogo",
+        catalog_heading: "Catálogo",
+        catalog_copy: "Revisa cada artículo capturado desde cotizaciones, facturas y el carrito, y agrega registros manuales para uso futuro.",
+        add_catalog_item: "Agregar Artículo al Catálogo",
+        no_catalog_items: "Aún no hay artículos en el catálogo.",
+        item_name: "Nombre del Artículo",
+        price: "Precio",
+        item_details: "Detalles",
+        item_notes: "Notas",
+        date_updated: "Fecha Actualizada",
+        category: "Categoría",
+        brand: "Marca",
+        unit_size: "Tamaño de Unidad",
+        vendor: "Proveedor",
+        source: "Origen",
+        source_manual: "Manual",
+        source_cart: "Carrito",
+        source_document: "Documento",
+        save_catalog_item: "Guardar Artículo del Catálogo",
+        update_catalog_item: "Actualizar Artículo del Catálogo",
         report_submitted_success: "Reporte enviado correctamente.",
         report_required_error: "Agrega un resumen y detalles antes de enviar.",
         report_delete_confirm: "¿Eliminar este reporte?",
@@ -375,6 +480,8 @@ const TRANSLATIONS = {
         hero_copy: "Prepara cotizaciones refinadas, facturas seguras y un flujo diario más coordinado desde un solo espacio elegante.",
         new_quote: "Nueva Cotización",
         new_invoice: "Nueva Factura",
+        invoice_reports: "Reportes de Facturas",
+        invoice_reports_copy: "Revisa los totales de facturas por cliente, cambia entre facturas pagadas y pendientes, y mantén la lista ordenada por cliente.",
         import_status_default: "Usa las herramientas JSON para restaurar registros eliminados o mover datos entre entornos.",
         snapshot: "Resumen",
         documents: "Documentos",
@@ -387,8 +494,6 @@ const TRANSLATIONS = {
         total: "Total",
         status_draft: "Borrador",
         status_logged: "Registrado",
-        payment_paid: "Pagada",
-        payment_unpaid: "Pendiente",
         created_by: "Creado por",
         converted_source: "Fuente Convertida",
         legacy_pdf_attached: "PDF heredado adjunto",
@@ -396,12 +501,18 @@ const TRANSLATIONS = {
         open_pdf_preview: "Abrir Vista PDF",
         view_pdf: "Ver PDF",
         convert_to_invoice: "Convertir en Factura",
+        payment_paid: "Pagada",
+        payment_unpaid: "No Pagada",
+        mark_as_paid: "Marcar como Pagada",
+        mark_as_unpaid: "Marcar como No Pagada",
+        report_pending: "Pendiente",
+        local_mode: "MODO LOCAL",
         pipeline_value: "Valor en Proceso",
         amount_invoiced: "Monto Facturado",
         income_received: "Ingresos Recibidos",
         tap_view_invoiced: "Toca para ver el monto facturado",
-        tap_view_pipeline: "Toca para ver el valor en proceso",
         tap_view_income: "Toca para ver los ingresos recibidos",
+        tap_view_pipeline: "Toca para ver el valor en proceso",
         documents_heading: "Documentos",
         documents_subtitle: "Abre, ordena, filtra y gestiona cada cotización y factura desde un solo espacio coordinado.",
         sort: "Ordenar",
@@ -411,6 +522,8 @@ const TRANSLATIONS = {
         sort_date_asc: "Fecha: más antigua primero",
         sort_created_desc: "Creado: más reciente primero",
         sort_created_asc: "Creado: más antiguo primero",
+        sort_client_asc: "Cliente: A a Z",
+        sort_client_desc: "Cliente: Z a A",
         filter_all: "Todos",
         no_date: "Sin fecha",
         unknown_client: "Cliente desconocido",
@@ -484,8 +597,20 @@ const TRANSLATIONS = {
         include_signature: "Incluir firma al exportar",
         include_signature_help: "Desactiva esto para cotizaciones o facturas sin firma antes de abrir la vista PDF.",
         include_stamp: "Incluir sello al exportar",
+        include_stamp_help: "Agrega un pequeño sello de la empresa cerca de la firma sin cambiar el diseño del documento.",
         workflow_tip: "Consejo de Flujo",
-        workflow_tip_copy: "Mantén las líneas concisas y usa palabras clave como destino, tipo de servicio o prioridad para facilitar la búsqueda."
+        workflow_tip_copy: "Mantén las líneas concisas y usa palabras clave como destino, tipo de servicio o prioridad para facilitar la búsqueda.",
+        report_client: "Cliente",
+        report_status: "Estado",
+        report_ref: "Referencia",
+        report_date: "Fecha",
+        report_total: "Total",
+        report_total_invoices: "Facturas",
+        report_total_clients: "Clientes",
+        report_total_paid: "Pagadas",
+        report_total_pending: "Pendientes",
+        report_no_invoices: "Todavía no hay facturas.",
+        report_no_matches: "No hay facturas que coincidan con este filtro."
     },
     fr: {
         language_name: "Français",
@@ -494,8 +619,8 @@ const TRANSLATIONS = {
         login_kicker: "Connexion à l’Espace",
         login_title: `Entrer dans ${BRAND.name}`,
         login_copy: "Connectez-vous avec un compte local pour créer, modifier et gérer des devis et factures avec une identité plus premium et cohérente.",
-        username: "Nom d’utilisateur",
-        username_placeholder: "Entrez le nom d’utilisateur",
+        username: "Identifiant ou e-mail",
+        username_placeholder: "Entrez l’identifiant ou l’e-mail",
         password: "Mot de passe",
         password_placeholder: "Entrez le mot de passe",
         login_error: "Ce nom d’utilisateur ou mot de passe est incorrect. Réessayez.",
@@ -508,7 +633,7 @@ const TRANSLATIONS = {
         end_session: "Fermer la session",
         sign_out: "Se déconnecter",
         settings: "Paramètres",
-        issue_inbox: "Boîte des Incidents",
+        issue_inbox: "Rapports de Service",
         report_issue: "Signaler un Problème",
         issue_report_copy: "Partagez un bug, un flux cassé ou un problème visuel et joignez une capture si cela aide à expliquer le souci.",
         issue_summary: "Résumé du Problème",
@@ -518,11 +643,40 @@ const TRANSLATIONS = {
         attach_screenshot: "Joindre une Capture",
         attach_screenshot_help: "Optionnel. Une capture peut rendre les rapports bien plus faciles à examiner.",
         submit_report: "Envoyer le Rapport",
-        issue_inbox_copy: "Les rapports envoyés depuis le pied de page apparaissent ici pour examen par les administrateurs.",
+        issue_inbox_copy: "Les rapports et journaux de service apparaissent ici pour que les administrateurs puissent les examiner, ajouter des notes et les clôturer.",
         no_issue_reports: "Aucun rapport pour le moment.",
         submitted_by: "Envoyé par",
         screenshot: "Capture",
         delete_report: "Supprimer le rapport",
+        issue_open: "Ouvert",
+        issue_closed: "Clôturé",
+        close_report: "Clôturer le rapport",
+        reopen_report: "Rouvrir le rapport",
+        issue_admin_notes: "Notes Admin",
+        issue_admin_notes_placeholder: "Ajoutez des notes internes, un suivi ou un résumé de résolution.",
+        save_notes: "Enregistrer les notes",
+        issue_notes_saved: "Notes enregistrées.",
+        new_report: "Nouveau",
+        catalog: "Catalogue",
+        catalog_heading: "Catalogue",
+        catalog_copy: "Consultez chaque article issu des devis, factures et du panier, et ajoutez des fiches catalogue manuelles pour plus tard.",
+        add_catalog_item: "Ajouter au Catalogue",
+        no_catalog_items: "Aucun article dans le catalogue pour le moment.",
+        item_name: "Nom de l’Article",
+        price: "Prix",
+        item_details: "Détails",
+        item_notes: "Notes",
+        date_updated: "Date de Mise à Jour",
+        category: "Catégorie",
+        brand: "Marque",
+        unit_size: "Taille Unitaire",
+        vendor: "Fournisseur",
+        source: "Source",
+        source_manual: "Manuel",
+        source_cart: "Panier",
+        source_document: "Document",
+        save_catalog_item: "Enregistrer l’Article",
+        update_catalog_item: "Mettre à Jour l’Article",
         report_submitted_success: "Rapport envoyé avec succès.",
         report_required_error: "Ajoutez un résumé et des détails avant l’envoi.",
         report_delete_confirm: "Supprimer ce rapport ?",
@@ -573,6 +727,8 @@ const TRANSLATIONS = {
         hero_copy: "Préparez des devis raffinés, des factures sûres et un flux quotidien mieux synchronisé depuis un seul espace élégant.",
         new_quote: "Nouveau Devis",
         new_invoice: "Nouvelle Facture",
+        invoice_reports: "Rapports de Factures",
+        invoice_reports_copy: "Consultez les totaux de factures par client, basculez entre les factures payees et en attente, et gardez la liste triee par client.",
         import_status_default: "Utilisez les outils JSON pour restaurer des enregistrements supprimés ou déplacer des données entre environnements.",
         snapshot: "Aperçu",
         documents: "Documents",
@@ -585,8 +741,6 @@ const TRANSLATIONS = {
         total: "Total",
         status_draft: "Brouillon",
         status_logged: "Enregistré",
-        payment_paid: "Payée",
-        payment_unpaid: "Impayée",
         created_by: "Créé par",
         converted_source: "Source Convertie",
         legacy_pdf_attached: "PDF hérité joint",
@@ -594,12 +748,18 @@ const TRANSLATIONS = {
         open_pdf_preview: "Ouvrir l’aperçu PDF",
         view_pdf: "Voir le PDF",
         convert_to_invoice: "Convertir en Facture",
+        payment_paid: "Payee",
+        payment_unpaid: "Non Payee",
+        mark_as_paid: "Marquer comme Payee",
+        mark_as_unpaid: "Marquer comme Non Payee",
+        report_pending: "En attente",
+        local_mode: "MODE LOCAL",
         pipeline_value: "Valeur Pipeline",
         amount_invoiced: "Montant Facturé",
-        income_received: "Revenu Reçu",
+        income_received: "Revenus Reçus",
         tap_view_invoiced: "Touchez pour voir le montant facturé",
+        tap_view_income: "Touchez pour voir les revenus reçus",
         tap_view_pipeline: "Touchez pour voir la valeur pipeline",
-        tap_view_income: "Touchez pour voir le revenu reçu",
         documents_heading: "Documents",
         documents_subtitle: "Ouvrez, triez, filtrez et gérez chaque devis et facture depuis un espace coordonné.",
         sort: "Trier",
@@ -609,6 +769,8 @@ const TRANSLATIONS = {
         sort_date_asc: "Date : plus ancien d’abord",
         sort_created_desc: "Créé : plus récent d’abord",
         sort_created_asc: "Créé : plus ancien d’abord",
+        sort_client_asc: "Client : A a Z",
+        sort_client_desc: "Client : Z a A",
         filter_all: "Tous",
         no_date: "Aucune date",
         unknown_client: "Client inconnu",
@@ -682,8 +844,20 @@ const TRANSLATIONS = {
         include_signature: "Inclure la signature à l’export",
         include_signature_help: "Désactivez ceci pour des devis ou factures non signés avant d’ouvrir l’aperçu PDF.",
         include_stamp: "Inclure le tampon à l’export",
+        include_stamp_help: "Ajoute un petit tampon de l’entreprise près de la signature sans modifier la mise en page du document.",
         workflow_tip: "Conseil de Flux",
-        workflow_tip_copy: "Gardez les lignes concises et utilisez des mots-clés comme destination, type de service ou priorité pour faciliter la recherche."
+        workflow_tip_copy: "Gardez les lignes concises et utilisez des mots-clés comme destination, type de service ou priorité pour faciliter la recherche.",
+        report_client: "Client",
+        report_status: "Statut",
+        report_ref: "Reference",
+        report_date: "Date",
+        report_total: "Total",
+        report_total_invoices: "Factures",
+        report_total_clients: "Clients",
+        report_total_paid: "Payees",
+        report_total_pending: "En attente",
+        report_no_invoices: "Aucune facture pour le moment.",
+        report_no_matches: "Aucune facture ne correspond a ce filtre."
     }
 };
 
@@ -703,6 +877,11 @@ function getCurrentLocale() {
     return LANGUAGE_LOCALES[getCurrentLanguage()] || "en-US";
 }
 
+function getUsdToDopRate() {
+    const rate = Number(state.exchangeRateUsdToDop);
+    return Number.isFinite(rate) && rate > 0 ? rate : DOP_PER_USD;
+}
+
 function t(key, vars = {}) {
     const language = getCurrentLanguage();
     const template = TRANSLATIONS[language]?.[key] ?? TRANSLATIONS.en[key] ?? key;
@@ -720,6 +899,31 @@ function setElementHtml(selector, value) {
     const element = typeof selector === "string" ? document.querySelector(selector) : selector;
     if (element) {
         element.innerHTML = value;
+    }
+}
+
+function updateHeroOperationalSummary() {
+    setElementText(".hero-copy h1", formatPrintedDate(new Date()));
+    setElementText(".hero-copy p", `USD 1.00 = DOP ${formatAmount(getUsdToDopRate())}`);
+}
+
+function updateExchangeRateCopy() {
+    updateHeroOperationalSummary();
+    elements.itemsContainer.querySelectorAll(".item-currency-mode .field-help").forEach(helpText => {
+        helpText.textContent = `Converts pesos back to USD using RD$${formatAmount(getUsdToDopRate())} = US$1.`;
+    });
+}
+
+async function refreshExchangeRate() {
+    try {
+        const payload = await requestJSON("/api/exchange-rate");
+        const rate = Number(payload?.rate);
+        if (Number.isFinite(rate) && rate > 0) {
+            state.exchangeRateUsdToDop = rate;
+            updateExchangeRateCopy();
+        }
+    } catch (error) {
+        updateExchangeRateCopy();
     }
 }
 
@@ -751,17 +955,20 @@ function applyTranslations() {
     document.getElementById("languagePickerLabel").textContent = t("language");
     elements.openInboxBtn.setAttribute("aria-label", t("issue_inbox"));
     elements.openInboxBtn.setAttribute("title", t("issue_inbox"));
+    setElementText("#openInboxLabel", t("issue_inbox"));
     elements.navMenuBtn.setAttribute("aria-label", t("menu"));
+    elements.topbarCatalogBtn.textContent = t("catalog");
     elements.topbarSettingsBtn.textContent = t("settings");
     elements.topbarSignOutBtn.textContent = t("sign_out");
+    updateRuntimeModeBadge();
     elements.languageSelect.options[0].textContent = "🍔 ENG";
     elements.languageSelect.options[1].textContent = "🪇 ESP";
     elements.languageSelect.options[2].textContent = "🥐 FRN";
 
     setElementText(".workspace-hero .eyebrow", t("hero_kicker"));
-    setElementText(".hero-copy h1", t("hero_title"));
-    setElementText(".hero-copy p", t("hero_copy"));
+    updateHeroOperationalSummary();
     elements.newQuoteBtn.textContent = t("new_quote");
+    elements.openInvoiceReportsBtn.textContent = t("invoice_reports");
     elements.newInvoiceBtn.textContent = t("new_invoice");
     if (!elements.importDocumentStatus.dataset.customized) {
         elements.importDocumentStatus.textContent = t("import_status_default");
@@ -783,6 +990,20 @@ function applyTranslations() {
     }
     setElementText(".dashboard-topbar h2", t("documents_heading"));
     setElementText(".dashboard-subtitle", t("documents_subtitle"));
+    setElementText("#catalogHeading", t("catalog_heading"));
+    setElementText("#catalogCopy", t("catalog_copy"));
+    setElementText("#backToDocumentsBtn", t("documents"));
+    setElementText("#openCatalogItemModalBtn", t("add_catalog_item"));
+    setElementText("#catalogItemModalTitle", state.editingCatalogItemId ? t("update_catalog_item") : t("add_catalog_item"));
+    setElementText("#catalogItemNameLabel", t("item_name"));
+    setElementText("#catalogItemPriceLabel", t("unit_price_usd"));
+    setElementText("#catalogItemCategoryLabel", t("category"));
+    setElementText("#catalogItemBrandLabel", t("brand"));
+    setElementText("#catalogItemUnitSizeLabel", t("unit_size"));
+    setElementText("#catalogItemVendorLabel", t("vendor"));
+    setElementText("#catalogItemDetailsLabel", t("item_details"));
+    setElementText("#catalogItemNotesLabel", t("item_notes"));
+    elements.saveCatalogItemBtn.textContent = state.editingCatalogItemId ? t("update_catalog_item") : t("save_catalog_item");
     setElementText(document.querySelector('.sort-field .search-label'), t("sort"));
     setElementText(document.querySelector('.search-field .search-label'), t("search"));
     elements.documentSearch.placeholder = t("search_placeholder");
@@ -845,6 +1066,14 @@ function applyTranslations() {
     elements.submitIssueReportBtn.textContent = t("submit_report");
     setElementText("#issueInboxTitle", t("issue_inbox"));
     setElementText("#issueInboxCopy", t("issue_inbox_copy"));
+    setElementText("#invoiceReportsTitle", t("invoice_reports"));
+    setElementText("#invoiceReportsCopy", t("invoice_reports_copy"));
+    setElementText("#invoiceReportsSortLabel", t("sort"));
+    elements.invoiceReportSort.options[0].textContent = t("sort_client_asc");
+    elements.invoiceReportSort.options[1].textContent = t("sort_client_desc");
+    elements.invoiceReportFilterButtons[0].textContent = t("filter_all");
+    elements.invoiceReportFilterButtons[1].textContent = t("payment_paid");
+    elements.invoiceReportFilterButtons[2].textContent = t("report_pending");
     setElementText("#companyProfileTitle", t("company_profile"));
     setElementText("#companyProfileCopy", t("company_profile_copy"));
     const companyProfileLabels = elements.companyProfileModal.querySelectorAll(".form-group > span");
@@ -906,10 +1135,13 @@ function applyTranslations() {
     renderUserManagementList();
     renderClientManagementList();
     renderIssueInbox();
+    renderInvoiceReport();
     updateInboxBadge();
     renderExportSelectionList();
     renderSavedItemsList();
     renderDocuments();
+    renderCatalog();
+    applyPageState();
 }
 
 function renderBrandAssets() {
@@ -938,8 +1170,9 @@ function updateStaticEditorTranslations() {
     setElementText(document.querySelectorAll('.sidebar-card .sidebar-label')[3], t("pdf_options"));
     setElementText(document.querySelectorAll('.sidebar-card .sidebar-label')[4], t("workflow_tip"));
     setElementText(document.querySelector('#includeSignature + span'), t("include_signature"));
-    setElementText(document.querySelector('#includeStamp + span'), t("include_stamp"));
     setElementText(document.querySelector('#includeSignature').closest('.sidebar-card').querySelector('.field-help'), t("include_signature_help"));
+    setElementText(document.querySelector('#includeStamp + span'), t("include_stamp"));
+    setElementText(document.querySelector('#includeStamp').closest('.sidebar-card').querySelectorAll('.field-help')[1], t("include_stamp_help"));
     elements.prevBtn.textContent = t("previous");
     elements.nextBtn.textContent = t("next");
 }
@@ -974,8 +1207,9 @@ function cacheElements() {
     elements.topbarBrandLogo = document.getElementById("topbarBrandLogo");
     elements.sessionLoader = document.getElementById("sessionLoader");
     elements.sessionLoaderMessage = document.getElementById("sessionLoaderMessage");
+    elements.runtimeModeBadge = document.getElementById("runtimeModeBadge");
+    elements.workspaceShell = document.querySelector(".workspace-shell");
     elements.settingsModal = document.getElementById("settingsModal");
-    elements.environmentBadge = document.getElementById("environmentBadge");
     elements.sessionBadge = document.getElementById("sessionBadge");
     elements.openInboxBtn = document.getElementById("openInboxBtn");
     elements.inboxCountBadge = document.getElementById("inboxCountBadge");
@@ -983,6 +1217,8 @@ function cacheElements() {
     elements.savedItemsCountBadge = document.getElementById("savedItemsCountBadge");
     elements.navMenuBtn = document.getElementById("navMenuBtn");
     elements.topbarMenu = document.getElementById("topbarMenu");
+    elements.topbarAccountAdminBtn = document.getElementById("topbarAccountAdminBtn");
+    elements.topbarCatalogBtn = document.getElementById("topbarCatalogBtn");
     elements.topbarCompanyProfileBtn = document.getElementById("topbarCompanyProfileBtn");
     elements.topbarSettingsBtn = document.getElementById("topbarSettingsBtn");
     elements.topbarSignOutBtn = document.getElementById("topbarSignOutBtn");
@@ -997,6 +1233,7 @@ function cacheElements() {
     elements.exportSelectedJsonBtn = document.getElementById("exportSelectedJsonBtn");
     elements.issueReportModal = document.getElementById("issueReportModal");
     elements.openIssueReportBtn = document.getElementById("openIssueReportBtn");
+    elements.openInvoiceReportsBtn = document.getElementById("openInvoiceReportsBtn");
     elements.openAboutBtn = document.getElementById("openAboutBtn");
     elements.closeIssueReportModalBtn = document.getElementById("closeIssueReportModalBtn");
     elements.issueSummaryInput = document.getElementById("issueSummaryInput");
@@ -1007,10 +1244,77 @@ function cacheElements() {
     elements.issueInboxModal = document.getElementById("issueInboxModal");
     elements.closeIssueInboxModalBtn = document.getElementById("closeIssueInboxModalBtn");
     elements.issueInboxList = document.getElementById("issueInboxList");
+    elements.invoiceReportsModal = document.getElementById("invoiceReportsModal");
+    elements.closeInvoiceReportsModalBtn = document.getElementById("closeInvoiceReportsModalBtn");
+    elements.invoiceReportSort = document.getElementById("invoiceReportSort");
+    elements.invoiceReportFilterButtons = Array.from(document.querySelectorAll("[data-invoice-report-filter]"));
+    elements.invoiceReportSummary = document.getElementById("invoiceReportSummary");
+    elements.invoiceReportList = document.getElementById("invoiceReportList");
     elements.companyProfileModal = document.getElementById("companyProfileModal");
     elements.savedItemsModal = document.getElementById("savedItemsModal");
     elements.savedItemCreateModal = document.getElementById("savedItemCreateModal");
     elements.savedItemImageModal = document.getElementById("savedItemImageModal");
+    elements.catalogPage = document.getElementById("catalogPage");
+    elements.accountAdminPage = document.getElementById("accountAdminPage");
+    elements.accountAdminWorkspaceBtn = document.getElementById("accountAdminWorkspaceBtn");
+    elements.accountAdminCatalogBtn = document.getElementById("accountAdminCatalogBtn");
+    elements.accountAdminOwnerName = document.getElementById("accountAdminOwnerName");
+    elements.accountAdminOwnerMeta = document.getElementById("accountAdminOwnerMeta");
+    elements.accountAdminOwnerBadge = document.getElementById("accountAdminOwnerBadge");
+    elements.accountUserCountStat = document.getElementById("accountUserCountStat");
+    elements.accountSubaccountCountStat = document.getElementById("accountSubaccountCountStat");
+    elements.accountSessionCountStat = document.getElementById("accountSessionCountStat");
+    elements.accountActivityCountStat = document.getElementById("accountActivityCountStat");
+    elements.accountAdminUserList = document.getElementById("accountAdminUserList");
+    elements.accountAdminFormTitle = document.getElementById("accountAdminFormTitle");
+    elements.accountAdminDisplayNameInput = document.getElementById("accountAdminDisplayNameInput");
+    elements.accountAdminUsernameInput = document.getElementById("accountAdminUsernameInput");
+    elements.accountAdminEmailInput = document.getElementById("accountAdminEmailInput");
+    elements.accountAdminPasswordInput = document.getElementById("accountAdminPasswordInput");
+    elements.accountAdminRoleSelect = document.getElementById("accountAdminRoleSelect");
+    elements.accountAdminAccessLevelSelect = document.getElementById("accountAdminAccessLevelSelect");
+    elements.accountAdminParentSelect = document.getElementById("accountAdminParentSelect");
+    elements.accountAdminSaveBtn = document.getElementById("accountAdminSaveBtn");
+    elements.accountAdminCancelEditBtn = document.getElementById("accountAdminCancelEditBtn");
+    elements.accountSignatureInput = document.getElementById("accountSignatureInput");
+    elements.accountStampInput = document.getElementById("accountStampInput");
+    elements.accountSignaturePreview = document.getElementById("accountSignaturePreview");
+    elements.accountStampPreview = document.getElementById("accountStampPreview");
+    elements.accountSignatureFallback = document.getElementById("accountSignatureFallback");
+    elements.accountStampFallback = document.getElementById("accountStampFallback");
+    elements.saveBrandAssetsBtn = document.getElementById("saveBrandAssetsBtn");
+    elements.clearSignatureAssetBtn = document.getElementById("clearSignatureAssetBtn");
+    elements.clearStampAssetBtn = document.getElementById("clearStampAssetBtn");
+    elements.accountSessionLogList = document.getElementById("accountSessionLogList");
+    elements.accountActivityLogList = document.getElementById("accountActivityLogList");
+    elements.catalogGrid = document.getElementById("catalogGrid");
+    elements.backToDocumentsBtn = document.getElementById("backToDocumentsBtn");
+    elements.openCatalogItemModalBtn = document.getElementById("openCatalogItemModalBtn");
+    elements.catalogItemModal = document.getElementById("catalogItemModal");
+    elements.closeCatalogItemModalBtn = document.getElementById("closeCatalogItemModalBtn");
+    elements.catalogDetailsModal = document.getElementById("catalogDetailsModal");
+    elements.closeCatalogDetailsModalBtn = document.getElementById("closeCatalogDetailsModalBtn");
+    elements.catalogDetailsTitle = document.getElementById("catalogDetailsTitle");
+    elements.catalogDetailsImage = document.getElementById("catalogDetailsImage");
+    elements.catalogDetailsFallback = document.getElementById("catalogDetailsFallback");
+    elements.catalogDetailsName = document.getElementById("catalogDetailsName");
+    elements.catalogDetailsMeta = document.getElementById("catalogDetailsMeta");
+    elements.catalogDetailsPrice = document.getElementById("catalogDetailsPrice");
+    elements.catalogDetailsCategory = document.getElementById("catalogDetailsCategory");
+    elements.catalogDetailsBrand = document.getElementById("catalogDetailsBrand");
+    elements.catalogDetailsUnitSize = document.getElementById("catalogDetailsUnitSize");
+    elements.catalogDetailsVendor = document.getElementById("catalogDetailsVendor");
+    elements.catalogDetailsText = document.getElementById("catalogDetailsText");
+    elements.catalogDetailsNotes = document.getElementById("catalogDetailsNotes");
+    elements.catalogItemNameInput = document.getElementById("catalogItemNameInput");
+    elements.catalogItemPriceInput = document.getElementById("catalogItemPriceInput");
+    elements.catalogItemCategoryInput = document.getElementById("catalogItemCategoryInput");
+    elements.catalogItemBrandInput = document.getElementById("catalogItemBrandInput");
+    elements.catalogItemUnitSizeInput = document.getElementById("catalogItemUnitSizeInput");
+    elements.catalogItemVendorInput = document.getElementById("catalogItemVendorInput");
+    elements.catalogItemDetailsInput = document.getElementById("catalogItemDetailsInput");
+    elements.catalogItemNotesInput = document.getElementById("catalogItemNotesInput");
+    elements.saveCatalogItemBtn = document.getElementById("saveCatalogItemBtn");
     elements.openCompanyProfileBtn = document.getElementById("openCompanyProfileBtn");
     elements.openSavedItemsBtn = document.getElementById("openSavedItemsBtn");
     elements.openSavedItemsInlineCount = document.getElementById("openSavedItemsInlineCount");
@@ -1123,6 +1427,7 @@ function bindEvents() {
         prepareNewDocument("quote");
         openModal("quote");
     });
+    elements.openInvoiceReportsBtn.addEventListener("click", openInvoiceReportsModal);
     elements.newInvoiceBtn.addEventListener("click", () => {
         prepareNewDocument("invoice");
         openModal("invoice");
@@ -1131,6 +1436,8 @@ function bindEvents() {
     elements.openInboxBtn.addEventListener("click", openIssueInboxModal);
     elements.openSavedItemsTopbarBtn.addEventListener("click", openSavedItemsModal);
     elements.navMenuBtn.addEventListener("click", toggleTopbarMenu);
+    elements.topbarAccountAdminBtn?.addEventListener("click", openAccountAdminPage);
+    elements.topbarCatalogBtn.addEventListener("click", openCatalogPage);
     elements.topbarCompanyProfileBtn.addEventListener("click", openCompanyProfileModal);
     elements.topbarSettingsBtn.addEventListener("click", handleTopbarSettingsClick);
     elements.topbarSignOutBtn.addEventListener("click", handleEndSessionClick);
@@ -1151,12 +1458,25 @@ function bindEvents() {
     elements.closeCompanyProfileModalBtn.addEventListener("click", closeCompanyProfileModal);
     elements.closeSavedItemsModalBtn.addEventListener("click", closeSavedItemsModal);
     elements.closeSavedItemCreateModalBtn.addEventListener("click", closeSavedItemCreateModal);
-    elements.closeSavedItemImageModalBtn.addEventListener("click", closeSavedItemImageModal);
+    elements.closeSavedItemImageModalBtn?.addEventListener("click", closeSavedItemImageModal);
     elements.toggleSavedItemsFormBtn.addEventListener("click", openSavedItemCreateModal);
+    elements.backToDocumentsBtn.addEventListener("click", () => setActivePage("documents"));
+    elements.accountAdminWorkspaceBtn?.addEventListener("click", () => setActivePage("documents"));
+    elements.accountAdminCatalogBtn?.addEventListener("click", openCatalogPage);
+    elements.openCatalogItemModalBtn.addEventListener("click", openCatalogItemModal);
+    elements.closeCatalogItemModalBtn.addEventListener("click", closeCatalogItemModal);
+    elements.closeCatalogDetailsModalBtn.addEventListener("click", closeCatalogDetailsModal);
+    elements.saveCatalogItemBtn.addEventListener("click", saveCatalogItemFromModal);
+    elements.catalogGrid.addEventListener("click", handleCatalogGridClick);
     elements.closeAboutModalBtn.addEventListener("click", closeAboutModal);
     elements.issueScreenshotInput.addEventListener("change", handleIssueScreenshotChange);
     elements.submitIssueReportBtn.addEventListener("click", submitIssueReport);
     elements.closeIssueInboxModalBtn.addEventListener("click", closeIssueInboxModal);
+    elements.closeInvoiceReportsModalBtn.addEventListener("click", closeInvoiceReportsModal);
+    elements.invoiceReportSort.addEventListener("change", renderInvoiceReport);
+    elements.invoiceReportFilterButtons.forEach(button => {
+        button.addEventListener("click", handleInvoiceReportFilterClick);
+    });
     elements.saveCompanyProfileBtn.addEventListener("click", saveCompanyProfile);
     elements.addSavedItemBtn.addEventListener("click", addSavedItemFromModal);
     elements.savedItemsList.addEventListener("click", handleSavedItemsListClick);
@@ -1169,6 +1489,14 @@ function bindEvents() {
     elements.clearLocalTestDataBtn.addEventListener("click", clearLocalTestData);
     elements.addUserBtn.addEventListener("click", handleAddUser);
     elements.userManagementList.addEventListener("click", handleUserManagementClick);
+    elements.accountAdminSaveBtn?.addEventListener("click", handleAccountAdminSaveUser);
+    elements.accountAdminCancelEditBtn?.addEventListener("click", resetAccountAdminForm);
+    elements.accountAdminUserList?.addEventListener("click", handleAccountAdminUserListClick);
+    elements.accountSignatureInput?.addEventListener("change", handleBrandAssetSelection);
+    elements.accountStampInput?.addEventListener("change", handleBrandAssetSelection);
+    elements.clearSignatureAssetBtn?.addEventListener("click", () => clearBrandAsset("signature"));
+    elements.clearStampAssetBtn?.addEventListener("click", () => clearBrandAsset("stamp"));
+    elements.saveBrandAssetsBtn?.addEventListener("click", saveBrandAssets);
     elements.clientManagementList.addEventListener("click", handleClientManagementClick);
     elements.issueInboxList.addEventListener("click", handleIssueInboxClick);
     elements.valueToggleCard.addEventListener("click", toggleValueView);
@@ -1189,6 +1517,7 @@ function bindEvents() {
     elements.saveBtn.addEventListener("click", saveDocumentOnly);
     elements.exportPdfBtn.addEventListener("click", saveAndExportDocument);
     elements.stepIndicator.addEventListener("click", handleStepIndicatorClick);
+    elements.previewContainer.addEventListener("click", handlePreviewContainerClick);
     elements.documentsGrid.addEventListener("click", handleDocumentCardClick);
     elements.itemsContainer.addEventListener("click", handleItemContainerClick);
     elements.itemsContainer.addEventListener("input", handleItemsChange);
@@ -1207,6 +1536,28 @@ function bindEvents() {
     window.addEventListener("pointerup", stopCalculatorDrag);
     elements.filterButtons.forEach(button => {
         button.addEventListener("click", () => setActiveFilter(button.dataset.filter));
+    });
+
+    [
+        elements.docType,
+        elements.refNumber,
+        elements.docDate,
+        elements.clientName,
+        elements.clientAddress,
+        elements.consigneeName,
+        elements.consigneeAddress,
+        elements.poNumber,
+        elements.docTags,
+        elements.notes,
+        elements.paymentTerms,
+        elements.includeSignature,
+        elements.includeStamp
+    ].forEach(field => {
+        if (!field) {
+            return;
+        }
+        field.addEventListener("input", queueDraftAutosave);
+        field.addEventListener("change", queueDraftAutosave);
     });
 
     elements.documentModal.addEventListener("click", event => {
@@ -1255,9 +1606,24 @@ function bindEvents() {
             closeSavedItemCreateModal();
         }
     });
-    elements.savedItemImageModal.addEventListener("click", event => {
+    elements.savedItemImageModal?.addEventListener("click", event => {
         if (event.target === elements.savedItemImageModal) {
             closeSavedItemImageModal();
+        }
+    });
+    elements.catalogItemModal.addEventListener("click", event => {
+        if (event.target === elements.catalogItemModal) {
+            closeCatalogItemModal();
+        }
+    });
+    elements.catalogDetailsModal.addEventListener("click", event => {
+        if (event.target === elements.catalogDetailsModal) {
+            closeCatalogDetailsModal();
+        }
+    });
+    elements.invoiceReportsModal.addEventListener("click", event => {
+        if (event.target === elements.invoiceReportsModal) {
+            closeInvoiceReportsModal();
         }
     });
 
@@ -1275,6 +1641,9 @@ function bindEvents() {
     document.addEventListener("input", handleSessionActivity);
     window.addEventListener("focus", handleSessionActivity);
     window.addEventListener("scroll", handleSessionActivity, { passive: true });
+    window.addEventListener("resize", () => {
+        window.requestAnimationFrame(syncActivePreviewScale);
+    });
 }
 
 async function init() {
@@ -1283,19 +1652,26 @@ async function init() {
     await bootstrapSharedWorkspaceData();
     state.currentUser = getStoredSessionUser();
     state.currentLanguage = state.currentUser?.language || "en";
-    applyRoleAccess();
     applyAccessState(hasActiveSession());
     setAccessLoading(false);
     setSessionLoader(false);
     applyTranslations();
     hydrateEditorPreferences();
     updateCalculatorDisplay();
+    void refreshExchangeRate();
     if (!hasActiveSession()) {
-        revealBrandSplash();
         return;
     }
 
+    setSessionLoader(true);
     await bootstrapAppData();
+    if (isOwnerSession()) {
+        resetAccountAdminForm();
+    }
+    setActivePage(isOwnerSession() ? "accountAdmin" : "documents");
+    applyRoleAccess();
+    applyAccessState(true);
+    setSessionLoader(false);
     revealBrandSplash();
 }
 
@@ -1518,22 +1894,37 @@ function normalizeUserAccounts(users) {
                 id: String(user.id || `user-${Date.now()}-${Math.random().toString(36).slice(2)}`),
                 username: String(user.username || "").trim().toLowerCase(),
                 displayName: String(user.displayName || user.username || "").trim(),
+                email: String(user.email || "").trim().toLowerCase(),
                 password: String(user.password || ""),
-                role: user.role === "admin" ? "admin" : "user",
-                language: TRANSLATIONS[user.language] ? user.language : "en"
+                role: ["owner", "admin"].includes(user.role) ? user.role : "user",
+                language: TRANSLATIONS[user.language] ? user.language : "en",
+                accessLevel: ["owner", "workspace", "operations", "review"].includes(user.accessLevel) ? user.accessLevel : "workspace",
+                parentUserId: String(user.parentUserId || "").trim(),
+                lastLoginAt: String(user.lastLoginAt || "").trim()
             }))
             .filter(user => user.username && user.displayName && user.password)
         : [];
 
     const mergedUsers = [];
     const usernameSet = new Set();
+    const emailSet = new Set();
     normalizedUsers.forEach(user => {
         if (usernameSet.has(user.username)) {
             return;
         }
+        if (user.email && emailSet.has(user.email)) {
+            return;
+        }
         usernameSet.add(user.username);
+        if (user.email) {
+            emailSet.add(user.email);
+        }
         mergedUsers.push(user);
     });
+
+    if (!mergedUsers.some(user => user.email === DEFAULT_OWNER_USER.email)) {
+        mergedUsers.unshift({ ...DEFAULT_OWNER_USER });
+    }
 
     if (!mergedUsers.some(user => user.username === DEFAULT_ADMIN_USER.username)) {
         mergedUsers.unshift({ ...DEFAULT_ADMIN_USER });
@@ -1543,8 +1934,29 @@ function normalizeUserAccounts(users) {
             ...mergedUsers[adminIndex],
             id: mergedUsers[adminIndex].id || DEFAULT_ADMIN_USER.id,
             displayName: mergedUsers[adminIndex].displayName || DEFAULT_ADMIN_USER.displayName,
+            email: mergedUsers[adminIndex].email || DEFAULT_ADMIN_USER.email,
             password: mergedUsers[adminIndex].password || DEFAULT_ADMIN_USER.password,
-            role: "admin"
+            role: "admin",
+            accessLevel: mergedUsers[adminIndex].accessLevel || DEFAULT_ADMIN_USER.accessLevel,
+            parentUserId: "",
+            lastLoginAt: mergedUsers[adminIndex].lastLoginAt || ""
+        };
+    }
+
+    const ownerIndex = mergedUsers.findIndex(user => user.email === DEFAULT_OWNER_USER.email);
+    if (ownerIndex >= 0) {
+        mergedUsers[ownerIndex] = {
+            ...mergedUsers[ownerIndex],
+            id: mergedUsers[ownerIndex].id || DEFAULT_OWNER_USER.id,
+            username: mergedUsers[ownerIndex].username || DEFAULT_OWNER_USER.username,
+            displayName: mergedUsers[ownerIndex].displayName || DEFAULT_OWNER_USER.displayName,
+            email: DEFAULT_OWNER_USER.email,
+            password: mergedUsers[ownerIndex].password || DEFAULT_OWNER_USER.password,
+            role: "owner",
+            accessLevel: "owner",
+            parentUserId: "",
+            language: TRANSLATIONS[mergedUsers[ownerIndex].language] ? mergedUsers[ownerIndex].language : "en",
+            lastLoginAt: mergedUsers[ownerIndex].lastLoginAt || ""
         };
     }
 
@@ -1563,6 +1975,10 @@ function loadLocalWorkspaceState() {
     state.issueReports = loadIssueReports();
     state.companyProfile = loadCompanyProfile();
     state.savedItems = loadSavedItems();
+    state.catalogItems = loadCatalogItems();
+    state.sessionLogs = loadSessionLogs();
+    state.activityLogs = loadActivityLogs();
+    updateRuntimeModeBadge();
 }
 
 function cacheWorkspaceStateLocally() {
@@ -1570,6 +1986,9 @@ function cacheWorkspaceStateLocally() {
     writeLocalDataset(ISSUE_REPORTS_STORAGE_KEY, state.issueReports);
     writeLocalDataset(COMPANY_PROFILE_STORAGE_KEY, state.companyProfile);
     writeLocalDataset(SAVED_ITEMS_STORAGE_KEY, state.savedItems);
+    writeLocalDataset(CATALOG_ITEMS_STORAGE_KEY, state.catalogItems);
+    writeLocalDataset(SESSION_LOGS_STORAGE_KEY, state.sessionLogs);
+    writeLocalDataset(ACTIVITY_LOGS_STORAGE_KEY, state.activityLogs);
 }
 
 function applyWorkspaceState(payload) {
@@ -1577,11 +1996,17 @@ function applyWorkspaceState(payload) {
     state.issueReports = normalizeIssueReports(payload?.issueReports || []);
     state.companyProfile = normalizeCompanyProfile(payload?.companyProfile || DEFAULT_COMPANY_PROFILE);
     state.savedItems = normalizeSavedItems(payload?.savedItems || []);
+    state.catalogItems = normalizeCatalogItems(payload?.catalogItems || []);
+    state.sessionLogs = normalizeSessionLogs(payload?.sessionLogs || []);
+    state.activityLogs = normalizeActivityLogs(payload?.activityLogs || []);
     cacheWorkspaceStateLocally();
+    updateRuntimeModeBadge();
     renderUserManagementList();
     renderIssueInbox();
     updateInboxBadge();
     renderSavedItemsList();
+    renderCatalog();
+    renderAccountAdminPage();
 }
 
 async function bootstrapSharedWorkspaceData() {
@@ -1593,12 +2018,14 @@ async function bootstrapSharedWorkspaceData() {
         state.workspaceDataMode = "local";
         loadLocalWorkspaceState();
     }
+    updateRuntimeModeBadge();
 }
 
 async function persistSharedWorkspaceData() {
     cacheWorkspaceStateLocally();
 
     if (state.workspaceDataMode === "local") {
+        updateRuntimeModeBadge();
         return;
     }
 
@@ -1609,7 +2036,10 @@ async function persistSharedWorkspaceData() {
                 userAccounts: state.userAccounts,
                 issueReports: state.issueReports,
                 companyProfile: state.companyProfile,
-                savedItems: state.savedItems
+                savedItems: state.savedItems,
+                catalogItems: state.catalogItems,
+                sessionLogs: state.sessionLogs,
+                activityLogs: state.activityLogs
             })
         });
 
@@ -1620,12 +2050,14 @@ async function persistSharedWorkspaceData() {
         cacheWorkspaceStateLocally();
         setImportStatus("Server save failed, so shared workspace data was saved locally in this browser instead.");
     }
+    updateRuntimeModeBadge();
 }
 
 async function saveUserAccounts(users) {
     state.userAccounts = normalizeUserAccounts(users);
     cacheWorkspaceStateLocally();
     renderUserManagementList();
+    renderAccountAdminPage();
     await persistSharedWorkspaceData();
 }
 
@@ -1641,6 +2073,8 @@ function normalizeIssueReports(reports) {
                 screenshotDataUrl: typeof report.screenshotDataUrl === "string" ? report.screenshotDataUrl : "",
                 createdAt: report.createdAt || new Date().toISOString(),
                 unread: report.unread !== false,
+                status: report.status === "closed" ? "closed" : "open",
+                adminNotes: String(report.adminNotes || "").trim(),
                 createdBy: {
                     userId: String(report.createdBy?.userId || ""),
                     username: String(report.createdBy?.username || ""),
@@ -1673,8 +2107,122 @@ function normalizeCompanyProfile(profile) {
         email: String(profile?.email || DEFAULT_COMPANY_PROFILE.email).trim(),
         phone: String(profile?.phone || DEFAULT_COMPANY_PROFILE.phone).trim(),
         website: String(profile?.website || DEFAULT_COMPANY_PROFILE.website).trim(),
-        taxId: String(profile?.taxId || DEFAULT_COMPANY_PROFILE.taxId).trim()
+        taxId: String(profile?.taxId || DEFAULT_COMPANY_PROFILE.taxId).trim(),
+        signatureDataUrl: typeof profile?.signatureDataUrl === "string" ? profile.signatureDataUrl : "",
+        stampDataUrl: typeof profile?.stampDataUrl === "string" ? profile.stampDataUrl : ""
     };
+}
+
+function normalizeSessionLogs(logs) {
+    return Array.isArray(logs)
+        ? logs
+            .filter(log => log && typeof log === "object")
+            .map(log => ({
+                id: String(log.id || `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+                userId: String(log.userId || ""),
+                username: String(log.username || "").trim(),
+                displayName: String(log.displayName || log.username || "Unknown").trim(),
+                startedAt: String(log.startedAt || new Date().toISOString()),
+                endedAt: String(log.endedAt || "").trim(),
+                status: log.status === "closed" ? "closed" : "open",
+                reason: String(log.reason || "").trim(),
+                loginMethod: String(log.loginMethod || "local").trim()
+            }))
+        : [];
+}
+
+function loadSessionLogs() {
+    const logs = normalizeSessionLogs(readLocalDataset(SESSION_LOGS_STORAGE_KEY, []));
+    writeLocalDataset(SESSION_LOGS_STORAGE_KEY, logs);
+    return logs;
+}
+
+function normalizeActivityLogs(logs) {
+    return Array.isArray(logs)
+        ? logs
+            .filter(log => log && typeof log === "object")
+            .map(log => ({
+                id: String(log.id || `activity-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+                userId: String(log.userId || ""),
+                username: String(log.username || "").trim(),
+                displayName: String(log.displayName || log.username || "System").trim(),
+                action: String(log.action || "updated workspace").trim(),
+                details: String(log.details || "").trim(),
+                createdAt: String(log.createdAt || new Date().toISOString())
+            }))
+        : [];
+}
+
+function loadActivityLogs() {
+    const logs = normalizeActivityLogs(readLocalDataset(ACTIVITY_LOGS_STORAGE_KEY, []));
+    writeLocalDataset(ACTIVITY_LOGS_STORAGE_KEY, logs);
+    return logs;
+}
+
+function recordActivity(action, details) {
+    if (!state.currentUser) {
+        return;
+    }
+
+    state.activityLogs = normalizeActivityLogs([
+        {
+            id: `activity-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            userId: state.currentUser.userId,
+            username: state.currentUser.username,
+            displayName: state.currentUser.displayName,
+            action,
+            details,
+            createdAt: new Date().toISOString()
+        },
+        ...state.activityLogs
+    ]).slice(0, 100);
+
+    cacheWorkspaceStateLocally();
+    renderAccountAdminPage();
+    void persistSharedWorkspaceData();
+}
+
+async function startSessionLog(user) {
+    const sessionLog = {
+        id: `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        userId: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        startedAt: new Date().toISOString(),
+        endedAt: "",
+        status: "open",
+        reason: "",
+        loginMethod: user.email ? "email / local" : "local"
+    };
+
+    state.sessionLogs = normalizeSessionLogs([sessionLog, ...state.sessionLogs]).slice(0, 100);
+    state.userAccounts = state.userAccounts.map(entry =>
+        entry.id === user.id ? { ...entry, lastLoginAt: sessionLog.startedAt } : entry
+    );
+    cacheWorkspaceStateLocally();
+    await persistSharedWorkspaceData();
+    return sessionLog.id;
+}
+
+async function closeSessionLog(reason = "Signed out") {
+    const sessionLogId = state.currentUser?.sessionLogId;
+    if (!sessionLogId) {
+        return;
+    }
+
+    state.sessionLogs = normalizeSessionLogs(state.sessionLogs.map(log =>
+        log.id === sessionLogId
+            ? {
+                ...log,
+                endedAt: new Date().toISOString(),
+                status: "closed",
+                reason
+            }
+            : log
+    ));
+    cacheWorkspaceStateLocally();
+    renderAccountAdminPage();
+    await persistSharedWorkspaceData();
 }
 
 function loadCompanyProfile() {
@@ -1686,6 +2234,40 @@ function loadCompanyProfile() {
 async function saveCompanyProfileState(profile) {
     state.companyProfile = normalizeCompanyProfile(profile);
     cacheWorkspaceStateLocally();
+    renderAccountAdminPage();
+    await persistSharedWorkspaceData();
+}
+
+function normalizeCatalogItems(items) {
+    return Array.isArray(items)
+        ? items
+            .filter(item => item && typeof item === "object")
+            .map(item => ({
+                id: String(item.id || `catalog-${Date.now()}-${Math.random().toString(36).slice(2)}`),
+                name: String(item.name || "").trim(),
+                details: String(item.details || "").trim(),
+                notes: String(item.notes || "").trim(),
+                price: Number.parseFloat(item.price) || 0,
+                dateUpdated: item.dateUpdated || new Date().toISOString(),
+                category: String(item.category || "").trim(),
+                brand: String(item.brand || "").trim(),
+                unitSize: String(item.unitSize || "").trim(),
+                vendor: String(item.vendor || "").trim()
+            }))
+            .filter(item => item.name)
+        : [];
+}
+
+function loadCatalogItems() {
+    const items = normalizeCatalogItems(readLocalDataset(CATALOG_ITEMS_STORAGE_KEY, []));
+    writeLocalDataset(CATALOG_ITEMS_STORAGE_KEY, items);
+    return items;
+}
+
+async function saveCatalogItems(items) {
+    state.catalogItems = normalizeCatalogItems(items);
+    cacheWorkspaceStateLocally();
+    renderCatalog();
     await persistSharedWorkspaceData();
 }
 
@@ -1721,6 +2303,7 @@ async function saveSavedItemsState(items) {
     state.savedItems = normalizeSavedItems(items);
     cacheWorkspaceStateLocally();
     renderSavedItemsList();
+    renderCatalog();
     await persistSharedWorkspaceData();
 }
 
@@ -1733,6 +2316,16 @@ function updateSavedItemsCountBadge() {
         elements.openSavedItemsInlineCount.textContent = String(count);
         elements.openSavedItemsInlineCount.hidden = count === 0;
     }
+}
+
+function updateRuntimeModeBadge() {
+    if (!elements.runtimeModeBadge) {
+        return;
+    }
+
+    const isLocalMode = state.dataMode === "local" || state.workspaceDataMode === "local";
+    elements.runtimeModeBadge.hidden = !isLocalMode;
+    elements.runtimeModeBadge.textContent = t("local_mode");
 }
 
 function getStoredSessionUser() {
@@ -1757,7 +2350,10 @@ function getStoredSessionUser() {
             username: user.username,
             displayName: user.displayName,
             role: user.role,
-            language: TRANSLATIONS[user.language] ? user.language : "en"
+            language: TRANSLATIONS[user.language] ? user.language : "en",
+            email: user.email || "",
+            accessLevel: user.accessLevel || "workspace",
+            sessionLogId: String(session.sessionLogId || "")
         };
     } catch (error) {
         return null;
@@ -1768,8 +2364,12 @@ function hasActiveSession() {
     return Boolean(state.currentUser);
 }
 
+function isOwnerSession() {
+    return state.currentUser?.role === "owner";
+}
+
 function isAdminSession() {
-    return state.currentUser?.role === "admin";
+    return ["owner", "admin"].includes(state.currentUser?.role);
 }
 
 function persistCurrentSession(user) {
@@ -1778,7 +2378,10 @@ function persistCurrentSession(user) {
         username: user.username,
         displayName: user.displayName,
         role: user.role,
-        language: user.language || "en"
+        language: user.language || "en",
+        email: user.email || "",
+        accessLevel: user.accessLevel || "workspace",
+        sessionLogId: user.sessionLogId || ""
     };
     sessionStorage.setItem(CURRENT_SESSION_STORAGE_KEY, JSON.stringify(state.currentUser));
     applyRoleAccess();
@@ -1792,6 +2395,7 @@ function clearCurrentSession() {
 
 function applyRoleAccess() {
     const isAdmin = isAdminSession();
+    const isOwner = isOwnerSession();
     const hasSession = hasActiveSession();
 
     if (elements.openSettingsBtn) {
@@ -1804,9 +2408,11 @@ function applyRoleAccess() {
         ? state.currentUser.displayName
         : "";
     elements.openInboxBtn.hidden = !isAdmin;
+    elements.topbarAccountAdminBtn.hidden = !isOwner;
     elements.topbarCompanyProfileBtn.hidden = !isAdmin;
     elements.openCompanyProfileBtn.hidden = !isAdmin;
     elements.topbarSettingsBtn.hidden = !isAdmin;
+    elements.topbarAccountAdminBtn?.setAttribute("aria-hidden", String(!isOwner));
     elements.topbarSettingsBtn.setAttribute("aria-hidden", String(!isAdmin));
     elements.topbarCompanyProfileBtn.setAttribute("aria-hidden", String(!isAdmin));
     elements.openCompanyProfileBtn.setAttribute("aria-hidden", String(!isAdmin));
@@ -1817,9 +2423,15 @@ function applyRoleAccess() {
         closeIssueInboxModal();
     }
 
+    if (!isOwner && state.activePage === "accountAdmin") {
+        state.activePage = "documents";
+    }
+
     renderUserManagementList();
     renderClientManagementList();
     renderIssueInbox();
+    renderAccountAdminPage();
+    applyPageState();
 }
 
 function applyAccessState(isUnlocked) {
@@ -1858,10 +2470,15 @@ function setSessionLoader(isVisible, message = t("session_loader_message")) {
 }
 
 async function unlockAccess(user) {
-    persistCurrentSession(user);
+    const sessionLogId = await startSessionLog(user);
+    persistCurrentSession({ ...user, sessionLogId });
+    state.currentUser = { ...user, sessionLogId };
     await bootstrapSharedWorkspaceData();
-    state.currentUser = getStoredSessionUser() || user;
+    state.currentUser = getStoredSessionUser() || { ...user, sessionLogId };
+    recordActivity("signed in", "Opened the SantoSync workspace.");
     await bootstrapAppData();
+    setActivePage(isOwnerSession() ? "accountAdmin" : "documents");
+    applyRoleAccess();
     applyAccessState(true);
 }
 
@@ -1892,8 +2509,10 @@ function handleSessionActivity() {
     resetInactivityTimer();
 }
 
-function endSession(message = "", { showMessage = false } = {}) {
+async function endSession(message = "", { showMessage = false } = {}) {
     clearInactivityTimer();
+    await closeSessionLog(message || "Signed out");
+    recordActivity("signed out", message || "Ended the current session.");
     clearCurrentSession();
     closeModal();
     closeSettingsModal();
@@ -1911,13 +2530,13 @@ function endSession(message = "", { showMessage = false } = {}) {
 }
 
 function signOutForInactivity() {
-    endSession("Signed out after 5 minutes of inactivity. Sign in again to continue.", {
+    void endSession("Signed out after 5 minutes of inactivity. Sign in again to continue.", {
         showMessage: true
     });
 }
 
 function handleEndSessionClick() {
-    endSession("Session ended. Sign in again to open the dashboard.", {
+    void endSession("Session ended. Sign in again to open the dashboard.", {
         showMessage: true
     });
 }
@@ -1933,6 +2552,334 @@ function closeTopbarMenu() {
     elements.navMenuBtn.setAttribute("aria-expanded", "false");
 }
 
+function setActivePage(page) {
+    state.activePage = ["catalog", "accountAdmin"].includes(page) ? page : "documents";
+    applyPageState();
+    closeTopbarMenu();
+}
+
+function applyPageState() {
+    if (elements.catalogPage) {
+        elements.catalogPage.hidden = state.activePage !== "catalog";
+    }
+    if (elements.accountAdminPage) {
+        elements.accountAdminPage.hidden = state.activePage !== "accountAdmin";
+    }
+    if (elements.workspaceShell) {
+        elements.workspaceShell.hidden = state.activePage === "accountAdmin";
+    }
+    if (elements.documentsGrid?.closest(".dashboard")) {
+        elements.documentsGrid.closest(".dashboard").hidden = state.activePage !== "documents";
+    }
+}
+
+function openCatalogPage() {
+    setActivePage("catalog");
+    renderCatalog();
+}
+
+function openAccountAdminPage() {
+    if (!isOwnerSession()) {
+        setImportStatus("Only the owner account can open Account Admin.", true);
+        return;
+    }
+
+    resetAccountAdminForm();
+    setActivePage("accountAdmin");
+    renderAccountAdminPage();
+}
+
+function syncModalOpenState() {
+    document.body.classList.toggle("modal-open", Boolean(document.querySelector(".modal.active")));
+}
+
+function isMobileViewport() {
+    return window.matchMedia("(max-width: 768px)").matches;
+}
+
+function setModalState(modal, isOpen) {
+    if (!modal) {
+        return;
+    }
+
+    modal.classList.toggle("active", isOpen);
+    modal.setAttribute("aria-hidden", isOpen ? "false" : "true");
+
+    const modalBody = modal.querySelector(".modal-body");
+    if (isOpen && modalBody) {
+        modalBody.scrollTop = 0;
+    }
+
+    syncModalOpenState();
+}
+
+function resetDocumentModalViewport(step) {
+    const modalBody = elements.documentModal?.querySelector(".modal-body");
+    if (modalBody) {
+        modalBody.scrollTop = 0;
+    }
+
+    const activePreview = step >= 5
+        ? elements.documentModal?.querySelector(`.form-step.active .preview-container`)
+        : null;
+    if (activePreview) {
+        activePreview.scrollTop = 0;
+        activePreview.scrollLeft = 0;
+    }
+}
+
+function syncActivePreviewScale() {
+    if (!elements.documentModal?.classList.contains("active")) {
+        return;
+    }
+
+    const activePreview = elements.documentModal.querySelector(".form-step.active .preview-container");
+    const sheet = activePreview?.querySelector(".document-sheet");
+    if (!activePreview || !sheet) {
+        return;
+    }
+
+    sheet.style.transform = "";
+    sheet.style.transformOrigin = "";
+
+    if (!isMobileViewport() || state.currentStep < getTotalSteps()) {
+        return;
+    }
+
+    const modalBody = elements.documentModal.querySelector(".modal-body");
+    const stepIndicatorHeight = elements.stepIndicator?.offsetHeight || 0;
+    const availableWidth = Math.max(activePreview.clientWidth - 8, 1);
+    const availableHeight = Math.max((modalBody?.clientHeight || window.innerHeight) - stepIndicatorHeight - 24, 1);
+    const sheetWidth = Math.max(sheet.offsetWidth, 1);
+    const sheetHeight = Math.max(sheet.offsetHeight, 1);
+    const scale = Math.min(availableWidth / sheetWidth, availableHeight / sheetHeight, 1);
+
+    if (scale < 0.999) {
+        sheet.style.transform = `scale(${scale})`;
+        sheet.style.transformOrigin = "top center";
+    }
+}
+
+function openCatalogItemModal() {
+    state.editingCatalogItemId = null;
+    elements.catalogItemNameInput.value = "";
+    elements.catalogItemPriceInput.value = "0";
+    elements.catalogItemCategoryInput.value = "";
+    elements.catalogItemBrandInput.value = "";
+    elements.catalogItemUnitSizeInput.value = "";
+    elements.catalogItemVendorInput.value = "";
+    elements.catalogItemDetailsInput.value = "";
+    elements.catalogItemNotesInput.value = "";
+    setModalState(elements.catalogItemModal, true);
+    applyTranslations();
+}
+
+function closeCatalogItemModal() {
+    setModalState(elements.catalogItemModal, false);
+    state.editingCatalogItemId = null;
+}
+
+function openCatalogDetailsModal(item) {
+    if (!item || !elements.catalogDetailsModal) {
+        return;
+    }
+
+    const fallbackLabel = (item.name || "Item").trim().slice(0, 2).toUpperCase() || "IT";
+    setElementText("#catalogDetailsTitle", item.name || "Catalog Item");
+    setElementText("#catalogDetailsName", item.name || "Untitled item");
+    setElementText("#catalogDetailsMeta", `${t(`source_${item.sourceKey}`)} · ${formatDateTime(item.dateUpdated)}`);
+    setElementText("#catalogDetailsPrice", formatCurrency(item.price || 0));
+    setElementText("#catalogDetailsCategory", item.category || "—");
+    setElementText("#catalogDetailsBrand", item.brand || "—");
+    setElementText("#catalogDetailsUnitSize", item.unitSize || "—");
+    setElementText("#catalogDetailsVendor", item.vendor || "—");
+    setElementText("#catalogDetailsText", item.details || "—");
+    setElementText("#catalogDetailsNotes", item.notes || "—");
+    setElementText("#catalogDetailsFallback", fallbackLabel);
+
+    if (item.imageDataUrl) {
+        elements.catalogDetailsImage.src = item.imageDataUrl;
+        elements.catalogDetailsImage.hidden = false;
+        elements.catalogDetailsFallback.hidden = true;
+    } else {
+        elements.catalogDetailsImage.hidden = true;
+        elements.catalogDetailsImage.removeAttribute("src");
+        elements.catalogDetailsFallback.hidden = false;
+    }
+
+    setModalState(elements.catalogDetailsModal, true);
+}
+
+function closeCatalogDetailsModal() {
+    setModalState(elements.catalogDetailsModal, false);
+}
+
+function getCatalogEntries() {
+    const manualEntries = state.catalogItems.map(item => ({
+        ...item,
+        imageDataUrl: typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl : "",
+        sourceKey: "manual"
+    }));
+
+    const cartEntries = state.savedItems.map(item => ({
+        id: `cart-${item.id}`,
+        name: item.description || "Untitled item",
+        details: item.description || "",
+        notes: "",
+        price: Number(item.unitPrice || 0),
+        dateUpdated: item.createdAt || new Date().toISOString(),
+        category: "",
+        brand: "",
+        unitSize: item.quantity ? `Qty ${formatAmount(item.quantity)}` : "",
+        vendor: "",
+        imageDataUrl: typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl : "",
+        sourceKey: "cart"
+    }));
+
+    const documentEntries = state.documents.flatMap(doc => (Array.isArray(doc.items) ? doc.items : []).map((item, index) => ({
+        id: `doc-${doc.id}-${index}`,
+        name: item.description || `Item ${index + 1}`,
+        details: item.description || "",
+        notes: doc.notes || "",
+        price: Number(item.unitPrice || item.price || 0),
+        dateUpdated: doc.printedAt || doc.date || new Date().toISOString(),
+        category: "",
+        brand: "",
+        unitSize: item.quantity ? `Qty ${formatAmount(item.quantity)}` : "",
+        vendor: doc.clientName || "",
+        imageDataUrl: typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl : "",
+        sourceKey: "document"
+    })));
+
+    return [...manualEntries, ...cartEntries, ...documentEntries]
+        .sort((left, right) => Date.parse(right.dateUpdated || 0) - Date.parse(left.dateUpdated || 0));
+}
+
+function renderCatalog() {
+    if (!elements.catalogGrid) {
+        return;
+    }
+
+    const entries = getCatalogEntries();
+    if (!entries.length) {
+        elements.catalogGrid.innerHTML = `
+            <div class="empty-state">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h10"></path>
+                </svg>
+                <p>${escapeHtml(t("no_catalog_items"))}</p>
+            </div>
+        `;
+        return;
+    }
+
+    elements.catalogGrid.innerHTML = entries.map(item => `
+        <article class="catalog-card">
+            <button class="catalog-card-trigger" type="button" data-catalog-action="open" data-catalog-id="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.name)}">
+                <div class="catalog-card-bubble" aria-hidden="true">
+                    ${item.imageDataUrl
+                        ? `<img src="${escapeHtml(item.imageDataUrl)}" alt="${escapeHtml(item.name)}">`
+                        : `<span>${escapeHtml((item.name || "Item").trim().slice(0, 2).toUpperCase() || "IT")}</span>`}
+                </div>
+                <div class="catalog-card-copy">
+                    <strong>${escapeHtml(item.name)}</strong>
+                    <span>${escapeHtml(t(`source_${item.sourceKey}`))}</span>
+                </div>
+            </button>
+            ${item.sourceKey === "manual" ? `<button class="catalog-edit-btn" type="button" data-catalog-action="edit" data-catalog-id="${escapeHtml(item.id)}">${escapeHtml(t("edit"))}</button>` : ""}
+        </article>
+    `).join("");
+}
+
+function handleCatalogGridClick(event) {
+    const openButton = event.target.closest("[data-catalog-action=\"open\"]");
+    if (openButton) {
+        const item = getCatalogEntries().find(entry => entry.id === openButton.dataset.catalogId);
+        if (item) {
+            openCatalogDetailsModal(item);
+        }
+        return;
+    }
+
+    const editButton = event.target.closest("[data-catalog-action=\"edit\"]");
+    if (!editButton) {
+        return;
+    }
+
+    const item = state.catalogItems.find(entry => entry.id === editButton.dataset.catalogId);
+    if (!item) {
+        return;
+    }
+
+    state.editingCatalogItemId = item.id;
+    elements.catalogItemNameInput.value = item.name || "";
+    elements.catalogItemPriceInput.value = String(item.price || 0);
+    elements.catalogItemCategoryInput.value = item.category || "";
+    elements.catalogItemBrandInput.value = item.brand || "";
+    elements.catalogItemUnitSizeInput.value = item.unitSize || "";
+    elements.catalogItemVendorInput.value = item.vendor || "";
+    elements.catalogItemDetailsInput.value = item.details || "";
+    elements.catalogItemNotesInput.value = item.notes || "";
+    closeCatalogDetailsModal();
+    setModalState(elements.catalogItemModal, true);
+    applyTranslations();
+}
+
+async function saveCatalogItemFromModal() {
+    const name = elements.catalogItemNameInput.value.trim();
+    if (!name) {
+        window.alert("Enter an item name before saving.");
+        return;
+    }
+
+    const item = {
+        id: state.editingCatalogItemId || `catalog-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        name,
+        details: elements.catalogItemDetailsInput.value.trim(),
+        notes: elements.catalogItemNotesInput.value.trim(),
+        price: Number.parseFloat(elements.catalogItemPriceInput.value) || 0,
+        dateUpdated: new Date().toISOString(),
+        category: elements.catalogItemCategoryInput.value.trim(),
+        brand: elements.catalogItemBrandInput.value.trim(),
+        unitSize: elements.catalogItemUnitSizeInput.value.trim(),
+        vendor: elements.catalogItemVendorInput.value.trim()
+    };
+
+    const nextItems = state.editingCatalogItemId
+        ? state.catalogItems.map(entry => entry.id === state.editingCatalogItemId ? item : entry)
+        : [item, ...state.catalogItems];
+
+    await saveCatalogItems(nextItems);
+    closeCatalogItemModal();
+    setActivePage("catalog");
+}
+
+function syncItemActionMenus() {
+    elements.itemsContainer.querySelectorAll("[data-item-menu]").forEach(menu => {
+        const isOpen = menu.dataset.itemMenu === state.openItemMenuId;
+        menu.hidden = !isOpen;
+        menu.style.display = isOpen ? "grid" : "none";
+    });
+    elements.itemsContainer.querySelectorAll("[data-toggle-item-menu]").forEach(button => {
+        button.setAttribute("aria-expanded", String(button.dataset.toggleItemMenu === state.openItemMenuId));
+    });
+}
+
+function syncDocumentActionMenus() {
+    elements.documentsGrid.querySelectorAll("[data-document-menu]").forEach(menu => {
+        const isOpen = menu.dataset.documentMenu === state.openDocumentMenuId;
+        menu.hidden = !isOpen;
+        menu.style.display = isOpen ? "grid" : "none";
+        const row = menu.closest(".document-row");
+        if (row) {
+            row.classList.toggle("has-open-menu", isOpen);
+        }
+    });
+    elements.documentsGrid.querySelectorAll("[data-toggle-document-menu]").forEach(button => {
+        button.setAttribute("aria-expanded", String(button.dataset.toggleDocumentMenu === state.openDocumentMenuId));
+    });
+}
+
 function handleTopbarSettingsClick() {
     closeTopbarMenu();
     openSettingsModal();
@@ -1943,13 +2890,13 @@ function handleGlobalClick(event) {
         closeTopbarMenu();
     }
 
-    if (!event.target.closest(".item-action-menu-wrap")) {
-        state.openItemActionMenuId = null;
+    if (!event.target.closest(".item-actions-menu-wrap") && state.openItemMenuId !== null) {
+        state.openItemMenuId = null;
         syncItemActionMenus();
     }
 
-    if (!event.target.closest(".doc-action-menu-wrap")) {
-        state.openDocumentActionMenuId = null;
+    if (!event.target.closest(".doc-actions-menu-wrap") && state.openDocumentMenuId !== null) {
+        state.openDocumentMenuId = null;
         syncDocumentActionMenus();
     }
 }
@@ -1963,26 +2910,22 @@ function openSettingsModal() {
     syncEditorPreferenceControls();
     renderUserManagementList();
     renderClientManagementList();
-    elements.settingsModal.classList.add("active");
-    elements.settingsModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.settingsModal, true);
 }
 
 function closeSettingsModal() {
-    elements.settingsModal.classList.remove("active");
-    elements.settingsModal.setAttribute("aria-hidden", "true");
+    setModalState(elements.settingsModal, false);
 }
 
 function openIssueReportModal() {
     elements.issueReportStatus.hidden = true;
     elements.issueReportStatus.textContent = "";
     elements.issueReportStatus.classList.remove("hero-helper-error");
-    elements.issueReportModal.classList.add("active");
-    elements.issueReportModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.issueReportModal, true);
 }
 
 function closeIssueReportModal() {
-    elements.issueReportModal.classList.remove("active");
-    elements.issueReportModal.setAttribute("aria-hidden", "true");
+    setModalState(elements.issueReportModal, false);
 }
 
 async function openIssueInboxModal() {
@@ -1991,13 +2934,141 @@ async function openIssueInboxModal() {
     }
 
     await saveIssueReports(state.issueReports.map(report => ({ ...report, unread: false })));
-    elements.issueInboxModal.classList.add("active");
-    elements.issueInboxModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.issueInboxModal, true);
 }
 
 function closeIssueInboxModal() {
-    elements.issueInboxModal.classList.remove("active");
-    elements.issueInboxModal.setAttribute("aria-hidden", "true");
+    setModalState(elements.issueInboxModal, false);
+}
+
+function openInvoiceReportsModal() {
+    renderInvoiceReport();
+    setModalState(elements.invoiceReportsModal, true);
+}
+
+function closeInvoiceReportsModal() {
+    setModalState(elements.invoiceReportsModal, false);
+}
+
+function getInvoiceReportFilter() {
+    const activeButton = elements.invoiceReportFilterButtons.find(button => button.classList.contains("active"));
+    return activeButton?.dataset?.invoiceReportFilter || "all";
+}
+
+function handleInvoiceReportFilterClick(event) {
+    const button = event.currentTarget;
+    const nextFilter = button.dataset.invoiceReportFilter || "all";
+    elements.invoiceReportFilterButtons.forEach(entry => {
+        const isActive = entry.dataset.invoiceReportFilter === nextFilter;
+        entry.classList.toggle("active", isActive);
+        entry.setAttribute("aria-pressed", String(isActive));
+    });
+    renderInvoiceReport();
+}
+
+function renderInvoiceReport() {
+    if (!elements.invoiceReportList || !elements.invoiceReportSummary || !elements.invoiceReportSort) {
+        return;
+    }
+
+    const allInvoices = state.documents.filter(doc => doc.type === "invoice");
+    const filter = getInvoiceReportFilter();
+    const sortOrder = elements.invoiceReportSort.value || "client_asc";
+    const filteredInvoices = allInvoices
+        .filter(doc => filter === "all" || (filter === "paid" ? doc.paymentStatus === "paid" : doc.paymentStatus !== "paid"));
+    const groupedByClient = new Map();
+
+    filteredInvoices.forEach(doc => {
+        const clientName = String(doc.clientName || t("unknown_client")).trim() || t("unknown_client");
+        const existingGroup = groupedByClient.get(clientName) || {
+            clientName,
+            invoices: [],
+            total: 0
+        };
+        existingGroup.invoices.push(doc);
+        existingGroup.total += Number(doc.total || 0);
+        groupedByClient.set(clientName, existingGroup);
+    });
+
+    const clientGroups = [...groupedByClient.values()]
+        .map(group => ({
+            ...group,
+            invoices: [...group.invoices].sort((left, right) => compareDocuments(left, right, "date_desc"))
+        }))
+        .sort((left, right) => {
+            const comparison = left.clientName.localeCompare(right.clientName, getCurrentLocale(), { sensitivity: "base" });
+            return sortOrder === "client_desc" ? -comparison : comparison;
+        });
+
+    const paidCount = allInvoices.filter(doc => doc.paymentStatus === "paid").length;
+    const pendingCount = allInvoices.filter(doc => doc.paymentStatus !== "paid").length;
+    const paidTotal = allInvoices
+        .filter(doc => doc.paymentStatus === "paid")
+        .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
+    const pendingTotal = allInvoices
+        .filter(doc => doc.paymentStatus !== "paid")
+        .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
+
+    elements.invoiceReportSummary.innerHTML = `
+        <article class="invoice-report-summary-card">
+            <span>${escapeHtml(t("report_total_invoices"))}</span>
+            <strong>${escapeHtml(String(allInvoices.length))}</strong>
+        </article>
+        <article class="invoice-report-summary-card">
+            <span>${escapeHtml(t("report_total_clients"))}</span>
+            <strong>${escapeHtml(String(new Set(allInvoices.map(doc => String(doc.clientName || t("unknown_client")).trim() || t("unknown_client"))).size))}</strong>
+        </article>
+        <article class="invoice-report-summary-card">
+            <span>${escapeHtml(t("report_total_paid"))}</span>
+            <strong>${escapeHtml(`${paidCount} • ${formatCurrency(paidTotal)}`)}</strong>
+        </article>
+        <article class="invoice-report-summary-card">
+            <span>${escapeHtml(t("report_total_pending"))}</span>
+            <strong>${escapeHtml(`${pendingCount} • ${formatCurrency(pendingTotal)}`)}</strong>
+        </article>
+    `;
+
+    if (!allInvoices.length) {
+        elements.invoiceReportList.innerHTML = `<p class="invoice-report-empty">${escapeHtml(t("report_no_invoices"))}</p>`;
+        return;
+    }
+
+    if (!clientGroups.length) {
+        elements.invoiceReportList.innerHTML = `<p class="invoice-report-empty">${escapeHtml(t("report_no_matches"))}</p>`;
+        return;
+    }
+
+    elements.invoiceReportList.innerHTML = clientGroups.map(group => `
+        <article class="invoice-report-client-card">
+            <div class="invoice-report-client-header">
+                <div>
+                    <strong>${escapeHtml(group.clientName)}</strong>
+                    <span>${escapeHtml(`${group.invoices.length} ${t("report_total_invoices").toLowerCase()}`)}</span>
+                </div>
+                <div class="invoice-report-client-total">${escapeHtml(formatCurrency(group.total))}</div>
+            </div>
+            <table class="invoice-report-table">
+                <thead>
+                    <tr>
+                        <th>${escapeHtml(t("report_ref"))}</th>
+                        <th>${escapeHtml(t("report_date"))}</th>
+                        <th>${escapeHtml(t("report_status"))}</th>
+                        <th>${escapeHtml(t("report_total"))}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${group.invoices.map(doc => `
+                        <tr>
+                            <td><strong>${escapeHtml(doc.refNumber || "—")}</strong></td>
+                            <td>${escapeHtml(formatDisplayDate(doc.date) || t("no_date"))}</td>
+                            <td>${escapeHtml(doc.paymentStatus === "paid" ? t("payment_paid") : t("report_pending"))}</td>
+                            <td>${escapeHtml(formatCurrency(doc.total || 0))}</td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
+        </article>
+    `).join("");
 }
 
 function syncCompanyProfileForm() {
@@ -2019,13 +3090,11 @@ function openCompanyProfileModal() {
 
     closeTopbarMenu();
     syncCompanyProfileForm();
-    elements.companyProfileModal.classList.add("active");
-    elements.companyProfileModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.companyProfileModal, true);
 }
 
 function closeCompanyProfileModal() {
-    elements.companyProfileModal.classList.remove("active");
-    elements.companyProfileModal.setAttribute("aria-hidden", "true");
+    setModalState(elements.companyProfileModal, false);
 }
 
 async function saveCompanyProfile() {
@@ -2038,6 +3107,7 @@ async function saveCompanyProfile() {
         website: elements.companyWebsiteInput.value,
         taxId: elements.companyTaxIdInput.value
     });
+    recordActivity("updated company profile", "Edited the SantoSync business identity settings.");
     closeCompanyProfileModal();
     renderDocuments();
     generatePreviews();
@@ -2106,7 +3176,7 @@ async function handleSavedItemImageInputChange() {
         }
 
         try {
-            const itemImageDataUrl = await readFileAsDataUrl(file);
+            const itemImageDataUrl = await readImageFileAsDataUrl(file);
             await saveSavedItemsState(state.savedItems.map(item =>
                 item.id === state.pendingSavedItemImageUploadId
                     ? { ...item, itemImageDataUrl }
@@ -2130,7 +3200,7 @@ async function handleSavedItemImageInputChange() {
     }
 
     try {
-        elements.savedItemCreateModal.dataset.itemImageDataUrl = await readFileAsDataUrl(file);
+        elements.savedItemCreateModal.dataset.itemImageDataUrl = await readImageFileAsDataUrl(file);
         syncSavedItemImageUI();
     } catch (error) {
         clearSavedItemImageSelection();
@@ -2139,13 +3209,6 @@ async function handleSavedItemImageInputChange() {
 }
 
 function handleImageUploadTriggerClick(event) {
-    const savedItemUploadTrigger = event.target.closest(".saved-item-image-upload-btn");
-    if (savedItemUploadTrigger && elements.savedItemImageInput) {
-        event.preventDefault();
-        elements.savedItemImageInput.click();
-        return;
-    }
-
     const itemUploadTrigger = event.target.closest(".item-image-upload-btn");
     if (itemUploadTrigger) {
         const itemRow = itemUploadTrigger.closest(".item-row");
@@ -2160,13 +3223,11 @@ function handleImageUploadTriggerClick(event) {
 function openSavedItemsModal() {
     renderSavedItemsList();
     syncSavedItemsTotal();
-    elements.savedItemsModal.classList.add("active");
-    elements.savedItemsModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.savedItemsModal, true);
 }
 
 function closeSavedItemsModal() {
-    elements.savedItemsModal.classList.remove("active");
-    elements.savedItemsModal.setAttribute("aria-hidden", "true");
+    setModalState(elements.savedItemsModal, false);
     closeSavedItemCreateModal();
 }
 
@@ -2185,8 +3246,7 @@ function openSavedItemCreateModal() {
     elements.savedItemTotalInput.value = "0";
     applyTranslations();
     syncSavedItemImageUI();
-    elements.savedItemCreateModal.classList.add("active");
-    elements.savedItemCreateModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.savedItemCreateModal, true);
     elements.savedItemDescriptionInput.focus();
 }
 
@@ -2205,8 +3265,7 @@ function openSavedItemEditModal(item) {
     elements.savedItemTotalInput.value = formatAmount(item.total || 0);
     applyTranslations();
     syncSavedItemImageUI();
-    elements.savedItemCreateModal.classList.add("active");
-    elements.savedItemCreateModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.savedItemCreateModal, true);
     elements.savedItemDescriptionInput.focus();
 }
 
@@ -2216,8 +3275,7 @@ function closeSavedItemCreateModal() {
     }
     state.editingSavedItemId = null;
     elements.savedItemCreateModal.dataset.itemImageDataUrl = "";
-    elements.savedItemCreateModal.classList.remove("active");
-    elements.savedItemCreateModal.setAttribute("aria-hidden", "true");
+    setModalState(elements.savedItemCreateModal, false);
 }
 
 function openSavedItemImageModal(imageUrl) {
@@ -2256,38 +3314,40 @@ function renderSavedItemsList() {
     const canUseInCurrentDocument = canInsertCartItemIntoEditor();
     elements.savedItemsList.innerHTML = sortedItems.map(item => `
         <article class="saved-item-card${state.highlightedSavedItemId === item.id ? " saved-item-card-highlighted" : ""}" data-saved-item-card="${escapeHtml(item.id)}">
-            <div class="saved-item-thumb${item.itemImageDataUrl ? " is-clickable" : ""}" ${item.itemImageDataUrl ? `data-saved-item-action="preview-image" data-saved-item-id="${escapeHtml(item.id)}" role="button" tabindex="0" aria-label="Preview item image"` : 'aria-hidden="true"'}>
-                ${item.itemImageDataUrl
-                    ? `<img src="${escapeHtml(item.itemImageDataUrl)}" alt="${escapeHtml(item.description)}">`
-                    : `<div class="saved-item-thumb-placeholder">
-                        <div class="saved-item-thumb-icon">
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <rect x="4.5" y="5" width="15" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/>
-                                <circle cx="9" cy="10" r="1.4" fill="currentColor"/>
-                                <path d="M6.8 16l3.6-3.5 2.5 2.2 2.4-2 1.9 3.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                        </div>
-                        <span>No Image</span>
-                    </div>`}
-            </div>
-            <div class="saved-item-card-main">
-                <div class="saved-item-card-top">
-                    <strong>${escapeHtml(item.description)}</strong>
-                    <span class="saved-item-card-date">${escapeHtml(formatDateTime(item.createdAt))}</span>
+            <div class="saved-item-card-layout">
+                <div class="saved-item-thumb${item.itemImageDataUrl ? " is-clickable" : ""}" ${item.itemImageDataUrl ? `data-saved-item-action="preview-image" data-saved-item-id="${escapeHtml(item.id)}" role="button" tabindex="0" aria-label="Preview item image"` : 'aria-hidden="true"'}>
+                    ${item.itemImageDataUrl
+                        ? `<img src="${escapeHtml(item.itemImageDataUrl)}" alt="${escapeHtml(item.description)}">`
+                        : `<div class="saved-item-thumb-placeholder">
+                            <div class="saved-item-thumb-icon">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <rect x="4.5" y="5" width="15" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                    <circle cx="9" cy="10" r="1.4" fill="currentColor"/>
+                                    <path d="M6.8 16l3.6-3.5 2.5 2.2 2.4-2 1.9 3.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <span>No Image</span>
+                        </div>`}
                 </div>
-                <p class="saved-item-card-copy">${escapeHtml(item.description)}</p>
-                <div class="saved-item-card-metrics">
-                    <div class="saved-item-metric">
-                        <span class="saved-item-metric-label">Qty</span>
-                        <strong>${escapeHtml(formatAmount(item.quantity))}</strong>
+                <div class="saved-item-card-main">
+                    <div class="saved-item-card-top">
+                        <strong>${escapeHtml(item.description)}</strong>
+                        <span class="saved-item-card-date">${escapeHtml(formatDateTime(item.createdAt))}</span>
                     </div>
-                    <div class="saved-item-metric">
-                        <span class="saved-item-metric-label">Price</span>
-                        <strong>${escapeHtml(formatCurrency(item.unitPrice))}</strong>
-                    </div>
-                    <div class="saved-item-metric saved-item-metric-total">
-                        <span class="saved-item-metric-label">Total</span>
-                        <strong>${escapeHtml(formatCurrency(item.total))}</strong>
+                    <p class="saved-item-card-copy">${escapeHtml(item.description)}</p>
+                    <div class="saved-item-card-metrics">
+                        <div class="saved-item-metric">
+                            <span class="saved-item-metric-label">Qty</span>
+                            <strong>${escapeHtml(formatAmount(item.quantity))}</strong>
+                        </div>
+                        <div class="saved-item-metric">
+                            <span class="saved-item-metric-label">Price</span>
+                            <strong>${escapeHtml(formatCurrency(item.unitPrice))}</strong>
+                        </div>
+                        <div class="saved-item-metric saved-item-metric-total">
+                            <span class="saved-item-metric-label">Total</span>
+                            <strong>${escapeHtml(formatCurrency(item.total))}</strong>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2426,9 +3486,9 @@ function addSavedItemToEditor(item) {
 
     lastItem.querySelector(".item-description").value = item.description;
     lastItem.querySelector(".item-quantity").value = formatAmount(item.quantity);
-    lastItem.querySelector(".item-manual-unit-toggle").checked = true;
     lastItem.querySelector(".item-unit-price").value = formatAmount(item.unitPrice);
     lastItem.querySelector(".item-total-price").value = formatAmount(item.total);
+    lastItem.dataset.priceDriver = "unit";
     lastItem.dataset.itemImageDataUrl = item.itemImageDataUrl || "";
     updateItemPricing(lastItem);
     syncItemImageUI(lastItem);
@@ -2513,13 +3573,310 @@ function handleSavedItemsListKeydown(event) {
 }
 
 function openAboutModal() {
-    elements.aboutModal.classList.add("active");
-    elements.aboutModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.aboutModal, true);
 }
 
 function closeAboutModal() {
-    elements.aboutModal.classList.remove("active");
-    elements.aboutModal.setAttribute("aria-hidden", "true");
+    setModalState(elements.aboutModal, false);
+}
+
+function getManagedUserLabel(userId) {
+    if (!userId) {
+        return "Direct account";
+    }
+    const parent = state.userAccounts.find(entry => entry.id === userId);
+    return parent ? `Sub-account of ${parent.displayName}` : "Direct account";
+}
+
+function syncAccountAdminParentOptions() {
+    if (!elements.accountAdminParentSelect) {
+        return;
+    }
+
+    const currentEditingId = state.editingManagedUserId;
+    const options = ['<option value="">Direct account for SantoSync</option>']
+        .concat(state.userAccounts
+            .filter(user => user.id !== currentEditingId && user.role !== "owner")
+            .map(user => `<option value="${escapeHtml(user.id)}">${escapeHtml(user.displayName)}${user.email ? ` • ${escapeHtml(user.email)}` : ""}</option>`));
+    elements.accountAdminParentSelect.innerHTML = options.join("");
+}
+
+function resetAccountAdminForm() {
+    state.editingManagedUserId = null;
+    if (!elements.accountAdminDisplayNameInput) {
+        return;
+    }
+
+    elements.accountAdminFormTitle.textContent = "Add Workspace Account";
+    elements.accountAdminDisplayNameInput.value = "";
+    elements.accountAdminUsernameInput.value = "";
+    elements.accountAdminEmailInput.value = "";
+    elements.accountAdminPasswordInput.value = "";
+    elements.accountAdminRoleSelect.value = "user";
+    elements.accountAdminAccessLevelSelect.value = "workspace";
+    syncAccountAdminParentOptions();
+    elements.accountAdminParentSelect.value = "";
+    elements.accountAdminCancelEditBtn.hidden = true;
+}
+
+function syncBrandAssetPreviews() {
+    const signatureUrl = state.companyProfile?.signatureDataUrl || "";
+    const stampUrl = state.companyProfile?.stampDataUrl || "";
+
+    if (elements.accountSignaturePreview && elements.accountSignatureFallback) {
+        elements.accountSignaturePreview.hidden = !signatureUrl;
+        elements.accountSignatureFallback.hidden = Boolean(signatureUrl);
+        if (signatureUrl) {
+            elements.accountSignaturePreview.src = signatureUrl;
+        } else {
+            elements.accountSignaturePreview.removeAttribute("src");
+        }
+    }
+
+    if (elements.accountStampPreview && elements.accountStampFallback) {
+        elements.accountStampPreview.hidden = !stampUrl;
+        elements.accountStampFallback.hidden = Boolean(stampUrl);
+        if (stampUrl) {
+            elements.accountStampPreview.src = stampUrl;
+        } else {
+            elements.accountStampPreview.removeAttribute("src");
+        }
+    }
+}
+
+function renderAccountAdminPage() {
+    if (!elements.accountAdminPage) {
+        return;
+    }
+
+    if (!isOwnerSession()) {
+        elements.accountAdminPage.hidden = true;
+        return;
+    }
+
+    const managedUsers = state.userAccounts.filter(user => user.role !== "owner");
+    const subaccountCount = managedUsers.filter(user => user.parentUserId).length;
+    const recentSessions = state.sessionLogs.slice(0, 8);
+    const recentActivities = state.activityLogs.slice(0, 10);
+
+    elements.accountAdminOwnerName.textContent = state.currentUser?.displayName || "SantoSync Owner";
+    elements.accountAdminOwnerMeta.textContent = state.currentUser?.email || DEFAULT_OWNER_USER.email;
+    elements.accountAdminOwnerBadge.textContent = "Owner";
+    elements.accountUserCountStat.textContent = String(managedUsers.length);
+    elements.accountSubaccountCountStat.textContent = String(subaccountCount);
+    elements.accountSessionCountStat.textContent = String(recentSessions.length);
+    elements.accountActivityCountStat.textContent = String(recentActivities.length);
+
+    const sortedUsers = [...managedUsers].sort((left, right) => {
+        if (Boolean(left.parentUserId) !== Boolean(right.parentUserId)) {
+            return left.parentUserId ? 1 : -1;
+        }
+        return left.displayName.localeCompare(right.displayName);
+    });
+
+    elements.accountAdminUserList.innerHTML = sortedUsers.length
+        ? sortedUsers.map(user => `
+            <article class="account-admin-user-card${user.parentUserId ? " subaccount" : ""}">
+                <div class="account-admin-user-copy">
+                    <strong>${escapeHtml(user.displayName)}</strong>
+                    <span class="account-admin-user-meta">@${escapeHtml(user.username)}${user.email ? ` • ${escapeHtml(user.email)}` : ""}</span>
+                    <div class="account-admin-user-tags">
+                        <span class="account-admin-user-tag">${escapeHtml(user.role === "admin" ? "Admin" : "User")}</span>
+                        <span class="account-admin-user-tag">${escapeHtml(user.accessLevel || "workspace")}</span>
+                        <span class="account-admin-user-tag">${escapeHtml(getManagedUserLabel(user.parentUserId))}</span>
+                        ${user.lastLoginAt ? `<span class="account-admin-user-tag">Last login ${escapeHtml(formatDateTime(user.lastLoginAt))}</span>` : ""}
+                    </div>
+                </div>
+                <div class="account-admin-user-actions">
+                    <button class="btn btn-secondary" type="button" data-account-action="edit" data-user-id="${escapeHtml(user.id)}">Edit</button>
+                    <button class="btn btn-secondary" type="button" data-account-action="reset-password" data-user-id="${escapeHtml(user.id)}">Reset Password</button>
+                    <button class="btn btn-secondary" type="button" data-account-action="delete" data-user-id="${escapeHtml(user.id)}"${user.username === "admin" ? " disabled" : ""}>Delete</button>
+                </div>
+            </article>
+        `).join("")
+        : `<p class="user-list-empty">No registered accounts yet.</p>`;
+
+    elements.accountSessionLogList.innerHTML = recentSessions.length
+        ? recentSessions.map(log => `
+            <article class="account-admin-feed-card">
+                <strong>${escapeHtml(log.displayName)}</strong>
+                <span class="account-admin-feed-meta">${escapeHtml(log.username)} • ${escapeHtml(log.status === "open" ? "Active session" : "Closed session")}</span>
+                <span class="account-admin-feed-meta">Started ${escapeHtml(formatDateTime(log.startedAt))}${log.endedAt ? ` • Ended ${escapeHtml(formatDateTime(log.endedAt))}` : ""}</span>
+                ${log.reason ? `<span class="account-admin-feed-meta">${escapeHtml(log.reason)}</span>` : ""}
+            </article>
+        `).join("")
+        : `<p class="user-list-empty">No login sessions recorded yet.</p>`;
+
+    elements.accountActivityLogList.innerHTML = recentActivities.length
+        ? recentActivities.map(log => `
+            <article class="account-admin-feed-card">
+                <strong>${escapeHtml(log.action)}</strong>
+                <span class="account-admin-feed-meta">${escapeHtml(log.displayName)} • ${escapeHtml(formatDateTime(log.createdAt))}</span>
+                <span class="account-admin-feed-meta">${escapeHtml(log.details || "")}</span>
+            </article>
+        `).join("")
+        : `<p class="user-list-empty">No workspace activity recorded yet.</p>`;
+
+    syncAccountAdminParentOptions();
+    syncBrandAssetPreviews();
+}
+
+async function handleAccountAdminSaveUser() {
+    if (!isOwnerSession()) {
+        setImportStatus("Only the owner account can manage registered accounts.", true);
+        return;
+    }
+
+    const displayName = elements.accountAdminDisplayNameInput.value.trim();
+    const username = elements.accountAdminUsernameInput.value.trim().toLowerCase();
+    const email = elements.accountAdminEmailInput.value.trim().toLowerCase();
+    const password = elements.accountAdminPasswordInput.value.trim();
+    const role = elements.accountAdminRoleSelect.value === "admin" ? "admin" : "user";
+    const accessLevel = elements.accountAdminAccessLevelSelect.value;
+    const parentUserId = elements.accountAdminParentSelect.value;
+
+    if (!displayName || !username || !email || !password) {
+        window.alert("Enter a display name, username, email, and password before saving this account.");
+        return;
+    }
+
+    const duplicateUser = state.userAccounts.find(user =>
+        user.id !== state.editingManagedUserId && (user.username === username || user.email === email)
+    );
+    if (duplicateUser) {
+        window.alert("That username or email is already in use.");
+        return;
+    }
+
+    const nextUsers = state.editingManagedUserId
+        ? state.userAccounts.map(user => user.id === state.editingManagedUserId
+            ? { ...user, displayName, username, email, password, role, accessLevel, parentUserId }
+            : user)
+        : [
+            ...state.userAccounts,
+            {
+                id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                displayName,
+                username,
+                email,
+                password,
+                role,
+                accessLevel,
+                parentUserId
+            }
+        ];
+
+    await saveUserAccounts(nextUsers);
+    recordActivity(state.editingManagedUserId ? "updated account" : "created account", `${displayName} was ${state.editingManagedUserId ? "updated" : "added"} in Account Admin.`);
+    resetAccountAdminForm();
+    setImportStatus(`${displayName} saved to SantoSync account management.`);
+}
+
+async function handleAccountAdminUserListClick(event) {
+    const button = event.target.closest("[data-account-action]");
+    if (!button || !isOwnerSession()) {
+        return;
+    }
+
+    const userId = button.dataset.userId;
+    const action = button.dataset.accountAction;
+    const user = state.userAccounts.find(entry => entry.id === userId);
+    if (!user) {
+        return;
+    }
+
+    if (action === "edit") {
+        state.editingManagedUserId = user.id;
+        elements.accountAdminFormTitle.textContent = `Edit ${user.displayName}`;
+        elements.accountAdminDisplayNameInput.value = user.displayName;
+        elements.accountAdminUsernameInput.value = user.username;
+        elements.accountAdminEmailInput.value = user.email || "";
+        elements.accountAdminPasswordInput.value = user.password;
+        elements.accountAdminRoleSelect.value = user.role === "admin" ? "admin" : "user";
+        elements.accountAdminAccessLevelSelect.value = user.accessLevel || "workspace";
+        syncAccountAdminParentOptions();
+        elements.accountAdminParentSelect.value = user.parentUserId || "";
+        elements.accountAdminCancelEditBtn.hidden = false;
+        return;
+    }
+
+    if (action === "reset-password") {
+        const nextPassword = window.prompt(`Enter a new password for ${user.displayName}:`, user.password || "");
+        if (!nextPassword) {
+            return;
+        }
+
+        await saveUserAccounts(state.userAccounts.map(entry =>
+            entry.id === user.id ? { ...entry, password: nextPassword.trim() || entry.password } : entry
+        ));
+        recordActivity("reset password", `Reset the password for ${user.displayName}.`);
+        setImportStatus(`Password reset for ${user.displayName}.`);
+        return;
+    }
+
+    if (action === "delete") {
+        if (!window.confirm(`Remove ${user.displayName} from SantoSync account management?`)) {
+            return;
+        }
+
+        await saveUserAccounts(state.userAccounts.filter(entry => entry.id !== user.id && entry.parentUserId !== user.id));
+        recordActivity("deleted account", `Removed ${user.displayName} and any direct sub-accounts.`);
+        resetAccountAdminForm();
+        setImportStatus(`Removed ${user.displayName} from SantoSync.`);
+    }
+}
+
+async function handleBrandAssetSelection(event) {
+    const input = event.target;
+    const file = input.files?.[0];
+    if (!file) {
+        return;
+    }
+
+    try {
+        const dataUrl = await readFileAsDataUrl(file);
+        if (input === elements.accountSignatureInput) {
+            state.companyProfile = normalizeCompanyProfile({
+                ...state.companyProfile,
+                signatureDataUrl: dataUrl
+            });
+        }
+        if (input === elements.accountStampInput) {
+            state.companyProfile = normalizeCompanyProfile({
+                ...state.companyProfile,
+                stampDataUrl: dataUrl
+            });
+        }
+        syncBrandAssetPreviews();
+    } catch (error) {
+        window.alert(error.message || "Unable to read image.");
+    }
+}
+
+function clearBrandAsset(type) {
+    state.companyProfile = normalizeCompanyProfile({
+        ...state.companyProfile,
+        signatureDataUrl: type === "signature" ? "" : state.companyProfile?.signatureDataUrl,
+        stampDataUrl: type === "stamp" ? "" : state.companyProfile?.stampDataUrl
+    });
+    if (type === "signature" && elements.accountSignatureInput) {
+        elements.accountSignatureInput.value = "";
+    }
+    if (type === "stamp" && elements.accountStampInput) {
+        elements.accountStampInput.value = "";
+    }
+    syncBrandAssetPreviews();
+}
+
+async function saveBrandAssets() {
+    if (!isOwnerSession()) {
+        return;
+    }
+
+    await saveCompanyProfileState(state.companyProfile);
+    recordActivity("updated branding assets", "Changed the signature or stamp used for generated documents.");
+    generatePreviews();
+    setImportStatus("Branding assets saved for document generation.");
 }
 
 function renderUserManagementList() {
@@ -2532,14 +3889,16 @@ function renderUserManagementList() {
         return;
     }
 
-    if (!state.userAccounts.length) {
+    const manageableUsers = state.userAccounts.filter(user => user.role !== "owner");
+
+    if (!manageableUsers.length) {
         elements.userManagementList.innerHTML = `<p class="user-list-empty">${escapeHtml(t("no_users"))}</p>`;
         return;
     }
 
-    elements.userManagementList.innerHTML = state.userAccounts.map(user => {
+    elements.userManagementList.innerHTML = manageableUsers.map(user => {
         const isCurrentUser = state.currentUser?.userId === user.id;
-        const isOnlyAdmin = user.role === "admin" && state.userAccounts.filter(entry => entry.role === "admin").length === 1;
+        const isOnlyAdmin = user.role === "admin" && manageableUsers.filter(entry => entry.role === "admin").length === 1;
         return `
             <article class="user-row">
                 <div class="user-row-copy">
@@ -2623,6 +3982,7 @@ async function handleAddUser() {
             role
         }
     ]);
+    recordActivity("created user", `Added ${displayName} from the workspace tools.`);
 
     elements.newUserDisplayName.value = "";
     elements.newUserUsername.value = "";
@@ -2640,7 +4000,7 @@ async function handleUserManagementClick(event) {
     const userId = button.dataset.userId;
     const action = button.dataset.userAction;
     const user = state.userAccounts.find(entry => entry.id === userId);
-    if (!user) {
+    if (!user || user.role === "owner") {
         return;
     }
 
@@ -2653,6 +4013,7 @@ async function handleUserManagementClick(event) {
         await saveUserAccounts(state.userAccounts.map(entry =>
             entry.id === user.id ? { ...entry, password: nextPassword.trim() || entry.password } : entry
         ));
+        recordActivity("reset password", `Reset the password for ${user.displayName}.`);
         setImportStatus(`Password reset for ${user.displayName}.`);
         return;
     }
@@ -2674,6 +4035,7 @@ async function handleUserManagementClick(event) {
         }
 
         await saveUserAccounts(state.userAccounts.filter(entry => entry.id !== user.id));
+        recordActivity("deleted user", `Removed ${user.displayName} from the workspace user list.`);
         setImportStatus(`Removed ${user.displayName} from workspace access.`);
     }
 }
@@ -2784,19 +4146,17 @@ function openExportModal() {
 
     closeSettingsModal();
     renderExportSelectionList();
-    elements.exportModal.classList.add("active");
-    elements.exportModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.exportModal, true);
 }
 
 function closeExportModal() {
-    elements.exportModal.classList.remove("active");
-    elements.exportModal.setAttribute("aria-hidden", "true");
+    setModalState(elements.exportModal, false);
 }
 
 function updateInboxBadge() {
-    const unreadCount = isAdminSession() ? state.issueReports.filter(report => report.unread).length : 0;
-    elements.inboxCountBadge.hidden = unreadCount === 0;
-    elements.inboxCountBadge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
+    const openCount = isAdminSession() ? state.issueReports.filter(report => report.status !== "closed").length : 0;
+    elements.inboxCountBadge.hidden = openCount === 0;
+    elements.inboxCountBadge.textContent = openCount > 99 ? "99+" : String(openCount);
 }
 
 function renderIssueInbox() {
@@ -2816,21 +4176,35 @@ function renderIssueInbox() {
 
     const reports = [...state.issueReports].sort((left, right) => Date.parse(right.createdAt || 0) - Date.parse(left.createdAt || 0));
     elements.issueInboxList.innerHTML = reports.map(report => `
-        <article class="issue-card${report.unread ? " issue-card-unread" : ""}">
+        <article class="issue-card${report.unread ? " issue-card-unread" : ""}${report.status === "closed" ? " issue-card-closed" : ""}" data-issue-id="${escapeHtml(report.id)}">
             <div class="issue-card-header">
-                <div>
+                <div class="issue-card-header-copy">
                     <strong>${escapeHtml(report.subject)}</strong>
                     <span>${escapeHtml(t("submitted_by"))} ${escapeHtml(report.createdBy.displayName || report.createdBy.username || "Unknown")} · ${escapeHtml(formatDateTime(report.createdAt))}</span>
                 </div>
-                <button class="issue-delete-btn" type="button" data-issue-action="delete" data-issue-id="${escapeHtml(report.id)}">${escapeHtml(t("delete_report"))}</button>
+                <div class="issue-card-status-wrap">
+                    <span class="issue-status-pill issue-status-pill-${report.status}">${escapeHtml(report.status === "closed" ? t("issue_closed") : t("issue_open"))}</span>
+                    ${report.unread ? `<span class="issue-fresh-pill">${escapeHtml(t("new_report"))}</span>` : ""}
+                </div>
             </div>
-            <p>${escapeHtml(report.details).replace(/\n/g, "<br>")}</p>
+            ${report.status === "closed"
+                ? `<div class="issue-card-collapsed-copy">${escapeHtml(report.adminNotes || report.details).replace(/\n/g, "<br>")}</div>`
+                : `<p>${escapeHtml(report.details).replace(/\n/g, "<br>")}</p>
             ${report.screenshotDataUrl
                 ? `<a class="issue-screenshot-link" href="${escapeHtml(report.screenshotDataUrl)}" target="_blank" rel="noreferrer">
                     <span>${escapeHtml(t("screenshot"))}</span>
                     <img src="${escapeHtml(report.screenshotDataUrl)}" alt="${escapeHtml(report.screenshotName || t("screenshot"))}">
                 </a>`
                 : ""}
+            <div class="issue-notes-block">
+                <label class="issue-notes-label" for="issueNotes-${escapeHtml(report.id)}">${escapeHtml(t("issue_admin_notes"))}</label>
+                <textarea class="issue-notes-input" id="issueNotes-${escapeHtml(report.id)}" data-issue-notes="${escapeHtml(report.id)}" placeholder="${escapeHtml(t("issue_admin_notes_placeholder"))}" rows="3">${escapeHtml(report.adminNotes || "")}</textarea>
+            </div>`}
+            <div class="issue-card-actions">
+                ${report.status === "closed" ? "" : `<button class="issue-action-btn" type="button" data-issue-action="save-notes" data-issue-id="${escapeHtml(report.id)}">${escapeHtml(t("save_notes"))}</button>`}
+                <button class="issue-action-btn issue-action-btn-secondary" type="button" data-issue-action="${report.status === "closed" ? "reopen" : "close"}" data-issue-id="${escapeHtml(report.id)}">${escapeHtml(report.status === "closed" ? t("reopen_report") : t("close_report"))}</button>
+                <button class="issue-action-btn issue-action-btn-danger" type="button" data-issue-action="delete" data-issue-id="${escapeHtml(report.id)}">${escapeHtml(t("delete_report"))}</button>
+            </div>
         </article>
     `).join("");
 }
@@ -2841,7 +4215,34 @@ async function handleIssueInboxClick(event) {
         return;
     }
 
-    if (button.dataset.issueAction !== "delete") {
+    const issueId = button.dataset.issueId;
+    const action = button.dataset.issueAction;
+
+    if (!issueId || !action) {
+        return;
+    }
+
+    if (action === "save-notes") {
+        const issueCard = button.closest("[data-issue-id]");
+        const notesInput = issueCard?.querySelector("[data-issue-notes]");
+        const adminNotes = notesInput ? notesInput.value.trim() : "";
+        await saveIssueReports(state.issueReports.map(report => (
+            report.id === issueId ? { ...report, adminNotes, unread: false } : report
+        )));
+        window.alert(t("issue_notes_saved"));
+        return;
+    }
+
+    if (action === "close" || action === "reopen") {
+        await saveIssueReports(state.issueReports.map(report => (
+            report.id === issueId
+                ? { ...report, status: action === "close" ? "closed" : "open", unread: false }
+                : report
+        )));
+        return;
+    }
+
+    if (action !== "delete") {
         return;
     }
 
@@ -2849,7 +4250,7 @@ async function handleIssueInboxClick(event) {
         return;
     }
 
-    await saveIssueReports(state.issueReports.filter(report => report.id !== button.dataset.issueId));
+    await saveIssueReports(state.issueReports.filter(report => report.id !== issueId));
 }
 
 function handleIssueScreenshotChange() {
@@ -2889,6 +4290,8 @@ async function submitIssueReport() {
             screenshotDataUrl,
             createdAt: new Date().toISOString(),
             unread: true,
+            status: "open",
+            adminNotes: "",
             createdBy: {
                 userId: state.currentUser?.userId || "",
                 username: state.currentUser?.username || "",
@@ -2911,6 +4314,52 @@ function readFileAsDataUrl(file) {
         reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
         reader.onerror = () => reject(new Error("Unable to read screenshot."));
         reader.readAsDataURL(file);
+    });
+}
+
+function readImageFileAsDataUrl(file, { maxDimension = 1200, quality = 0.82 } = {}) {
+    if (!file || !String(file.type || "").startsWith("image/")) {
+        return readFileAsDataUrl(file);
+    }
+
+    return new Promise((resolve, reject) => {
+        const objectUrl = URL.createObjectURL(file);
+        const image = new Image();
+
+        image.onload = () => {
+            try {
+                const longestSide = Math.max(image.naturalWidth || 0, image.naturalHeight || 0);
+                const scale = longestSide > maxDimension ? maxDimension / longestSide : 1;
+                const width = Math.max(1, Math.round((image.naturalWidth || 1) * scale));
+                const height = Math.max(1, Math.round((image.naturalHeight || 1) * scale));
+                const canvas = document.createElement("canvas");
+                canvas.width = width;
+                canvas.height = height;
+                const context = canvas.getContext("2d");
+
+                if (!context) {
+                    URL.revokeObjectURL(objectUrl);
+                    readFileAsDataUrl(file).then(resolve).catch(reject);
+                    return;
+                }
+
+                context.drawImage(image, 0, 0, width, height);
+                const normalizedType = file.type === "image/png" ? "image/png" : "image/jpeg";
+                const result = canvas.toDataURL(normalizedType, normalizedType === "image/png" ? undefined : quality);
+                URL.revokeObjectURL(objectUrl);
+                resolve(result);
+            } catch (error) {
+                URL.revokeObjectURL(objectUrl);
+                reject(new Error("Unable to process image."));
+            }
+        };
+
+        image.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error("Unable to read image."));
+        };
+
+        image.src = objectUrl;
     });
 }
 
@@ -3014,7 +4463,7 @@ async function handleAccessSubmit(event) {
     const submittedUsername = elements.accessUsername.value.trim().toLowerCase();
     const submittedCode = elements.accessCode.value.trim();
     const matchingUser = state.userAccounts.find(user =>
-        user.username === submittedUsername && user.password === submittedCode
+        (user.username === submittedUsername || user.email === submittedUsername) && user.password === submittedCode
     );
     const isValid = Boolean(matchingUser);
     elements.accessError.textContent = DEFAULT_ACCESS_ERROR_MESSAGE;
@@ -3069,7 +4518,6 @@ function normalizeDocuments(documents) {
         }
 
         doc.status = doc.status === "draft" ? "draft" : "logged";
-        doc.paymentStatus = doc.type === "invoice" && doc.paymentStatus === "paid" ? "paid" : "unpaid";
 
         const refNumber = String(doc.refNumber || "").trim().toUpperCase();
         const isTlReference = /^TL-\d{4}-\d{4}-\d+$/i.test(refNumber);
@@ -3173,7 +4621,14 @@ function readLocalDataset(storageKey, fallbackValue) {
 }
 
 function writeLocalDataset(storageKey, value) {
-    window.localStorage.setItem(storageKey, JSON.stringify(value));
+    try {
+        window.localStorage.setItem(storageKey, JSON.stringify(value));
+    } catch (error) {
+        if (error?.name === "QuotaExceededError") {
+            throw new Error("Local storage is full. Try a smaller image.");
+        }
+        throw error;
+    }
 }
 
 function clearLocalDataset(storageKey) {
@@ -3185,6 +4640,7 @@ function loadLocalAppData() {
     const clients = normalizeClients(readLocalDataset(LOCAL_CLIENTS_STORAGE_KEY, []));
 
     state.dataMode = "local";
+    updateRuntimeModeBadge();
     state.documents = documents;
     state.clients = clients;
     renderClientOptions();
@@ -3237,6 +4693,7 @@ async function bootstrapAppData() {
         ]);
 
         state.dataMode = "server";
+        updateRuntimeModeBadge();
         state.documents = normalizeDocuments(documentsResponse.documents);
         state.clients = normalizeClients(clientsResponse.clients);
         renderClientOptions();
@@ -3254,6 +4711,7 @@ async function saveDocumentsToServer(documents) {
     if (state.dataMode === "local") {
         state.documents = normalizeDocuments(documents);
         writeLocalDataset(LOCAL_DOCUMENTS_STORAGE_KEY, state.documents);
+        updateRuntimeModeBadge();
         return;
     }
 
@@ -3264,9 +4722,11 @@ async function saveDocumentsToServer(documents) {
         });
 
         state.dataMode = "server";
+        updateRuntimeModeBadge();
         state.documents = normalizeDocuments(payload.documents);
     } catch (error) {
         state.dataMode = "local";
+        updateRuntimeModeBadge();
         state.documents = normalizeDocuments(documents);
         writeLocalDataset(LOCAL_DOCUMENTS_STORAGE_KEY, state.documents);
         setImportStatus("Server save failed, so changes were saved locally in this browser instead.");
@@ -3277,6 +4737,7 @@ async function saveClientsToServer(clients) {
     if (state.dataMode === "local") {
         state.clients = normalizeClients(clients);
         writeLocalDataset(LOCAL_CLIENTS_STORAGE_KEY, state.clients);
+        updateRuntimeModeBadge();
         return;
     }
 
@@ -3287,9 +4748,11 @@ async function saveClientsToServer(clients) {
         });
 
         state.dataMode = "server";
+        updateRuntimeModeBadge();
         state.clients = normalizeClients(payload.clients);
     } catch (error) {
         state.dataMode = "local";
+        updateRuntimeModeBadge();
         state.clients = normalizeClients(clients);
         writeLocalDataset(LOCAL_CLIENTS_STORAGE_KEY, state.clients);
         setImportStatus("Server save failed, so clients were saved locally in this browser instead.");
@@ -3478,6 +4941,7 @@ function buildDocumentFromCsvRow(row, indexMap) {
         notes: csvValue(row, indexMap, "notes"),
         paymentTerms: csvValue(row, indexMap, "paymentTerms") || DEFAULT_PAYMENT_TERMS,
         includeSignature: false,
+        includeStamp: false,
         printedAt: new Date().toISOString(),
         subtotal: total,
         total,
@@ -3990,8 +5454,7 @@ function openModal(type = "quote") {
     state.currentDocType = type;
     elements.docType.value = type;
     updateModalTitle();
-    elements.documentModal.classList.add("active");
-    elements.documentModal.setAttribute("aria-hidden", "false");
+    setModalState(elements.documentModal, true);
     goToStep(isPrefilledEditMode() ? getTotalSteps() : 1);
 }
 
@@ -4004,11 +5467,11 @@ function getActionButtonMarkup(icon, label) {
 }
 
 function closeModal() {
-    elements.documentModal.classList.remove("active");
+    clearDraftAutosaveTimer();
+    setModalState(elements.documentModal, false);
     elements.documentModal.classList.remove("review-mode");
     elements.documentModal.classList.remove("final-preview-mode");
     elements.documentModal.classList.remove("prefilled-edit-mode");
-    elements.documentModal.setAttribute("aria-hidden", "true");
     resetForm();
 }
 
@@ -4042,6 +5505,7 @@ function updateModalTitle() {
 }
 
 function resetForm() {
+    clearDraftAutosaveTimer();
     state.editingDocumentId = null;
     state.convertingFromQuoteId = null;
     elements.clientSelect.value = "";
@@ -4064,6 +5528,7 @@ function resetForm() {
 }
 
 function prepareNewDocument(type = "quote") {
+    clearDraftAutosaveTimer();
     state.editingDocumentId = null;
     state.convertingFromQuoteId = null;
     elements.itemsContainer.innerHTML = "";
@@ -4090,7 +5555,7 @@ function goToStep(step) {
     const isPrefilled = isPrefilledEditMode();
     state.currentStep = step;
     elements.documentModal.classList.toggle("review-mode", step === totalSteps);
-    elements.documentModal.classList.toggle("final-preview-mode", step === totalSteps);
+    elements.documentModal.classList.toggle("final-preview-mode", step === totalSteps && !isMobileViewport());
     elements.documentModal.classList.toggle("prefilled-edit-mode", isPrefilled);
 
     document.querySelectorAll(".step[data-step]").forEach(el => {
@@ -4122,6 +5587,8 @@ function goToStep(step) {
     }
 
     updateEditorSummary();
+    resetDocumentModalViewport(step);
+    window.requestAnimationFrame(syncActivePreviewScale);
 }
 
 function nextStep() {
@@ -4174,6 +5641,62 @@ function validateStep(step) {
     return true;
 }
 
+function clearDraftAutosaveTimer() {
+    if (state.draftAutosaveTimerId) {
+        window.clearTimeout(state.draftAutosaveTimerId);
+        state.draftAutosaveTimerId = null;
+    }
+}
+
+function hasMeaningfulDraftContent() {
+    if (state.editingDocumentId !== null) {
+        return true;
+    }
+
+    const simpleFields = [
+        elements.clientName?.value,
+        elements.clientAddress?.value,
+        elements.consigneeName?.value,
+        elements.consigneeAddress?.value,
+        elements.poNumber?.value,
+        elements.notes?.value,
+        elements.docTags?.value
+    ];
+
+    if (simpleFields.some(value => String(value || "").trim())) {
+        return true;
+    }
+
+    return Array.from(elements.itemsContainer.querySelectorAll(".item-row")).some(row => {
+        const description = row.querySelector(".item-description")?.value.trim();
+        const total = parseFloat(row.querySelector(".item-total-price")?.value) || 0;
+        const quantity = parseFloat(row.querySelector(".item-quantity")?.value) || 0;
+        const image = row.dataset.itemImageDataUrl || "";
+        return Boolean(description || total > 0 || quantity > 1 || image);
+    });
+}
+
+function queueDraftAutosave() {
+    if (!elements.documentModal?.classList.contains("active")) {
+        return;
+    }
+
+    clearDraftAutosaveTimer();
+    if (!hasMeaningfulDraftContent()) {
+        return;
+    }
+
+    state.draftAutosaveTimerId = window.setTimeout(() => {
+        state.draftAutosaveTimerId = null;
+        void persistDocument({
+            exportAfterSave: false,
+            silent: true,
+            keepOpen: true,
+            forceDraft: true
+        });
+    }, 900);
+}
+
 function addItem() {
     state.itemCounter += 1;
     const itemId = String(state.itemCounter);
@@ -4181,99 +5704,91 @@ function addItem() {
     const itemDiv = document.createElement("div");
     itemDiv.className = "item-row expanded";
     itemDiv.dataset.itemId = itemId;
+    itemDiv.dataset.priceDriver = "total";
     itemDiv.innerHTML = `
         <div class="item-row-header">
             <button type="button" class="item-summary-toggle" data-toggle-item="${itemId}" aria-expanded="true">
-                <span class="item-number">Item #${state.itemCounter}</span>
+                <span class="item-summary-thumb" aria-hidden="true">
+                    <img class="item-summary-thumb-img" alt="">
+                    <span class="item-summary-thumb-fallback">${state.itemCounter}</span>
+                </span>
                 <span class="item-summary-copy">
-                    <span class="item-summary-title">New line item</span>
+                    <span class="item-summary-title-row">
+                        <span class="item-number">Item #${state.itemCounter}</span>
+                        <span class="item-summary-title">New line item</span>
+                    </span>
                     <span class="item-summary-meta">Qty 1 | Unit $0.00 | Total $0.00</span>
                 </span>
-                <span class="item-summary-hint">Click to edit</span>
             </button>
             <div class="item-row-header-actions">
-                <div class="item-action-menu-wrap">
-                    <button type="button" class="item-action-trigger" data-toggle-item-menu="${itemId}" aria-expanded="false" aria-haspopup="true" aria-label="Open line item actions" title="Open line item actions">
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <circle cx="12" cy="5.5" r="1.7" fill="currentColor"/>
-                            <circle cx="12" cy="12" r="1.7" fill="currentColor"/>
-                            <circle cx="12" cy="18.5" r="1.7" fill="currentColor"/>
-                        </svg>
+                <div class="item-actions-menu-wrap">
+                    <button
+                        type="button"
+                        class="item-menu-toggle"
+                        data-toggle-item-menu="${itemId}"
+                        aria-expanded="false"
+                        aria-haspopup="menu"
+                        aria-label="${escapeHtml(t("menu"))}"
+                        title="${escapeHtml(t("menu"))}"
+                    >
+                        <span></span><span></span><span></span>
                     </button>
-                    <div class="item-action-menu" data-item-menu="${itemId}" hidden>
-                        <button type="button" class="item-action-menu-btn" data-save-item-later="${itemId}">${escapeHtml(t("save_for_later"))}</button>
-                        <button type="button" class="item-action-menu-btn item-action-menu-btn-danger" data-remove-item="${itemId}">Remove</button>
+                    <div class="item-actions-menu" data-item-menu="${itemId}" hidden style="display: none;">
+                        <button type="button" class="item-actions-menu-btn" data-save-item-later="${itemId}">${escapeHtml(t("save_for_later"))}</button>
+                        <button type="button" class="item-actions-menu-btn item-actions-menu-btn-danger" data-remove-item="${itemId}">${escapeHtml(t("delete"))}</button>
                     </div>
                 </div>
             </div>
         </div>
         <div class="item-editor">
-            <div class="form-group">
-                <label>Description</label>
-                <textarea class="item-description" rows="2" placeholder="Item description..."></textarea>
-            </div>
-            <div class="form-group item-image-group">
-                <div class="item-image-uploader">
-                    <label class="item-image-upload-btn" aria-label="${escapeHtml(t("upload_item_image"))}" title="${escapeHtml(t("upload_item_image"))}">
-                        <input type="file" class="item-image-input" accept="image/*" hidden>
-                        <span class="item-image-upload-art" aria-hidden="true">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M5 7.5A2.5 2.5 0 0 1 7.5 5h9A2.5 2.5 0 0 1 19 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 16.5z" fill="none" stroke="currentColor" stroke-width="1.7"/>
-                                <path d="M8 15l2.4-2.4a1 1 0 0 1 1.4 0l1.1 1.1 2.1-2.1a1 1 0 0 1 1.4 0L19 14.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                                <circle cx="10" cy="9.5" r="1.2" fill="currentColor"/>
+            <div class="item-editor-grid">
+                <div class="item-editor-main">
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea class="item-description" rows="2" placeholder="Item description..."></textarea>
+                    </div>
+                    <div class="form-row item-pricing-row">
+                        <div class="form-group">
+                            <label>Quantity</label>
+                            <input type="number" class="item-quantity" value="1" min="0" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Unit Price (USD)</label>
+                            <input type="number" class="item-unit-price" value="0.00" min="0" step="0.01" inputmode="decimal">
+                        </div>
+                        <div class="form-group item-total-price-usd-group">
+                            <label>Total Price (USD)</label>
+                            <input type="number" class="item-total-price" value="0.00" min="0" step="0.01">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group item-image-group">
+                    <div class="item-image-uploader">
+                        <label class="item-image-upload-btn" aria-label="${escapeHtml(t("upload_item_image"))}" title="${escapeHtml(t("upload_item_image"))}">
+                            <input type="file" class="item-image-input" accept="image/*" hidden>
+                            <span class="item-image-upload-art" aria-hidden="true">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M5 7.5A2.5 2.5 0 0 1 7.5 5h9A2.5 2.5 0 0 1 19 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 16.5z" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                    <path d="M8 15l2.4-2.4a1 1 0 0 1 1.4 0l1.1 1.1 2.1-2.1a1 1 0 0 1 1.4 0L19 14.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <circle cx="10" cy="9.5" r="1.2" fill="currentColor"/>
+                                </svg>
+                            </span>
+                            <span class="item-image-upload-copy">
+                                <strong>${escapeHtml(t("item_image"))}</strong>
+                                <small>Add image</small>
+                            </span>
+                        </label>
+                        <button type="button" class="item-image-remove-btn" hidden aria-label="${escapeHtml(t("remove_item_image"))}" title="${escapeHtml(t("remove_item_image"))}">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M6 7h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                <path d="M9.5 7V5.6c0-.4.3-.6.6-.6h3.8c.3 0 .6.2.6.6V7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                <path d="M8.2 7l.7 10.2c0 .4.3.8.8.8h4.6c.4 0 .7-.3.8-.8L16 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
-                        </span>
-                        <span class="item-image-upload-copy">
-                            <strong>${escapeHtml(t("item_image"))}</strong>
-                            <small>Add image</small>
-                        </span>
-                    </label>
-                    <button type="button" class="item-image-remove-btn" hidden aria-label="${escapeHtml(t("remove_item_image"))}" title="${escapeHtml(t("remove_item_image"))}">
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M6 7h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                            <path d="M9.5 7V5.6c0-.4.3-.6.6-.6h3.8c.3 0 .6.2.6.6V7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                            <path d="M8.2 7l.7 10.2c0 .4.3.8.8.8h4.6c.4 0 .7-.3.8-.8L16 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="item-image-preview" hidden>
-                    <img class="item-image-preview-img" alt="Item preview">
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Quantity</label>
-                    <input type="number" class="item-quantity" value="1" min="0" step="1">
-                </div>
-                <div class="form-group item-total-price-usd-group">
-                    <label>Total Price (USD)</label>
-                    <input type="number" class="item-total-price" value="0" min="0" step="0.01">
-                </div>
-                <div class="form-group">
-                    <label>Unit Price (USD)</label>
-                    <input type="text" class="item-unit-price" value="0.00" inputmode="decimal" placeholder="0.00" readonly>
-                </div>
-            </div>
-            <div class="item-pricing-options">
-                <div class="item-pricing-option">
-                    <label class="checkbox-row checkbox-row-block">
-                        <input type="checkbox" class="item-manual-unit-toggle">
-                        <span>Enter unit price manually</span>
-                    </label>
-                    <small class="field-help">Leave this off to auto-calculate the unit price from quantity and total.</small>
-                </div>
-                <div class="item-pricing-option item-currency-mode">
-                    <label class="checkbox-row checkbox-row-block">
-                        <input type="checkbox" class="item-dop-toggle">
-                        <span>Enter total in DOP</span>
-                    </label>
-                    <small class="field-help">Converts pesos back to USD using RD$${DOP_PER_USD} = US$1.</small>
-                </div>
-            </div>
-            <div class="form-row item-dop-row" style="display: none;">
-                <div class="form-group item-total-price-dop-group">
-                    <label>Total Price (DOP)</label>
-                    <input type="number" class="item-total-price-dop" value="0" min="0" step="0.01">
+                        </button>
+                    </div>
+                    <div class="item-image-preview" hidden>
+                        <img class="item-image-preview-img" alt="Item preview">
+                    </div>
                 </div>
             </div>
             <div class="item-internal-panel">
@@ -4302,20 +5817,27 @@ function addItem() {
     syncItemImageUI(itemDiv);
     updateItemPricing(itemDiv);
     setExpandedItem(itemDiv);
+    syncItemActionMenus();
+    queueDraftAutosave();
 }
 
 function removeItem(id) {
     const item = elements.itemsContainer.querySelector(`[data-item-id="${id}"]`);
     if (item) {
+        if (state.openItemMenuId === String(id)) {
+            state.openItemMenuId = null;
+        }
         const shouldExpandNeighbor = item.classList.contains("expanded");
         item.remove();
         refreshItemOrdering();
+        syncItemActionMenus();
         if (shouldExpandNeighbor) {
             const nextItem = elements.itemsContainer.querySelector(".item-row");
             if (nextItem) {
                 setExpandedItem(nextItem);
             }
         }
+        queueDraftAutosave();
     }
 }
 
@@ -4344,20 +5866,26 @@ function saveEditorItemForLater(id) {
     });
     removeItem(id);
     setImportStatus(t("saved_item_added"));
+    queueDraftAutosave();
 }
 
 async function handleItemContainerClick(event) {
-    const toggleMenuButton = event.target.closest("[data-toggle-item-menu]");
-    if (toggleMenuButton) {
-        const itemId = toggleMenuButton.dataset.toggleItemMenu;
-        state.openItemActionMenuId = state.openItemActionMenuId === itemId ? null : itemId;
+    const menuToggleButton = event.target.closest("[data-toggle-item-menu]");
+    if (menuToggleButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        const itemId = String(menuToggleButton.dataset.toggleItemMenu);
+        state.openItemMenuId = state.openItemMenuId === itemId ? null : itemId;
         syncItemActionMenus();
+        elements.itemsContainer.querySelectorAll("[data-toggle-item-menu]").forEach(button => {
+            button.setAttribute("aria-expanded", String(button.dataset.toggleItemMenu === state.openItemMenuId));
+        });
         return;
     }
 
     const saveForLaterButton = event.target.closest("[data-save-item-later]");
     if (saveForLaterButton) {
-        state.openItemActionMenuId = null;
+        state.openItemMenuId = null;
         syncItemActionMenus();
         saveEditorItemForLater(saveForLaterButton.dataset.saveItemLater);
         return;
@@ -4365,7 +5893,7 @@ async function handleItemContainerClick(event) {
 
     const removeButton = event.target.closest("[data-remove-item]");
     if (removeButton) {
-        state.openItemActionMenuId = null;
+        state.openItemMenuId = null;
         syncItemActionMenus();
         removeItem(removeButton.dataset.removeItem);
         return;
@@ -4394,19 +5922,6 @@ async function handleItemContainerClick(event) {
     }
 }
 
-function syncItemActionMenus() {
-    elements.itemsContainer.querySelectorAll("[data-item-menu]").forEach(menu => {
-        const isOpen = menu.dataset.itemMenu === state.openItemActionMenuId;
-        menu.hidden = !isOpen;
-    });
-
-    elements.itemsContainer.querySelectorAll("[data-toggle-item-menu]").forEach(button => {
-        const isOpen = button.dataset.toggleItemMenu === state.openItemActionMenuId;
-        button.setAttribute("aria-expanded", String(isOpen));
-        button.classList.toggle("is-open", isOpen);
-    });
-}
-
 async function handleItemImageInputChange(event) {
     const imageInput = event.target.closest(".item-image-input");
     if (!imageInput) {
@@ -4428,6 +5943,7 @@ async function handleItemImageInputChange(event) {
     try {
         itemRow.dataset.itemImageDataUrl = await readFileAsDataUrl(file);
         syncItemImageUI(itemRow);
+        queueDraftAutosave();
     } catch (error) {
         itemRow.dataset.itemImageDataUrl = "";
         imageInput.value = "";
@@ -4460,70 +5976,76 @@ function syncItemImageUI(row) {
         row.classList.remove("has-item-image");
         uploadButtonCopy.textContent = "Add image";
     }
+
+    const summaryThumbImage = row.querySelector(".item-summary-thumb-img");
+    const summaryThumbFallback = row.querySelector(".item-summary-thumb-fallback");
+    if (summaryThumbImage && summaryThumbFallback) {
+        if (imageDataUrl) {
+            summaryThumbImage.src = imageDataUrl;
+            summaryThumbImage.hidden = false;
+            summaryThumbFallback.hidden = true;
+        } else {
+            summaryThumbImage.removeAttribute("src");
+            summaryThumbImage.hidden = true;
+            summaryThumbFallback.hidden = false;
+        }
+    }
 }
 
 function handleItemsChange(event) {
     const activeRow = event?.target?.closest?.(".item-row") || null;
-    const shouldPreserveManualUnitInput = Boolean(
-        event
-        && event.type === "input"
-        && event.target?.classList?.contains("item-unit-price")
-    );
+    const isInputEvent = event?.type === "input";
+    const activeTarget = event?.target || null;
+
+    if (activeRow && activeTarget?.classList?.contains("item-unit-price")) {
+        activeRow.dataset.priceDriver = "unit";
+    } else if (activeRow && activeTarget?.classList?.contains("item-total-price")) {
+        activeRow.dataset.priceDriver = "total";
+    }
 
     elements.itemsContainer.querySelectorAll(".item-row").forEach(row => {
         updateItemPricing(row, {
-            preserveManualUnitInput: shouldPreserveManualUnitInput && row === activeRow
+            sourceField: row === activeRow ? (
+                activeTarget?.classList?.contains("item-unit-price")
+                    ? "unit"
+                    : activeTarget?.classList?.contains("item-total-price")
+                        ? "total"
+                        : activeTarget?.classList?.contains("item-quantity")
+                            ? "quantity"
+                            : null
+            ) : null,
+            preserveActiveInput: isInputEvent && row === activeRow
         });
         updateItemSummary(row);
     });
     calculateTotals();
     updateEditorSummary();
+    queueDraftAutosave();
 }
 
 function updateItemPricing(row, options = {}) {
-    const { preserveManualUnitInput = false } = options;
+    const { sourceField = null, preserveActiveInput = false } = options;
     const quantity = parseFloat(row.querySelector(".item-quantity").value) || 0;
     const totalPriceInput = row.querySelector(".item-total-price");
-    const totalPriceUsdGroup = row.querySelector(".item-total-price-usd-group");
     const unitPriceInput = row.querySelector(".item-unit-price");
-    const dopToggle = row.querySelector(".item-dop-toggle");
-    const dopRow = row.querySelector(".item-dop-row");
-    const dopTotalPriceInput = row.querySelector(".item-total-price-dop");
-    const manualToggle = row.querySelector(".item-manual-unit-toggle");
-
     let totalPrice = parseFloat(totalPriceInput.value) || 0;
-    const isManual = manualToggle.checked;
-    const usesDopTotal = dopToggle.checked;
+    let unitPrice = parseDecimalInput(unitPriceInput.value);
+    const driver = sourceField === "quantity"
+        ? (row.dataset.priceDriver || "total")
+        : (sourceField || row.dataset.priceDriver || "total");
 
-    if (isManual && usesDopTotal) {
-        dopToggle.checked = false;
-    }
+    row.dataset.priceDriver = driver;
 
-    const isUsingDopTotal = dopToggle.checked;
-    dopRow.style.display = isUsingDopTotal ? "grid" : "none";
-    if (totalPriceUsdGroup) {
-        totalPriceUsdGroup.style.display = isUsingDopTotal ? "none" : "block";
-    }
-    unitPriceInput.readOnly = !isManual;
-    totalPriceInput.readOnly = isUsingDopTotal;
-
-    if (isManual) {
-        const manualUnitPrice = parseDecimalInput(unitPriceInput.value);
-        if (!preserveManualUnitInput) {
-            unitPriceInput.value = manualUnitPrice.toFixed(2);
-        }
-        totalPriceInput.value = (manualUnitPrice * quantity).toFixed(2);
-        dopTotalPriceInput.value = (manualUnitPrice * quantity * DOP_PER_USD).toFixed(2);
-    } else {
-        if (isUsingDopTotal) {
-            const dopTotal = parseFloat(dopTotalPriceInput.value) || 0;
-            totalPrice = dopTotal / DOP_PER_USD;
+    if (driver === "unit") {
+        totalPrice = unitPrice * quantity;
+        if (!preserveActiveInput || sourceField !== "total") {
             totalPriceInput.value = totalPrice.toFixed(2);
-        } else {
-            dopTotalPriceInput.value = (totalPrice * DOP_PER_USD).toFixed(2);
         }
-        const derivedUnitPrice = quantity > 0 ? totalPrice / quantity : 0;
-        unitPriceInput.value = derivedUnitPrice.toFixed(2);
+    } else {
+        unitPrice = quantity > 0 ? totalPrice / quantity : 0;
+        if (!preserveActiveInput || sourceField !== "unit") {
+            unitPriceInput.value = unitPrice.toFixed(2);
+        }
     }
 
     updateItemInternalMetrics(row);
@@ -4534,17 +6056,13 @@ function updateItemSummary(row) {
     const quantity = parseFloat(row.querySelector(".item-quantity").value) || 0;
     const totalPrice = parseFloat(row.querySelector(".item-total-price").value) || 0;
     const unitPrice = parseDecimalInput(row.querySelector(".item-unit-price").value);
-    const usesDopTotal = row.querySelector(".item-dop-toggle").checked;
-    const dopTotalPrice = parseFloat(row.querySelector(".item-total-price-dop").value) || 0;
     const upchargePercent = row.querySelector(".item-upcharge-percent").value;
     const title = description || "New line item";
     const compactTitle = title.length > 72 ? `${title.slice(0, 69)}...` : title;
-    const totalLabel = usesDopTotal
-        ? `Total ${formatCurrency(totalPrice)} from RD$${formatAmount(dopTotalPrice)}`
-        : `Total ${formatCurrency(totalPrice)}`;
+    const summaryMeta = `Qty ${quantity || 0} | Unit ${formatCurrency(unitPrice)} | Total ${formatCurrency(totalPrice)}${state.showInternalPricing ? ` | Upcharge ${upchargePercent}` : ""}`;
 
     row.querySelector(".item-summary-title").textContent = compactTitle;
-    row.querySelector(".item-summary-meta").textContent = `Qty ${quantity || 0} | Unit ${formatCurrency(unitPrice)} | ${totalLabel} | Upcharge ${upchargePercent}`;
+    row.querySelector(".item-summary-meta").textContent = summaryMeta;
 }
 
 function documentHasItemImages(doc) {
@@ -4623,6 +6141,10 @@ function updateItemInternalMetrics(row) {
 function refreshItemOrdering() {
     elements.itemsContainer.querySelectorAll(".item-row").forEach((row, index) => {
         row.querySelector(".item-number").textContent = `Item #${index + 1}`;
+        const thumbFallback = row.querySelector(".item-summary-thumb-fallback");
+        if (thumbFallback) {
+            thumbFallback.textContent = String(index + 1);
+        }
         updateItemSummary(row);
     });
 }
@@ -4636,6 +6158,9 @@ function setExpandedItem(targetRow) {
             toggle.setAttribute("aria-expanded", String(isTarget));
         }
     });
+    if (targetRow) {
+        targetRow.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
 }
 
 function calculateTotals() {
@@ -4687,24 +6212,40 @@ function getLetterheadUrl() {
 }
 
 function getSignatureUrl() {
+    if (state.companyProfile?.signatureDataUrl) {
+        return state.companyProfile.signatureDataUrl;
+    }
     const url = new URL("assets/david-forman-signature.png", window.location.href);
     url.searchParams.set("v", "20260328-1434");
     return url.href;
 }
 
 function getStampUrl() {
+    if (state.companyProfile?.stampDataUrl) {
+        return state.companyProfile.stampDataUrl;
+    }
     const url = new URL("assets/gonzalez-logistics-stamp.svg", window.location.href);
     url.searchParams.set("v", "20260408-2300");
     return url.href;
 }
 
-function getStampOverlayStyle() {
-    const left = 56 + Math.random() * 8;
-    const bottom = -12 + Math.random() * 10;
-    const rotate = -10 + Math.random() * 20;
-    const opacity = 0.4 + Math.random() * 0.08;
-
-    return `left:${left}%;bottom:${bottom.toFixed(2)}px;transform:translateX(-50%) rotate(${rotate.toFixed(2)}deg);opacity:${opacity.toFixed(2)};`;
+function getStampStyle() {
+    const offsets = [
+        { x: -22, y: 4, rotate: -13 },
+        { x: 26, y: -5, rotate: 9 },
+        { x: -8, y: 20, rotate: -7 },
+        { x: 32, y: 8, rotate: 15 },
+        { x: -28, y: -3, rotate: -11 },
+        { x: 16, y: 26, rotate: 6 },
+        { x: -12, y: -7, rotate: -17 },
+        { x: 22, y: 32, rotate: 12 },
+        { x: -18, y: 14, rotate: -9 },
+        { x: 6, y: -9, rotate: 19 },
+        { x: 34, y: 18, rotate: -14 },
+        { x: -30, y: 10, rotate: 8 },
+    ];
+    const choice = offsets[Math.floor(Math.random() * offsets.length)];
+    return `left: calc(50% + ${choice.x}px); bottom: ${choice.y}px; transform: translateX(-50%) rotate(${choice.rotate}deg);`;
 }
 
 function getFooterWaveUrl() {
@@ -4717,24 +6258,20 @@ function buildDocumentData() {
     elements.itemsContainer.querySelectorAll(".item-row").forEach((row, index) => {
         const quantity = parseFloat(row.querySelector(".item-quantity").value) || 0;
         const totalPrice = parseFloat(row.querySelector(".item-total-price").value) || 0;
-        const isManualUnitPrice = row.querySelector(".item-manual-unit-toggle").checked;
-        const usesDopTotal = row.querySelector(".item-dop-toggle").checked;
-        const totalPriceDop = parseFloat(row.querySelector(".item-total-price-dop").value) || 0;
         const internalCost = parseFloat(row.querySelector(".item-internal-cost").value) || 0;
-        const unitPrice = isManualUnitPrice
-            ? parseDecimalInput(row.querySelector(".item-unit-price").value)
-            : (quantity > 0 ? totalPrice / quantity : 0);
+        const unitPrice = parseDecimalInput(row.querySelector(".item-unit-price").value);
         items.push({
             itemNo: index + 1,
             description: row.querySelector(".item-description").value.trim(),
             quantity: row.querySelector(".item-quantity").value || "-",
             unitPrice: unitPrice.toFixed(2),
             totalPrice: totalPrice.toFixed(2),
-            totalPriceDop: totalPriceDop.toFixed(2),
+            totalPriceDop: "0.00",
             internalCost: internalCost.toFixed(2),
             upchargePercent: internalCost > 0 ? (((totalPrice - internalCost) / internalCost) * 100).toFixed(2) : "0.00",
-            usesDopTotal,
-            manualUnitPrice: isManualUnitPrice
+            usesDopTotal: false,
+            manualUnitPrice: row.dataset.priceDriver === "unit",
+            itemImageDataUrl: row.dataset.itemImageDataUrl || ""
         });
     });
 
@@ -4761,7 +6298,8 @@ function buildDocumentData() {
     };
 }
 
-function buildDocumentMarkup(doc) {
+function buildDocumentMarkup(doc, stampStyle, options = {}) {
+    const { printPreview = false } = options;
     const documentTitle = doc.type === "quote" ? "Quote" : "Invoice";
     const referenceLabel = doc.type === "quote" ? "Reference No." : `${documentTitle} Reference`;
     const primaryPartyLabel = doc.type === "quote" ? "For:" : "Bill To:";
@@ -4770,9 +6308,12 @@ function buildDocumentMarkup(doc) {
     const safeNotes = doc.notes && doc.notes.trim()
         ? escapeHtml(doc.notes.trim())
         : "<em>*No additional notes provided.</em>";
+    const sheetClassName = ["document-sheet", printPreview ? "print-preview-sheet" : ""]
+        .filter(Boolean)
+        .join(" ");
 
     return `
-        <div class="document-sheet">
+        <div class="${sheetClassName}">
             <div class="letterhead">
                 <img class="letterhead-image" src="${escapeHtml(getLetterheadUrl())}" alt="Todos Logistics letterhead">
             </div>
@@ -4858,17 +6399,17 @@ function buildDocumentMarkup(doc) {
                                     alt="David Forman signature"
                                     onerror="this.closest('.line-fill').innerHTML = '&nbsp;';"
                                 >
-                                ${doc.includeStamp === true ? `
-                                <img
-                                    class="document-stamp"
-                                    src="${escapeHtml(getStampUrl())}"
-                                    alt="Company stamp"
-                                    style="${escapeHtml(getStampOverlayStyle())}"
-                                >
-                                ` : ""}
                             </span>
                         </span>
                     </div>
+                    ${doc.includeStamp ? `
+                    <img
+                        class="signature-stamp"
+                        src="${escapeHtml(getStampUrl())}"
+                        alt="Company stamp"
+                        style="${escapeHtml(stampStyle || getStampStyle())}"
+                    >
+                    ` : ""}
                 </div>
             </div>
             `}
@@ -4959,7 +6500,30 @@ function generatePreviews() {
     if (elements.lineItemsPreviewContainer) {
         elements.lineItemsPreviewContainer.innerHTML = buildLineItemsPreviewMarkup(doc);
     }
-    elements.previewContainer.innerHTML = buildDocumentMarkup(doc);
+    elements.previewContainer.innerHTML = shouldUseMobilePreviewLauncher()
+        ? buildMobilePreviewLauncherMarkup(doc)
+        : buildDocumentMarkup(doc, null, { printPreview: true });
+}
+
+function shouldUseMobilePreviewLauncher() {
+    return isMobileViewport() && state.currentStep === getTotalSteps();
+}
+
+function buildMobilePreviewLauncherMarkup(doc) {
+    const documentLabel = doc.type === "quote" ? "quote" : "invoice";
+
+    return `
+        <div class="mobile-preview-launcher-card">
+            <span class="mobile-preview-launcher-kicker">Print-ready preview</span>
+            <h6>Open the ${escapeHtml(documentLabel)} in a separate preview.</h6>
+            <p>The preview uses the same layout and content that will be printed or saved as PDF.</p>
+            <div class="mobile-preview-launcher-meta">
+                <span>${escapeHtml(doc.refNumber || "Reference pending")}</span>
+                <span>${escapeHtml(formatDisplayDate(doc.date) || "Date pending")}</span>
+            </div>
+            <button class="btn btn-secondary" type="button" data-open-preview-window="true">Open Print Preview</button>
+        </div>
+    `;
 }
 
 function getPrintStylesMarkup() {
@@ -4973,13 +6537,71 @@ function getPrintStylesMarkup() {
     }).join("\n");
 }
 
-function openPrintWindow(doc) {
+function createPrintWindow(doc) {
     const printWindow = window.open("", "_blank", "width=1024,height=900");
     if (!printWindow) {
         alert("Please allow pop-ups to export the PDF.");
-        return;
+        return null;
     }
 
+    const documentTitle = `${doc.type === "quote" ? "Quote" : "Invoice"} ${doc.refNumber || "Preview"}`;
+    printWindow.document.open();
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${escapeHtml(documentTitle)}</title>
+            <style>
+                body {
+                    margin: 0;
+                    min-height: 100vh;
+                    display: grid;
+                    place-items: center;
+                    background: #eef3fb;
+                    color: #1f2937;
+                    font-family: Arial, sans-serif;
+                }
+
+                .print-preview-loading {
+                    display: grid;
+                    gap: 0.7rem;
+                    justify-items: center;
+                    padding: 2rem;
+                    text-align: center;
+                }
+
+                .print-preview-loading strong {
+                    font-size: 1rem;
+                }
+
+                .print-preview-loading span {
+                    color: #5b6b81;
+                    font-size: 0.92rem;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="print-preview-loading">
+                <strong>Preparing preview</strong>
+                <span>${escapeHtml(documentTitle)}</span>
+            </div>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    return printWindow;
+}
+
+function openPrintWindow(doc, existingWindow = null) {
+    const printWindow = existingWindow || createPrintWindow(doc);
+    if (!printWindow) {
+        return null;
+    }
+
+    const stampStyle = getStampStyle();
+    printWindow.document.open();
     printWindow.document.write(`
         <!DOCTYPE html>
         <html lang="en">
@@ -5018,7 +6640,12 @@ function openPrintWindow(doc) {
                     color: #28415b;
                 }
 
+                .print-preview-sheet {
+                    min-height: 100vh;
+                }
+
                 @media print {
+                    @page { size: auto; margin: 0; }
                     .pdf-preview-toolbar {
                         display: none !important;
                     }
@@ -5030,28 +6657,45 @@ function openPrintWindow(doc) {
                 <button class="secondary" type="button" onclick="window.close()">Close Preview</button>
                 <button type="button" onclick="window.print()">Print or Save as PDF</button>
             </div>
-            <div id="previewContainer" class="preview-container">${buildDocumentMarkup(doc)}</div>
+            <div id="previewContainer" class="preview-container">${buildDocumentMarkup(doc, stampStyle, { printPreview: true })}</div>
         </body>
         </html>
     `);
     printWindow.document.close();
+    printWindow.focus();
+    return printWindow;
+}
+
+function handlePreviewContainerClick(event) {
+    const previewButton = event.target.closest("[data-open-preview-window]");
+    if (!previewButton) {
+        return;
+    }
+
+    openPrintWindow(buildDocumentData());
 }
 
 async function persistDocument(options = {}) {
-    const { exportAfterSave = false } = options;
+    const {
+        exportAfterSave = false,
+        silent = false,
+        keepOpen = false,
+        forceDraft = false,
+        previewWindow = null
+    } = options;
     const isEditing = state.editingDocumentId !== null;
     const existingDocument = isEditing ? getDocumentById(state.editingDocumentId) : null;
     const nextStatus = exportAfterSave
         ? "logged"
-        : (existingDocument?.status === "logged" ? "logged" : "draft");
+        : (forceDraft ? "draft" : (existingDocument?.status === "logged" ? "logged" : "draft"));
     const doc = {
         ...(existingDocument || {}),
         id: state.editingDocumentId ?? Date.now(),
         type: elements.docType.value,
         status: nextStatus,
-        paymentStatus: existingDocument?.type === "invoice" && existingDocument?.paymentStatus === "paid"
-            ? "paid"
-            : "unpaid",
+        paymentStatus: elements.docType.value === "invoice"
+            ? (existingDocument?.paymentStatus || "unpaid")
+            : null,
         refNumber: elements.refNumber.value,
         date: elements.docDate.value,
         clientName: elements.clientName.value,
@@ -5079,32 +6723,25 @@ async function persistDocument(options = {}) {
     elements.itemsContainer.querySelectorAll(".item-row").forEach(row => {
         const qty = parseFloat(row.querySelector(".item-quantity").value) || 0;
         const totalPrice = parseFloat(row.querySelector(".item-total-price").value) || 0;
-        const usesDopTotal = row.querySelector(".item-dop-toggle").checked;
-        const totalPriceDop = parseFloat(row.querySelector(".item-total-price-dop").value) || 0;
         const internalCost = parseFloat(row.querySelector(".item-internal-cost").value) || 0;
-        const manualUnitPrice = row.querySelector(".item-manual-unit-toggle").checked
-            ? parseDecimalInput(row.querySelector(".item-unit-price").value)
-            : null;
+        const unitPrice = parseDecimalInput(row.querySelector(".item-unit-price").value);
         doc.items.push({
             description: row.querySelector(".item-description").value,
             quantity: qty,
-            price: manualUnitPrice ?? (qty > 0 ? totalPrice / qty : 0),
-            unitPrice: manualUnitPrice ?? (qty > 0 ? totalPrice / qty : 0),
+            price: unitPrice,
+            unitPrice,
             totalPrice,
-            totalPriceDop,
+            totalPriceDop: 0,
             internalCost,
             upchargePercent: internalCost > 0 ? (((totalPrice - internalCost) / internalCost) * 100) : 0,
-            usesDopTotal,
-            manualUnitPrice: manualUnitPrice !== null,
+            usesDopTotal: false,
+            manualUnitPrice: row.dataset.priceDriver === "unit",
             itemImageDataUrl: row.dataset.itemImageDataUrl || ""
         });
     });
 
     doc.subtotal = calculateTotals();
     doc.total = doc.subtotal;
-    if (doc.type !== "invoice") {
-        delete doc.paymentStatus;
-    }
 
     let nextDocuments;
 
@@ -5128,21 +6765,40 @@ async function persistDocument(options = {}) {
 
     try {
         await saveDocumentsToServer(nextDocuments);
-        closeModal();
+        state.editingDocumentId = doc.id;
         renderDocuments();
+        recordActivity(
+            exportAfterSave ? "exported document" : (isEditing ? "updated document" : "created document"),
+            `${doc.type === "quote" ? "Quote" : "Invoice"} ${doc.refNumber} for ${doc.clientName || "unknown client"}.`
+        );
     } catch (error) {
-        alert(`Unable to save this ${doc.type} to the server.\n\n${error.message}`);
+        if (previewWindow && !previewWindow.closed) {
+            previewWindow.close();
+        }
+        if (!silent) {
+            alert(`Unable to save this ${doc.type} to the server.\n\n${error.message}`);
+        }
         return;
     }
 
+    if (keepOpen) {
+        updateEditorSummary();
+        return;
+    }
+
+    closeModal();
     const actionLabel = isEditing ? "updated" : "saved";
     if (exportAfterSave) {
-        openPrintWindow(doc);
-        alert(`${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.\n\nA PDF preview has opened in a new window. Print only if you want to from there.`);
+        openPrintWindow(doc, previewWindow);
+        if (!silent) {
+            alert(`${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.\n\nA PDF preview has opened in a new window. Print only if you want to from there.`);
+        }
         return;
     }
 
-    alert(`${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.`);
+    if (!silent) {
+        alert(`${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.`);
+    }
 }
 
 async function saveDocumentOnly() {
@@ -5156,7 +6812,11 @@ async function saveAndExportDocument() {
     if (!validateDocumentForSave()) {
         return;
     }
-    await persistDocument({ exportAfterSave: true });
+    const previewWindow = createPrintWindow(buildDocumentData());
+    await persistDocument({
+        exportAfterSave: true,
+        previewWindow
+    });
 }
 
 function validateDocumentForSave() {
@@ -5196,29 +6856,31 @@ function updateOverviewStats() {
     const invoicedValue = state.documents
         .filter(doc => doc.type === "invoice")
         .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
-    const incomeReceived = state.documents
+    const incomeValue = state.documents
         .filter(doc => doc.type === "invoice" && doc.paymentStatus === "paid")
         .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
     const totalValue = state.valueView === "invoiced"
         ? invoicedValue
         : state.valueView === "income"
-            ? incomeReceived
+            ? incomeValue
             : pipelineValue;
+    const currentLabelKey = state.valueView === "invoiced"
+        ? "amount_invoiced"
+        : state.valueView === "income"
+            ? "income_received"
+            : "pipeline_value";
+    const nextHintKey = state.valueView === "pipeline"
+        ? "tap_view_invoiced"
+        : state.valueView === "invoiced"
+            ? "tap_view_income"
+            : "tap_view_pipeline";
 
     elements.totalDocumentsStat.textContent = String(state.documents.length);
     elements.quoteCountStat.textContent = String(quoteCount);
     elements.invoiceCountStat.textContent = String(invoiceCount);
     elements.totalValueStat.textContent = formatCurrency(totalValue);
-    elements.totalValueLabel.textContent = state.valueView === "invoiced"
-        ? t("amount_invoiced")
-        : state.valueView === "income"
-            ? t("income_received")
-            : t("pipeline_value");
-    elements.totalValueHint.textContent = state.valueView === "invoiced"
-        ? t("tap_view_income")
-        : state.valueView === "income"
-            ? t("tap_view_pipeline")
-            : t("tap_view_invoiced");
+    elements.totalValueLabel.textContent = t(currentLabelKey);
+    elements.totalValueHint.textContent = t(nextHintKey);
     elements.valueToggleCard.setAttribute("aria-pressed", String(state.valueView !== "pipeline"));
     elements.valueToggleCard.classList.toggle("is-invoiced", state.valueView === "invoiced");
     elements.valueToggleCard.classList.toggle("is-income", state.valueView === "income");
@@ -5342,6 +7004,8 @@ function getDocumentById(id) {
 
 function renderDocuments() {
     updateOverviewStats();
+    renderCatalog();
+    renderInvoiceReport();
 
     const visibleDocuments = getFilteredDocuments();
 
@@ -5374,9 +7038,7 @@ function renderDocuments() {
         const isLockedSourceQuote = Boolean(doc.lockedAfterConversion);
         const statusLabel = doc.status === "draft" ? t("status_draft") : t("status_logged");
         const statusClass = doc.status === "draft" ? "draft" : "logged";
-        const paymentLabel = doc.type === "invoice"
-            ? (doc.paymentStatus === "paid" ? t("payment_paid") : t("payment_unpaid"))
-            : "";
+        const paymentStatus = doc.type === "invoice" ? (doc.paymentStatus === "paid" ? "paid" : "unpaid") : null;
         const creatorLabel = isAdminSession() && doc.createdBy?.displayName
             ? `${escapeHtml(doc.createdBy.displayName)}${doc.createdBy.username ? ` (@${escapeHtml(doc.createdBy.username)})` : ""}`
             : "";
@@ -5387,10 +7049,13 @@ function renderDocuments() {
         const legacyBadge = doc.legacyPdfUrl
             ? `<span class="doc-lock-badge">${escapeHtml(t("legacy_pdf_attached"))}</span>`
             : "";
+        const paymentBadge = paymentStatus
+            ? `<span class="doc-payment-badge ${paymentStatus}">${escapeHtml(t(paymentStatus === "paid" ? "payment_paid" : "payment_unpaid"))}</span>`
+            : "";
         const rowAriaLabel = `${doc.type} ${doc.refNumber || "document"} for ${doc.clientName || "unknown client"}`;
 
         return `
-            <div class="document-row document-row-${doc.type}${isLockedSourceQuote ? " document-row-locked" : ""}"${cardViewId}${isLockedSourceQuote ? "" : ' tabindex="0" role="button"'} aria-label="${escapeHtml(rowAriaLabel)}">
+            <div class="document-row document-row-${doc.type}${doc.status === "draft" ? " document-row-draft" : ""}${isLockedSourceQuote ? " document-row-locked" : ""}"${cardViewId}${isLockedSourceQuote ? "" : ' tabindex="0" role="button"'} aria-label="${escapeHtml(rowAriaLabel)}">
                 <div class="doc-row-main">
                     <div class="doc-row-primary">
                         <span class="doc-type ${doc.type}">${escapeHtml(doc.type === "quote" ? t("quote_singular") : t("invoice_singular"))}</span>
@@ -5403,48 +7068,45 @@ function renderDocuments() {
                     </div>
                 </div>
                 <div class="doc-row-badges">
-                    <span class="doc-status-badge ${statusClass}">${escapeHtml(statusLabel)}</span>
-                    ${doc.type === "invoice" ? `<span class="doc-payment-badge ${doc.paymentStatus === "paid" ? "paid" : "unpaid"}">${escapeHtml(paymentLabel)}</span>` : ""}
                     ${statusBadge}
                     ${legacyBadge}
+                    <span class="doc-status-badge ${statusClass}">${escapeHtml(statusLabel)}</span>
+                    ${paymentBadge}
                 </div>
                 <div class="doc-row-total">
                     <span class="doc-total-label">${escapeHtml(t("total"))}</span>
                     <div class="doc-total">${formatCurrency(doc.total || 0)}</div>
                 </div>
                 <div class="doc-actions">
-                    ${isLockedSourceQuote
-                        ? `<span class="doc-lock-note">${escapeHtml(t("locked_after_conversion"))}</span>`
-                        : `<div class="doc-action-menu-wrap">
-                            <button type="button" class="doc-action-btn doc-action-btn-primary" data-action="edit" data-id="${doc.id}">${escapeHtml(t("edit"))}</button>
+                    ${isLockedSourceQuote ? `<span class="doc-lock-note">${escapeHtml(t("locked_after_conversion"))}</span>` : `
+                        <div class="doc-actions-menu-wrap">
                             <button
                                 type="button"
-                                class="doc-action-trigger"
-                                data-toggle-doc-menu="${doc.id}"
+                                class="doc-menu-toggle"
+                                data-toggle-document-menu="${doc.id}"
                                 aria-expanded="false"
-                                aria-haspopup="true"
-                                aria-label="Open document actions"
-                                title="Open document actions"
+                                aria-haspopup="menu"
+                                aria-label="${escapeHtml(t("menu"))}"
+                                title="${escapeHtml(t("menu"))}"
                             >
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <circle cx="12" cy="5.5" r="1.7" fill="currentColor"/>
-                                    <circle cx="12" cy="12" r="1.7" fill="currentColor"/>
-                                    <circle cx="12" cy="18.5" r="1.7" fill="currentColor"/>
-                                </svg>
+                                <span></span><span></span><span></span>
                             </button>
-                            <div class="doc-action-menu" data-doc-menu="${doc.id}" hidden>
-                                <button type="button" class="doc-action-menu-btn" data-action="edit" data-id="${doc.id}">${escapeHtml(t("edit"))}</button>
-                                <button type="button" class="doc-action-menu-btn" data-action="export-pdf" data-id="${doc.id}">${escapeHtml(t("open_pdf_preview"))}</button>
-                                ${doc.legacyPdfUrl ? `<button type="button" class="doc-action-menu-btn" data-action="view-pdf" data-id="${doc.id}">${escapeHtml(t("view_pdf"))}</button>` : ""}
-                                ${doc.type === "invoice" ? `<button type="button" class="doc-action-menu-btn" data-action="toggle-paid" data-id="${doc.id}">${escapeHtml(doc.paymentStatus === "paid" ? t("payment_unpaid") : t("payment_paid"))}</button>` : ""}
-                                ${doc.type === "quote" ? `<button type="button" class="doc-action-menu-btn" data-action="convert" data-id="${doc.id}">${escapeHtml(t("convert_to_invoice"))}</button>` : ""}
-                                <button type="button" class="doc-action-menu-btn doc-action-menu-btn-danger" data-action="delete" data-id="${doc.id}">${escapeHtml(t("delete"))}</button>
+                            <div class="doc-actions-menu" data-document-menu="${doc.id}" hidden style="display: none;">
+                                <button type="button" class="doc-actions-menu-btn" data-action="edit" data-id="${doc.id}">${escapeHtml(t("edit"))}</button>
+                                <button type="button" class="doc-actions-menu-btn" data-action="export-pdf" data-id="${doc.id}">${escapeHtml(t("open_pdf_preview"))}</button>
+                                ${doc.legacyPdfUrl ? `<button type="button" class="doc-actions-menu-btn" data-action="view-pdf" data-id="${doc.id}">${escapeHtml(t("view_pdf"))}</button>` : ""}
+                                ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="toggle-paid" data-id="${doc.id}">${escapeHtml(t(paymentStatus === "paid" ? "mark_as_unpaid" : "mark_as_paid"))}</button>` : ""}
+                                ${doc.type === "quote" ? `<button type="button" class="doc-actions-menu-btn" data-action="convert" data-id="${doc.id}">${escapeHtml(t("convert_to_invoice"))}</button>` : ""}
+                                <button type="button" class="doc-actions-menu-btn doc-actions-menu-btn-danger" data-action="delete" data-id="${doc.id}">${escapeHtml(t("delete"))}</button>
                             </div>
-                        </div>`}
+                        </div>
+                    `}
                 </div>
             </div>
         `;
     }).join("");
+
+    syncDocumentActionMenus();
 }
 
 function handleSearchInput(event) {
@@ -5541,6 +7203,16 @@ async function saveClient() {
 }
 
 async function handleDocumentCardClick(event) {
+    const menuToggleButton = event.target.closest("[data-toggle-document-menu]");
+    if (menuToggleButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        const docId = String(menuToggleButton.dataset.toggleDocumentMenu);
+        state.openDocumentMenuId = state.openDocumentMenuId === docId ? null : docId;
+        syncDocumentActionMenus();
+        return;
+    }
+
     const showTagsButton = event.target.closest("[data-show-tags]");
     if (showTagsButton) {
         event.preventDefault();
@@ -5553,22 +7225,10 @@ async function handleDocumentCardClick(event) {
         return;
     }
 
-    const toggleMenuButton = event.target.closest("[data-toggle-doc-menu]");
-    if (toggleMenuButton) {
-        event.preventDefault();
-        event.stopPropagation();
-        const docId = toggleMenuButton.dataset.toggleDocMenu;
-        state.openDocumentActionMenuId = state.openDocumentActionMenuId === docId ? null : docId;
-        syncDocumentActionMenus();
-        return;
-    }
-
     const actionButton = event.target.closest("[data-action]");
     if (actionButton) {
         event.preventDefault();
         event.stopPropagation();
-        state.openDocumentActionMenuId = null;
-        syncDocumentActionMenus();
 
         const docId = actionButton.dataset.id;
         const action = actionButton.dataset.action;
@@ -5581,7 +7241,7 @@ async function handleDocumentCardClick(event) {
                 openPrintWindow(doc);
             }
         } else if (action === "toggle-paid") {
-            await toggleInvoicePaidStatus(docId);
+            await toggleDocumentPaid(docId);
         } else if (action === "delete") {
             await deleteDocument(docId);
         } else if (action === "convert") {
@@ -5603,54 +7263,40 @@ async function handleDocumentCardClick(event) {
     editDocument(card.dataset.viewId);
 }
 
-async function toggleInvoicePaidStatus(id) {
-    const doc = getDocumentById(id);
-    if (!doc || doc.type !== "invoice") {
-        return;
-    }
-
-    const nextDocuments = state.documents.map(entry =>
-        isSameDocumentId(entry.id, id)
-            ? {
-                ...entry,
-                paymentStatus: entry.paymentStatus === "paid" ? "unpaid" : "paid"
-            }
-            : entry
-    );
-
-    try {
-        await saveDocumentsToServer(nextDocuments);
-        renderDocuments();
-    } catch (error) {
-        alert(`Unable to update invoice payment status.\n\n${error.message}`);
-    }
-}
-
-function syncDocumentActionMenus() {
-    elements.documentsGrid.querySelectorAll("[data-doc-menu]").forEach(menu => {
-        const isOpen = menu.dataset.docMenu === state.openDocumentActionMenuId;
-        menu.hidden = !isOpen;
-    });
-
-    elements.documentsGrid.querySelectorAll("[data-toggle-doc-menu]").forEach(button => {
-        const isOpen = button.dataset.toggleDocMenu === state.openDocumentActionMenuId;
-        button.setAttribute("aria-expanded", String(isOpen));
-        button.classList.toggle("is-open", isOpen);
-    });
-}
-
 function handleDocumentCardKeydown(event) {
     if (event.key !== "Enter" && event.key !== " ") {
         return;
     }
 
     const row = event.target.closest("[data-view-id]");
-    if (!row || event.target.closest("[data-action]") || event.target.closest("[data-show-tags]") || event.target.closest("[data-toggle-doc-menu]")) {
+    if (!row || event.target.closest("[data-action]") || event.target.closest("[data-show-tags]") || event.target.closest("[data-toggle-document-menu]")) {
         return;
     }
 
     event.preventDefault();
     editDocument(row.dataset.viewId);
+}
+
+async function toggleDocumentPaid(id) {
+    const doc = getDocumentById(id);
+    if (!doc || doc.type !== "invoice") {
+        return;
+    }
+
+    const nextStatus = doc.paymentStatus === "paid" ? "unpaid" : "paid";
+    const nextDocuments = state.documents.map(entry => (
+        isSameDocumentId(entry.id, id)
+            ? { ...entry, paymentStatus: nextStatus }
+            : entry
+    ));
+
+    try {
+        await saveDocumentsToServer(nextDocuments);
+        state.openDocumentMenuId = null;
+        renderDocuments();
+    } catch (error) {
+        alert(`Unable to update invoice payment status.\n\n${error.message}`);
+    }
 }
 
 function populateFormFromDocument(doc) {
@@ -5666,7 +7312,7 @@ function populateFormFromDocument(doc) {
     elements.notes.value = doc.notes || "";
     elements.paymentTerms.value = doc.paymentTerms || DEFAULT_PAYMENT_TERMS;
     elements.includeSignature.checked = doc.includeSignature !== false;
-    elements.includeStamp.checked = doc.includeStamp === true;
+    elements.includeStamp.checked = Boolean(doc.includeStamp);
 
     elements.itemsContainer.innerHTML = "";
     state.itemCounter = 0;
@@ -5677,10 +7323,8 @@ function populateFormFromDocument(doc) {
         lastItem.querySelector(".item-description").value = item.description || "";
         lastItem.querySelector(".item-quantity").value = item.quantity ?? 0;
         lastItem.querySelector(".item-total-price").value = item.totalPrice ?? ((parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0)).toFixed(2);
-        lastItem.querySelector(".item-dop-toggle").checked = Boolean(item.usesDopTotal);
-        lastItem.querySelector(".item-total-price-dop").value = item.totalPriceDop ?? (((parseFloat(item.totalPrice) || ((parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0))) * DOP_PER_USD).toFixed(2));
-        lastItem.querySelector(".item-manual-unit-toggle").checked = Boolean(item.manualUnitPrice);
         lastItem.querySelector(".item-unit-price").value = item.unitPrice ?? item.price ?? 0;
+        lastItem.dataset.priceDriver = item.manualUnitPrice ? "unit" : "total";
         lastItem.querySelector(".item-internal-cost").value = item.internalCost ?? 0;
         lastItem.dataset.itemImageDataUrl = item.itemImageDataUrl || "";
         updateItemPricing(lastItem);
@@ -5704,6 +7348,7 @@ function editDocument(id) {
 
     state.editingDocumentId = id;
     state.convertingFromQuoteId = null;
+    state.openDocumentMenuId = null;
     openModal(doc.type);
     populateFormFromDocument(doc);
     updateModalTitle();
@@ -5731,6 +7376,7 @@ async function deleteDocument(id) {
 
     try {
         await saveDocumentsToServer(nextDocuments);
+        state.openDocumentMenuId = null;
         renderDocuments();
     } catch (error) {
         alert(`Unable to delete this ${docLabel} from the server.\n\n${error.message}`);
@@ -5750,6 +7396,7 @@ function convertQuoteToInvoice(id) {
 
     state.editingDocumentId = null;
     state.convertingFromQuoteId = id;
+    state.openDocumentMenuId = null;
     openModal("invoice");
     populateFormFromDocument({ ...doc, type: "invoice", date: getLocalDateInputValue() });
     elements.docType.value = "invoice";

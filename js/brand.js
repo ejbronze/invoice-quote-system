@@ -30,29 +30,24 @@
         }
     };
 
+    let logoInstanceCounter = 0;
+
     function getLogoSvg(variant = "icon") {
+        logoInstanceCounter += 1;
+        const instanceId = `santosync-logo-${logoInstanceCounter}`;
+        const gradientId = `${instanceId}-gradient`;
         const mark = `
             <svg viewBox="0 0 80 80" aria-hidden="true">
                 <defs>
-                    <linearGradient id="santosyncGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <linearGradient id="${gradientId}" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stop-color="#0c3fa6"/>
                         <stop offset="52%" stop-color="#1459d9"/>
                         <stop offset="100%" stop-color="#17b889"/>
                     </linearGradient>
-                    <linearGradient id="santosyncStrokeA" x1="12%" y1="14%" x2="88%" y2="86%">
-                        <stop offset="0%" stop-color="#ffffff"/>
-                        <stop offset="100%" stop-color="#d7fff0"/>
-                    </linearGradient>
-                    <linearGradient id="santosyncStrokeB" x1="88%" y1="14%" x2="12%" y2="86%">
-                        <stop offset="0%" stop-color="#cce1ff"/>
-                        <stop offset="100%" stop-color="#ffffff"/>
-                    </linearGradient>
                 </defs>
-                <rect x="8" y="8" width="64" height="64" rx="22" fill="url(#santosyncGradient)"/>
-                <path d="M46 21c-7.8 0-13 3.9-13 9.1 0 3.7 2.6 6.1 7.7 7.5l7.2 1.9c3.7 1 5.2 2.1 5.2 4.1 0 2.7-2.8 4.4-7.4 4.4-4.9 0-8.6-1.5-12.2-4.8" fill="none" stroke="url(#santosyncStrokeA)" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M34 59c7.8 0 13-3.9 13-9.1 0-3.7-2.6-6.1-7.7-7.5l-7.2-1.9c-3.7-1-5.2-2.1-5.2-4.1 0-2.7 2.8-4.4 7.4-4.4 4.9 0 8.6 1.5 12.2 4.8" fill="none" stroke="url(#santosyncStrokeB)" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="27" cy="36.5" r="2.7" fill="#dffbf2"/>
-                <circle cx="53" cy="43.5" r="2.7" fill="#ffffff"/>
+                <rect x="8" y="8" width="64" height="64" rx="20" fill="url(#${gradientId})"/>
+                <path d="M50,21 C50,13 22,13 22,30 C22,44 58,46 58,59" fill="none" stroke="rgba(255,255,255,0.96)" stroke-width="7" stroke-linecap="round"/>
+                <path d="M30,59 C30,67 58,67 58,50 C58,36 22,34 22,21" fill="none" stroke="rgba(215,255,240,0.78)" stroke-width="7" stroke-linecap="round"/>
             </svg>
         `;
 
