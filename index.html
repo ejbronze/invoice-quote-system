@@ -90,14 +90,6 @@
                 <span class="session-identity" id="sessionBadge" hidden></span>
             </div>
             <div class="app-topbar-actions">
-                <button class="mailbox-trigger" id="openInboxBtn" type="button" aria-label="Open service reports" hidden>
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M7 4.8h8.5a2 2 0 0 1 2 2V19.2H8.6a2.8 2.8 0 0 1-2.8-2.8V6.9a2.1 2.1 0 0 1 2.1-2.1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                        <path d="M9.2 9.1h5.8M9.2 12.5h5.8M9.2 15.9h3.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                    </svg>
-                    <span class="mailbox-trigger-label" id="openInboxLabel">Reports</span>
-                    <span class="mailbox-count" id="inboxCountBadge" hidden>0</span>
-                </button>
                 <button class="cart-trigger" id="openSavedItemsTopbarBtn" type="button" aria-label="Open pending items cart">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M3.5 5h2.1l1.5 8.2a1.6 1.6 0 0 0 1.6 1.3h7.9a1.6 1.6 0 0 0 1.6-1.2l1.2-5.6H7.1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -109,9 +101,9 @@
                 <label class="language-picker">
                     <span class="visually-hidden" id="languagePickerLabel">Language</span>
                     <select id="languageSelect" aria-labelledby="languagePickerLabel">
-                        <option value="en">🍔 ENG</option>
-                        <option value="es">🪇 ESP</option>
-                        <option value="fr">🥐 FRN</option>
+                        <option value="en">🇺🇸</option>
+                        <option value="es">🇩🇴</option>
+                        <option value="fr">🇫🇷</option>
                     </select>
                 </label>
                 <div class="topbar-menu-wrap">
@@ -122,8 +114,11 @@
                     </button>
                     <div class="topbar-menu" id="topbarMenu" hidden>
                         <button class="topbar-menu-item" id="topbarAccountAdminBtn" type="button" hidden>Account Admin</button>
+                        <button class="topbar-menu-item" id="topbarInvoiceReportsBtn" type="button">Invoice Reports</button>
+                        <button class="topbar-menu-item topbar-menu-item--with-badge" id="openInboxBtn" type="button" hidden><span id="openInboxLabel">Service Reports</span><span class="mailbox-count" id="inboxCountBadge" hidden>0</span></button>
+                        <div class="topbar-menu-divider"></div>
                         <button class="topbar-menu-item" id="topbarCatalogBtn" type="button">Catalog</button>
-                        <button class="topbar-menu-item" id="topbarCompanyProfileBtn" type="button">Company Profile</button>
+                        <button class="topbar-menu-item" id="topbarCompanyProfileBtn" type="button" hidden>Company Profile</button>
                         <button class="topbar-menu-item" id="topbarSettingsBtn" type="button">Settings</button>
                         <button class="topbar-menu-item" id="topbarSignOutBtn" type="button">Sign out</button>
                     </div>
@@ -203,7 +198,6 @@
 
                 <div class="dashboard-actions-row" aria-label="Primary actions">
                     <div class="hero-action-grid">
-                        <button class="btn btn-secondary" id="openInvoiceReportsBtn" type="button">Invoice Reports</button>
                         <button class="btn btn-primary" id="newQuoteBtn" type="button">New Quote</button>
                         <button class="btn btn-success" id="newInvoiceBtn" type="button">New Invoice</button>
                     </div>
@@ -652,6 +646,12 @@
             </div>
             <div class="modal-body settings-modal-body">
                 <p class="settings-copy" id="invoiceReportsCopy">Review invoice totals by client, switch between paid and pending invoices, and keep the list sorted by client.</p>
+                <div class="invoice-report-presets">
+                    <button class="preset-chip" id="presetThisMonthBtn" type="button" data-preset="this-month">This Month</button>
+                    <button class="preset-chip" id="presetLast30Btn" type="button" data-preset="last-30">Last 30 Days</button>
+                    <button class="preset-chip" id="presetThisYearBtn" type="button" data-preset="this-year">This Year</button>
+                    <button class="preset-chip preset-chip--clear" id="presetClearDatesBtn" type="button" data-preset="clear">All Dates</button>
+                </div>
                 <div class="invoice-reports-toolbar">
                     <label class="sort-field invoice-reports-sort-field">
                         <span class="search-label" id="invoiceReportsSortLabel">Sort</span>

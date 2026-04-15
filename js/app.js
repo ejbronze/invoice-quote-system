@@ -970,15 +970,17 @@ function applyTranslations() {
     elements.topbarSettingsBtn.textContent = t("settings");
     elements.topbarSignOutBtn.textContent = t("sign_out");
     updateRuntimeModeBadge();
-    elements.languageSelect.options[0].textContent = "🍔 ENG";
-    elements.languageSelect.options[1].textContent = "🪇 ESP";
-    elements.languageSelect.options[2].textContent = "🥐 FRN";
+    elements.languageSelect.options[0].textContent = "🇺🇸";
+    elements.languageSelect.options[1].textContent = "🇩🇴";
+    elements.languageSelect.options[2].textContent = "🇫🇷";
 
     setElementText(".workspace-hero .eyebrow", t("hero_kicker"));
     updateHeroOperationalSummary();
     elements.newQuoteBtn.textContent = t("new_quote");
-    elements.openInvoiceReportsBtn.textContent = t("invoice_reports");
     elements.newInvoiceBtn.textContent = t("new_invoice");
+    if (elements.topbarInvoiceReportsBtn) {
+        elements.topbarInvoiceReportsBtn.textContent = t("invoice_reports");
+    }
     if (!elements.importDocumentStatus.dataset.customized) {
         elements.importDocumentStatus.textContent = t("import_status_default");
         elements.importDocumentStatus.hidden = true;
@@ -1231,6 +1233,7 @@ function cacheElements() {
     elements.navMenuBtn = document.getElementById("navMenuBtn");
     elements.topbarMenu = document.getElementById("topbarMenu");
     elements.topbarAccountAdminBtn = document.getElementById("topbarAccountAdminBtn");
+    elements.topbarInvoiceReportsBtn = document.getElementById("topbarInvoiceReportsBtn");
     elements.topbarCatalogBtn = document.getElementById("topbarCatalogBtn");
     elements.topbarCompanyProfileBtn = document.getElementById("topbarCompanyProfileBtn");
     elements.topbarSettingsBtn = document.getElementById("topbarSettingsBtn");
@@ -1246,7 +1249,10 @@ function cacheElements() {
     elements.exportSelectedJsonBtn = document.getElementById("exportSelectedJsonBtn");
     elements.issueReportModal = document.getElementById("issueReportModal");
     elements.openIssueReportBtn = document.getElementById("openIssueReportBtn");
-    elements.openInvoiceReportsBtn = document.getElementById("openInvoiceReportsBtn");
+    elements.presetThisMonthBtn = document.getElementById("presetThisMonthBtn");
+    elements.presetLast30Btn = document.getElementById("presetLast30Btn");
+    elements.presetThisYearBtn = document.getElementById("presetThisYearBtn");
+    elements.presetClearDatesBtn = document.getElementById("presetClearDatesBtn");
     elements.openAboutBtn = document.getElementById("openAboutBtn");
     elements.closeIssueReportModalBtn = document.getElementById("closeIssueReportModalBtn");
     elements.issueSummaryInput = document.getElementById("issueSummaryInput");
@@ -1443,7 +1449,7 @@ function bindEvents() {
         prepareNewDocument("quote");
         openModal("quote");
     });
-    elements.openInvoiceReportsBtn.addEventListener("click", openInvoiceReportsModal);
+    elements.topbarInvoiceReportsBtn?.addEventListener("click", () => { closeTopbarMenu(); openInvoiceReportsModal(); });
     elements.newInvoiceBtn.addEventListener("click", () => {
         prepareNewDocument("invoice");
         openModal("invoice");
@@ -1490,11 +1496,14 @@ function bindEvents() {
     elements.closeIssueInboxModalBtn.addEventListener("click", closeIssueInboxModal);
     elements.closeInvoiceReportsModalBtn.addEventListener("click", closeInvoiceReportsModal);
     elements.invoiceReportSort.addEventListener("change", renderInvoiceReport);
-    elements.invoiceReportStartDate.addEventListener("change", renderInvoiceReport);
-    elements.invoiceReportEndDate.addEventListener("change", renderInvoiceReport);
+    elements.invoiceReportStartDate.addEventListener("change", () => { document.querySelectorAll(".preset-chip").forEach(b => b.classList.remove("active")); renderInvoiceReport(); });
+    elements.invoiceReportEndDate.addEventListener("change", () => { document.querySelectorAll(".preset-chip").forEach(b => b.classList.remove("active")); renderInvoiceReport(); });
     elements.exportInvoiceReportCsvBtn.addEventListener("click", exportInvoiceReportCsv);
     elements.invoiceReportFilterButtons.forEach(button => {
         button.addEventListener("click", handleInvoiceReportFilterClick);
+    });
+    [elements.presetThisMonthBtn, elements.presetLast30Btn, elements.presetThisYearBtn, elements.presetClearDatesBtn].forEach(btn => {
+        btn?.addEventListener("click", handleDatePresetClick);
     });
     elements.saveCompanyProfileBtn.addEventListener("click", saveCompanyProfile);
     elements.addSavedItemBtn.addEventListener("click", addSavedItemFromModal);
@@ -2985,6 +2994,32 @@ function handleInvoiceReportFilterClick(event) {
     renderInvoiceReport();
 }
 
+function handleDatePresetClick(event) {
+    const preset = event.currentTarget.dataset.preset;
+    const today = new Date();
+    let start = "";
+    let end = "";
+
+    if (preset === "this-month") {
+        start = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+        end = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().slice(0, 10);
+    } else if (preset === "last-30") {
+        const past = new Date(today);
+        past.setDate(today.getDate() - 29);
+        start = past.toISOString().slice(0, 10);
+        end = today.toISOString().slice(0, 10);
+    } else if (preset === "this-year") {
+        start = new Date(today.getFullYear(), 0, 1).toISOString().slice(0, 10);
+        end = new Date(today.getFullYear(), 11, 31).toISOString().slice(0, 10);
+    }
+
+    document.querySelectorAll(".preset-chip").forEach(btn => btn.classList.remove("active"));
+    event.currentTarget.classList.add("active");
+    elements.invoiceReportStartDate.value = start;
+    elements.invoiceReportEndDate.value = end;
+    renderInvoiceReport();
+}
+
 function getInvoiceReportDateRange() {
     const startValue = elements.invoiceReportStartDate?.value || "";
     const endValue = elements.invoiceReportEndDate?.value || "";
@@ -3165,6 +3200,14 @@ function exportInvoiceReportCsv() {
                 formatCurrency(doc.total || 0)
             ]);
         });
+        rows.push([
+            group.clientName + " — Subtotal",
+            "",
+            "",
+            `${group.invoices.length} invoice${group.invoices.length !== 1 ? "s" : ""}`,
+            formatCurrency(group.total)
+        ]);
+        rows.push(["", "", "", "", ""]);
     });
 
     const csv = rows.map(row => row.map(escapeCsvCell).join(",")).join("\n");
