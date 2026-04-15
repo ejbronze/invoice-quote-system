@@ -660,10 +660,23 @@
                             <option value="client_desc">Client: Z to A</option>
                         </select>
                     </label>
+                    <div class="invoice-report-date-range">
+                        <label class="form-group">
+                            <span id="invoiceReportStartLabel">From</span>
+                            <input type="date" id="invoiceReportStartDate">
+                        </label>
+                        <label class="form-group">
+                            <span id="invoiceReportEndLabel">To</span>
+                            <input type="date" id="invoiceReportEndDate">
+                        </label>
+                    </div>
                     <div class="filter-row invoice-report-filter-row" role="tablist" aria-label="Invoice report filters">
                         <button class="filter-chip active" id="invoiceReportFilterAllBtn" type="button" data-invoice-report-filter="all">All</button>
                         <button class="filter-chip" id="invoiceReportFilterPaidBtn" type="button" data-invoice-report-filter="paid">Paid</button>
                         <button class="filter-chip" id="invoiceReportFilterPendingBtn" type="button" data-invoice-report-filter="pending">Pending</button>
+                    </div>
+                    <div class="settings-actions invoice-report-actions">
+                        <button class="btn btn-secondary" id="exportInvoiceReportCsvBtn" type="button">Export CSV</button>
                     </div>
                 </div>
                 <div class="invoice-report-summary" id="invoiceReportSummary"></div>

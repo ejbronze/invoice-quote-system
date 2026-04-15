@@ -235,6 +235,9 @@ const TRANSLATIONS = {
         new_invoice: "New Invoice",
         invoice_reports: "Invoice Reports",
         invoice_reports_copy: "Review invoice totals by client, switch between paid and pending invoices, and keep the list sorted by client.",
+        export_report_csv: "Export CSV",
+        report_from: "From",
+        report_to: "To",
         import_status_default: "Use JSON backup tools to restore deleted records or move data between environments.",
         snapshot: "Snapshot",
         documents: "Documents",
@@ -482,6 +485,9 @@ const TRANSLATIONS = {
         new_invoice: "Nueva Factura",
         invoice_reports: "Reportes de Facturas",
         invoice_reports_copy: "Revisa los totales de facturas por cliente, cambia entre facturas pagadas y pendientes, y mantén la lista ordenada por cliente.",
+        export_report_csv: "Exportar CSV",
+        report_from: "Desde",
+        report_to: "Hasta",
         import_status_default: "Usa las herramientas JSON para restaurar registros eliminados o mover datos entre entornos.",
         snapshot: "Resumen",
         documents: "Documentos",
@@ -729,6 +735,9 @@ const TRANSLATIONS = {
         new_invoice: "Nouvelle Facture",
         invoice_reports: "Rapports de Factures",
         invoice_reports_copy: "Consultez les totaux de factures par client, basculez entre les factures payees et en attente, et gardez la liste triee par client.",
+        export_report_csv: "Exporter CSV",
+        report_from: "Du",
+        report_to: "Au",
         import_status_default: "Utilisez les outils JSON pour restaurer des enregistrements supprimés ou déplacer des données entre environnements.",
         snapshot: "Aperçu",
         documents: "Documents",
@@ -1069,6 +1078,9 @@ function applyTranslations() {
     setElementText("#invoiceReportsTitle", t("invoice_reports"));
     setElementText("#invoiceReportsCopy", t("invoice_reports_copy"));
     setElementText("#invoiceReportsSortLabel", t("sort"));
+    setElementText("#invoiceReportStartLabel", t("report_from"));
+    setElementText("#invoiceReportEndLabel", t("report_to"));
+    setElementText("#exportInvoiceReportCsvBtn", t("export_report_csv"));
     elements.invoiceReportSort.options[0].textContent = t("sort_client_asc");
     elements.invoiceReportSort.options[1].textContent = t("sort_client_desc");
     elements.invoiceReportFilterButtons[0].textContent = t("filter_all");
@@ -1208,6 +1220,7 @@ function cacheElements() {
     elements.sessionLoader = document.getElementById("sessionLoader");
     elements.sessionLoaderMessage = document.getElementById("sessionLoaderMessage");
     elements.runtimeModeBadge = document.getElementById("runtimeModeBadge");
+    elements.environmentBadge = document.getElementById("environmentBadge");
     elements.workspaceShell = document.querySelector(".workspace-shell");
     elements.settingsModal = document.getElementById("settingsModal");
     elements.sessionBadge = document.getElementById("sessionBadge");
@@ -1247,9 +1260,12 @@ function cacheElements() {
     elements.invoiceReportsModal = document.getElementById("invoiceReportsModal");
     elements.closeInvoiceReportsModalBtn = document.getElementById("closeInvoiceReportsModalBtn");
     elements.invoiceReportSort = document.getElementById("invoiceReportSort");
+    elements.invoiceReportStartDate = document.getElementById("invoiceReportStartDate");
+    elements.invoiceReportEndDate = document.getElementById("invoiceReportEndDate");
     elements.invoiceReportFilterButtons = Array.from(document.querySelectorAll("[data-invoice-report-filter]"));
     elements.invoiceReportSummary = document.getElementById("invoiceReportSummary");
     elements.invoiceReportList = document.getElementById("invoiceReportList");
+    elements.exportInvoiceReportCsvBtn = document.getElementById("exportInvoiceReportCsvBtn");
     elements.companyProfileModal = document.getElementById("companyProfileModal");
     elements.savedItemsModal = document.getElementById("savedItemsModal");
     elements.savedItemCreateModal = document.getElementById("savedItemCreateModal");
@@ -1474,6 +1490,9 @@ function bindEvents() {
     elements.closeIssueInboxModalBtn.addEventListener("click", closeIssueInboxModal);
     elements.closeInvoiceReportsModalBtn.addEventListener("click", closeInvoiceReportsModal);
     elements.invoiceReportSort.addEventListener("change", renderInvoiceReport);
+    elements.invoiceReportStartDate.addEventListener("change", renderInvoiceReport);
+    elements.invoiceReportEndDate.addEventListener("change", renderInvoiceReport);
+    elements.exportInvoiceReportCsvBtn.addEventListener("click", exportInvoiceReportCsv);
     elements.invoiceReportFilterButtons.forEach(button => {
         button.addEventListener("click", handleInvoiceReportFilterClick);
     });
@@ -2966,15 +2985,39 @@ function handleInvoiceReportFilterClick(event) {
     renderInvoiceReport();
 }
 
-function renderInvoiceReport() {
-    if (!elements.invoiceReportList || !elements.invoiceReportSummary || !elements.invoiceReportSort) {
-        return;
-    }
+function getInvoiceReportDateRange() {
+    const startValue = elements.invoiceReportStartDate?.value || "";
+    const endValue = elements.invoiceReportEndDate?.value || "";
+    const startTimestamp = startValue ? Date.parse(`${startValue}T00:00:00`) : null;
+    const endTimestamp = endValue ? Date.parse(`${endValue}T23:59:59.999`) : null;
 
-    const allInvoices = state.documents.filter(doc => doc.type === "invoice");
+    return {
+        startValue,
+        endValue,
+        startTimestamp: Number.isNaN(startTimestamp) ? null : startTimestamp,
+        endTimestamp: Number.isNaN(endTimestamp) ? null : endTimestamp
+    };
+}
+
+function getInvoiceReportData() {
+    const dateRange = getInvoiceReportDateRange();
+    const rangedInvoices = state.documents.filter(doc => {
+        if (doc.type !== "invoice") {
+            return false;
+        }
+
+        const timestamp = getDocumentDateAt(doc);
+        if (dateRange.startTimestamp !== null && timestamp < dateRange.startTimestamp) {
+            return false;
+        }
+        if (dateRange.endTimestamp !== null && timestamp > dateRange.endTimestamp) {
+            return false;
+        }
+        return true;
+    });
     const filter = getInvoiceReportFilter();
     const sortOrder = elements.invoiceReportSort.value || "client_asc";
-    const filteredInvoices = allInvoices
+    const filteredInvoices = rangedInvoices
         .filter(doc => filter === "all" || (filter === "paid" ? doc.paymentStatus === "paid" : doc.paymentStatus !== "paid"));
     const groupedByClient = new Map();
 
@@ -3000,14 +3043,35 @@ function renderInvoiceReport() {
             return sortOrder === "client_desc" ? -comparison : comparison;
         });
 
-    const paidCount = allInvoices.filter(doc => doc.paymentStatus === "paid").length;
-    const pendingCount = allInvoices.filter(doc => doc.paymentStatus !== "paid").length;
-    const paidTotal = allInvoices
+    const paidCount = rangedInvoices.filter(doc => doc.paymentStatus === "paid").length;
+    const pendingCount = rangedInvoices.filter(doc => doc.paymentStatus !== "paid").length;
+    const paidTotal = rangedInvoices
         .filter(doc => doc.paymentStatus === "paid")
         .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
-    const pendingTotal = allInvoices
+    const pendingTotal = rangedInvoices
         .filter(doc => doc.paymentStatus !== "paid")
         .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
+
+    return {
+        allInvoices: rangedInvoices,
+        clientGroups,
+        dateRange,
+        summary: {
+            paidCount,
+            pendingCount,
+            paidTotal,
+            pendingTotal,
+            clientCount: new Set(rangedInvoices.map(doc => String(doc.clientName || t("unknown_client")).trim() || t("unknown_client"))).size
+        }
+    };
+}
+
+function renderInvoiceReport() {
+    if (!elements.invoiceReportList || !elements.invoiceReportSummary || !elements.invoiceReportSort) {
+        return;
+    }
+
+    const { allInvoices, clientGroups, summary } = getInvoiceReportData();
 
     elements.invoiceReportSummary.innerHTML = `
         <article class="invoice-report-summary-card">
@@ -3016,15 +3080,15 @@ function renderInvoiceReport() {
         </article>
         <article class="invoice-report-summary-card">
             <span>${escapeHtml(t("report_total_clients"))}</span>
-            <strong>${escapeHtml(String(new Set(allInvoices.map(doc => String(doc.clientName || t("unknown_client")).trim() || t("unknown_client"))).size))}</strong>
+            <strong>${escapeHtml(String(summary.clientCount))}</strong>
         </article>
         <article class="invoice-report-summary-card">
             <span>${escapeHtml(t("report_total_paid"))}</span>
-            <strong>${escapeHtml(`${paidCount} • ${formatCurrency(paidTotal)}`)}</strong>
+            <strong>${escapeHtml(`${summary.paidCount} • ${formatCurrency(summary.paidTotal)}`)}</strong>
         </article>
         <article class="invoice-report-summary-card">
             <span>${escapeHtml(t("report_total_pending"))}</span>
-            <strong>${escapeHtml(`${pendingCount} • ${formatCurrency(pendingTotal)}`)}</strong>
+            <strong>${escapeHtml(`${summary.pendingCount} • ${formatCurrency(summary.pendingTotal)}`)}</strong>
         </article>
     `;
 
@@ -3069,6 +3133,44 @@ function renderInvoiceReport() {
             </table>
         </article>
     `).join("");
+}
+
+function escapeCsvCell(value) {
+    const normalized = String(value ?? "").replace(/\r?\n/g, " ").trim();
+    return `"${normalized.replace(/"/g, '""')}"`;
+}
+
+function exportInvoiceReportCsv() {
+    const { allInvoices, clientGroups } = getInvoiceReportData();
+    if (!allInvoices.length || !clientGroups.length) {
+        setImportStatus(t("report_no_matches"), true);
+        return;
+    }
+
+    const rows = [[
+        t("report_client"),
+        t("report_ref"),
+        t("report_date"),
+        t("report_status"),
+        t("report_total")
+    ]];
+
+    clientGroups.forEach(group => {
+        group.invoices.forEach(doc => {
+            rows.push([
+                group.clientName,
+                doc.refNumber || "",
+                formatDisplayDate(doc.date) || t("no_date"),
+                doc.paymentStatus === "paid" ? t("payment_paid") : t("report_pending"),
+                formatCurrency(doc.total || 0)
+            ]);
+        });
+    });
+
+    const csv = rows.map(row => row.map(escapeCsvCell).join(",")).join("\n");
+    const filter = getInvoiceReportFilter();
+    const timestamp = new Date().toISOString().slice(0, 10);
+    downloadTextFile(`invoice-report-${filter}-${timestamp}.csv`, `${csv}\n`, "text/csv;charset=utf-8");
 }
 
 function syncCompanyProfileForm() {
