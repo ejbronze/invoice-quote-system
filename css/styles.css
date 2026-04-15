@@ -2203,25 +2203,32 @@ body::after {
     flex-wrap: wrap;
 }
 
-.doc-type {
+.doc-type-icon {
     display: inline-flex;
     align-items: center;
-    padding: 0.35rem 0.7rem;
-    border-radius: 999px;
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    font-family: inherit;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 8px;
+    border: 1px solid rgba(202, 213, 226, 0.92);
+    background: rgba(255, 255, 255, 0.92);
+    color: #35517b;
+    flex: 0 0 1.9rem;
 }
 
-.doc-type.quote {
-    background: rgba(66, 99, 235, 0.12);
+.doc-type-icon svg {
+    width: 1rem;
+    height: 1rem;
+    display: block;
+}
+
+.doc-type-icon.quote {
+    background: rgba(66, 99, 235, 0.08);
     color: var(--blue-deep);
 }
 
-.doc-type.invoice {
-    background: rgba(29, 191, 140, 0.14);
+.doc-type-icon.invoice {
+    background: rgba(29, 191, 140, 0.1);
     color: var(--mint-deep);
 }
 
@@ -2235,12 +2242,6 @@ body::after {
 .doc-date {
     color: var(--text-faint);
     font-size: 0.78rem;
-}
-
-.doc-creator {
-    color: var(--blue-deep);
-    font-size: 0.74rem;
-    font-weight: 700;
 }
 
 .doc-total {
@@ -2265,7 +2266,6 @@ body::after {
     flex-wrap: wrap;
 }
 
-.doc-status-badge,
 .doc-payment-badge {
     display: inline-flex;
     align-items: center;
@@ -2275,19 +2275,14 @@ body::after {
     font-weight: 700;
 }
 
-.doc-status-badge.logged {
-    background: rgba(29, 191, 140, 0.14);
-    color: #156f52;
-}
-
-.doc-status-badge.draft {
-    background: rgba(244, 200, 74, 0.18);
-    color: #99650a;
-}
-
 .doc-payment-badge.paid {
     background: rgba(29, 191, 140, 0.18);
     color: #156f52;
+}
+
+.doc-payment-badge.pending {
+    background: rgba(244, 200, 74, 0.22);
+    color: #99650a;
 }
 
 .doc-payment-badge.unpaid {
@@ -2296,15 +2291,16 @@ body::after {
 }
 
 .doc-status-indicator {
-    position: absolute;
-    top: 0.72rem;
-    left: 0.72rem;
-    z-index: 2;
+    position: relative;
+    top: auto;
+    left: auto;
+    z-index: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 1rem;
     height: 1rem;
+    flex: 0 0 1rem;
 }
 
 .doc-status-indicator.logged {
@@ -3238,7 +3234,7 @@ body::after {
 
 .invoice-report-summary {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 0.8rem;
     margin-bottom: 1rem;
 }

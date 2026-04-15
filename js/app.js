@@ -234,7 +234,7 @@ const TRANSLATIONS = {
         new_quote: "New Quote",
         new_invoice: "New Invoice",
         invoice_reports: "Invoice Reports",
-        invoice_reports_copy: "Review invoice totals by client, switch between paid and pending invoices, and keep the list sorted by client.",
+        invoice_reports_copy: "Review invoice totals by client, switch between unpaid, pending, and paid invoices, and keep the list sorted by client.",
         export_report_csv: "Export CSV",
         report_from: "From",
         report_to: "To",
@@ -258,8 +258,10 @@ const TRANSLATIONS = {
         view_pdf: "View PDF",
         convert_to_invoice: "Convert to Invoice",
         payment_paid: "Paid",
+        payment_pending: "Pending Payment",
         payment_unpaid: "Unpaid",
         mark_as_paid: "Mark As Paid",
+        mark_as_pending: "Mark As Pending",
         mark_as_unpaid: "Mark As Unpaid",
         report_pending: "Pending",
         local_mode: "LOCAL MODE",
@@ -364,6 +366,7 @@ const TRANSLATIONS = {
         report_total_invoices: "Invoices",
         report_total_clients: "Clients",
         report_total_paid: "Paid",
+        report_total_unpaid: "Unpaid",
         report_total_pending: "Pending",
         report_no_invoices: "No invoices yet.",
         report_no_matches: "No invoices match this report filter."
@@ -484,7 +487,7 @@ const TRANSLATIONS = {
         new_quote: "Nueva Cotización",
         new_invoice: "Nueva Factura",
         invoice_reports: "Reportes de Facturas",
-        invoice_reports_copy: "Revisa los totales de facturas por cliente, cambia entre facturas pagadas y pendientes, y mantén la lista ordenada por cliente.",
+        invoice_reports_copy: "Revisa los totales de facturas por cliente, cambia entre facturas no pagadas, pendientes y pagadas, y mantén la lista ordenada por cliente.",
         export_report_csv: "Exportar CSV",
         report_from: "Desde",
         report_to: "Hasta",
@@ -508,8 +511,10 @@ const TRANSLATIONS = {
         view_pdf: "Ver PDF",
         convert_to_invoice: "Convertir en Factura",
         payment_paid: "Pagada",
+        payment_pending: "Pago Pendiente",
         payment_unpaid: "No Pagada",
         mark_as_paid: "Marcar como Pagada",
+        mark_as_pending: "Marcar como Pendiente",
         mark_as_unpaid: "Marcar como No Pagada",
         report_pending: "Pendiente",
         local_mode: "MODO LOCAL",
@@ -614,6 +619,7 @@ const TRANSLATIONS = {
         report_total_invoices: "Facturas",
         report_total_clients: "Clientes",
         report_total_paid: "Pagadas",
+        report_total_unpaid: "No Pagadas",
         report_total_pending: "Pendientes",
         report_no_invoices: "Todavía no hay facturas.",
         report_no_matches: "No hay facturas que coincidan con este filtro."
@@ -734,7 +740,7 @@ const TRANSLATIONS = {
         new_quote: "Nouveau Devis",
         new_invoice: "Nouvelle Facture",
         invoice_reports: "Rapports de Factures",
-        invoice_reports_copy: "Consultez les totaux de factures par client, basculez entre les factures payees et en attente, et gardez la liste triee par client.",
+        invoice_reports_copy: "Consultez les totaux de factures par client, basculez entre les factures impayees, en attente et payees, et gardez la liste triee par client.",
         export_report_csv: "Exporter CSV",
         report_from: "Du",
         report_to: "Au",
@@ -758,8 +764,10 @@ const TRANSLATIONS = {
         view_pdf: "Voir le PDF",
         convert_to_invoice: "Convertir en Facture",
         payment_paid: "Payee",
+        payment_pending: "Paiement en attente",
         payment_unpaid: "Non Payee",
         mark_as_paid: "Marquer comme Payee",
+        mark_as_pending: "Marquer en attente",
         mark_as_unpaid: "Marquer comme Non Payee",
         report_pending: "En attente",
         local_mode: "MODE LOCAL",
@@ -864,6 +872,7 @@ const TRANSLATIONS = {
         report_total_invoices: "Factures",
         report_total_clients: "Clients",
         report_total_paid: "Payees",
+        report_total_unpaid: "Non Payees",
         report_total_pending: "En attente",
         report_no_invoices: "Aucune facture pour le moment.",
         report_no_matches: "Aucune facture ne correspond a ce filtre."
@@ -1086,8 +1095,9 @@ function applyTranslations() {
     elements.invoiceReportSort.options[0].textContent = t("sort_client_asc");
     elements.invoiceReportSort.options[1].textContent = t("sort_client_desc");
     elements.invoiceReportFilterButtons[0].textContent = t("filter_all");
-    elements.invoiceReportFilterButtons[1].textContent = t("payment_paid");
-    elements.invoiceReportFilterButtons[2].textContent = t("report_pending");
+    elements.invoiceReportFilterButtons[1].textContent = t("payment_unpaid");
+    elements.invoiceReportFilterButtons[2].textContent = t("payment_pending");
+    elements.invoiceReportFilterButtons[3].textContent = t("payment_paid");
     setElementText("#companyProfileTitle", t("company_profile"));
     setElementText("#companyProfileCopy", t("company_profile_copy"));
     const companyProfileLabels = elements.companyProfileModal.querySelectorAll(".form-group > span");
@@ -3053,7 +3063,7 @@ function getInvoiceReportData() {
     const filter = getInvoiceReportFilter();
     const sortOrder = elements.invoiceReportSort.value || "client_asc";
     const filteredInvoices = rangedInvoices
-        .filter(doc => filter === "all" || (filter === "paid" ? doc.paymentStatus === "paid" : doc.paymentStatus !== "paid"));
+        .filter(doc => filter === "all" || normalizePaymentStatus(doc.paymentStatus) === filter);
     const groupedByClient = new Map();
 
     filteredInvoices.forEach(doc => {
@@ -3078,13 +3088,17 @@ function getInvoiceReportData() {
             return sortOrder === "client_desc" ? -comparison : comparison;
         });
 
-    const paidCount = rangedInvoices.filter(doc => doc.paymentStatus === "paid").length;
-    const pendingCount = rangedInvoices.filter(doc => doc.paymentStatus !== "paid").length;
+    const paidCount = rangedInvoices.filter(doc => normalizePaymentStatus(doc.paymentStatus) === "paid").length;
+    const pendingCount = rangedInvoices.filter(doc => normalizePaymentStatus(doc.paymentStatus) === "pending").length;
+    const unpaidCount = rangedInvoices.filter(doc => normalizePaymentStatus(doc.paymentStatus) === "unpaid").length;
     const paidTotal = rangedInvoices
-        .filter(doc => doc.paymentStatus === "paid")
+        .filter(doc => normalizePaymentStatus(doc.paymentStatus) === "paid")
         .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
     const pendingTotal = rangedInvoices
-        .filter(doc => doc.paymentStatus !== "paid")
+        .filter(doc => normalizePaymentStatus(doc.paymentStatus) === "pending")
+        .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
+    const unpaidTotal = rangedInvoices
+        .filter(doc => normalizePaymentStatus(doc.paymentStatus) === "unpaid")
         .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
 
     return {
@@ -3094,8 +3108,10 @@ function getInvoiceReportData() {
         summary: {
             paidCount,
             pendingCount,
+            unpaidCount,
             paidTotal,
             pendingTotal,
+            unpaidTotal,
             clientCount: new Set(rangedInvoices.map(doc => String(doc.clientName || t("unknown_client")).trim() || t("unknown_client"))).size
         }
     };
@@ -3120,6 +3136,10 @@ function renderInvoiceReport() {
         <article class="invoice-report-summary-card">
             <span>${escapeHtml(t("report_total_paid"))}</span>
             <strong>${escapeHtml(`${summary.paidCount} • ${formatCurrency(summary.paidTotal)}`)}</strong>
+        </article>
+        <article class="invoice-report-summary-card">
+            <span>${escapeHtml(t("report_total_unpaid"))}</span>
+            <strong>${escapeHtml(`${summary.unpaidCount} • ${formatCurrency(summary.unpaidTotal)}`)}</strong>
         </article>
         <article class="invoice-report-summary-card">
             <span>${escapeHtml(t("report_total_pending"))}</span>
@@ -3160,7 +3180,7 @@ function renderInvoiceReport() {
                         <tr>
                             <td><strong>${escapeHtml(doc.refNumber || "—")}</strong></td>
                             <td>${escapeHtml(formatDisplayDate(doc.date) || t("no_date"))}</td>
-                            <td>${escapeHtml(doc.paymentStatus === "paid" ? t("payment_paid") : t("report_pending"))}</td>
+                            <td>${escapeHtml(getPaymentStatusLabel(doc.paymentStatus))}</td>
                             <td>${escapeHtml(formatCurrency(doc.total || 0))}</td>
                         </tr>
                     `).join("")}
@@ -3196,7 +3216,7 @@ function exportInvoiceReportCsv() {
                 group.clientName,
                 doc.refNumber || "",
                 formatDisplayDate(doc.date) || t("no_date"),
-                doc.paymentStatus === "paid" ? t("payment_paid") : t("report_pending"),
+                getPaymentStatusLabel(doc.paymentStatus),
                 formatCurrency(doc.total || 0)
             ]);
         });
@@ -4651,6 +4671,24 @@ async function requestJSON(url, options = {}) {
     return payload;
 }
 
+function normalizePaymentStatus(status) {
+    if (status === "paid" || status === "pending" || status === "unpaid") {
+        return status;
+    }
+    return "unpaid";
+}
+
+function getPaymentStatusLabel(status) {
+    const normalizedStatus = normalizePaymentStatus(status);
+    if (normalizedStatus === "paid") {
+        return t("payment_paid");
+    }
+    if (normalizedStatus === "pending") {
+        return t("payment_pending");
+    }
+    return t("payment_unpaid");
+}
+
 function normalizeDocuments(documents) {
     const normalized = Array.isArray(documents) ? documents : [];
     const consolidated = [];
@@ -4663,6 +4701,9 @@ function normalizeDocuments(documents) {
         }
 
         doc.status = doc.status === "draft" ? "draft" : "logged";
+        doc.paymentStatus = String(doc.type || "").toLowerCase() === "invoice"
+            ? normalizePaymentStatus(doc.paymentStatus)
+            : null;
 
         const refNumber = String(doc.refNumber || "").trim().toUpperCase();
         const isTlReference = /^TL-\d{4}-\d{4}-\d+$/i.test(refNumber);
@@ -6839,7 +6880,7 @@ async function persistDocument(options = {}) {
         type: elements.docType.value,
         status: nextStatus,
         paymentStatus: elements.docType.value === "invoice"
-            ? (existingDocument?.paymentStatus || "unpaid")
+            ? normalizePaymentStatus(existingDocument?.paymentStatus)
             : null,
         refNumber: elements.refNumber.value,
         date: elements.docDate.value,
@@ -7183,10 +7224,7 @@ function renderDocuments() {
         const isLockedSourceQuote = Boolean(doc.lockedAfterConversion);
         const statusLabel = doc.status === "draft" ? t("status_draft") : t("status_logged");
         const statusClass = doc.status === "draft" ? "draft" : "logged";
-        const paymentStatus = doc.type === "invoice" ? (doc.paymentStatus === "paid" ? "paid" : "unpaid") : null;
-        const creatorLabel = isAdminSession() && doc.createdBy?.displayName
-            ? `${escapeHtml(doc.createdBy.displayName)}${doc.createdBy.username ? ` (@${escapeHtml(doc.createdBy.username)})` : ""}`
-            : "";
+        const paymentStatus = doc.type === "invoice" ? normalizePaymentStatus(doc.paymentStatus) : null;
         const cardViewId = isLockedSourceQuote ? "" : ` data-view-id="${doc.id}"`;
         const statusBadge = isLockedSourceQuote
             ? `<span class="doc-lock-badge">${escapeHtml(t("converted_source"))}</span>`
@@ -7195,27 +7233,51 @@ function renderDocuments() {
             ? `<span class="doc-lock-badge">${escapeHtml(t("legacy_pdf_attached"))}</span>`
             : "";
         const paymentBadge = paymentStatus
-            ? `<span class="doc-payment-badge ${paymentStatus}">${escapeHtml(t(paymentStatus === "paid" ? "payment_paid" : "payment_unpaid"))}</span>`
+            ? `<span class="doc-payment-badge ${paymentStatus}">${escapeHtml(getPaymentStatusLabel(paymentStatus))}</span>`
             : "";
         const rowAriaLabel = `${doc.type} ${doc.refNumber || "document"} for ${doc.clientName || "unknown client"}`;
+        const docTypeLabel = doc.type === "quote" ? t("quote_singular") : t("invoice_singular");
+        const docTypeIcon = doc.type === "quote"
+            ? `
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M8 7h8m-8 5h8m-8 5h5m5 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v9a2 2 0 0 1-2 2z"></path>
+                </svg>
+            `
+            : `
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M7 3h7l5 5v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M9 13h6m-6 4h6M14 3v5h5"></path>
+                </svg>
+            `;
+        const workflowIndicator = `
+            <span class="doc-status-indicator ${statusClass}" aria-label="${escapeHtml(statusLabel)}" title="${escapeHtml(statusLabel)}">
+                ${statusClass === "logged"
+                    ? `<span class="doc-status-check" aria-hidden="true">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </span>`
+                    : `<span class="doc-status-dot" aria-hidden="true"></span>`
+                }
+            </span>
+        `;
 
         return `
             <div class="document-row document-row-${doc.type}${doc.status === "draft" ? " document-row-draft" : ""}${isLockedSourceQuote ? " document-row-locked" : ""}"${cardViewId}${isLockedSourceQuote ? "" : ' tabindex="0" role="button"'} aria-label="${escapeHtml(rowAriaLabel)}">
                 <div class="doc-row-main">
                     <div class="doc-row-primary">
-                        <span class="doc-type ${doc.type}">${escapeHtml(doc.type === "quote" ? t("quote_singular") : t("invoice_singular"))}</span>
+                        <span class="doc-type-icon ${doc.type}" aria-label="${escapeHtml(docTypeLabel)}" title="${escapeHtml(docTypeLabel)}">${docTypeIcon}</span>
+                        ${workflowIndicator}
                         <div class="doc-ref">${doc.refNumber}</div>
                     </div>
                     <div class="doc-row-secondary">
                         <div class="doc-client">${escapeHtml(doc.clientName)}</div>
                         <div class="doc-date">${escapeHtml(t("date_label"))} ${date}</div>
-                        ${creatorLabel ? `<div class="doc-creator">${escapeHtml(t("created_by"))} ${creatorLabel}</div>` : ""}
                     </div>
                 </div>
                 <div class="doc-row-badges">
                     ${statusBadge}
                     ${legacyBadge}
-                    <span class="doc-status-badge ${statusClass}">${escapeHtml(statusLabel)}</span>
                     ${paymentBadge}
                 </div>
                 <div class="doc-row-total">
@@ -7240,7 +7302,9 @@ function renderDocuments() {
                                 <button type="button" class="doc-actions-menu-btn" data-action="edit" data-id="${doc.id}">${escapeHtml(t("edit"))}</button>
                                 <button type="button" class="doc-actions-menu-btn" data-action="export-pdf" data-id="${doc.id}">${escapeHtml(t("open_pdf_preview"))}</button>
                                 ${doc.legacyPdfUrl ? `<button type="button" class="doc-actions-menu-btn" data-action="view-pdf" data-id="${doc.id}">${escapeHtml(t("view_pdf"))}</button>` : ""}
-                                ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="toggle-paid" data-id="${doc.id}">${escapeHtml(t(paymentStatus === "paid" ? "mark_as_unpaid" : "mark_as_paid"))}</button>` : ""}
+                                ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="unpaid" data-id="${doc.id}">${escapeHtml(t("mark_as_unpaid"))}</button>` : ""}
+                                ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="pending" data-id="${doc.id}">${escapeHtml(t("mark_as_pending"))}</button>` : ""}
+                                ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="paid" data-id="${doc.id}">${escapeHtml(t("mark_as_paid"))}</button>` : ""}
                                 ${doc.type === "quote" ? `<button type="button" class="doc-actions-menu-btn" data-action="convert" data-id="${doc.id}">${escapeHtml(t("convert_to_invoice"))}</button>` : ""}
                                 <button type="button" class="doc-actions-menu-btn doc-actions-menu-btn-danger" data-action="delete" data-id="${doc.id}">${escapeHtml(t("delete"))}</button>
                             </div>
@@ -7385,8 +7449,8 @@ async function handleDocumentCardClick(event) {
             if (doc) {
                 openPrintWindow(doc);
             }
-        } else if (action === "toggle-paid") {
-            await toggleDocumentPaid(docId);
+        } else if (action === "set-payment-status") {
+            await updateDocumentPaymentStatus(docId, actionButton.dataset.paymentStatus);
         } else if (action === "delete") {
             await deleteDocument(docId);
         } else if (action === "convert") {
@@ -7422,13 +7486,19 @@ function handleDocumentCardKeydown(event) {
     editDocument(row.dataset.viewId);
 }
 
-async function toggleDocumentPaid(id) {
+async function updateDocumentPaymentStatus(id, status) {
     const doc = getDocumentById(id);
     if (!doc || doc.type !== "invoice") {
         return;
     }
 
-    const nextStatus = doc.paymentStatus === "paid" ? "unpaid" : "paid";
+    const nextStatus = normalizePaymentStatus(status);
+    if (normalizePaymentStatus(doc.paymentStatus) === nextStatus) {
+        state.openDocumentMenuId = null;
+        renderDocuments();
+        return;
+    }
+
     const nextDocuments = state.documents.map(entry => (
         isSameDocumentId(entry.id, id)
             ? { ...entry, paymentStatus: nextStatus }

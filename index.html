@@ -645,7 +645,7 @@
                 <button class="close-btn" id="closeInvoiceReportsModalBtn" type="button" aria-label="Close">x</button>
             </div>
             <div class="modal-body settings-modal-body">
-                <p class="settings-copy" id="invoiceReportsCopy">Review invoice totals by client, switch between paid and pending invoices, and keep the list sorted by client.</p>
+                <p class="settings-copy" id="invoiceReportsCopy">Review invoice totals by client, switch between unpaid, pending, and paid invoices, and keep the list sorted by client.</p>
                 <div class="invoice-report-presets">
                     <button class="preset-chip" id="presetThisMonthBtn" type="button" data-preset="this-month">This Month</button>
                     <button class="preset-chip" id="presetLast30Btn" type="button" data-preset="last-30">Last 30 Days</button>
@@ -672,8 +672,9 @@
                     </div>
                     <div class="filter-row invoice-report-filter-row" role="tablist" aria-label="Invoice report filters">
                         <button class="filter-chip active" id="invoiceReportFilterAllBtn" type="button" data-invoice-report-filter="all">All</button>
-                        <button class="filter-chip" id="invoiceReportFilterPaidBtn" type="button" data-invoice-report-filter="paid">Paid</button>
+                        <button class="filter-chip" id="invoiceReportFilterUnpaidBtn" type="button" data-invoice-report-filter="unpaid">Unpaid</button>
                         <button class="filter-chip" id="invoiceReportFilterPendingBtn" type="button" data-invoice-report-filter="pending">Pending</button>
+                        <button class="filter-chip" id="invoiceReportFilterPaidBtn" type="button" data-invoice-report-filter="paid">Paid</button>
                     </div>
                     <div class="settings-actions invoice-report-actions">
                         <button class="btn btn-secondary" id="exportInvoiceReportCsvBtn" type="button">Export CSV</button>
