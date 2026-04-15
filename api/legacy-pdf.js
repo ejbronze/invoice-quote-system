@@ -1,9 +1,4 @@
-const { get } = require("@vercel/blob");
-const { normalizeDocuments, readDataset } = require("./_storage");
-
-function getBlobToken() {
-    return process.env.BLOB_READ_WRITE_TOKEN;
-}
+const { normalizeDocuments, readDataset, readLegacyPdfBuffer } = require("./_storage");
 
 module.exports = async function handler(request, response) {
     try {
@@ -24,21 +19,9 @@ module.exports = async function handler(request, response) {
             return response.status(404).json({ error: "Legacy PDF not found." });
         }
 
-        const token = getBlobToken();
-        if (!token) {
-            return response.status(500).json({ error: "BLOB_READ_WRITE_TOKEN is not configured." });
-        }
-
-        const blobResponse = await get(doc.legacyPdfUrl, { token });
-        if (!blobResponse || !blobResponse.body) {
-            return response.status(404).json({ error: "Legacy PDF could not be opened." });
-        }
-
         response.setHeader("Content-Type", "application/pdf");
         response.setHeader("Content-Disposition", `inline; filename="${doc.legacyPdfFilename || "legacy-document.pdf"}"`);
-
-        const arrayBuffer = await new Response(blobResponse.body).arrayBuffer();
-        return response.status(200).send(Buffer.from(arrayBuffer));
+        return response.status(200).send(await readLegacyPdfBuffer(doc.legacyPdfUrl));
     } catch (error) {
         return response.status(error.statusCode || 500).json({
             error: error.message || "Unable to load the legacy PDF."

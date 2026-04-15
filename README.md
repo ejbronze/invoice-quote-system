@@ -164,6 +164,13 @@ Browser-local:
 - Local fallback copies of workspace data when the API is unavailable
 - Local fallback test documents/clients when the API is unavailable
 
+Local sandbox server:
+
+- Available when running local development through `npm run dev:sandbox`
+- Can seed `documents`, `clients`, and `workspace` from live Vercel Blob once at startup
+- Stores all writes in a temporary local folder instead of production storage
+- Deletes that temporary dataset when the local sandbox server stops
+
 ## Local Development
 
 Run a static local server for safe UI testing:
@@ -180,12 +187,93 @@ http://127.0.0.1:3000
 
 When the API is unavailable, SantoSync automatically switches to browser-local test mode.
 
+## Local Sandbox Workflow
+
+Use the sandbox mode when you want realistic local testing with production-like data, but you do not want any local edits to be pushed back to the live server.
+
+What it does:
+
+- Reads the live datasets once from Vercel Blob when the local sandbox starts
+- Copies that data into a temporary local folder
+- Serves all later reads and writes from that temporary local copy only
+- Removes the temporary local copy when you stop the dev server
+
+This gives you a disposable local environment that is seeded from live data but isolated from production writes.
+
+### 1. Create a local env file
+
+Create `.env.local` in the project root with your live blob token:
+
+```bash
+BLOB_READ_WRITE_TOKEN=your_live_vercel_blob_token
+BLOB_ACCESS_MODE=private
+```
+
+Notes:
+
+- `BLOB_READ_WRITE_TOKEN` is only used to read the live data once during sandbox startup
+- In sandbox mode, document, client, workspace, and legacy PDF uploads are written locally instead of to Vercel Blob
+- If you do not set `BLOB_READ_WRITE_TOKEN`, the sandbox still runs, but it starts from empty/default local data instead of cloning live data
+
+### 2. Start the sandbox server
+
+From the project root, run:
+
+```bash
+npm install
+npm run dev:sandbox
+```
+
+Then open:
+
+```text
+http://127.0.0.1:3000
+```
+
+What the command does:
+
+- Starts `vercel dev` locally so the frontend and `api/` routes work together
+- Uses the locally installed project dependencies, including `@vercel/blob`
+- Forces the app into `local-sandbox` storage mode
+- Seeds local temporary datasets from live Blob on first read when a blob token is available
+- Cleans up the temporary sandbox data when you stop the server with `Ctrl+C`
+
+First-time note:
+
+- On the first local run, Vercel CLI may ask to link this folder to the existing Vercel project and pull the development environment variables
+- Accept those prompts so `.env.local` is created and the sandbox can clone the live datasets once before switching to local-only writes
+
+### 3. Test normally
+
+While the sandbox server is running:
+
+- The app behaves like it has a working backend
+- Reads come from the temporary local sandbox copy
+- Writes stay inside the temporary local sandbox copy
+- No local test edits are pushed to the live server
+- The top bar shows a `LOCAL SANDBOX` badge so you can visually confirm you are not using the live environment
+
+### 4. End the session
+
+Stop the server with `Ctrl+C`.
+
+The `dev:sandbox` wrapper removes the temporary local data directory automatically, so the next sandbox session starts fresh and reseeds from live again.
+
+### Optional: start without cloning live data
+
+If you want a blank disposable sandbox instead of a live-seeded one:
+
+```bash
+LOCAL_SEED_FROM_BLOB=false npm run dev:sandbox
+```
+
 ## Deployment Notes
 
 - The app is a static HTML/CSS/JS frontend with Vercel serverless functions in `api/`
 - Persistent server data depends on Vercel Blob configuration
 - Shared workspace data now syncs online through `/api/workspace`
 - The active signed-in session still remains browser-local by design
+- Local sandbox mode can safely emulate server-backed behavior without writing to production Blob
 - A future backend auth layer would still be needed for stronger account security and password management
 
 ## Future Improvements

@@ -24,11 +24,15 @@ const state = {
     showInternalPricing: false,
     dataMode: "server",
     workspaceDataMode: "server",
+    runtimeMode: "unknown",
     issueReports: [],
     companyProfile: null,
     savedItems: [],
     editingSavedItemId: null,
-    pendingSavedItemImageUploadId: null
+    pendingSavedItemImageUploadId: null,
+    openItemActionMenuId: null,
+    openDocumentActionMenuId: null,
+    highlightedSavedItemId: null
 };
 
 const DOP_PER_USD = 59;
@@ -185,6 +189,8 @@ const TRANSLATIONS = {
         total: "Total",
         status_draft: "Draft",
         status_logged: "Logged",
+        payment_paid: "Paid",
+        payment_unpaid: "Unpaid",
         created_by: "Created by",
         converted_source: "Converted Source",
         legacy_pdf_attached: "Legacy PDF Attached",
@@ -194,8 +200,10 @@ const TRANSLATIONS = {
         convert_to_invoice: "Convert to Invoice",
         pipeline_value: "Pipeline Value",
         amount_invoiced: "Amount Invoiced",
+        income_received: "Income Received",
         tap_view_invoiced: "Tap to view invoiced amount",
         tap_view_pipeline: "Tap to view pipeline value",
+        tap_view_income: "Tap to view income received",
         documents_heading: "Documents",
         documents_subtitle: "Open, sort, filter, and manage every quote and invoice from one coordinated workspace.",
         sort: "Sort",
@@ -277,6 +285,7 @@ const TRANSLATIONS = {
         pdf_options: "PDF Options",
         include_signature: "Include signature on export",
         include_signature_help: "Turn this off for unsigned quotes or invoices before opening the PDF preview.",
+        include_stamp: "Include stamp on export",
         workflow_tip: "Workflow Tip",
         workflow_tip_copy: "Keep line items concise and use keywords like destination, service type, or priority to make search much easier later."
     },
@@ -378,6 +387,8 @@ const TRANSLATIONS = {
         total: "Total",
         status_draft: "Borrador",
         status_logged: "Registrado",
+        payment_paid: "Pagada",
+        payment_unpaid: "Pendiente",
         created_by: "Creado por",
         converted_source: "Fuente Convertida",
         legacy_pdf_attached: "PDF heredado adjunto",
@@ -387,8 +398,10 @@ const TRANSLATIONS = {
         convert_to_invoice: "Convertir en Factura",
         pipeline_value: "Valor en Proceso",
         amount_invoiced: "Monto Facturado",
+        income_received: "Ingresos Recibidos",
         tap_view_invoiced: "Toca para ver el monto facturado",
         tap_view_pipeline: "Toca para ver el valor en proceso",
+        tap_view_income: "Toca para ver los ingresos recibidos",
         documents_heading: "Documentos",
         documents_subtitle: "Abre, ordena, filtra y gestiona cada cotización y factura desde un solo espacio coordinado.",
         sort: "Ordenar",
@@ -470,6 +483,7 @@ const TRANSLATIONS = {
         pdf_options: "Opciones PDF",
         include_signature: "Incluir firma al exportar",
         include_signature_help: "Desactiva esto para cotizaciones o facturas sin firma antes de abrir la vista PDF.",
+        include_stamp: "Incluir sello al exportar",
         workflow_tip: "Consejo de Flujo",
         workflow_tip_copy: "Mantén las líneas concisas y usa palabras clave como destino, tipo de servicio o prioridad para facilitar la búsqueda."
     },
@@ -571,6 +585,8 @@ const TRANSLATIONS = {
         total: "Total",
         status_draft: "Brouillon",
         status_logged: "Enregistré",
+        payment_paid: "Payée",
+        payment_unpaid: "Impayée",
         created_by: "Créé par",
         converted_source: "Source Convertie",
         legacy_pdf_attached: "PDF hérité joint",
@@ -580,8 +596,10 @@ const TRANSLATIONS = {
         convert_to_invoice: "Convertir en Facture",
         pipeline_value: "Valeur Pipeline",
         amount_invoiced: "Montant Facturé",
+        income_received: "Revenu Reçu",
         tap_view_invoiced: "Touchez pour voir le montant facturé",
         tap_view_pipeline: "Touchez pour voir la valeur pipeline",
+        tap_view_income: "Touchez pour voir le revenu reçu",
         documents_heading: "Documents",
         documents_subtitle: "Ouvrez, triez, filtrez et gérez chaque devis et facture depuis un espace coordonné.",
         sort: "Trier",
@@ -663,6 +681,7 @@ const TRANSLATIONS = {
         pdf_options: "Options PDF",
         include_signature: "Inclure la signature à l’export",
         include_signature_help: "Désactivez ceci pour des devis ou factures non signés avant d’ouvrir l’aperçu PDF.",
+        include_stamp: "Inclure le tampon à l’export",
         workflow_tip: "Conseil de Flux",
         workflow_tip_copy: "Gardez les lignes concises et utilisez des mots-clés comme destination, type de service ou priorité pour faciliter la recherche."
     }
@@ -754,6 +773,9 @@ function applyTranslations() {
     setElementText(elements.invoiceCountStat.previousElementSibling, t("invoices"));
     if (state.valueView === "invoiced") {
         elements.totalValueLabel.textContent = t("amount_invoiced");
+        elements.totalValueHint.textContent = t("tap_view_income");
+    } else if (state.valueView === "income") {
+        elements.totalValueLabel.textContent = t("income_received");
         elements.totalValueHint.textContent = t("tap_view_pipeline");
     } else {
         elements.totalValueLabel.textContent = t("pipeline_value");
@@ -916,6 +938,7 @@ function updateStaticEditorTranslations() {
     setElementText(document.querySelectorAll('.sidebar-card .sidebar-label')[3], t("pdf_options"));
     setElementText(document.querySelectorAll('.sidebar-card .sidebar-label')[4], t("workflow_tip"));
     setElementText(document.querySelector('#includeSignature + span'), t("include_signature"));
+    setElementText(document.querySelector('#includeStamp + span'), t("include_stamp"));
     setElementText(document.querySelector('#includeSignature').closest('.sidebar-card').querySelector('.field-help'), t("include_signature_help"));
     elements.prevBtn.textContent = t("previous");
     elements.nextBtn.textContent = t("next");
@@ -952,6 +975,7 @@ function cacheElements() {
     elements.sessionLoader = document.getElementById("sessionLoader");
     elements.sessionLoaderMessage = document.getElementById("sessionLoaderMessage");
     elements.settingsModal = document.getElementById("settingsModal");
+    elements.environmentBadge = document.getElementById("environmentBadge");
     elements.sessionBadge = document.getElementById("sessionBadge");
     elements.openInboxBtn = document.getElementById("openInboxBtn");
     elements.inboxCountBadge = document.getElementById("inboxCountBadge");
@@ -986,6 +1010,7 @@ function cacheElements() {
     elements.companyProfileModal = document.getElementById("companyProfileModal");
     elements.savedItemsModal = document.getElementById("savedItemsModal");
     elements.savedItemCreateModal = document.getElementById("savedItemCreateModal");
+    elements.savedItemImageModal = document.getElementById("savedItemImageModal");
     elements.openCompanyProfileBtn = document.getElementById("openCompanyProfileBtn");
     elements.openSavedItemsBtn = document.getElementById("openSavedItemsBtn");
     elements.openSavedItemsInlineCount = document.getElementById("openSavedItemsInlineCount");
@@ -993,6 +1018,7 @@ function cacheElements() {
     elements.closeSavedItemsModalBtn = document.getElementById("closeSavedItemsModalBtn");
     elements.toggleSavedItemsFormBtn = document.getElementById("toggleSavedItemsFormBtn");
     elements.closeSavedItemCreateModalBtn = document.getElementById("closeSavedItemCreateModalBtn");
+    elements.closeSavedItemImageModalBtn = document.getElementById("closeSavedItemImageModalBtn");
     elements.companyNameInput = document.getElementById("companyNameInput");
     elements.companyTaglineInput = document.getElementById("companyTaglineInput");
     elements.companyAddressInput = document.getElementById("companyAddressInput");
@@ -1006,6 +1032,7 @@ function cacheElements() {
     elements.savedItemImageInput = document.getElementById("savedItemImageInput");
     elements.savedItemImagePreview = document.getElementById("savedItemImagePreview");
     elements.savedItemImagePreviewImg = document.getElementById("savedItemImagePreviewImg");
+    elements.savedItemImageModalImg = document.getElementById("savedItemImageModalImg");
     elements.savedItemImageRemoveBtn = document.getElementById("savedItemImageRemoveBtn");
     elements.savedItemQuantityInput = document.getElementById("savedItemQuantityInput");
     elements.savedItemUnitPriceInput = document.getElementById("savedItemUnitPriceInput");
@@ -1039,6 +1066,7 @@ function cacheElements() {
     elements.notes = document.getElementById("notes");
     elements.paymentTerms = document.getElementById("paymentTerms");
     elements.includeSignature = document.getElementById("includeSignature");
+    elements.includeStamp = document.getElementById("includeStamp");
     elements.itemsContainer = document.getElementById("itemsContainer");
     elements.lineItemsPreviewContainer = document.getElementById("lineItemsPreviewContainer");
     elements.previewContainer = document.getElementById("previewContainer");
@@ -1123,6 +1151,7 @@ function bindEvents() {
     elements.closeCompanyProfileModalBtn.addEventListener("click", closeCompanyProfileModal);
     elements.closeSavedItemsModalBtn.addEventListener("click", closeSavedItemsModal);
     elements.closeSavedItemCreateModalBtn.addEventListener("click", closeSavedItemCreateModal);
+    elements.closeSavedItemImageModalBtn.addEventListener("click", closeSavedItemImageModal);
     elements.toggleSavedItemsFormBtn.addEventListener("click", openSavedItemCreateModal);
     elements.closeAboutModalBtn.addEventListener("click", closeAboutModal);
     elements.issueScreenshotInput.addEventListener("change", handleIssueScreenshotChange);
@@ -1131,6 +1160,7 @@ function bindEvents() {
     elements.saveCompanyProfileBtn.addEventListener("click", saveCompanyProfile);
     elements.addSavedItemBtn.addEventListener("click", addSavedItemFromModal);
     elements.savedItemsList.addEventListener("click", handleSavedItemsListClick);
+    elements.savedItemsList.addEventListener("keydown", handleSavedItemsListKeydown);
     document.addEventListener("click", handleImageUploadTriggerClick);
     elements.savedItemImageInput.addEventListener("change", handleSavedItemImageInputChange);
     elements.savedItemImageRemoveBtn.addEventListener("click", clearSavedItemImageSelection);
@@ -1225,6 +1255,11 @@ function bindEvents() {
             closeSavedItemCreateModal();
         }
     });
+    elements.savedItemImageModal.addEventListener("click", event => {
+        if (event.target === elements.savedItemImageModal) {
+            closeSavedItemImageModal();
+        }
+    });
 
     elements.aboutModal.addEventListener("click", event => {
         if (event.target === elements.aboutModal) {
@@ -1243,6 +1278,7 @@ function bindEvents() {
 }
 
 async function init() {
+    await bootstrapRuntimeMode();
     loadLocalWorkspaceState();
     await bootstrapSharedWorkspaceData();
     state.currentUser = getStoredSessionUser();
@@ -1261,6 +1297,32 @@ async function init() {
 
     await bootstrapAppData();
     revealBrandSplash();
+}
+
+async function bootstrapRuntimeMode() {
+    try {
+        const payload = await requestJSON("/api/runtime-mode");
+        state.runtimeMode = String(payload?.mode || "live");
+    } catch (error) {
+        state.runtimeMode = "unknown";
+    }
+
+    updateEnvironmentBadge();
+}
+
+function updateEnvironmentBadge() {
+    if (!elements.environmentBadge) {
+        return;
+    }
+
+    if (state.runtimeMode === "local-sandbox") {
+        elements.environmentBadge.textContent = "Local Sandbox";
+        elements.environmentBadge.hidden = false;
+        return;
+    }
+
+    elements.environmentBadge.textContent = "";
+    elements.environmentBadge.hidden = true;
 }
 
 function revealBrandSplash() {
@@ -1880,6 +1942,16 @@ function handleGlobalClick(event) {
     if (!event.target.closest(".topbar-menu-wrap")) {
         closeTopbarMenu();
     }
+
+    if (!event.target.closest(".item-action-menu-wrap")) {
+        state.openItemActionMenuId = null;
+        syncItemActionMenus();
+    }
+
+    if (!event.target.closest(".doc-action-menu-wrap")) {
+        state.openDocumentActionMenuId = null;
+        syncDocumentActionMenus();
+    }
 }
 
 function openSettingsModal() {
@@ -2148,6 +2220,26 @@ function closeSavedItemCreateModal() {
     elements.savedItemCreateModal.setAttribute("aria-hidden", "true");
 }
 
+function openSavedItemImageModal(imageUrl) {
+    if (!elements.savedItemImageModal || !elements.savedItemImageModalImg || !imageUrl) {
+        return;
+    }
+
+    elements.savedItemImageModalImg.src = imageUrl;
+    elements.savedItemImageModal.classList.add("active");
+    elements.savedItemImageModal.setAttribute("aria-hidden", "false");
+}
+
+function closeSavedItemImageModal() {
+    if (!elements.savedItemImageModal || !elements.savedItemImageModalImg) {
+        return;
+    }
+
+    elements.savedItemImageModal.classList.remove("active");
+    elements.savedItemImageModal.setAttribute("aria-hidden", "true");
+    elements.savedItemImageModalImg.removeAttribute("src");
+}
+
 function renderSavedItemsList() {
     if (!elements.savedItemsList) {
         return;
@@ -2163,65 +2255,90 @@ function renderSavedItemsList() {
     const sortedItems = [...state.savedItems].sort((left, right) => Date.parse(right.createdAt || 0) - Date.parse(left.createdAt || 0));
     const canUseInCurrentDocument = canInsertCartItemIntoEditor();
     elements.savedItemsList.innerHTML = sortedItems.map(item => `
-        <article class="saved-item-card">
-            <div class="saved-item-card-layout">
-                <div class="saved-item-thumb" aria-hidden="true">
-                    ${item.itemImageDataUrl
-                        ? `<img src="${escapeHtml(item.itemImageDataUrl)}" alt="${escapeHtml(item.description)}">`
-                        : `<div class="saved-item-thumb-icon">
+        <article class="saved-item-card${state.highlightedSavedItemId === item.id ? " saved-item-card-highlighted" : ""}" data-saved-item-card="${escapeHtml(item.id)}">
+            <div class="saved-item-thumb${item.itemImageDataUrl ? " is-clickable" : ""}" ${item.itemImageDataUrl ? `data-saved-item-action="preview-image" data-saved-item-id="${escapeHtml(item.id)}" role="button" tabindex="0" aria-label="Preview item image"` : 'aria-hidden="true"'}>
+                ${item.itemImageDataUrl
+                    ? `<img src="${escapeHtml(item.itemImageDataUrl)}" alt="${escapeHtml(item.description)}">`
+                    : `<div class="saved-item-thumb-placeholder">
+                        <div class="saved-item-thumb-icon">
                             <svg viewBox="0 0 24 24" aria-hidden="true">
                                 <rect x="4.5" y="5" width="15" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/>
                                 <circle cx="9" cy="10" r="1.4" fill="currentColor"/>
                                 <path d="M6.8 16l3.6-3.5 2.5 2.2 2.4-2 1.9 3.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                         </div>
-                        <span>Image</span>`}
+                        <span>No Image</span>
+                    </div>`}
+            </div>
+            <div class="saved-item-card-main">
+                <div class="saved-item-card-top">
+                    <strong>${escapeHtml(item.description)}</strong>
+                    <span class="saved-item-card-date">${escapeHtml(formatDateTime(item.createdAt))}</span>
                 </div>
-                <div class="saved-item-card-main">
-                    <div class="saved-item-card-top">
-                        <strong>${escapeHtml(item.description)}</strong>
-                        <span class="saved-item-card-date">${escapeHtml(formatDateTime(item.createdAt))}</span>
+                <p class="saved-item-card-copy">${escapeHtml(item.description)}</p>
+                <div class="saved-item-card-metrics">
+                    <div class="saved-item-metric">
+                        <span class="saved-item-metric-label">Qty</span>
+                        <strong>${escapeHtml(formatAmount(item.quantity))}</strong>
                     </div>
-                    <div class="saved-item-card-metrics">
-                        <span class="saved-item-chip">Qty ${escapeHtml(formatAmount(item.quantity))}</span>
-                        <span class="saved-item-chip">Unit ${escapeHtml(formatCurrency(item.unitPrice))}</span>
-                        <span class="saved-item-chip saved-item-chip-strong">Total ${escapeHtml(formatCurrency(item.total))}</span>
+                    <div class="saved-item-metric">
+                        <span class="saved-item-metric-label">Price</span>
+                        <strong>${escapeHtml(formatCurrency(item.unitPrice))}</strong>
+                    </div>
+                    <div class="saved-item-metric saved-item-metric-total">
+                        <span class="saved-item-metric-label">Total</span>
+                        <strong>${escapeHtml(formatCurrency(item.total))}</strong>
                     </div>
                 </div>
             </div>
             <div class="client-row-actions saved-item-card-actions">
-                <button
-                    class="saved-item-icon-action"
-                    type="button"
-                    data-saved-item-action="edit"
-                    data-saved-item-id="${escapeHtml(item.id)}"
-                    aria-label="${escapeHtml(t("edit"))}"
-                    title="${escapeHtml(t("edit"))}"
-                >
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M7.2 16.8l1.1-3.6L15.7 5.8a1.4 1.4 0 0 1 2 0l.5.5a1.4 1.4 0 0 1 0 2l-7.4 7.4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                        <path d="M6.8 17.2l3.8-.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                    </svg>
-                </button>
-                <button
-                    class="saved-item-icon-action"
-                    type="button"
-                    data-saved-item-action="image"
-                    data-saved-item-id="${escapeHtml(item.id)}"
-                    aria-label="${escapeHtml(t("upload_item_image"))}"
-                    title="${escapeHtml(t("upload_item_image"))}"
-                >
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <rect x="4.5" y="5" width="15" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/>
-                        <circle cx="9" cy="10" r="1.4" fill="currentColor"/>
-                        <path d="M6.8 16l3.6-3.5 2.5 2.2 2.4-2 1.9 3.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
-                ${canUseInCurrentDocument ? `<button class="btn btn-secondary" type="button" data-saved-item-action="use" data-saved-item-id="${escapeHtml(item.id)}">${escapeHtml(t("use_item"))}</button>` : ""}
-                <button class="btn btn-secondary" type="button" data-saved-item-action="delete" data-saved-item-id="${escapeHtml(item.id)}">${escapeHtml(t("delete"))}</button>
+                <div class="saved-item-card-toolbar">
+                    <button
+                        class="saved-item-icon-action"
+                        type="button"
+                        data-saved-item-action="edit"
+                        data-saved-item-id="${escapeHtml(item.id)}"
+                        aria-label="${escapeHtml(t("edit"))}"
+                        title="${escapeHtml(t("edit"))}"
+                    >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M7.2 16.8l1.1-3.6L15.7 5.8a1.4 1.4 0 0 1 2 0l.5.5a1.4 1.4 0 0 1 0 2l-7.4 7.4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                            <path d="M6.8 17.2l3.8-.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    <button
+                        class="saved-item-icon-action"
+                        type="button"
+                        data-saved-item-action="image"
+                        data-saved-item-id="${escapeHtml(item.id)}"
+                        aria-label="${escapeHtml(t("upload_item_image"))}"
+                        title="${escapeHtml(t("upload_item_image"))}"
+                    >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="4.5" y="5" width="15" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                            <circle cx="9" cy="10" r="1.4" fill="currentColor"/>
+                            <path d="M6.8 16l3.6-3.5 2.5 2.2 2.4-2 1.9 3.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="saved-item-card-cta-row">
+                    ${canUseInCurrentDocument ? `<button class="btn btn-secondary" type="button" data-saved-item-action="use" data-saved-item-id="${escapeHtml(item.id)}">${escapeHtml(t("use_item"))}</button>` : ""}
+                    <button class="btn btn-secondary" type="button" data-saved-item-action="delete" data-saved-item-id="${escapeHtml(item.id)}">${escapeHtml(t("delete"))}</button>
+                </div>
             </div>
         </article>
     `).join("");
+
+    if (state.highlightedSavedItemId) {
+        const highlightedCard = elements.savedItemsList.querySelector(`[data-saved-item-card="${CSS.escape(state.highlightedSavedItemId)}"]`);
+        if (highlightedCard) {
+            highlightedCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            window.setTimeout(() => {
+                state.highlightedSavedItemId = null;
+                highlightedCard.classList.remove("saved-item-card-highlighted");
+            }, 2200);
+        }
+    }
 }
 
 function createSavedItem(payload) {
@@ -2241,7 +2358,9 @@ function createSavedItem(payload) {
 }
 
 async function addSavedItem(item) {
-    await saveSavedItemsState([createSavedItem(item), ...state.savedItems]);
+    const nextItem = createSavedItem(item);
+    await saveSavedItemsState([nextItem, ...state.savedItems]);
+    return nextItem;
 }
 
 async function addSavedItemFromModal() {
@@ -2258,6 +2377,7 @@ async function addSavedItemFromModal() {
     }
 
     if (state.editingSavedItemId) {
+        const editedId = state.editingSavedItemId;
         await saveSavedItemsState(state.savedItems.map(item =>
             item.id === state.editingSavedItemId
                 ? {
@@ -2270,8 +2390,10 @@ async function addSavedItemFromModal() {
                 }
                 : item
         ));
+        state.highlightedSavedItemId = editedId;
     } else {
-        await addSavedItem({ description, quantity, unitPrice, total, itemImageDataUrl });
+        const savedItem = await addSavedItem({ description, quantity, unitPrice, total, itemImageDataUrl });
+        state.highlightedSavedItemId = savedItem.id;
     }
     elements.savedItemDescriptionInput.value = "";
     elements.savedItemQuantityInput.value = "1";
@@ -2279,6 +2401,7 @@ async function addSavedItemFromModal() {
     elements.savedItemTotalInput.value = "0";
     clearSavedItemImageSelection();
     closeSavedItemCreateModal();
+    openSavedItemsModal();
     setImportStatus(isEditingSavedItem ? t("saved_item_updated") : t("saved_item_added"));
 }
 
@@ -2340,6 +2463,13 @@ async function handleSavedItemsListClick(event) {
         return;
     }
 
+    if (button.dataset.savedItemAction === "preview-image") {
+        if (item.itemImageDataUrl) {
+            openSavedItemImageModal(item.itemImageDataUrl);
+        }
+        return;
+    }
+
     if (button.dataset.savedItemAction === "use") {
         if (!canInsertCartItemIntoEditor()) {
             setImportStatus("Open a quote or invoice first, then add cart items into that document.", true);
@@ -2366,6 +2496,20 @@ async function handleSavedItemsListClick(event) {
         }
         await removeSavedItem(item.id);
     }
+}
+
+function handleSavedItemsListKeydown(event) {
+    if (event.key !== "Enter" && event.key !== " ") {
+        return;
+    }
+
+    const previewTarget = event.target.closest('[data-saved-item-action="preview-image"]');
+    if (!previewTarget) {
+        return;
+    }
+
+    event.preventDefault();
+    previewTarget.click();
 }
 
 function openAboutModal() {
@@ -2925,6 +3069,7 @@ function normalizeDocuments(documents) {
         }
 
         doc.status = doc.status === "draft" ? "draft" : "logged";
+        doc.paymentStatus = doc.type === "invoice" && doc.paymentStatus === "paid" ? "paid" : "unpaid";
 
         const refNumber = String(doc.refNumber || "").trim().toUpperCase();
         const isTlReference = /^TL-\d{4}-\d{4}-\d+$/i.test(refNumber);
@@ -3909,6 +4054,7 @@ function resetForm() {
     elements.notes.value = "";
     elements.paymentTerms.value = DEFAULT_PAYMENT_TERMS;
     elements.includeSignature.checked = true;
+    elements.includeStamp.checked = false;
     elements.itemsContainer.innerHTML = "";
     state.itemCounter = 0;
     addItem();
@@ -3933,6 +4079,7 @@ function prepareNewDocument(type = "quote") {
     elements.notes.value = "";
     elements.paymentTerms.value = DEFAULT_PAYMENT_TERMS;
     elements.includeSignature.checked = true;
+    elements.includeStamp.checked = false;
     elements.docType.value = type;
     setToday();
     updateModalTitle();
@@ -4045,14 +4192,19 @@ function addItem() {
                 <span class="item-summary-hint">Click to edit</span>
             </button>
             <div class="item-row-header-actions">
-                <button type="button" class="save-item-later" data-save-item-later="${itemId}" aria-label="${escapeHtml(t("save_for_later"))}" title="${escapeHtml(t("save_for_later"))}">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M3.5 5h2.1l1.5 8.2a1.6 1.6 0 0 0 1.6 1.3h7.9a1.6 1.6 0 0 0 1.6-1.2l1.2-5.6H7.1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="10" cy="18.2" r="1.4" fill="currentColor"/>
-                        <circle cx="17.2" cy="18.2" r="1.4" fill="currentColor"/>
-                    </svg>
-                </button>
-                <button type="button" class="remove-item" data-remove-item="${itemId}">Remove</button>
+                <div class="item-action-menu-wrap">
+                    <button type="button" class="item-action-trigger" data-toggle-item-menu="${itemId}" aria-expanded="false" aria-haspopup="true" aria-label="Open line item actions" title="Open line item actions">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="5.5" r="1.7" fill="currentColor"/>
+                            <circle cx="12" cy="12" r="1.7" fill="currentColor"/>
+                            <circle cx="12" cy="18.5" r="1.7" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <div class="item-action-menu" data-item-menu="${itemId}" hidden>
+                        <button type="button" class="item-action-menu-btn" data-save-item-later="${itemId}">${escapeHtml(t("save_for_later"))}</button>
+                        <button type="button" class="item-action-menu-btn item-action-menu-btn-danger" data-remove-item="${itemId}">Remove</button>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="item-editor">
@@ -4195,14 +4347,26 @@ function saveEditorItemForLater(id) {
 }
 
 async function handleItemContainerClick(event) {
+    const toggleMenuButton = event.target.closest("[data-toggle-item-menu]");
+    if (toggleMenuButton) {
+        const itemId = toggleMenuButton.dataset.toggleItemMenu;
+        state.openItemActionMenuId = state.openItemActionMenuId === itemId ? null : itemId;
+        syncItemActionMenus();
+        return;
+    }
+
     const saveForLaterButton = event.target.closest("[data-save-item-later]");
     if (saveForLaterButton) {
+        state.openItemActionMenuId = null;
+        syncItemActionMenus();
         saveEditorItemForLater(saveForLaterButton.dataset.saveItemLater);
         return;
     }
 
     const removeButton = event.target.closest("[data-remove-item]");
     if (removeButton) {
+        state.openItemActionMenuId = null;
+        syncItemActionMenus();
         removeItem(removeButton.dataset.removeItem);
         return;
     }
@@ -4228,6 +4392,19 @@ async function handleItemContainerClick(event) {
             setExpandedItem(item);
         }
     }
+}
+
+function syncItemActionMenus() {
+    elements.itemsContainer.querySelectorAll("[data-item-menu]").forEach(menu => {
+        const isOpen = menu.dataset.itemMenu === state.openItemActionMenuId;
+        menu.hidden = !isOpen;
+    });
+
+    elements.itemsContainer.querySelectorAll("[data-toggle-item-menu]").forEach(button => {
+        const isOpen = button.dataset.toggleItemMenu === state.openItemActionMenuId;
+        button.setAttribute("aria-expanded", String(isOpen));
+        button.classList.toggle("is-open", isOpen);
+    });
 }
 
 async function handleItemImageInputChange(event) {
@@ -4515,6 +4692,21 @@ function getSignatureUrl() {
     return url.href;
 }
 
+function getStampUrl() {
+    const url = new URL("assets/gonzalez-logistics-stamp.svg", window.location.href);
+    url.searchParams.set("v", "20260408-2300");
+    return url.href;
+}
+
+function getStampOverlayStyle() {
+    const left = 56 + Math.random() * 8;
+    const bottom = -12 + Math.random() * 10;
+    const rotate = -10 + Math.random() * 20;
+    const opacity = 0.4 + Math.random() * 0.08;
+
+    return `left:${left}%;bottom:${bottom.toFixed(2)}px;transform:translateX(-50%) rotate(${rotate.toFixed(2)}deg);opacity:${opacity.toFixed(2)};`;
+}
+
 function getFooterWaveUrl() {
     return new URL("assets/rg-footer-wave.png", window.location.href).href;
 }
@@ -4561,6 +4753,7 @@ function buildDocumentData() {
         notes: elements.notes.value,
         paymentTerms: elements.paymentTerms.value,
         includeSignature: elements.includeSignature.checked,
+        includeStamp: elements.includeStamp.checked,
         printedAt: elements.docDate.value ? `${elements.docDate.value}T12:00:00.000Z` : new Date().toISOString(),
         subtotal,
         total: subtotal,
@@ -4665,6 +4858,14 @@ function buildDocumentMarkup(doc) {
                                     alt="David Forman signature"
                                     onerror="this.closest('.line-fill').innerHTML = '&nbsp;';"
                                 >
+                                ${doc.includeStamp === true ? `
+                                <img
+                                    class="document-stamp"
+                                    src="${escapeHtml(getStampUrl())}"
+                                    alt="Company stamp"
+                                    style="${escapeHtml(getStampOverlayStyle())}"
+                                >
+                                ` : ""}
                             </span>
                         </span>
                     </div>
@@ -4848,6 +5049,9 @@ async function persistDocument(options = {}) {
         id: state.editingDocumentId ?? Date.now(),
         type: elements.docType.value,
         status: nextStatus,
+        paymentStatus: existingDocument?.type === "invoice" && existingDocument?.paymentStatus === "paid"
+            ? "paid"
+            : "unpaid",
         refNumber: elements.refNumber.value,
         date: elements.docDate.value,
         clientName: elements.clientName.value,
@@ -4859,6 +5063,7 @@ async function persistDocument(options = {}) {
         notes: elements.notes.value,
         paymentTerms: elements.paymentTerms.value,
         includeSignature: elements.includeSignature.checked,
+        includeStamp: elements.includeStamp.checked,
         createdBy: existingDocument?.createdBy || (state.currentUser ? {
             userId: state.currentUser.userId,
             username: state.currentUser.username,
@@ -4897,6 +5102,9 @@ async function persistDocument(options = {}) {
 
     doc.subtotal = calculateTotals();
     doc.total = doc.subtotal;
+    if (doc.type !== "invoice") {
+        delete doc.paymentStatus;
+    }
 
     let nextDocuments;
 
@@ -4988,21 +5196,40 @@ function updateOverviewStats() {
     const invoicedValue = state.documents
         .filter(doc => doc.type === "invoice")
         .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
-    const showingInvoiced = state.valueView === "invoiced";
-    const totalValue = showingInvoiced ? invoicedValue : pipelineValue;
+    const incomeReceived = state.documents
+        .filter(doc => doc.type === "invoice" && doc.paymentStatus === "paid")
+        .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
+    const totalValue = state.valueView === "invoiced"
+        ? invoicedValue
+        : state.valueView === "income"
+            ? incomeReceived
+            : pipelineValue;
 
     elements.totalDocumentsStat.textContent = String(state.documents.length);
     elements.quoteCountStat.textContent = String(quoteCount);
     elements.invoiceCountStat.textContent = String(invoiceCount);
     elements.totalValueStat.textContent = formatCurrency(totalValue);
-    elements.totalValueLabel.textContent = showingInvoiced ? t("amount_invoiced") : t("pipeline_value");
-    elements.totalValueHint.textContent = showingInvoiced ? t("tap_view_pipeline") : t("tap_view_invoiced");
-    elements.valueToggleCard.setAttribute("aria-pressed", String(showingInvoiced));
-    elements.valueToggleCard.classList.toggle("is-invoiced", showingInvoiced);
+    elements.totalValueLabel.textContent = state.valueView === "invoiced"
+        ? t("amount_invoiced")
+        : state.valueView === "income"
+            ? t("income_received")
+            : t("pipeline_value");
+    elements.totalValueHint.textContent = state.valueView === "invoiced"
+        ? t("tap_view_income")
+        : state.valueView === "income"
+            ? t("tap_view_pipeline")
+            : t("tap_view_invoiced");
+    elements.valueToggleCard.setAttribute("aria-pressed", String(state.valueView !== "pipeline"));
+    elements.valueToggleCard.classList.toggle("is-invoiced", state.valueView === "invoiced");
+    elements.valueToggleCard.classList.toggle("is-income", state.valueView === "income");
 }
 
 function toggleValueView() {
-    state.valueView = state.valueView === "pipeline" ? "invoiced" : "pipeline";
+    state.valueView = state.valueView === "pipeline"
+        ? "invoiced"
+        : state.valueView === "invoiced"
+            ? "income"
+            : "pipeline";
     updateOverviewStats();
     elements.valueToggleCard.classList.remove("is-pulsing");
     void elements.valueToggleCard.offsetWidth;
@@ -5147,6 +5374,9 @@ function renderDocuments() {
         const isLockedSourceQuote = Boolean(doc.lockedAfterConversion);
         const statusLabel = doc.status === "draft" ? t("status_draft") : t("status_logged");
         const statusClass = doc.status === "draft" ? "draft" : "logged";
+        const paymentLabel = doc.type === "invoice"
+            ? (doc.paymentStatus === "paid" ? t("payment_paid") : t("payment_unpaid"))
+            : "";
         const creatorLabel = isAdminSession() && doc.createdBy?.displayName
             ? `${escapeHtml(doc.createdBy.displayName)}${doc.createdBy.username ? ` (@${escapeHtml(doc.createdBy.username)})` : ""}`
             : "";
@@ -5160,17 +5390,7 @@ function renderDocuments() {
         const rowAriaLabel = `${doc.type} ${doc.refNumber || "document"} for ${doc.clientName || "unknown client"}`;
 
         return `
-            <div class="document-row${isLockedSourceQuote ? " document-row-locked" : ""}"${cardViewId}${isLockedSourceQuote ? "" : ' tabindex="0" role="button"'} aria-label="${escapeHtml(rowAriaLabel)}">
-                <div class="doc-status-indicator ${statusClass}" aria-label="${escapeHtml(statusLabel)}" title="${escapeHtml(statusLabel)}">
-                    ${doc.status === "draft"
-                        ? `<span class="doc-status-dot" aria-hidden="true"></span>`
-                        : `<span class="doc-status-check" aria-hidden="true">
-                            <svg viewBox="0 0 16 16">
-                                <path d="M3.2 8.5l3 3.1 6.4-6.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                        </span>`}
-                    <span class="visually-hidden">${escapeHtml(statusLabel)}</span>
-                </div>
+            <div class="document-row document-row-${doc.type}${isLockedSourceQuote ? " document-row-locked" : ""}"${cardViewId}${isLockedSourceQuote ? "" : ' tabindex="0" role="button"'} aria-label="${escapeHtml(rowAriaLabel)}">
                 <div class="doc-row-main">
                     <div class="doc-row-primary">
                         <span class="doc-type ${doc.type}">${escapeHtml(doc.type === "quote" ? t("quote_singular") : t("invoice_singular"))}</span>
@@ -5183,20 +5403,44 @@ function renderDocuments() {
                     </div>
                 </div>
                 <div class="doc-row-badges">
+                    <span class="doc-status-badge ${statusClass}">${escapeHtml(statusLabel)}</span>
+                    ${doc.type === "invoice" ? `<span class="doc-payment-badge ${doc.paymentStatus === "paid" ? "paid" : "unpaid"}">${escapeHtml(paymentLabel)}</span>` : ""}
                     ${statusBadge}
                     ${legacyBadge}
-                    ${getDocumentTagPreviewMarkup(doc)}
                 </div>
                 <div class="doc-row-total">
                     <span class="doc-total-label">${escapeHtml(t("total"))}</span>
                     <div class="doc-total">${formatCurrency(doc.total || 0)}</div>
                 </div>
                 <div class="doc-actions">
-                    ${isLockedSourceQuote ? `<span class="doc-lock-note">${escapeHtml(t("locked_after_conversion"))}</span>` : `<button type="button" class="doc-action-btn" data-action="edit" data-id="${doc.id}">${escapeHtml(t("edit"))}</button>`}
-                    ${isLockedSourceQuote ? "" : `<button type="button" class="doc-action-btn" data-action="export-pdf" data-id="${doc.id}">${escapeHtml(t("open_pdf_preview"))}</button>`}
-                    ${doc.legacyPdfUrl ? `<button type="button" class="doc-action-btn" data-action="view-pdf" data-id="${doc.id}">${escapeHtml(t("view_pdf"))}</button>` : ""}
-                    ${doc.type === "quote" && !isLockedSourceQuote ? `<button type="button" class="doc-action-btn" data-action="convert" data-id="${doc.id}">${escapeHtml(t("convert_to_invoice"))}</button>` : ""}
-                    ${isLockedSourceQuote ? "" : `<button type="button" class="doc-action-btn doc-action-btn-danger" data-action="delete" data-id="${doc.id}">${escapeHtml(t("delete"))}</button>`}
+                    ${isLockedSourceQuote
+                        ? `<span class="doc-lock-note">${escapeHtml(t("locked_after_conversion"))}</span>`
+                        : `<div class="doc-action-menu-wrap">
+                            <button type="button" class="doc-action-btn doc-action-btn-primary" data-action="edit" data-id="${doc.id}">${escapeHtml(t("edit"))}</button>
+                            <button
+                                type="button"
+                                class="doc-action-trigger"
+                                data-toggle-doc-menu="${doc.id}"
+                                aria-expanded="false"
+                                aria-haspopup="true"
+                                aria-label="Open document actions"
+                                title="Open document actions"
+                            >
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <circle cx="12" cy="5.5" r="1.7" fill="currentColor"/>
+                                    <circle cx="12" cy="12" r="1.7" fill="currentColor"/>
+                                    <circle cx="12" cy="18.5" r="1.7" fill="currentColor"/>
+                                </svg>
+                            </button>
+                            <div class="doc-action-menu" data-doc-menu="${doc.id}" hidden>
+                                <button type="button" class="doc-action-menu-btn" data-action="edit" data-id="${doc.id}">${escapeHtml(t("edit"))}</button>
+                                <button type="button" class="doc-action-menu-btn" data-action="export-pdf" data-id="${doc.id}">${escapeHtml(t("open_pdf_preview"))}</button>
+                                ${doc.legacyPdfUrl ? `<button type="button" class="doc-action-menu-btn" data-action="view-pdf" data-id="${doc.id}">${escapeHtml(t("view_pdf"))}</button>` : ""}
+                                ${doc.type === "invoice" ? `<button type="button" class="doc-action-menu-btn" data-action="toggle-paid" data-id="${doc.id}">${escapeHtml(doc.paymentStatus === "paid" ? t("payment_unpaid") : t("payment_paid"))}</button>` : ""}
+                                ${doc.type === "quote" ? `<button type="button" class="doc-action-menu-btn" data-action="convert" data-id="${doc.id}">${escapeHtml(t("convert_to_invoice"))}</button>` : ""}
+                                <button type="button" class="doc-action-menu-btn doc-action-menu-btn-danger" data-action="delete" data-id="${doc.id}">${escapeHtml(t("delete"))}</button>
+                            </div>
+                        </div>`}
                 </div>
             </div>
         `;
@@ -5309,10 +5553,22 @@ async function handleDocumentCardClick(event) {
         return;
     }
 
+    const toggleMenuButton = event.target.closest("[data-toggle-doc-menu]");
+    if (toggleMenuButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        const docId = toggleMenuButton.dataset.toggleDocMenu;
+        state.openDocumentActionMenuId = state.openDocumentActionMenuId === docId ? null : docId;
+        syncDocumentActionMenus();
+        return;
+    }
+
     const actionButton = event.target.closest("[data-action]");
     if (actionButton) {
         event.preventDefault();
         event.stopPropagation();
+        state.openDocumentActionMenuId = null;
+        syncDocumentActionMenus();
 
         const docId = actionButton.dataset.id;
         const action = actionButton.dataset.action;
@@ -5324,6 +5580,8 @@ async function handleDocumentCardClick(event) {
             if (doc) {
                 openPrintWindow(doc);
             }
+        } else if (action === "toggle-paid") {
+            await toggleInvoicePaidStatus(docId);
         } else if (action === "delete") {
             await deleteDocument(docId);
         } else if (action === "convert") {
@@ -5345,13 +5603,49 @@ async function handleDocumentCardClick(event) {
     editDocument(card.dataset.viewId);
 }
 
+async function toggleInvoicePaidStatus(id) {
+    const doc = getDocumentById(id);
+    if (!doc || doc.type !== "invoice") {
+        return;
+    }
+
+    const nextDocuments = state.documents.map(entry =>
+        isSameDocumentId(entry.id, id)
+            ? {
+                ...entry,
+                paymentStatus: entry.paymentStatus === "paid" ? "unpaid" : "paid"
+            }
+            : entry
+    );
+
+    try {
+        await saveDocumentsToServer(nextDocuments);
+        renderDocuments();
+    } catch (error) {
+        alert(`Unable to update invoice payment status.\n\n${error.message}`);
+    }
+}
+
+function syncDocumentActionMenus() {
+    elements.documentsGrid.querySelectorAll("[data-doc-menu]").forEach(menu => {
+        const isOpen = menu.dataset.docMenu === state.openDocumentActionMenuId;
+        menu.hidden = !isOpen;
+    });
+
+    elements.documentsGrid.querySelectorAll("[data-toggle-doc-menu]").forEach(button => {
+        const isOpen = button.dataset.toggleDocMenu === state.openDocumentActionMenuId;
+        button.setAttribute("aria-expanded", String(isOpen));
+        button.classList.toggle("is-open", isOpen);
+    });
+}
+
 function handleDocumentCardKeydown(event) {
     if (event.key !== "Enter" && event.key !== " ") {
         return;
     }
 
     const row = event.target.closest("[data-view-id]");
-    if (!row || event.target.closest("[data-action]") || event.target.closest("[data-show-tags]")) {
+    if (!row || event.target.closest("[data-action]") || event.target.closest("[data-show-tags]") || event.target.closest("[data-toggle-doc-menu]")) {
         return;
     }
 
@@ -5372,6 +5666,7 @@ function populateFormFromDocument(doc) {
     elements.notes.value = doc.notes || "";
     elements.paymentTerms.value = doc.paymentTerms || DEFAULT_PAYMENT_TERMS;
     elements.includeSignature.checked = doc.includeSignature !== false;
+    elements.includeStamp.checked = doc.includeStamp === true;
 
     elements.itemsContainer.innerHTML = "";
     state.itemCounter = 0;

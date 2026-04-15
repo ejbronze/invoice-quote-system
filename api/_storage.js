@@ -1,3 +1,7 @@
+const fs = require("fs/promises");
+const os = require("os");
+const path = require("path");
+
 const DEFAULT_CLIENTS = [
     {
         id: "ccxpress",
@@ -27,12 +31,36 @@ const DEFAULT_COMPANY_PROFILE = Object.freeze({
     taxId: "Registration Pending"
 });
 
+const LOCAL_STORAGE_MODE = "local-sandbox";
+const LOCAL_LEGACY_PDF_PROTOCOL = "local-legacy-pdf://";
+
 function getBlobToken() {
     return process.env.BLOB_READ_WRITE_TOKEN;
 }
 
 function getBlobAccessMode() {
     return process.env.BLOB_ACCESS_MODE === "private" ? "private" : "public";
+}
+
+function isLocalSandboxMode() {
+    return String(process.env.DATA_STORAGE_MODE || "").trim().toLowerCase() === LOCAL_STORAGE_MODE;
+}
+
+function shouldSeedLocalDataFromBlob() {
+    return ["1", "true", "yes", "on"].includes(String(process.env.LOCAL_SEED_FROM_BLOB || "").trim().toLowerCase());
+}
+
+function getLocalDataDir() {
+    const configuredDir = String(process.env.LOCAL_DATA_DIR || "").trim();
+    return configuredDir || path.join(os.tmpdir(), "santosync-local-data");
+}
+
+function getDatasetFilePath(name) {
+    return path.join(getLocalDataDir(), "datasets", `${name}.json`);
+}
+
+function getLegacyPdfDirectory() {
+    return path.join(getLocalDataDir(), "legacy-pdfs");
 }
 
 function ensureBlobToken() {
@@ -172,9 +200,8 @@ async function loadBlobSdk() {
     return import("@vercel/blob");
 }
 
-async function readDataset(name, fallbackValue) {
+async function readBlobDataset(name, fallbackValue) {
     ensureBlobToken();
-
     const { get, list } = await loadBlobSdk();
     const { blobs } = await list({
         token: getBlobToken(),
@@ -214,9 +241,59 @@ async function readDataset(name, fallbackValue) {
     return response.json();
 }
 
-async function writeDataset(name, value) {
-    ensureBlobToken();
+async function ensureLocalDirectory(filePath) {
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
+}
 
+async function readLocalJsonFile(filePath) {
+    try {
+        const rawValue = await fs.readFile(filePath, "utf8");
+        return JSON.parse(rawValue);
+    } catch (error) {
+        if (error && error.code === "ENOENT") {
+            return undefined;
+        }
+
+        throw error;
+    }
+}
+
+async function writeLocalJsonFile(filePath, value) {
+    await ensureLocalDirectory(filePath);
+    await fs.writeFile(filePath, JSON.stringify(value, null, 2), "utf8");
+}
+
+async function readLocalDataset(name, fallbackValue) {
+    const filePath = getDatasetFilePath(name);
+    const existingValue = await readLocalJsonFile(filePath);
+    if (existingValue !== undefined) {
+        return existingValue;
+    }
+
+    let seededValue = fallbackValue;
+
+    if (shouldSeedLocalDataFromBlob() && getBlobToken()) {
+        try {
+            seededValue = await readBlobDataset(name, fallbackValue);
+        } catch (error) {
+            seededValue = fallbackValue;
+        }
+    }
+
+    await writeLocalJsonFile(filePath, seededValue);
+    return seededValue;
+}
+
+async function readDataset(name, fallbackValue) {
+    if (isLocalSandboxMode()) {
+        return readLocalDataset(name, fallbackValue);
+    }
+
+    return readBlobDataset(name, fallbackValue);
+}
+
+async function writeBlobDataset(name, value) {
+    ensureBlobToken();
     const { put } = await loadBlobSdk();
     return put(`todos-logistics/${name}/${Date.now()}.json`, JSON.stringify(value, null, 2), {
         token: getBlobToken(),
@@ -224,6 +301,105 @@ async function writeDataset(name, value) {
         contentType: "application/json",
         addRandomSuffix: false
     });
+}
+
+async function writeDataset(name, value) {
+    if (isLocalSandboxMode()) {
+        await writeLocalJsonFile(getDatasetFilePath(name), value);
+        return { url: getDatasetFilePath(name) };
+    }
+
+    return writeBlobDataset(name, value);
+}
+
+function sanitizeFilename(filename) {
+    return String(filename || "legacy-upload.pdf")
+        .replace(/[^a-z0-9._-]+/gi, "-")
+        .replace(/-+/g, "-");
+}
+
+function decodeFileBuffer(fileData) {
+    const value = String(fileData || "");
+    const base64 = value.includes(",") ? value.split(",")[1] : value;
+    return Buffer.from(base64, "base64");
+}
+
+async function storeLegacyPdfLocally(filename, fileData) {
+    const safeFilename = sanitizeFilename(filename);
+    const storedFilename = `${Date.now()}-${safeFilename}`;
+    const filePath = path.join(getLegacyPdfDirectory(), storedFilename);
+
+    await ensureLocalDirectory(filePath);
+    await fs.writeFile(filePath, decodeFileBuffer(fileData));
+
+    return {
+        fileUrl: `${LOCAL_LEGACY_PDF_PROTOCOL}${storedFilename}`,
+        filename: safeFilename
+    };
+}
+
+async function storeLegacyPdf(filename, mimeType, fileData) {
+    if (mimeType !== "application/pdf") {
+        const error = new Error("Legacy upload supports PDF files only.");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (isLocalSandboxMode()) {
+        return storeLegacyPdfLocally(filename, fileData);
+    }
+
+    ensureBlobToken();
+    const { put } = await loadBlobSdk();
+    const safeFilename = sanitizeFilename(filename);
+    const blob = await put(`todos-logistics/legacy-pdfs/${Date.now()}-${safeFilename}`, decodeFileBuffer(fileData), {
+        token: getBlobToken(),
+        access: getBlobAccessMode(),
+        contentType: "application/pdf",
+        addRandomSuffix: false
+    });
+
+    return {
+        fileUrl: blob.url,
+        filename: safeFilename
+    };
+}
+
+async function readLegacyPdfBuffer(fileUrl) {
+    if (String(fileUrl || "").startsWith(LOCAL_LEGACY_PDF_PROTOCOL)) {
+        const storedFilename = String(fileUrl).slice(LOCAL_LEGACY_PDF_PROTOCOL.length);
+        const filePath = path.join(getLegacyPdfDirectory(), storedFilename);
+
+        try {
+            return await fs.readFile(filePath);
+        } catch (error) {
+            if (error && error.code === "ENOENT") {
+                const notFoundError = new Error("Legacy PDF could not be opened.");
+                notFoundError.statusCode = 404;
+                throw notFoundError;
+            }
+
+            throw error;
+        }
+    }
+
+    const token = getBlobToken();
+    if (!token) {
+        const error = new Error("BLOB_READ_WRITE_TOKEN is not configured.");
+        error.statusCode = 500;
+        throw error;
+    }
+
+    const { get } = await loadBlobSdk();
+    const blobResponse = await get(fileUrl, { token });
+    if (!blobResponse || !blobResponse.body) {
+        const error = new Error("Legacy PDF could not be opened.");
+        error.statusCode = 404;
+        throw error;
+    }
+
+    const arrayBuffer = await new Response(blobResponse.body).arrayBuffer();
+    return Buffer.from(arrayBuffer);
 }
 
 function sendJson(response, statusCode, payload) {
@@ -244,7 +420,9 @@ module.exports = {
     normalizeSavedItems,
     normalizeUserAccounts,
     normalizeWorkspaceState,
+    readLegacyPdfBuffer,
     readDataset,
     sendJson,
+    storeLegacyPdf,
     writeDataset
 };

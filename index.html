@@ -59,6 +59,7 @@
                 <div class="brand-mark brand-mark-topbar" id="topbarBrandLogo" aria-hidden="true"></div>
                 <span class="app-topbar-kicker">Workspace</span>
                 <strong>SantoSync</strong>
+                <span class="environment-badge" id="environmentBadge" hidden></span>
                 <span class="session-identity" id="sessionBadge" hidden></span>
             </div>
             <div class="app-topbar-actions">
@@ -686,6 +687,10 @@
                                 <input type="checkbox" id="includeSignature" checked>
                                 <span>Include signature on export</span>
                             </label>
+                            <label class="checkbox-row checkbox-row-block">
+                                <input type="checkbox" id="includeStamp">
+                                <span>Include stamp on export</span>
+                            </label>
                             <small class="field-help">Turn this off for unsigned quotes or invoices before opening the PDF preview.</small>
                         </section>
 
@@ -729,7 +734,7 @@
                         <h4 id="savedItemsLibraryTitle">Cart Items</h4>
                         <p id="savedItemsLibraryCopy">Add an item to the open document, or remove it from the cart if it is no longer pending.</p>
                     </div>
-                    <div class="client-management-list" id="savedItemsList"></div>
+                    <div class="client-management-list saved-items-grid" id="savedItemsList"></div>
                 </div>
             </div>
         </div>
@@ -792,7 +797,21 @@
                     </div>
                 </div>
                 <div class="settings-actions">
-                    <button class="btn btn-secondary" id="addSavedItemBtn" type="button">Create Cart Item</button>
+                    <button class="btn btn-primary" id="addSavedItemBtn" type="button">Create Cart Item</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal nested-modal" id="savedItemImageModal" aria-hidden="true">
+        <div class="modal-content nested-modal-content saved-item-image-modal-content">
+            <div class="modal-header">
+                <h3>Item Image</h3>
+                <button class="close-btn" id="closeSavedItemImageModalBtn" type="button" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body settings-modal-body">
+                <div class="saved-item-image-modal-stage">
+                    <img id="savedItemImageModalImg" alt="Saved item image preview">
                 </div>
             </div>
         </div>

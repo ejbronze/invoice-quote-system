@@ -1,0 +1,21 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <path id="topArc" d="M 76 256 A 180 180 0 0 1 436 256" />
+    <path id="bottomArc" d="M 436 256 A 180 180 0 0 1 76 256" />
+  </defs>
+  <g opacity="0.7" stroke="#111111">
+    <circle cx="256" cy="256" r="222" stroke-width="8"/>
+    <circle cx="256" cy="256" r="208" stroke-width="3.5"/>
+    <circle cx="256" cy="256" r="200" stroke-width="1.5" stroke-dasharray="3 6"/>
+  </g>
+  <g fill="#111111" opacity="0.78" font-family="Arial, Helvetica, sans-serif" text-rendering="geometricPrecision">
+    <text font-size="28" font-weight="700" letter-spacing="1.8">
+      <textPath href="#topArc" startOffset="50%" text-anchor="middle">RUDY GONZALEZ LOGISTICS SRL</textPath>
+    </text>
+    <text font-size="28" font-weight="700" letter-spacing="1.2">
+      <textPath href="#bottomArc" startOffset="50%" text-anchor="middle">Santo Domingo, R.D.</textPath>
+    </text>
+    <text x="256" y="235" font-size="64" font-weight="700" text-anchor="middle">RNC:</text>
+    <text x="256" y="302" font-size="58" font-weight="700" text-anchor="middle">1-32-43334-3</text>
+  </g>
+</svg>
