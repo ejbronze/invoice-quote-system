@@ -42,7 +42,8 @@ const state = {
     editingManagedUserId: null,
     highlightedSavedItemId: null,
     documentEditorBaseline: "",
-    documentEditorDirty: false
+    documentEditorDirty: false,
+    mobileOverviewCollapsed: true
 };
 
 const DOP_PER_USD = 59;
@@ -1433,6 +1434,11 @@ function cacheElements() {
     elements.totalValueLabel = document.getElementById("totalValueLabel");
     elements.totalValueHint = document.getElementById("totalValueHint");
     elements.valueToggleCard = document.getElementById("valueToggleCard");
+    elements.overviewMobileToggle = document.getElementById("overviewMobileToggle");
+    elements.overviewMobileToggleValue = document.getElementById("overviewMobileToggleValue");
+    elements.overviewMobileToggleMeta = document.getElementById("overviewMobileToggleMeta");
+    elements.overviewPanel = document.querySelector(".overview-panel");
+    elements.workspaceHero = document.querySelector(".workspace-hero");
     elements.documentSearch = document.getElementById("documentSearch");
     elements.documentSort = document.getElementById("documentSort");
     elements.filterButtons = Array.from(document.querySelectorAll("[data-filter]"));
@@ -1540,6 +1546,7 @@ function bindEvents() {
     elements.clientManagementList.addEventListener("click", handleClientManagementClick);
     elements.issueInboxList.addEventListener("click", handleIssueInboxClick);
     elements.valueToggleCard.addEventListener("click", toggleValueView);
+    elements.overviewMobileToggle?.addEventListener("click", toggleMobileOverview);
     elements.showInternalPricingToggle.addEventListener("change", handleInternalPricingToggleChange);
     elements.importBackupBtn.addEventListener("click", () => {
         elements.importBackupInput.click();
@@ -1683,6 +1690,7 @@ function bindEvents() {
     window.addEventListener("scroll", handleSessionActivity, { passive: true });
     window.addEventListener("resize", () => {
         window.requestAnimationFrame(syncActivePreviewScale);
+        window.requestAnimationFrame(syncMobileOverviewState);
     });
 }
 
@@ -1698,6 +1706,7 @@ async function init() {
     applyTranslations();
     hydrateEditorPreferences();
     updateCalculatorDisplay();
+    syncMobileOverviewState();
     void refreshExchangeRate();
     if (!hasActiveSession()) {
         return;
@@ -7038,6 +7047,39 @@ function validateDocumentForSave() {
     return true;
 }
 
+function isMobileOverviewViewport() {
+    return window.innerWidth <= 640;
+}
+
+function syncMobileOverviewState() {
+    if (!elements.overviewPanel || !elements.overviewMobileToggle || !elements.workspaceHero) {
+        return;
+    }
+
+    const isMobile = isMobileOverviewViewport();
+    if (!isMobile) {
+        elements.overviewMobileToggle.hidden = true;
+        elements.overviewMobileToggle.setAttribute("aria-expanded", "true");
+        elements.overviewPanel.hidden = false;
+        elements.workspaceHero.classList.remove("workspace-hero-collapsed");
+        return;
+    }
+
+    elements.overviewMobileToggle.hidden = false;
+    elements.overviewPanel.hidden = state.mobileOverviewCollapsed;
+    elements.overviewMobileToggle.setAttribute("aria-expanded", String(!state.mobileOverviewCollapsed));
+    elements.workspaceHero.classList.toggle("workspace-hero-collapsed", state.mobileOverviewCollapsed);
+}
+
+function toggleMobileOverview() {
+    if (!isMobileOverviewViewport()) {
+        return;
+    }
+
+    state.mobileOverviewCollapsed = !state.mobileOverviewCollapsed;
+    syncMobileOverviewState();
+}
+
 function updateOverviewStats() {
     const quoteCount = state.documents.filter(doc => doc.type === "quote").length;
     const invoiceCount = state.documents.filter(doc => doc.type === "invoice").length;
@@ -7075,6 +7117,11 @@ function updateOverviewStats() {
     elements.valueToggleCard.setAttribute("aria-pressed", String(state.valueView !== "pipeline"));
     elements.valueToggleCard.classList.toggle("is-invoiced", state.valueView === "invoiced");
     elements.valueToggleCard.classList.toggle("is-income", state.valueView === "income");
+    if (elements.overviewMobileToggleValue && elements.overviewMobileToggleMeta) {
+        elements.overviewMobileToggleValue.textContent = formatCurrency(totalValue);
+        elements.overviewMobileToggleMeta.textContent = `${state.documents.length} ${t("documents").toLowerCase()} • ${quoteCount} ${t("quotes").toLowerCase()} • ${invoiceCount} ${t("invoices").toLowerCase()}`;
+    }
+    syncMobileOverviewState();
 }
 
 function toggleValueView() {

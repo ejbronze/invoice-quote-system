@@ -1526,6 +1526,10 @@ body::after {
     backdrop-filter: none;
 }
 
+.overview-mobile-toggle {
+    display: none;
+}
+
 .overview-panel-head {
     display: flex;
     flex-direction: column;
@@ -5902,6 +5906,65 @@ body.print-window .print-preview-sheet {
 }
 
 @media (max-width: 640px) {
+    .overview-mobile-toggle {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.35rem 0.6rem;
+        width: 100%;
+        padding: 0.56rem 0.62rem;
+        border: 1px solid rgba(211, 222, 236, 0.96);
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 255, 0.96));
+        box-shadow: 0 8px 18px rgba(30, 54, 88, 0.06);
+        text-align: left;
+        color: var(--text);
+        font: inherit;
+        cursor: pointer;
+    }
+
+    .overview-mobile-toggle-copy {
+        display: grid;
+        gap: 0.06rem;
+        min-width: 0;
+    }
+
+    .overview-mobile-toggle-label {
+        color: var(--text-faint);
+        font-size: 0.54rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+    .overview-mobile-toggle-value {
+        color: var(--text);
+        font-size: 0.88rem;
+        line-height: 1.1;
+    }
+
+    .overview-mobile-toggle-meta {
+        color: var(--text-soft);
+        font-size: 0.64rem;
+        font-weight: 700;
+        text-align: right;
+    }
+
+    .overview-mobile-toggle::after {
+        content: "";
+        width: 0.5rem;
+        height: 0.5rem;
+        border-right: 2px solid var(--blue-deep);
+        border-bottom: 2px solid var(--blue-deep);
+        transform: rotate(45deg) translateY(-1px);
+        justify-self: end;
+        transition: transform 0.2s ease;
+    }
+
+    .workspace-hero:not(.workspace-hero-collapsed) .overview-mobile-toggle::after {
+        transform: rotate(225deg) translateY(-1px);
+    }
+
     .dashboard .dashboard-topbar {
         grid-template-columns: minmax(96px, 0.66fr) minmax(0, 1fr);
         gap: 0.3rem 0.42rem;
@@ -5969,7 +6032,19 @@ body.print-window .print-preview-sheet {
         padding: 0.5rem 0.56rem 0.54rem;
     }
 
+    .workspace-hero-collapsed {
+        padding-bottom: 0.46rem;
+    }
+
     .hero-copy p {
+        display: none;
+    }
+
+    .workspace-hero-collapsed .hero-copy h1 {
+        margin-bottom: 0;
+    }
+
+    .workspace-hero-collapsed .overview-panel {
         display: none;
     }
 
