@@ -672,10 +672,6 @@ body::after {
     justify-content: flex-end;
 }
 
-#openCompanyProfileBtn {
-    display: none;
-}
-
 .saved-items-toggle-btn {
     display: inline-flex;
     align-items: center;
@@ -5594,6 +5590,51 @@ body.print-window .print-preview-sheet {
         width: 100%;
     }
 
+    .dashboard .dashboard-topbar {
+        display: grid;
+        grid-template-columns: minmax(108px, 0.72fr) minmax(0, 1fr);
+        align-items: end;
+        gap: 0.38rem 0.5rem;
+        margin-bottom: 0.32rem;
+        padding-bottom: 0.38rem;
+    }
+
+    .dashboard .dashboard-topbar > div:first-child {
+        grid-column: 1 / -1;
+    }
+
+    .dashboard .dashboard-topbar h2 {
+        margin-bottom: 0;
+        font-size: 0.96rem;
+    }
+
+    .dashboard .dashboard-subtitle {
+        display: none;
+    }
+
+    .dashboard .sort-field,
+    .dashboard .search-field {
+        gap: 0.18rem;
+        width: auto;
+    }
+
+    .dashboard .search-label {
+        font-size: 0.54rem;
+        letter-spacing: 0.04em;
+    }
+
+    .dashboard .sort-field select,
+    .dashboard .search-field input {
+        min-height: 2.2rem;
+        padding-top: 0.52rem;
+        padding-bottom: 0.52rem;
+        font-size: 0.78rem;
+    }
+
+    .dashboard .documents-toolbar {
+        gap: 0.45rem;
+    }
+
     .hero-actions {
         justify-content: stretch;
     }
@@ -5861,6 +5902,82 @@ body.print-window .print-preview-sheet {
 }
 
 @media (max-width: 640px) {
+    .dashboard .dashboard-topbar {
+        grid-template-columns: minmax(96px, 0.66fr) minmax(0, 1fr);
+        gap: 0.3rem 0.42rem;
+        margin-bottom: 0.26rem;
+        padding-bottom: 0.3rem;
+    }
+
+    .dashboard .search-label {
+        display: none;
+    }
+
+    .dashboard .sort-field select,
+    .dashboard .search-field input {
+        min-height: 2.05rem;
+        padding-top: 0.44rem;
+        padding-bottom: 0.44rem;
+        border-radius: 10px;
+        font-size: 0.74rem;
+    }
+
+    .dashboard .sort-field select {
+        padding-left: 0.62rem;
+        padding-right: 1.9rem;
+    }
+
+    .dashboard .search-field input {
+        padding-left: 0.65rem;
+        padding-right: 0.65rem;
+    }
+
+    .dashboard .documents-toolbar {
+        gap: 0.38rem;
+    }
+
+    .app-topbar {
+        padding: 0.42rem 0.5rem;
+    }
+
+    .app-topbar-copy strong {
+        font-size: 0.84rem;
+    }
+
+    .session-identity {
+        display: none;
+    }
+
+    .cart-trigger,
+    .menu-trigger {
+        width: 2.05rem;
+        height: 2.05rem;
+    }
+
+    .language-picker select {
+        width: 3.2rem;
+        padding-left: 0.45rem;
+        padding-right: 1.45rem;
+        font-size: 0.95rem;
+    }
+
+    .workspace-shell {
+        margin-bottom: 0.55rem;
+    }
+
+    .workspace-hero {
+        padding: 0.5rem 0.56rem 0.54rem;
+    }
+
+    .hero-copy p {
+        display: none;
+    }
+
+    .overview-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.26rem;
+    }
+
     .document-row {
         grid-template-columns: minmax(0, 1fr) auto;
         gap: 0.55rem 0.7rem;

@@ -40,7 +40,9 @@ const state = {
     openDocumentMenuId: null,
     draftAutosaveTimerId: null,
     editingManagedUserId: null,
-    highlightedSavedItemId: null
+    highlightedSavedItemId: null,
+    documentEditorBaseline: "",
+    documentEditorDirty: false
 };
 
 const DOP_PER_USD = 59;
@@ -338,7 +340,7 @@ const TRANSLATIONS = {
         next: "Next",
         save_draft: "Save Draft",
         save_changes: "Save Changes",
-        save_preview_pdf: "Save & Preview PDF",
+        save_preview_pdf: "Open Print Preview",
         document_summary: "Document Summary",
         ref_pending: "Ref pending",
         date_pending: "Date pending",
@@ -591,7 +593,7 @@ const TRANSLATIONS = {
         next: "Siguiente",
         save_draft: "Guardar Borrador",
         save_changes: "Guardar Cambios",
-        save_preview_pdf: "Guardar y Ver PDF",
+        save_preview_pdf: "Abrir Vista de Impresión",
         document_summary: "Resumen del Documento",
         ref_pending: "Ref pendiente",
         date_pending: "Fecha pendiente",
@@ -844,7 +846,7 @@ const TRANSLATIONS = {
         next: "Suivant",
         save_draft: "Enregistrer le Brouillon",
         save_changes: "Enregistrer les Modifications",
-        save_preview_pdf: "Enregistrer et Voir le PDF",
+        save_preview_pdf: "Ouvrir l’aperçu d’impression",
         document_summary: "Résumé du Document",
         ref_pending: "Réf en attente",
         date_pending: "Date en attente",
@@ -1049,26 +1051,29 @@ function applyTranslations() {
     elements.addUserBtn.textContent = t("add_user");
 
     const settingsPanels = elements.settingsModal.querySelectorAll(".settings-panel");
-    settingsPanels[0].querySelector("h4").textContent = t("user_management");
-    settingsPanels[0].querySelector(".settings-panel-header p").textContent = t("user_management_copy");
-    settingsPanels[1].querySelector("h4").textContent = t("client_records");
-    settingsPanels[1].querySelector(".settings-panel-header p").textContent = t("client_records_copy");
-    settingsPanels[2].querySelector("h4").textContent = t("editor_preferences");
-    settingsPanels[2].querySelector(".settings-panel-header p").textContent = t("editor_preferences_copy");
-    settingsPanels[2].querySelector("span").textContent = t("show_internal_pricing");
-    settingsPanels[3].querySelector("h4").textContent = t("csv_tools");
-    settingsPanels[3].querySelector(".settings-panel-header p").textContent = t("csv_tools_copy");
+    settingsPanels[0].querySelector("h4").textContent = t("company_profile");
+    settingsPanels[0].querySelector(".settings-panel-header p").textContent = t("company_profile_copy");
+    elements.settingsCompanyProfileBtn.textContent = t("company_profile");
+    settingsPanels[1].querySelector("h4").textContent = t("user_management");
+    settingsPanels[1].querySelector(".settings-panel-header p").textContent = t("user_management_copy");
+    settingsPanels[2].querySelector("h4").textContent = t("client_records");
+    settingsPanels[2].querySelector(".settings-panel-header p").textContent = t("client_records_copy");
+    settingsPanels[3].querySelector("h4").textContent = t("editor_preferences");
+    settingsPanels[3].querySelector(".settings-panel-header p").textContent = t("editor_preferences_copy");
+    settingsPanels[3].querySelector("span").textContent = t("show_internal_pricing");
+    settingsPanels[4].querySelector("h4").textContent = t("csv_tools");
+    settingsPanels[4].querySelector(".settings-panel-header p").textContent = t("csv_tools_copy");
     elements.exportCsvTemplateBtn.textContent = t("export_csv_template");
     elements.importCsvBtn.textContent = t("import_csv");
-    settingsPanels[4].querySelector("h4").textContent = t("json_backup");
-    settingsPanels[4].querySelector(".settings-panel-header p").textContent = t("json_backup_copy");
+    settingsPanels[5].querySelector("h4").textContent = t("json_backup");
+    settingsPanels[5].querySelector(".settings-panel-header p").textContent = t("json_backup_copy");
     elements.exportBackupBtn.textContent = t("export_backup");
     elements.importBackupBtn.textContent = t("import_backup");
-    settingsPanels[5].querySelector("h4").textContent = t("selective_export");
-    settingsPanels[5].querySelector(".settings-panel-header p").textContent = t("selective_export_copy");
+    settingsPanels[6].querySelector("h4").textContent = t("selective_export");
+    settingsPanels[6].querySelector(".settings-panel-header p").textContent = t("selective_export_copy");
     elements.openExportSelectionBtn.textContent = t("export_selected_json");
-    settingsPanels[6].querySelector("h4").textContent = t("local_testing");
-    settingsPanels[6].querySelector(".settings-panel-header p").textContent = t("local_testing_copy");
+    settingsPanels[7].querySelector("h4").textContent = t("local_testing");
+    settingsPanels[7].querySelector(".settings-panel-header p").textContent = t("local_testing_copy");
     elements.clearLocalTestDataBtn.textContent = t("clear_local_test_data");
 
     setElementText("#exportModal h3", t("export_json_title"));
@@ -1149,7 +1154,6 @@ function applyTranslations() {
     setElementText("#aboutDeveloperCopy", t("about_developer_copy"));
     setElementText("#footerStudioName", `${BRAND.studioName} - ${BRAND.developerName}`);
     setElementText("#footerCreditLine", t("footer_credit_line"));
-    elements.openCompanyProfileBtn.textContent = t("company_profile");
     elements.openAboutBtn.textContent = t("about_veloris");
     elements.openIssueReportBtn.textContent = t("footer_report_cta");
 
@@ -1245,7 +1249,6 @@ function cacheElements() {
     elements.topbarAccountAdminBtn = document.getElementById("topbarAccountAdminBtn");
     elements.topbarInvoiceReportsBtn = document.getElementById("topbarInvoiceReportsBtn");
     elements.topbarCatalogBtn = document.getElementById("topbarCatalogBtn");
-    elements.topbarCompanyProfileBtn = document.getElementById("topbarCompanyProfileBtn");
     elements.topbarSettingsBtn = document.getElementById("topbarSettingsBtn");
     elements.topbarSignOutBtn = document.getElementById("topbarSignOutBtn");
     elements.languageSelect = document.getElementById("languageSelect");
@@ -1347,7 +1350,7 @@ function cacheElements() {
     elements.catalogItemDetailsInput = document.getElementById("catalogItemDetailsInput");
     elements.catalogItemNotesInput = document.getElementById("catalogItemNotesInput");
     elements.saveCatalogItemBtn = document.getElementById("saveCatalogItemBtn");
-    elements.openCompanyProfileBtn = document.getElementById("openCompanyProfileBtn");
+    elements.settingsCompanyProfileBtn = document.getElementById("settingsCompanyProfileBtn");
     elements.openSavedItemsBtn = document.getElementById("openSavedItemsBtn");
     elements.openSavedItemsInlineCount = document.getElementById("openSavedItemsInlineCount");
     elements.closeCompanyProfileModalBtn = document.getElementById("closeCompanyProfileModalBtn");
@@ -1470,7 +1473,6 @@ function bindEvents() {
     elements.navMenuBtn.addEventListener("click", toggleTopbarMenu);
     elements.topbarAccountAdminBtn?.addEventListener("click", openAccountAdminPage);
     elements.topbarCatalogBtn.addEventListener("click", openCatalogPage);
-    elements.topbarCompanyProfileBtn.addEventListener("click", openCompanyProfileModal);
     elements.topbarSettingsBtn.addEventListener("click", handleTopbarSettingsClick);
     elements.topbarSignOutBtn.addEventListener("click", handleEndSessionClick);
     elements.openSettingsBtn?.addEventListener("click", openSettingsModal);
@@ -1483,7 +1485,7 @@ function bindEvents() {
     elements.selectAllExportsToggle.addEventListener("change", handleSelectAllExportsToggle);
     elements.exportSelectedJsonBtn.addEventListener("click", exportSelectedDocuments);
     elements.openIssueReportBtn.addEventListener("click", openIssueReportModal);
-    elements.openCompanyProfileBtn.addEventListener("click", openCompanyProfileModal);
+    elements.settingsCompanyProfileBtn.addEventListener("click", openCompanyProfileFromSettings);
     elements.openSavedItemsBtn.addEventListener("click", openSavedItemsModal);
     elements.openAboutBtn.addEventListener("click", openAboutModal);
     elements.closeIssueReportModalBtn.addEventListener("click", closeIssueReportModal);
@@ -2447,13 +2449,11 @@ function applyRoleAccess() {
         : "";
     elements.openInboxBtn.hidden = !isAdmin;
     elements.topbarAccountAdminBtn.hidden = !isOwner;
-    elements.topbarCompanyProfileBtn.hidden = !isAdmin;
-    elements.openCompanyProfileBtn.hidden = !isAdmin;
     elements.topbarSettingsBtn.hidden = !isAdmin;
+    elements.settingsCompanyProfileBtn.hidden = !isAdmin;
     elements.topbarAccountAdminBtn?.setAttribute("aria-hidden", String(!isOwner));
     elements.topbarSettingsBtn.setAttribute("aria-hidden", String(!isAdmin));
-    elements.topbarCompanyProfileBtn.setAttribute("aria-hidden", String(!isAdmin));
-    elements.openCompanyProfileBtn.setAttribute("aria-hidden", String(!isAdmin));
+    elements.settingsCompanyProfileBtn.setAttribute("aria-hidden", String(!isAdmin));
     updateInboxBadge();
 
     if (!isAdmin) {
@@ -2949,6 +2949,11 @@ function openSettingsModal() {
     renderUserManagementList();
     renderClientManagementList();
     setModalState(elements.settingsModal, true);
+}
+
+function openCompanyProfileFromSettings() {
+    closeSettingsModal();
+    openCompanyProfileModal();
 }
 
 function closeSettingsModal() {
