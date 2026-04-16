@@ -6823,42 +6823,12 @@ function buildDocumentMarkup(doc, stampStyle, options = {}) {
 }
 
 function buildLineItemsPreviewMarkup(doc) {
-    const documentTitle = doc.type === "quote" ? "Quote" : "Invoice";
-    const primaryPartyLabel = doc.type === "quote" ? "For:" : "Bill To:";
-    const showConsignee = doc.type !== "quote";
-    const showPoNumber = hasMeaningfulPoNumber(doc.poNumber);
     const safeNotes = doc.notes && doc.notes.trim()
         ? escapeHtml(doc.notes.trim())
         : "<em>*No additional notes provided.</em>";
 
     return `
         <div class="document-sheet line-items-review-sheet">
-            <div class="line-items-review-header">
-                <div class="line-items-review-kicker">${documentTitle} line item review</div>
-                <div class="line-items-review-ref">${escapeHtml(doc.refNumber || "Reference pending")}</div>
-            </div>
-
-            <div class="document-meta">
-                <div><strong>${primaryPartyLabel}</strong> ${escapeHtml(doc.clientName || "Client pending")}</div>
-                <div><strong>Date:</strong> <span class="meta-date-value">${escapeHtml(formatDisplayDate(doc.date))}</span></div>
-            </div>
-
-            <div class="document-parties line-items-parties">
-                <div class="party-card">
-                    <div class="issued-to-label"><strong>${primaryPartyLabel}</strong></div>
-                    <div class="issued-to-value">${escapeHtml(doc.clientAddress || "Address pending").replace(/\n/g, "<br>")}</div>
-                </div>
-                ${showConsignee ? `<div class="party-card">
-                    <div class="issued-to-label"><strong>Consignee:</strong></div>
-                    <div class="issued-to-value compact-party-value">
-                        ${doc.consigneeName || doc.consigneeAddress
-                            ? `${escapeHtml(doc.consigneeName || "Consignee pending")}${doc.consigneeAddress ? `<br>${escapeHtml(doc.consigneeAddress).replace(/\n/g, "<br>")}` : ""}`
-                            : "<em>Not provided</em>"}
-                    </div>
-                </div>` : ""}
-                ${showPoNumber ? `<div class="party-card po-card"><span class="po-label">Purchase Order Number:</span> ${escapeHtml(doc.poNumber)}</div>` : ""}
-            </div>
-
             ${buildDocumentItemsTable(doc)}
 
             <div class="document-divider"></div>
@@ -6868,7 +6838,7 @@ function buildLineItemsPreviewMarkup(doc) {
                 <div class="document-notes-content">${safeNotes}</div>
             </div>
 
-            <div class="document-bottom">
+            <div class="document-bottom line-items-review-bottom">
                 <div class="document-terms">
                     <span class="terms-label"><strong>Terms of Payment:</strong></span>
                     ${escapeHtml(doc.paymentTerms || DEFAULT_PAYMENT_TERMS)}
