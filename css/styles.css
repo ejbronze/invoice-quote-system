@@ -3328,6 +3328,20 @@ body::after {
     color: #173453;
 }
 
+.invoice-report-select-cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.invoice-report-select-cell input {
+    width: 0.95rem;
+    height: 0.95rem;
+    accent-color: var(--blue);
+    cursor: pointer;
+}
+
 .invoice-report-empty {
     border: 1px dashed rgba(190, 202, 220, 0.92);
     border-radius: 18px;

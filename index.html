@@ -115,7 +115,6 @@
                     <div class="topbar-menu" id="topbarMenu" hidden>
                         <button class="topbar-menu-item" id="topbarAccountAdminBtn" type="button" hidden>Account Admin</button>
                         <button class="topbar-menu-item" id="topbarInvoiceReportsBtn" type="button">Invoice Reports</button>
-                        <button class="topbar-menu-item topbar-menu-item--with-badge" id="openInboxBtn" type="button" hidden><span id="openInboxLabel">Service Reports</span><span class="mailbox-count" id="inboxCountBadge" hidden>0</span></button>
                         <div class="topbar-menu-divider"></div>
                         <button class="topbar-menu-item" id="topbarCatalogBtn" type="button">Catalog</button>
                         <button class="topbar-menu-item" id="topbarSettingsBtn" type="button">Settings</button>
@@ -493,6 +492,15 @@
                 </div>
                 <div class="settings-panel">
                     <div class="settings-panel-header">
+                        <h4>Service Reports</h4>
+                        <p>Bug reports and service logs appear here for admins to review, annotate, and close when resolved.</p>
+                    </div>
+                    <div class="settings-actions">
+                        <button class="btn btn-secondary" id="settingsIssueInboxBtn" type="button">Open Service Reports</button>
+                    </div>
+                </div>
+                <div class="settings-panel">
+                    <div class="settings-panel-header">
                         <h4>User Management</h4>
                         <p>Create local accounts, assign roles, reset passwords, and remove users who should not access the workspace.</p>
                     </div>
@@ -691,6 +699,8 @@
                         <button class="filter-chip" id="invoiceReportFilterPaidBtn" type="button" data-invoice-report-filter="paid">Paid</button>
                     </div>
                     <div class="settings-actions invoice-report-actions">
+                        <button class="btn btn-secondary" id="selectVisibleInvoiceReportsBtn" type="button">Select Visible</button>
+                        <button class="btn btn-secondary" id="printInvoiceReportBtn" type="button">Print Selected</button>
                         <button class="btn btn-secondary" id="exportInvoiceReportCsvBtn" type="button">Export CSV</button>
                     </div>
                 </div>

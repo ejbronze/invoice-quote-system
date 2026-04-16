@@ -43,7 +43,8 @@ const state = {
     highlightedSavedItemId: null,
     documentEditorBaseline: "",
     documentEditorDirty: false,
-    mobileOverviewCollapsed: true
+    mobileOverviewCollapsed: true,
+    selectedInvoiceReportIds: []
 };
 
 const DOP_PER_USD = 59;
@@ -239,6 +240,12 @@ const TRANSLATIONS = {
         invoice_reports: "Invoice Reports",
         invoice_reports_copy: "Review invoice totals by client, switch between unpaid, pending, and paid invoices, and keep the list sorted by client.",
         export_report_csv: "Export CSV",
+        select_visible_reports: "Select Visible",
+        print_selected_reports: "Print Selected",
+        open_service_reports: "Open Service Reports",
+        report_select: "Select",
+        report_print_title: "Invoice Report",
+        report_print_selected_empty: "Select at least one invoice from the invoice reports list before printing.",
         report_from: "From",
         report_to: "To",
         import_status_default: "Use JSON backup tools to restore deleted records or move data between environments.",
@@ -492,6 +499,12 @@ const TRANSLATIONS = {
         invoice_reports: "Reportes de Facturas",
         invoice_reports_copy: "Revisa los totales de facturas por cliente, cambia entre facturas no pagadas, pendientes y pagadas, y mantén la lista ordenada por cliente.",
         export_report_csv: "Exportar CSV",
+        select_visible_reports: "Seleccionar Visibles",
+        print_selected_reports: "Imprimir Seleccionadas",
+        open_service_reports: "Abrir Reportes de Servicio",
+        report_select: "Seleccionar",
+        report_print_title: "Reporte de Facturas",
+        report_print_selected_empty: "Selecciona al menos una factura de la lista de reportes antes de imprimir.",
         report_from: "Desde",
         report_to: "Hasta",
         import_status_default: "Usa las herramientas JSON para restaurar registros eliminados o mover datos entre entornos.",
@@ -745,6 +758,12 @@ const TRANSLATIONS = {
         invoice_reports: "Rapports de Factures",
         invoice_reports_copy: "Consultez les totaux de factures par client, basculez entre les factures impayees, en attente et payees, et gardez la liste triee par client.",
         export_report_csv: "Exporter CSV",
+        select_visible_reports: "Sélectionner les visibles",
+        print_selected_reports: "Imprimer la sélection",
+        open_service_reports: "Ouvrir les rapports de service",
+        report_select: "Sélection",
+        report_print_title: "Rapport de Factures",
+        report_print_selected_empty: "Sélectionnez au moins une facture dans la liste des rapports avant d’imprimer.",
         report_from: "Du",
         report_to: "Au",
         import_status_default: "Utilisez les outils JSON pour restaurer des enregistrements supprimés ou déplacer des données entre environnements.",
@@ -974,9 +993,6 @@ function applyTranslations() {
     setElementText(".app-topbar-kicker", t("workspace"));
     setElementText(".app-topbar-copy strong", t("dashboard_title_top"));
     document.getElementById("languagePickerLabel").textContent = t("language");
-    elements.openInboxBtn.setAttribute("aria-label", t("issue_inbox"));
-    elements.openInboxBtn.setAttribute("title", t("issue_inbox"));
-    setElementText("#openInboxLabel", t("issue_inbox"));
     elements.navMenuBtn.setAttribute("aria-label", t("menu"));
     elements.topbarCatalogBtn.textContent = t("catalog");
     elements.topbarSettingsBtn.textContent = t("settings");
@@ -1055,26 +1071,29 @@ function applyTranslations() {
     settingsPanels[0].querySelector("h4").textContent = t("company_profile");
     settingsPanels[0].querySelector(".settings-panel-header p").textContent = t("company_profile_copy");
     elements.settingsCompanyProfileBtn.textContent = t("company_profile");
-    settingsPanels[1].querySelector("h4").textContent = t("user_management");
-    settingsPanels[1].querySelector(".settings-panel-header p").textContent = t("user_management_copy");
-    settingsPanels[2].querySelector("h4").textContent = t("client_records");
-    settingsPanels[2].querySelector(".settings-panel-header p").textContent = t("client_records_copy");
-    settingsPanels[3].querySelector("h4").textContent = t("editor_preferences");
-    settingsPanels[3].querySelector(".settings-panel-header p").textContent = t("editor_preferences_copy");
-    settingsPanels[3].querySelector("span").textContent = t("show_internal_pricing");
-    settingsPanels[4].querySelector("h4").textContent = t("csv_tools");
-    settingsPanels[4].querySelector(".settings-panel-header p").textContent = t("csv_tools_copy");
+    settingsPanels[1].querySelector("h4").textContent = t("issue_inbox");
+    settingsPanels[1].querySelector(".settings-panel-header p").textContent = t("issue_inbox_copy");
+    elements.settingsIssueInboxBtn.textContent = t("open_service_reports");
+    settingsPanels[2].querySelector("h4").textContent = t("user_management");
+    settingsPanels[2].querySelector(".settings-panel-header p").textContent = t("user_management_copy");
+    settingsPanels[3].querySelector("h4").textContent = t("client_records");
+    settingsPanels[3].querySelector(".settings-panel-header p").textContent = t("client_records_copy");
+    settingsPanels[4].querySelector("h4").textContent = t("editor_preferences");
+    settingsPanels[4].querySelector(".settings-panel-header p").textContent = t("editor_preferences_copy");
+    settingsPanels[4].querySelector("span").textContent = t("show_internal_pricing");
+    settingsPanels[5].querySelector("h4").textContent = t("csv_tools");
+    settingsPanels[5].querySelector(".settings-panel-header p").textContent = t("csv_tools_copy");
     elements.exportCsvTemplateBtn.textContent = t("export_csv_template");
     elements.importCsvBtn.textContent = t("import_csv");
-    settingsPanels[5].querySelector("h4").textContent = t("json_backup");
-    settingsPanels[5].querySelector(".settings-panel-header p").textContent = t("json_backup_copy");
+    settingsPanels[6].querySelector("h4").textContent = t("json_backup");
+    settingsPanels[6].querySelector(".settings-panel-header p").textContent = t("json_backup_copy");
     elements.exportBackupBtn.textContent = t("export_backup");
     elements.importBackupBtn.textContent = t("import_backup");
-    settingsPanels[6].querySelector("h4").textContent = t("selective_export");
-    settingsPanels[6].querySelector(".settings-panel-header p").textContent = t("selective_export_copy");
+    settingsPanels[7].querySelector("h4").textContent = t("selective_export");
+    settingsPanels[7].querySelector(".settings-panel-header p").textContent = t("selective_export_copy");
     elements.openExportSelectionBtn.textContent = t("export_selected_json");
-    settingsPanels[7].querySelector("h4").textContent = t("local_testing");
-    settingsPanels[7].querySelector(".settings-panel-header p").textContent = t("local_testing_copy");
+    settingsPanels[8].querySelector("h4").textContent = t("local_testing");
+    settingsPanels[8].querySelector(".settings-panel-header p").textContent = t("local_testing_copy");
     elements.clearLocalTestDataBtn.textContent = t("clear_local_test_data");
 
     setElementText("#exportModal h3", t("export_json_title"));
@@ -1097,6 +1116,8 @@ function applyTranslations() {
     setElementText("#invoiceReportsSortLabel", t("sort"));
     setElementText("#invoiceReportStartLabel", t("report_from"));
     setElementText("#invoiceReportEndLabel", t("report_to"));
+    setElementText("#selectVisibleInvoiceReportsBtn", t("select_visible_reports"));
+    setElementText("#printInvoiceReportBtn", t("print_selected_reports"));
     setElementText("#exportInvoiceReportCsvBtn", t("export_report_csv"));
     elements.invoiceReportSort.options[0].textContent = t("sort_client_asc");
     elements.invoiceReportSort.options[1].textContent = t("sort_client_desc");
@@ -1241,8 +1262,6 @@ function cacheElements() {
     elements.workspaceShell = document.querySelector(".workspace-shell");
     elements.settingsModal = document.getElementById("settingsModal");
     elements.sessionBadge = document.getElementById("sessionBadge");
-    elements.openInboxBtn = document.getElementById("openInboxBtn");
-    elements.inboxCountBadge = document.getElementById("inboxCountBadge");
     elements.openSavedItemsTopbarBtn = document.getElementById("openSavedItemsTopbarBtn");
     elements.savedItemsCountBadge = document.getElementById("savedItemsCountBadge");
     elements.navMenuBtn = document.getElementById("navMenuBtn");
@@ -1277,6 +1296,7 @@ function cacheElements() {
     elements.issueInboxModal = document.getElementById("issueInboxModal");
     elements.closeIssueInboxModalBtn = document.getElementById("closeIssueInboxModalBtn");
     elements.issueInboxList = document.getElementById("issueInboxList");
+    elements.settingsIssueInboxBtn = document.getElementById("settingsIssueInboxBtn");
     elements.invoiceReportsModal = document.getElementById("invoiceReportsModal");
     elements.closeInvoiceReportsModalBtn = document.getElementById("closeInvoiceReportsModalBtn");
     elements.invoiceReportSort = document.getElementById("invoiceReportSort");
@@ -1285,6 +1305,8 @@ function cacheElements() {
     elements.invoiceReportFilterButtons = Array.from(document.querySelectorAll("[data-invoice-report-filter]"));
     elements.invoiceReportSummary = document.getElementById("invoiceReportSummary");
     elements.invoiceReportList = document.getElementById("invoiceReportList");
+    elements.selectVisibleInvoiceReportsBtn = document.getElementById("selectVisibleInvoiceReportsBtn");
+    elements.printInvoiceReportBtn = document.getElementById("printInvoiceReportBtn");
     elements.exportInvoiceReportCsvBtn = document.getElementById("exportInvoiceReportCsvBtn");
     elements.companyProfileModal = document.getElementById("companyProfileModal");
     elements.savedItemsModal = document.getElementById("savedItemsModal");
@@ -1474,7 +1496,7 @@ function bindEvents() {
         openModal("invoice");
     });
     elements.languageSelect.addEventListener("change", handleLanguageChange);
-    elements.openInboxBtn.addEventListener("click", openIssueInboxModal);
+    elements.settingsIssueInboxBtn.addEventListener("click", openIssueInboxFromSettings);
     elements.openSavedItemsTopbarBtn.addEventListener("click", openSavedItemsModal);
     elements.navMenuBtn.addEventListener("click", toggleTopbarMenu);
     elements.topbarAccountAdminBtn?.addEventListener("click", openAccountAdminPage);
@@ -1516,10 +1538,13 @@ function bindEvents() {
     elements.invoiceReportSort.addEventListener("change", renderInvoiceReport);
     elements.invoiceReportStartDate.addEventListener("change", () => { document.querySelectorAll(".preset-chip").forEach(b => b.classList.remove("active")); renderInvoiceReport(); });
     elements.invoiceReportEndDate.addEventListener("change", () => { document.querySelectorAll(".preset-chip").forEach(b => b.classList.remove("active")); renderInvoiceReport(); });
+    elements.selectVisibleInvoiceReportsBtn.addEventListener("click", selectVisibleInvoiceReports);
+    elements.printInvoiceReportBtn.addEventListener("click", printSelectedInvoiceReports);
     elements.exportInvoiceReportCsvBtn.addEventListener("click", exportInvoiceReportCsv);
     elements.invoiceReportFilterButtons.forEach(button => {
         button.addEventListener("click", handleInvoiceReportFilterClick);
     });
+    elements.invoiceReportList.addEventListener("change", handleInvoiceReportListChange);
     [elements.presetThisMonthBtn, elements.presetLast30Btn, elements.presetThisYearBtn, elements.presetClearDatesBtn].forEach(btn => {
         btn?.addEventListener("click", handleDatePresetClick);
     });
@@ -2456,13 +2481,14 @@ function applyRoleAccess() {
     elements.sessionBadge.textContent = hasSession
         ? state.currentUser.displayName
         : "";
-    elements.openInboxBtn.hidden = !isAdmin;
     elements.topbarAccountAdminBtn.hidden = !isOwner;
     elements.topbarSettingsBtn.hidden = !isAdmin;
     elements.settingsCompanyProfileBtn.hidden = !isAdmin;
+    elements.settingsIssueInboxBtn.hidden = !isAdmin;
     elements.topbarAccountAdminBtn?.setAttribute("aria-hidden", String(!isOwner));
     elements.topbarSettingsBtn.setAttribute("aria-hidden", String(!isAdmin));
     elements.settingsCompanyProfileBtn.setAttribute("aria-hidden", String(!isAdmin));
+    elements.settingsIssueInboxBtn.setAttribute("aria-hidden", String(!isAdmin));
     updateInboxBadge();
 
     if (!isAdmin) {
@@ -2969,6 +2995,11 @@ function closeSettingsModal() {
     setModalState(elements.settingsModal, false);
 }
 
+function openIssueInboxFromSettings() {
+    closeSettingsModal();
+    void openIssueInboxModal();
+}
+
 function openIssueReportModal() {
     elements.issueReportStatus.hidden = true;
     elements.issueReportStatus.textContent = "";
@@ -2994,6 +3025,7 @@ function closeIssueInboxModal() {
 }
 
 function openInvoiceReportsModal() {
+    state.selectedInvoiceReportIds = [];
     renderInvoiceReport();
     setModalState(elements.invoiceReportsModal, true);
 }
@@ -3007,6 +3039,10 @@ function getInvoiceReportFilter() {
     return activeButton?.dataset?.invoiceReportFilter || "all";
 }
 
+function getVisibleInvoiceReportInvoices() {
+    return getInvoiceReportData().clientGroups.flatMap(group => group.invoices);
+}
+
 function handleInvoiceReportFilterClick(event) {
     const button = event.currentTarget;
     const nextFilter = button.dataset.invoiceReportFilter || "all";
@@ -3015,6 +3051,32 @@ function handleInvoiceReportFilterClick(event) {
         entry.classList.toggle("active", isActive);
         entry.setAttribute("aria-pressed", String(isActive));
     });
+    renderInvoiceReport();
+}
+
+function handleInvoiceReportListChange(event) {
+    const checkbox = event.target.closest("[data-invoice-report-select]");
+    if (!checkbox) {
+        return;
+    }
+
+    const documentId = String(checkbox.dataset.invoiceReportSelect || "");
+    if (!documentId) {
+        return;
+    }
+
+    const nextSelection = new Set(state.selectedInvoiceReportIds.map(String));
+    if (checkbox.checked) {
+        nextSelection.add(documentId);
+    } else {
+        nextSelection.delete(documentId);
+    }
+    state.selectedInvoiceReportIds = [...nextSelection];
+}
+
+function selectVisibleInvoiceReports() {
+    const visibleIds = getVisibleInvoiceReportInvoices().map(doc => String(doc.id));
+    state.selectedInvoiceReportIds = visibleIds;
     renderInvoiceReport();
 }
 
@@ -3137,6 +3199,7 @@ function renderInvoiceReport() {
     }
 
     const { allInvoices, clientGroups, summary } = getInvoiceReportData();
+    const selectedIds = new Set(state.selectedInvoiceReportIds.map(String));
 
     elements.invoiceReportSummary.innerHTML = `
         <article class="invoice-report-summary-card">
@@ -3183,6 +3246,7 @@ function renderInvoiceReport() {
             <table class="invoice-report-table">
                 <thead>
                     <tr>
+                        <th>${escapeHtml(t("report_select"))}</th>
                         <th>${escapeHtml(t("report_ref"))}</th>
                         <th>${escapeHtml(t("report_date"))}</th>
                         <th>${escapeHtml(t("report_status"))}</th>
@@ -3192,6 +3256,11 @@ function renderInvoiceReport() {
                 <tbody>
                     ${group.invoices.map(doc => `
                         <tr>
+                            <td>
+                                <label class="invoice-report-select-cell">
+                                    <input type="checkbox" data-invoice-report-select="${escapeHtml(String(doc.id))}" ${selectedIds.has(String(doc.id)) ? "checked" : ""}>
+                                </label>
+                            </td>
                             <td><strong>${escapeHtml(doc.refNumber || "—")}</strong></td>
                             <td>${escapeHtml(formatDisplayDate(doc.date) || t("no_date"))}</td>
                             <td>${escapeHtml(getPaymentStatusLabel(doc.paymentStatus))}</td>
@@ -3248,6 +3317,135 @@ function exportInvoiceReportCsv() {
     const filter = getInvoiceReportFilter();
     const timestamp = new Date().toISOString().slice(0, 10);
     downloadTextFile(`invoice-report-${filter}-${timestamp}.csv`, `${csv}\n`, "text/csv;charset=utf-8");
+}
+
+function printSelectedInvoiceReports() {
+    const selectedIds = new Set(state.selectedInvoiceReportIds.map(String));
+    const selectedInvoices = getVisibleInvoiceReportInvoices().filter(doc => selectedIds.has(String(doc.id)));
+
+    if (!selectedInvoices.length) {
+        setImportStatus(t("report_print_selected_empty"), true);
+        window.alert(t("report_print_selected_empty"));
+        return;
+    }
+
+    const groupedByClient = new Map();
+    selectedInvoices.forEach(doc => {
+        const clientName = String(doc.clientName || t("unknown_client")).trim() || t("unknown_client");
+        const group = groupedByClient.get(clientName) || {
+            clientName,
+            invoices: [],
+            total: 0
+        };
+        group.invoices.push(doc);
+        group.total += Number(doc.total || 0);
+        groupedByClient.set(clientName, group);
+    });
+
+    const clientGroups = [...groupedByClient.values()]
+        .map(group => ({
+            ...group,
+            invoices: [...group.invoices].sort((left, right) => compareDocuments(left, right, "date_desc"))
+        }))
+        .sort((left, right) => left.clientName.localeCompare(right.clientName, getCurrentLocale(), { sensitivity: "base" }));
+
+    const dateRange = getInvoiceReportDateRange();
+    const filter = getInvoiceReportFilter();
+    const filterLabel = filter === "all" ? t("filter_all") : getPaymentStatusLabel(filter);
+    const rangeLabel = dateRange.startValue || dateRange.endValue
+        ? `${dateRange.startValue || "—"} to ${dateRange.endValue || "—"}`
+        : "All dates";
+
+    const printWindow = window.open("", "_blank", "noopener,noreferrer,width=1100,height=900");
+    if (!printWindow) {
+        window.alert("Please allow pop-ups to open the printable report.");
+        return;
+    }
+
+    printWindow.document.write(`<!doctype html>
+        <html lang="${escapeHtml(getCurrentLocale())}">
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>${escapeHtml(t("report_print_title"))}</title>
+            <style>
+                body { margin: 0; font-family: Inter, system-ui, sans-serif; background: #eef3f9; color: #173453; }
+                .report-print-toolbar { position: sticky; top: 0; display: flex; justify-content: flex-end; gap: 0.75rem; padding: 0.9rem 1rem; background: rgba(245,247,250,0.96); border-bottom: 1px solid #d8e0e8; }
+                .report-print-toolbar button { border: 0; border-radius: 999px; padding: 0.7rem 1rem; font: inherit; font-weight: 700; cursor: pointer; background: #1d4ed8; color: white; }
+                .report-print-toolbar button.secondary { background: #e7eef6; color: #28415b; }
+                .report-print-shell { max-width: 1080px; margin: 0 auto; padding: 1.1rem; }
+                .report-print-card { background: white; border-radius: 18px; padding: 1.2rem 1.25rem; box-shadow: 0 12px 30px rgba(23,52,83,0.08); }
+                .report-print-header { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+                .report-print-header h1 { margin: 0 0 0.25rem; font-size: 1.4rem; }
+                .report-print-header p, .report-print-meta span { margin: 0; color: #5b6f89; font-size: 0.88rem; }
+                .report-print-meta { display: grid; gap: 0.2rem; text-align: right; }
+                .report-print-group { border-top: 1px solid #dfe7f0; padding-top: 1rem; margin-top: 1rem; }
+                .report-print-group:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+                .report-print-group-head { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 0.7rem; }
+                .report-print-group-head strong { font-size: 1rem; }
+                .report-print-table { width: 100%; border-collapse: collapse; }
+                .report-print-table th, .report-print-table td { padding: 0.6rem 0.45rem; text-align: left; border-top: 1px solid #e3eaf3; font-size: 0.84rem; }
+                .report-print-table th { border-top: 0; padding-top: 0; color: #6d8097; font-size: 0.72rem; text-transform: uppercase; }
+                @media print {
+                    body { background: white; }
+                    .report-print-toolbar { display: none !important; }
+                    .report-print-shell { max-width: none; padding: 0; }
+                    .report-print-card { box-shadow: none; border-radius: 0; padding: 0; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="report-print-toolbar">
+                <button class="secondary" type="button" onclick="window.close()">Close Preview</button>
+                <button type="button" onclick="window.print()">Print</button>
+            </div>
+            <div class="report-print-shell">
+                <article class="report-print-card">
+                    <div class="report-print-header">
+                        <div>
+                            <h1>${escapeHtml(t("report_print_title"))}</h1>
+                            <p>${escapeHtml(`${selectedInvoices.length} ${t("report_total_invoices").toLowerCase()}`)}</p>
+                        </div>
+                        <div class="report-print-meta">
+                            <span>${escapeHtml(`${t("report_status")}: ${filterLabel}`)}</span>
+                            <span>${escapeHtml(`${t("report_from")}/${t("report_to")}: ${rangeLabel}`)}</span>
+                            <span>${escapeHtml(`Printed ${new Date().toLocaleString(getCurrentLocale())}`)}</span>
+                        </div>
+                    </div>
+                    ${clientGroups.map(group => `
+                        <section class="report-print-group">
+                            <div class="report-print-group-head">
+                                <div><strong>${escapeHtml(group.clientName)}</strong></div>
+                                <strong>${escapeHtml(formatCurrency(group.total))}</strong>
+                            </div>
+                            <table class="report-print-table">
+                                <thead>
+                                    <tr>
+                                        <th>${escapeHtml(t("report_ref"))}</th>
+                                        <th>${escapeHtml(t("report_date"))}</th>
+                                        <th>${escapeHtml(t("report_status"))}</th>
+                                        <th>${escapeHtml(t("report_total"))}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${group.invoices.map(doc => `
+                                        <tr>
+                                            <td>${escapeHtml(doc.refNumber || "—")}</td>
+                                            <td>${escapeHtml(formatDisplayDate(doc.date) || t("no_date"))}</td>
+                                            <td>${escapeHtml(getPaymentStatusLabel(doc.paymentStatus))}</td>
+                                            <td>${escapeHtml(formatCurrency(doc.total || 0))}</td>
+                                        </tr>
+                                    `).join("")}
+                                </tbody>
+                            </table>
+                        </section>
+                    `).join("")}
+                </article>
+            </div>
+        </body>
+        </html>`);
+    printWindow.document.close();
+    printWindow.focus();
 }
 
 function syncCompanyProfileForm() {
@@ -4334,6 +4532,9 @@ function closeExportModal() {
 
 function updateInboxBadge() {
     const openCount = isAdminSession() ? state.issueReports.filter(report => report.status !== "closed").length : 0;
+    if (!elements.inboxCountBadge) {
+        return;
+    }
     elements.inboxCountBadge.hidden = openCount === 0;
     elements.inboxCountBadge.textContent = openCount > 99 ? "99+" : String(openCount);
 }
