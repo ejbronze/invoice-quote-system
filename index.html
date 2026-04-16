@@ -134,9 +134,9 @@
                             <p>Build polished documents, convert quotes fast, and keep your day moving from one clean workspace.</p>
                         </div>
                         <div class="hero-side-column">
-                            <button class="overview-mobile-toggle" id="overviewMobileToggle" type="button" aria-expanded="false" hidden>
+                            <button class="overview-mobile-toggle" id="overviewMobileToggle" type="button" aria-label="Cycle snapshot value" hidden>
                                 <span class="overview-mobile-toggle-copy">
-                                    <span class="overview-mobile-toggle-label">Snapshot</span>
+                                    <span class="overview-mobile-toggle-label" id="overviewMobileToggleLabel">Pipeline Value</span>
                                     <strong class="overview-mobile-toggle-value" id="overviewMobileToggleValue">$0.00</strong>
                                 </span>
                                 <span class="overview-mobile-toggle-meta" id="overviewMobileToggleMeta">0 documents</span>
@@ -173,6 +173,11 @@
             </div>
         </section>
 
+        <div class="workspace-actions" aria-label="Primary actions">
+            <button class="btn btn-primary" id="newQuoteBtn" type="button">New Quote</button>
+            <button class="btn btn-success" id="newInvoiceBtn" type="button">New Invoice</button>
+        </div>
+
         <section class="dashboard">
             <div class="dashboard-topbar">
                 <div>
@@ -199,13 +204,6 @@
                     <button class="filter-chip active" id="filterAllBtn" type="button" data-filter="all">All</button>
                     <button class="filter-chip" id="filterQuotesBtn" type="button" data-filter="quote">Quotes</button>
                     <button class="filter-chip" id="filterInvoicesBtn" type="button" data-filter="invoice">Invoices</button>
-                </div>
-
-                <div class="dashboard-actions-row" aria-label="Primary actions">
-                    <div class="hero-action-grid">
-                        <button class="btn btn-primary" id="newQuoteBtn" type="button">New Quote</button>
-                        <button class="btn btn-success" id="newInvoiceBtn" type="button">New Invoice</button>
-                    </div>
                 </div>
             </div>
 

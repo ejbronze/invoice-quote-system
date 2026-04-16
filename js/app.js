@@ -1459,6 +1459,7 @@ function cacheElements() {
     elements.overviewMobileToggle = document.getElementById("overviewMobileToggle");
     elements.overviewMobileToggleValue = document.getElementById("overviewMobileToggleValue");
     elements.overviewMobileToggleMeta = document.getElementById("overviewMobileToggleMeta");
+    elements.overviewMobileToggleLabel = document.getElementById("overviewMobileToggleLabel");
     elements.overviewPanel = document.querySelector(".overview-panel");
     elements.workspaceHero = document.querySelector(".workspace-hero");
     elements.documentSearch = document.getElementById("documentSearch");
@@ -7260,16 +7261,14 @@ function syncMobileOverviewState() {
     const isMobile = isMobileOverviewViewport();
     if (!isMobile) {
         elements.overviewMobileToggle.hidden = true;
-        elements.overviewMobileToggle.setAttribute("aria-expanded", "true");
         elements.overviewPanel.hidden = false;
         elements.workspaceHero.classList.remove("workspace-hero-collapsed");
         return;
     }
 
     elements.overviewMobileToggle.hidden = false;
-    elements.overviewPanel.hidden = state.mobileOverviewCollapsed;
-    elements.overviewMobileToggle.setAttribute("aria-expanded", String(!state.mobileOverviewCollapsed));
-    elements.workspaceHero.classList.toggle("workspace-hero-collapsed", state.mobileOverviewCollapsed);
+    elements.overviewPanel.hidden = false;
+    elements.workspaceHero.classList.remove("workspace-hero-collapsed");
 }
 
 function toggleMobileOverview() {
@@ -7277,8 +7276,12 @@ function toggleMobileOverview() {
         return;
     }
 
-    state.mobileOverviewCollapsed = !state.mobileOverviewCollapsed;
-    syncMobileOverviewState();
+    toggleValueView();
+    if (elements.overviewMobileToggle) {
+        elements.overviewMobileToggle.classList.remove("is-pulsing");
+        void elements.overviewMobileToggle.offsetWidth;
+        elements.overviewMobileToggle.classList.add("is-pulsing");
+    }
 }
 
 function updateOverviewStats() {
@@ -7321,6 +7324,9 @@ function updateOverviewStats() {
     if (elements.overviewMobileToggleValue && elements.overviewMobileToggleMeta) {
         elements.overviewMobileToggleValue.textContent = formatCurrency(totalValue);
         elements.overviewMobileToggleMeta.textContent = `${state.documents.length} ${t("documents").toLowerCase()} • ${quoteCount} ${t("quotes").toLowerCase()} • ${invoiceCount} ${t("invoices").toLowerCase()}`;
+        if (elements.overviewMobileToggleLabel) {
+            elements.overviewMobileToggleLabel.textContent = t(currentLabelKey);
+        }
     }
     syncMobileOverviewState();
 }
