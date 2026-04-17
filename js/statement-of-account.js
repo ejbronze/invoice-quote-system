@@ -151,7 +151,77 @@
             .join("\n");
     }
 
+    function normalizeStatementDeductions(deductions, options = {}) {
+        const locale = options.locale || "en-US";
+        const currency = options.currency || DEFAULT_CURRENCY;
+        return (Array.isArray(deductions) ? deductions : [])
+            .map((entry, index) => {
+                const label = String(entry?.label || "").trim();
+                const amount = Number(entry?.amount || 0);
+                return {
+                    id: String(entry?.id || `deduction-${index + 1}`),
+                    label: label || "Deduction",
+                    amount,
+                    amountFormatted: formatStatementCurrency(amount, { locale, currency })
+                };
+            })
+            .filter(entry => entry.label || entry.amount);
+    }
+
+    function calculateStatementTotals(payload = {}) {
+        const locale = payload.locale || "en-US";
+        const currency = payload.currency || DEFAULT_CURRENCY;
+        const rows = Array.isArray(payload.rows) ? payload.rows : [];
+        const deductions = normalizeStatementDeductions(payload.deductions, { locale, currency });
+        const selectedTotal = rows.reduce((sum, row) => sum + Number(row?.invoiceValue || 0), 0);
+        const deductionTotal = deductions.reduce((sum, entry) => sum + Number(entry?.amount || 0), 0);
+        const grandTotal = selectedTotal - deductionTotal;
+
+        return {
+            selectedTotal,
+            deductionTotal,
+            grandTotal,
+            deductions,
+            selectedTotalFormatted: formatStatementCurrency(selectedTotal, { locale, currency }),
+            deductionTotalFormatted: formatStatementCurrency(deductionTotal, { locale, currency }),
+            grandTotalFormatted: formatStatementCurrency(grandTotal, { locale, currency })
+        };
+    }
+
+    function normalizeStatementPayload(payload = {}) {
+        const locale = payload.locale || "en-US";
+        const currency = payload.currency || DEFAULT_CURRENCY;
+        const rows = (Array.isArray(payload.rows) ? payload.rows : []).map((row, index) => {
+            const amount = Number(row?.invoiceValue || row?.amount || 0);
+            return {
+                id: row?.id || `statement-row-${index + 1}`,
+                invoiceNumber: String(row?.invoiceNumber || "—"),
+                poNumbers: String(row?.poNumbers || "—"),
+                invoiceDate: String(row?.invoiceDate || "—"),
+                dueDate: String(row?.dueDate || "—"),
+                invoiceValue: amount,
+                invoiceValueFormatted: formatStatementCurrency(amount, { locale, currency }),
+                status: String(row?.status || "—"),
+                rawStatus: String(row?.rawStatus || row?.status || "")
+            };
+        });
+        const totals = calculateStatementTotals({ ...payload, locale, currency, rows });
+
+        return {
+            ...payload,
+            locale,
+            currency,
+            rows,
+            deductions: totals.deductions,
+            totalSelectedFormatted: totals.selectedTotalFormatted,
+            totalOutstandingFormatted: totals.selectedTotalFormatted,
+            totalDeductionsFormatted: totals.deductionTotalFormatted,
+            grandTotalFormatted: totals.grandTotalFormatted
+        };
+    }
+
     function buildStatementDocumentMarkup(payload) {
+        const normalizedPayload = normalizeStatementPayload(payload);
         const {
             title,
             company,
@@ -160,15 +230,17 @@
             generatedDate,
             currency,
             rows,
-            totalSelectedFormatted,
             totalOutstandingFormatted,
+            totalDeductionsFormatted,
+            grandTotalFormatted,
             letterheadUrl,
             footerWaveUrl,
             referenceNumber,
             signatureUrl,
             stampUrl,
-            statementNote
-        } = payload;
+            statementNote,
+            deductions
+        } = normalizedPayload;
 
         const companyContact = [company?.address, company?.phone, company?.email].filter(Boolean);
 
@@ -351,10 +423,38 @@
             color: #3b6fca;
             font-weight: 700;
         }
-        .statement-balance-value {
+                .statement-balance-value {
             color: #e21c13;
             font-weight: 800;
             font-size: 0.92rem;
+        }
+        .statement-deductions {
+            display: grid;
+            gap: 0.25rem;
+            margin: 0.2rem 0 0.55rem auto;
+            max-width: 360px;
+            font-size: 0.78rem;
+        }
+        .statement-deduction-row,
+        .statement-grand-total-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            align-items: baseline;
+        }
+        .statement-deduction-row span:first-child {
+            color: #5c7088;
+        }
+        .statement-deduction-row span:last-child,
+        .statement-grand-total-row span:last-child {
+            font-weight: 700;
+        }
+        .statement-grand-total-row {
+            margin-top: 0.2rem;
+            padding-top: 0.3rem;
+            border-top: 1px solid #9eb2ca;
+            color: #173453;
+            font-size: 0.84rem;
         }
         .statement-rule {
             height: 3px;
@@ -667,6 +767,19 @@
                     <span class="statement-balance-label">Total Outstanding Balance:</span>
                     <span class="statement-balance-value">USD ${escapeHtml(String(totalOutstandingFormatted).replace(/^[A-Z$ ]+/i, "").trim() || totalOutstandingFormatted)}</span>
                 </div>
+                ${deductions.length ? `
+                <div class="statement-deductions">
+                    ${deductions.map(entry => `
+                        <div class="statement-deduction-row">
+                            <span>${escapeHtml(entry.label)}</span>
+                            <span>- ${escapeHtml(entry.amountFormatted)}</span>
+                        </div>
+                    `).join("")}
+                    <div class="statement-grand-total-row">
+                        <span>Grand Total</span>
+                        <span>${escapeHtml(grandTotalFormatted)}</span>
+                    </div>
+                </div>` : ""}
 
                 <div class="statement-rule"></div>
 
@@ -762,11 +875,14 @@
 
     global.StatementOfAccount = {
         calculateDueDateFromTerms,
+        calculateStatementTotals,
         formatStatementCurrency,
         mapInvoicesToStatementRows,
         createStatementFileName,
         buildStatementCsv,
         buildStatementDocumentMarkup,
+        normalizeStatementDeductions,
+        normalizeStatementPayload,
         generateStatementOfAccountPdf
     };
 })(window);
