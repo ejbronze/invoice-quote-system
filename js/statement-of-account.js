@@ -232,7 +232,7 @@
             width: 100%;
             max-width: 820px;
             margin: 0 auto;
-            padding: 0.42in 0 28mm;
+            padding: 0.34in 0 20mm;
             color: #1f2937;
             font-family: Arial, sans-serif;
             position: relative;
@@ -261,8 +261,8 @@
             justify-content: space-between;
             gap: 1rem;
             align-items: start;
-            margin-bottom: 1.3rem;
-            font-size: 0.94rem;
+            margin-bottom: 1rem;
+            font-size: 0.92rem;
         }
         .document-meta strong,
         .statement-label,
@@ -273,14 +273,17 @@
         }
         .statement-ref {
             display: grid;
-            gap: 0.5rem;
+            gap: 0.25rem;
             align-items: start;
+            flex: 1 1 auto;
         }
         .statement-date {
             display: inline-flex;
             align-items: center;
             gap: 0.45rem;
             justify-self: end;
+            margin-left: auto;
+            white-space: nowrap;
         }
         .statement-date-chip {
             display: inline-flex;
@@ -294,8 +297,8 @@
         .statement-party-lines {
             display: grid;
             gap: 0.4rem;
-            margin-bottom: 1.35rem;
-            font-size: 0.92rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
         }
         .statement-party-line {
             display: flex;
@@ -308,7 +311,7 @@
         .statement-table-wrap {
             border: 0;
             overflow: hidden;
-            margin-bottom: 0.35rem;
+            margin-bottom: 0.2rem;
         }
         .statement-table {
             width: 100%;
@@ -317,11 +320,11 @@
         }
         .statement-table th,
         .statement-table td {
-            padding: 0.38rem 0.4rem;
+            padding: 0.32rem 0.35rem;
             border: 1px solid #51555d;
             text-align: left;
             vertical-align: top;
-            font-size: 0.78rem;
+            font-size: 0.75rem;
         }
         .statement-table th {
             background: #eef3fb;
@@ -338,11 +341,11 @@
         .statement-balance-row {
             display: flex;
             justify-content: flex-end;
-            gap: 2rem;
+            gap: 1.2rem;
             align-items: center;
-            margin: 0.35rem 0 0.7rem;
+            margin: 0.25rem 0 0.45rem;
             padding-right: 0.2rem;
-            font-size: 0.88rem;
+            font-size: 0.84rem;
         }
         .statement-balance-label {
             color: #3b6fca;
@@ -351,89 +354,100 @@
         .statement-balance-value {
             color: #e21c13;
             font-weight: 800;
-            font-size: 0.96rem;
+            font-size: 0.92rem;
         }
         .statement-rule {
             height: 3px;
             background: #1f6ea1;
-            margin: 0 0 0.6rem;
+            margin: 0 0 0.45rem;
         }
         .statement-section-title {
             font-size: 0.84rem;
             font-weight: 700;
-            margin-bottom: 0.35rem;
+            margin-bottom: 0.2rem;
         }
         .statement-note {
-            min-height: 4.5rem;
-            margin-bottom: 1.3rem;
-            font-size: 0.84rem;
+            min-height: 3.2rem;
+            margin-bottom: 0.85rem;
+            font-size: 0.8rem;
         }
         .statement-note-body {
             text-align: center;
             font-weight: 700;
-            font-size: 0.84rem;
+            font-size: 0.8rem;
             line-height: 1.45;
-            padding: 0.35rem 1.2rem 0;
+            padding: 0.2rem 1rem 0;
         }
         .statement-signoff {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 340px;
-            gap: 1.1rem;
+            grid-template-columns: 420px 290px;
+            justify-content: space-between;
+            gap: 0.8rem;
             align-items: end;
+            margin-top: 0.15rem;
         }
         .statement-approval {
             display: grid;
-            gap: 0.9rem;
+            gap: 0.7rem;
             position: relative;
-            min-height: 125px;
+            min-height: 92px;
+            max-width: 420px;
         }
         .statement-line-row {
             display: grid;
-            grid-template-columns: auto minmax(0, 1fr);
+            grid-template-columns: auto 235px;
             align-items: end;
-            gap: 0.6rem;
+            gap: 0.45rem;
+            justify-content: start;
         }
         .statement-line {
             border-bottom: 1px solid #1f2937;
-            min-height: 1.2rem;
+            min-height: 1rem;
+            display: flex;
+            align-items: flex-end;
         }
         .statement-line-label {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             white-space: nowrap;
         }
         .statement-signature-image {
             position: absolute;
             left: 118px;
-            bottom: 6px;
-            width: 160px;
+            bottom: -2px;
+            width: 126px;
             height: auto;
         }
         .statement-stamp-image {
             position: absolute;
-            left: 72px;
-            bottom: -12px;
-            width: 136px;
+            left: 54px;
+            bottom: -18px;
+            width: 112px;
             height: auto;
             opacity: 0.75;
         }
         .statement-date-line {
             display: grid;
-            grid-template-columns: auto minmax(0, 1fr);
+            grid-template-columns: auto 215px;
             align-items: end;
-            gap: 0.6rem;
-            margin-top: 1.1rem;
+            gap: 0.45rem;
+            margin-top: 0.9rem;
+            justify-self: end;
         }
         .statement-date-value {
             border-bottom: 1px solid #1f2937;
-            min-height: 1.2rem;
-            font-size: 0.8rem;
+            min-height: 1rem;
+            font-size: 0.78rem;
             letter-spacing: 0.08em;
+            display: flex;
+            align-items: flex-end;
         }
         .footer-wave {
             position: absolute;
             left: 0;
             bottom: 0;
             width: 100%;
+            max-height: 82px;
+            object-fit: cover;
             display: block;
         }
         .document-sheet > *:not(.footer-wave) {
@@ -463,6 +477,16 @@
                 justify-content: space-between;
                 gap: 0.7rem;
                 flex-wrap: wrap;
+            }
+            .statement-line-row,
+            .statement-date-line {
+                grid-template-columns: auto minmax(0, 1fr);
+            }
+            .statement-signoff {
+                justify-content: stretch;
+            }
+            .statement-approval {
+                max-width: none;
             }
         }
         @media print {
