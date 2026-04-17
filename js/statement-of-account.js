@@ -490,13 +490,17 @@
             }
         }
         @media print {
-            @page { size: auto; margin: 0; }
+            @page { size: auto; margin: 10mm; }
             body { background: #fff; }
             .statement-toolbar { display: none !important; }
-            .statement-shell { max-width: none; padding: 0; }
+            .statement-shell {
+                max-width: 1080px;
+                padding: 0;
+            }
             .document-sheet {
                 box-shadow: none;
-                max-width: none;
+                max-width: 820px;
+                margin: 0 auto;
             }
         }
     </style>

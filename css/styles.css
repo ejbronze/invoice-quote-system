@@ -620,22 +620,72 @@ body::after {
     flex-wrap: wrap;
 }
 
-.app-footer-copy strong {
+.footer-brand-name {
     color: rgba(43, 57, 79, 0.9);
     font-size: 0.8rem;
     font-weight: 700;
 }
 
-.app-footer-copy span {
-    color: rgba(110, 126, 150, 0.92);
-    font-size: 0.72rem;
+.footer-updated {
+    font-size: 0.68rem;
+    color: rgba(130, 144, 166, 0.9);
+    letter-spacing: 0.01em;
 }
 
-.footer-version {
-    font-size: 0.62rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: rgba(130, 144, 166, 0.88);
+.footer-help-wrap {
+    position: relative;
+}
+
+.footer-help-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.footer-help-chevron {
+    width: 9px;
+    height: 6px;
+    flex-shrink: 0;
+    transition: transform 0.15s;
+}
+
+.footer-help-btn[aria-expanded="true"] .footer-help-chevron {
+    transform: rotate(180deg);
+}
+
+.footer-help-menu {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    min-width: 192px;
+    background: #fff;
+    border: 1px solid rgba(212, 221, 235, 0.9);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(23, 52, 83, 0.12), 0 2px 6px rgba(23, 52, 83, 0.06);
+    padding: 0.3rem;
+    z-index: 200;
+}
+
+.footer-help-menu-item {
+    display: block;
+    width: 100%;
+    padding: 0.52rem 0.75rem;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    text-align: left;
+    font: inherit;
+    font-size: 0.8rem;
+    color: #2b394f;
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s;
+}
+
+.footer-help-menu-item:hover,
+.footer-help-menu-item:focus-visible {
+    background: rgba(66, 99, 235, 0.07);
+    color: #1459d9;
+    outline: none;
 }
 
 .footer-report-btn {
@@ -1214,6 +1264,96 @@ body::after {
 .about-copy {
     display: grid;
     gap: 0.8rem;
+}
+
+/* ── Help & FAQ modal ───────────────────────────────────────────── */
+.help-modal-content {
+    max-width: 660px;
+}
+
+.help-section {
+    margin-bottom: 1.6rem;
+}
+
+.help-section:last-child {
+    margin-bottom: 0;
+}
+
+.help-section-title {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #173453;
+    margin: 0 0 0.55rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid rgba(212, 221, 235, 0.8);
+}
+
+.help-item {
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 0.3rem;
+    border: 1px solid rgba(212, 221, 235, 0.7);
+}
+
+.help-item summary {
+    padding: 0.62rem 0.85rem;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #2b394f;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    background: rgba(248, 250, 255, 0.9);
+    transition: background 0.12s, color 0.12s;
+}
+
+.help-item summary::-webkit-details-marker {
+    display: none;
+}
+
+.help-item summary::after {
+    content: "";
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-right: 1.8px solid #8fa3b8;
+    border-bottom: 1.8px solid #8fa3b8;
+    transform: rotate(45deg);
+    flex-shrink: 0;
+    transition: transform 0.15s;
+    margin-top: -3px;
+}
+
+.help-item[open] summary::after {
+    transform: rotate(-135deg);
+    margin-top: 3px;
+}
+
+.help-item summary:hover,
+.help-item[open] summary {
+    background: rgba(240, 245, 255, 0.98);
+    color: #1459d9;
+}
+
+.help-item[open] summary {
+    border-bottom: 1px solid rgba(212, 221, 235, 0.7);
+}
+
+.help-item p {
+    margin: 0;
+    padding: 0.7rem 0.85rem;
+    font-size: 0.82rem;
+    color: #4a5c71;
+    line-height: 1.6;
+    background: #fff;
+}
+
+.help-item p strong {
+    color: #173453;
 }
 
 .workspace-hero,
@@ -3220,6 +3360,47 @@ body::after {
     margin-bottom: 0.9rem;
 }
 
+.invoice-report-stage {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.8rem 0.95rem;
+    margin-bottom: 0.8rem;
+    border: 1px solid rgba(214, 223, 234, 0.82);
+    border-radius: 12px;
+    background: rgba(248, 250, 255, 0.92);
+}
+
+.invoice-report-stage-copy {
+    display: grid;
+    gap: 0.16rem;
+}
+
+.invoice-report-stage-copy strong {
+    color: #173453;
+    font-size: 0.9rem;
+}
+
+.invoice-report-stage-copy span {
+    color: #6d8097;
+    font-size: 0.78rem;
+}
+
+.invoice-report-stage-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 4.5rem;
+    min-height: 1.7rem;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(66, 99, 235, 0.1);
+    color: #214b93;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
 .invoice-reports-sort-field {
     min-width: 220px;
 }
@@ -3232,39 +3413,6 @@ body::after {
 
 .invoice-report-filter-row {
     flex-wrap: wrap;
-}
-
-.invoice-report-actions-shell {
-    margin-left: auto;
-    display: grid;
-    gap: 0.55rem;
-    justify-items: end;
-}
-
-.invoice-report-action-tabs {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.2rem;
-    border: 1px solid rgba(214, 223, 234, 0.9);
-    border-radius: 10px;
-    background: rgba(248, 250, 255, 0.96);
-}
-
-.invoice-report-action-tab {
-    border: 0;
-    background: transparent;
-    color: #6d8097;
-    font: inherit;
-    font-size: 0.78rem;
-    font-weight: 700;
-    padding: 0.45rem 0.8rem;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.invoice-report-action-tab.active {
-    background: rgba(66, 99, 235, 0.12);
-    color: #214b93;
 }
 
 .invoice-report-actions {
@@ -3365,6 +3513,30 @@ body::after {
 .statement-selection-totals strong {
     color: #173453;
     font-size: 1rem;
+}
+
+.statement-selection-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.invoice-report-inline-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.5rem;
+    margin-top: 0.35rem;
+    padding: 0.14rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(66, 99, 235, 0.08);
+    color: #365a92;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.invoice-report-inline-badge.is-statement {
+    background: rgba(27, 94, 32, 0.08);
+    color: #2e6b34;
 }
 
 /* Date preset chips */
@@ -3580,11 +3752,109 @@ body::after {
     max-width: 1040px;
 }
 
+.statement-export-wizard {
+    display: grid;
+    gap: 1rem;
+}
+
+.statement-export-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.statement-export-step {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.85rem 0.95rem;
+    border: 1px solid rgba(214, 223, 234, 0.88);
+    border-radius: 12px;
+    background: rgba(248, 250, 255, 0.92);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.statement-export-step:hover,
+.statement-export-step:focus-visible {
+    border-color: rgba(66, 99, 235, 0.36);
+    background: rgba(244, 247, 255, 0.98);
+    outline: none;
+}
+
+.statement-export-step.active {
+    border-color: rgba(66, 99, 235, 0.48);
+    background: rgba(240, 245, 255, 0.98);
+    box-shadow: 0 10px 22px rgba(66, 99, 235, 0.08);
+}
+
+.statement-export-step-index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 999px;
+    background: rgba(66, 99, 235, 0.14);
+    color: #214b93;
+    font-size: 0.82rem;
+    font-weight: 800;
+    flex: 0 0 auto;
+}
+
+.statement-export-step-copy {
+    display: grid;
+    gap: 0.12rem;
+}
+
+.statement-export-step-copy strong {
+    color: #173453;
+    font-size: 0.84rem;
+}
+
+.statement-export-step-copy span {
+    color: #6d8097;
+    font-size: 0.74rem;
+}
+
+.statement-export-stage-card {
+    border: 1px solid rgba(214, 223, 234, 0.82);
+    border-radius: 18px;
+    background: rgba(252, 253, 255, 0.98);
+    padding: 1rem;
+}
+
+.statement-export-stage-head {
+    display: grid;
+    gap: 0.2rem;
+    margin-bottom: 1rem;
+}
+
+.statement-export-stage-label {
+    color: #365a92;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.statement-export-stage-head h4 {
+    margin: 0;
+    color: #173453;
+    font-size: 1.05rem;
+}
+
+.statement-export-stage-head p {
+    margin: 0;
+    color: #6d8097;
+    font-size: 0.82rem;
+}
+
 .statement-export-overview {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 0.8rem;
-    margin-bottom: 1rem;
 }
 
 .statement-export-table-wrap {
@@ -3624,9 +3894,234 @@ body::after {
     white-space: nowrap;
 }
 
+.statement-export-confirm-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+}
+
+.statement-export-confirm-card {
+    border: 1px solid rgba(214, 223, 234, 0.82);
+    border-radius: 14px;
+    background: rgba(248, 250, 255, 0.94);
+    padding: 0.95rem 1rem;
+}
+
+.statement-export-confirm-card h5 {
+    margin: 0 0 0.6rem;
+    color: #173453;
+    font-size: 0.92rem;
+}
+
+.statement-export-checklist {
+    margin: 0;
+    padding-left: 1rem;
+    color: #4d627d;
+    display: grid;
+    gap: 0.45rem;
+    font-size: 0.82rem;
+}
+
+.statement-export-snapshot {
+    display: grid;
+    gap: 0.7rem;
+}
+
+.statement-export-snapshot-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    color: #5e728c;
+    font-size: 0.8rem;
+}
+
+.statement-export-snapshot-row strong {
+    color: #173453;
+    font-size: 0.88rem;
+    text-align: right;
+}
+
 .statement-export-actions {
     margin-top: 1rem;
     justify-content: space-between;
+}
+
+/* ── Step 3 document thumbnail ─────────────────────────────────── */
+.soa-thumb-wrap {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.soa-thumb-caption {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #8fa3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+}
+
+.soa-thumb-page {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(214, 223, 234, 0.8);
+    box-shadow: 0 6px 20px rgba(23, 52, 83, 0.1), 0 1px 4px rgba(23, 52, 83, 0.06);
+}
+
+.soa-thumb-lh-img {
+    width: 100%;
+    display: block;
+    max-height: 52px;
+    object-fit: cover;
+    object-position: top;
+}
+
+.soa-thumb-lh-bar {
+    height: 48px;
+    background: linear-gradient(120deg, #1a3a5c 0%, #2a5298 100%);
+}
+
+.soa-thumb-body {
+    padding: 0.7rem 0.8rem 0.8rem;
+}
+
+.soa-thumb-doc-title {
+    text-align: center;
+    color: #c0392b;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+}
+
+.soa-thumb-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.55rem;
+}
+
+.soa-thumb-meta-left,
+.soa-thumb-meta-right {
+    display: grid;
+    gap: 0.08rem;
+}
+
+.soa-thumb-meta-right {
+    text-align: right;
+}
+
+.soa-thumb-meta-label {
+    display: block;
+    font-size: 0.62rem;
+    color: #9db0c4;
+}
+
+.soa-thumb-meta-value {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #173453;
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.soa-thumb-divider {
+    height: 1px;
+    background: rgba(214, 223, 234, 0.85);
+    margin: 0.45rem 0;
+}
+
+.soa-thumb-table-head {
+    display: grid;
+    grid-template-columns: 1.8fr 1fr 1.1fr 1fr;
+    gap: 0.25rem;
+    padding: 0.28rem 0.35rem;
+    background: #eef3fb;
+    border-radius: 4px 4px 0 0;
+    margin-bottom: 0;
+}
+
+.soa-thumb-table-head span {
+    font-size: 0.58rem;
+    font-weight: 800;
+    color: #3c67a7;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.soa-thumb-row {
+    display: grid;
+    grid-template-columns: 1.8fr 1fr 1.1fr 1fr;
+    gap: 0.25rem;
+    padding: 0.26rem 0.35rem;
+    border-bottom: 1px solid rgba(214, 223, 234, 0.45);
+}
+
+.soa-thumb-row span {
+    font-size: 0.65rem;
+    color: #3a4d61;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.soa-thumb-row-num {
+    font-weight: 700;
+    color: #173453 !important;
+}
+
+.soa-thumb-row-val {
+    text-align: right;
+}
+
+.soa-thumb-row-status {
+    text-align: right;
+}
+
+.soa-thumb-row-empty {
+    display: block !important;
+    font-size: 0.66rem !important;
+    color: #9db0c4 !important;
+    font-style: italic;
+    text-align: center;
+    padding: 0.5rem 0.35rem !important;
+    grid-column: 1 / -1;
+}
+
+.soa-thumb-more {
+    font-size: 0.62rem;
+    color: #9db0c4;
+    font-style: italic;
+    text-align: center;
+    padding: 0.28rem 0.35rem;
+    border-bottom: 1px solid rgba(214, 223, 234, 0.45);
+}
+
+.soa-thumb-balance {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.45rem;
+    padding: 0.32rem 0.4rem;
+    background: rgba(23, 52, 83, 0.04);
+    border-radius: 5px;
+}
+
+.soa-thumb-balance-label {
+    font-size: 0.64rem;
+    color: #6d8097;
+}
+
+.soa-thumb-balance-val {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #173453;
 }
 
 .issue-card-closed {
@@ -6559,11 +7054,16 @@ body.print-window .print-preview-sheet {
         align-items: stretch;
     }
 
-    .invoice-report-actions-shell {
-        justify-items: stretch;
+    .statement-export-steps,
+    .statement-export-confirm-grid {
+        grid-template-columns: 1fr;
     }
 
-    .invoice-report-action-tabs,
+    .invoice-report-stage,
+    .statement-selection-toolbar {
+        align-items: start;
+    }
+
     .invoice-report-actions {
         width: 100%;
     }

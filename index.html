@@ -410,11 +410,24 @@
 
         <footer class="app-footer">
             <div class="app-footer-copy">
-                <strong id="footerStudioName">Palmchat Innovations Lab - Edwin Jaquez</strong>
-                <span id="footerCreditLine">Developed under Palmchat Innovations LLC NYC.</span>
-                <span class="footer-version" id="footerVersion">v1.0.0</span>
+                <strong class="footer-brand-name">SantoSync</strong>
+                <span class="footer-updated" id="footerUpdated">Updated —</span>
             </div>
             <div class="app-footer-actions">
+                <div class="footer-help-wrap" id="footerHelpWrap">
+                    <button class="footer-secondary-btn footer-help-btn" id="footerHelpBtn" type="button" aria-haspopup="true" aria-expanded="false">
+                        Help &amp; FAQ
+                        <svg class="footer-help-chevron" viewBox="0 0 10 6" aria-hidden="true" focusable="false">
+                            <path d="M1 5l4-4 4 4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <div class="footer-help-menu" id="footerHelpMenu" hidden>
+                        <button class="footer-help-menu-item" type="button" data-help-section="getting-started">Getting Started</button>
+                        <button class="footer-help-menu-item" type="button" data-help-section="documents">Documents &amp; Exporting</button>
+                        <button class="footer-help-menu-item" type="button" data-help-section="clients">Clients &amp; Statements</button>
+                        <button class="footer-help-menu-item" type="button" data-help-section="tips">Tips &amp; Shortcuts</button>
+                    </div>
+                </div>
                 <button class="footer-secondary-btn" id="openAboutBtn" type="button">About SantoSync</button>
                 <button class="footer-report-btn" id="openIssueReportBtn" type="button">Submit / Report Issues</button>
             </div>
@@ -484,6 +497,88 @@
                     <p id="aboutProductCopy">SantoSync is a premium document workspace for teams that need quotes, invoices, and business identity details to stay aligned from first draft to final export.</p>
                     <p id="aboutDeveloperCopy">Designed and developed by Edwin Jaquez through Palmchat Innovations Lab under Palmchat Innovations LLC NYC, with a focus on premium operational tools for modern trade and logistics teams.</p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal settings-modal" id="helpModal" aria-hidden="true">
+        <div class="modal-content settings-modal-content help-modal-content">
+            <div class="modal-header">
+                <h3>Help &amp; FAQ</h3>
+                <button class="close-btn" id="closeHelpModalBtn" type="button" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body settings-modal-body">
+                <section class="help-section" id="help-section-getting-started">
+                    <h4 class="help-section-title">Getting Started</h4>
+                    <details class="help-item">
+                        <summary>How do I create a new quote or invoice?</summary>
+                        <p>From the home screen, click <strong>New Quote</strong> or <strong>New Invoice</strong> in the top toolbar. The editor opens in a 6-step flow — fill in document details, client info, line items, keywords, then review before exporting.</p>
+                    </details>
+                    <details class="help-item">
+                        <summary>How do I edit an existing document?</summary>
+                        <p>Click any document card on the home screen to open it in the editor. All fields are editable and changes are saved automatically when you advance steps or click Save.</p>
+                    </details>
+                    <details class="help-item">
+                        <summary>How do I set up my company profile?</summary>
+                        <p>Open <strong>Tools</strong> from the top toolbar, then click <strong>Open Company Profile</strong>. Your name, address, logo, and payment info will appear on every document you generate.</p>
+                    </details>
+                </section>
+
+                <section class="help-section" id="help-section-documents">
+                    <h4 class="help-section-title">Documents &amp; Exporting</h4>
+                    <details class="help-item">
+                        <summary>What is the difference between a Quote and an Invoice?</summary>
+                        <p>A <strong>Quote</strong> is a price estimate sent before work begins. An <strong>Invoice</strong> is a formal payment request issued after work is completed or goods are delivered. You can switch between the two in Step 1 of the editor.</p>
+                    </details>
+                    <details class="help-item">
+                        <summary>How do I export a document to PDF?</summary>
+                        <p>Complete all steps in the editor and proceed to <strong>Step 6 – Final Preview</strong>. Click <strong>Open PDF Preview</strong> to open the print-ready view, then use your browser's print dialog to save as PDF.</p>
+                    </details>
+                    <details class="help-item">
+                        <summary>Can I save line items to reuse later?</summary>
+                        <p>Yes. In Step 3, use the cart icon next to <strong>Add Item</strong> to open your saved items. Any item you have saved from a previous document appears there and can be added with one click.</p>
+                    </details>
+                    <details class="help-item">
+                        <summary>How do I add or update payment terms?</summary>
+                        <p>Scroll to the <strong>Document Notes &amp; Terms</strong> panel at the bottom of Step 3. The <strong>Terms of Payment</strong> field is pre-filled with a NET 15 default — update it to match your agreement.</p>
+                    </details>
+                </section>
+
+                <section class="help-section" id="help-section-clients">
+                    <h4 class="help-section-title">Clients &amp; Statements</h4>
+                    <details class="help-item">
+                        <summary>How do I save a client for reuse?</summary>
+                        <p>In Step 2 of the editor, enter the client name and address, then click <strong>Save Client</strong>. Saved clients appear in the dropdown on future documents so you don't have to retype their details.</p>
+                    </details>
+                    <details class="help-item">
+                        <summary>What is a Statement of Account?</summary>
+                        <p>A Statement of Account is a PDF summary of all selected invoices for a specific client — useful for reconciliation and payment follow-up. Access it from the <strong>Invoice Reports</strong> section and use the export wizard to choose invoices and generate the PDF.</p>
+                    </details>
+                    <details class="help-item">
+                        <summary>How do I mark an invoice as paid?</summary>
+                        <p>On the home screen, open the invoice card's options menu and select the appropriate payment status. Paid invoices are visually flagged and excluded from outstanding balance calculations in reports.</p>
+                    </details>
+                </section>
+
+                <section class="help-section" id="help-section-tips">
+                    <h4 class="help-section-title">Tips &amp; Shortcuts</h4>
+                    <details class="help-item">
+                        <summary>How do I switch the display language?</summary>
+                        <p>Use the language selector in the top toolbar (EN / ES / FR). The interface and generated document labels will update to match your selected language.</p>
+                    </details>
+                    <details class="help-item">
+                        <summary>Can I add my company logo and signature to documents?</summary>
+                        <p>Yes. Open <strong>Company Profile</strong> from the Tools menu. You can upload a letterhead image, signature, stamp, and footer wave — all of which appear in exported PDFs.</p>
+                    </details>
+                    <details class="help-item">
+                        <summary>How do I search for a document?</summary>
+                        <p>Use the search bar at the top of the home screen. You can search by client name, reference number, or any keyword you added to the document in Step 4 of the editor.</p>
+                    </details>
+                    <details class="help-item">
+                        <summary>How do I report a bug or request a feature?</summary>
+                        <p>Click <strong>Submit / Report Issues</strong> in the footer. Fill in a summary, add any relevant screenshots, and submit. Your report is logged and visible to the admin in the Service Reports panel.</p>
+                    </details>
+                </section>
             </div>
         </div>
     </div>
@@ -684,6 +779,13 @@
             </div>
             <div class="modal-body settings-modal-body">
                 <p class="settings-copy" id="invoiceReportsCopy">Review invoice totals by client, switch between unpaid, pending, and paid invoices, and keep the list sorted by client.</p>
+                <div class="invoice-report-stage">
+                    <span class="invoice-report-stage-step">Step 1</span>
+                    <div class="invoice-report-stage-copy">
+                        <strong>Select invoices</strong>
+                        <span>Choose one or more invoices from a single client, then move to statement review.</span>
+                    </div>
+                </div>
                 <div class="invoice-report-presets">
                     <button class="preset-chip" id="presetThisMonthBtn" type="button" data-preset="this-month">This Month</button>
                     <button class="preset-chip" id="presetLast30Btn" type="button" data-preset="last-30">Last 30 Days</button>
@@ -714,29 +816,21 @@
                         <button class="filter-chip" id="invoiceReportFilterPendingBtn" type="button" data-invoice-report-filter="pending">Pending</button>
                         <button class="filter-chip" id="invoiceReportFilterPaidBtn" type="button" data-invoice-report-filter="paid">Paid</button>
                     </div>
-                    <div class="invoice-report-actions-shell">
-                        <div class="invoice-report-action-tabs" role="tablist" aria-label="Invoice report actions">
-                            <button class="invoice-report-action-tab active" id="invoiceReportSelectionTabBtn" type="button" data-invoice-report-action-tab="selection" aria-selected="true">Selection</button>
-                            <button class="invoice-report-action-tab" id="invoiceReportExportTabBtn" type="button" data-invoice-report-action-tab="export" aria-selected="false">Export</button>
-                        </div>
-                        <div class="settings-actions invoice-report-actions" id="invoiceReportSelectionActions" data-invoice-report-action-panel="selection">
-                            <button class="btn btn-secondary" id="selectVisibleInvoiceReportsBtn" type="button">Select Visible</button>
-                            <button class="btn btn-secondary" id="clearVisibleInvoiceReportsBtn" type="button">Clear Selection</button>
-                        </div>
-                        <div class="settings-actions invoice-report-actions" id="invoiceReportExportActions" data-invoice-report-action-panel="export" hidden>
-                            <button class="btn btn-primary" id="openStatementExportBtn" type="button" disabled>Export Statement of Account PDF</button>
-                            <div class="invoice-report-export-more-wrap">
-                                <button class="btn btn-secondary invoice-report-export-more-btn" id="invoiceReportExportMoreBtn" type="button" aria-expanded="false" aria-haspopup="menu">More</button>
-                                <div class="invoice-report-export-more-menu" id="invoiceReportExportMoreMenu" hidden>
-                                    <button class="invoice-report-export-more-item" id="printInvoiceReportBtn" type="button">Print Selected</button>
-                                    <button class="invoice-report-export-more-item" id="exportInvoiceReportCsvBtn" type="button" disabled>Export Selected as CSV</button>
-                                </div>
+                    <div class="settings-actions invoice-report-actions">
+                        <button class="btn btn-secondary" id="selectVisibleInvoiceReportsBtn" type="button">Select Visible</button>
+                        <button class="btn btn-secondary" id="clearVisibleInvoiceReportsBtn" type="button">Clear Selection</button>
+                        <div class="invoice-report-export-more-wrap">
+                            <button class="btn btn-secondary invoice-report-export-more-btn" id="invoiceReportExportMoreBtn" type="button" aria-expanded="false" aria-haspopup="menu">More</button>
+                            <div class="invoice-report-export-more-menu" id="invoiceReportExportMoreMenu" hidden>
+                                <button class="invoice-report-export-more-item" id="printInvoiceReportBtn" type="button">Print Selected</button>
+                                <button class="invoice-report-export-more-item" id="exportInvoiceReportCsvBtn" type="button" disabled>Export Selected as CSV</button>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="statement-selection-toolbar" id="statementSelectionToolbar" hidden>
                     <div class="statement-selection-copy">
+                        <span class="invoice-report-stage-step">Step 2</span>
                         <strong id="statementSelectionTitle">No invoices selected</strong>
                         <span id="statementSelectionMeta">Select invoices from a single client to prepare a statement.</span>
                     </div>
@@ -749,6 +843,9 @@
                             <span>Outstanding balance</span>
                             <strong id="statementSelectionOutstanding">$0.00</strong>
                         </div>
+                    </div>
+                    <div class="statement-selection-actions">
+                        <button class="btn btn-primary" id="openStatementExportBtn" type="button" disabled>Step 2: Review Statement</button>
                     </div>
                 </div>
                 <div class="invoice-report-summary" id="invoiceReportSummary"></div>
@@ -767,27 +864,78 @@
             </div>
             <div class="modal-body settings-modal-body">
                 <p class="settings-copy" id="statementExportCopy">Review the selected invoices before opening the print-ready PDF statement.</p>
-                <div class="statement-export-overview" id="statementExportOverview"></div>
-                <div class="statement-export-table-wrap">
-                    <table class="statement-export-table">
-                        <thead>
-                            <tr>
-                                <th>Invoice Number</th>
-                                <th>PO Number(s)</th>
-                                <th>Invoice Date</th>
-                                <th>Due Date</th>
-                                <th>Value</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="statementExportTableBody">
-                            <tr>
-                                <td colspan="6">No invoices selected yet.</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="statement-export-wizard">
+                    <div class="statement-export-steps" id="statementExportSteps">
+                        <button class="statement-export-step active" id="statementExportStepOverview" type="button" data-statement-export-step="1">
+                            <span class="statement-export-step-index">1</span>
+                            <span class="statement-export-step-copy">
+                                <strong>Selection</strong>
+                                <span>Client, totals, and scope</span>
+                            </span>
+                        </button>
+                        <button class="statement-export-step" id="statementExportStepRows" type="button" data-statement-export-step="2">
+                            <span class="statement-export-step-index">2</span>
+                            <span class="statement-export-step-copy">
+                                <strong>Invoices</strong>
+                                <span>Exact rows in the statement</span>
+                            </span>
+                        </button>
+                        <button class="statement-export-step" id="statementExportStepConfirm" type="button" data-statement-export-step="3">
+                            <span class="statement-export-step-index">3</span>
+                            <span class="statement-export-step-copy">
+                                <strong>Generate</strong>
+                                <span>Final check and export</span>
+                            </span>
+                        </button>
+                    </div>
+                    <div class="statement-export-stage-card">
+                        <div class="statement-export-stage-head">
+                            <span class="statement-export-stage-label" id="statementExportStageLabel">Step 1 of 3</span>
+                            <h4 id="statementExportStageTitle">Selection Summary</h4>
+                            <p id="statementExportStageCopy">Confirm the client and totals before reviewing the line items.</p>
+                        </div>
+                        <section class="statement-export-panel" id="statementExportOverviewPanel">
+                            <div class="statement-export-overview" id="statementExportOverview"></div>
+                        </section>
+                        <section class="statement-export-panel" id="statementExportRowsPanel" hidden>
+                            <div class="statement-export-table-wrap">
+                                <table class="statement-export-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Invoice Number</th>
+                                            <th>PO Number(s)</th>
+                                            <th>Invoice Date</th>
+                                            <th>Due Date</th>
+                                            <th>Value</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="statementExportTableBody">
+                                        <tr>
+                                            <td colspan="6">No invoices selected yet.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                        <section class="statement-export-panel" id="statementExportConfirmPanel" hidden>
+                            <div class="statement-export-confirm-grid">
+                                <article class="statement-export-confirm-card" id="statementExportChecklist">
+                                    <h5>Ready to export</h5>
+                                    <ul class="statement-export-checklist">
+                                        <li>The statement will include only the invoices selected in the report.</li>
+                                        <li>The generated file will be saved in the Statements area for later access.</li>
+                                        <li>The PDF will open in a print-ready view using your invoice branding.</li>
+                                    </ul>
+                                </article>
+                                <article class="statement-export-confirm-card" id="statementExportSnapshot"></article>
+                            </div>
+                        </section>
+                    </div>
                 </div>
                 <div class="settings-actions statement-export-actions">
+                    <button class="btn btn-secondary" id="statementExportBackBtn" type="button">Back</button>
+                    <button class="btn btn-secondary" id="statementExportNextBtn" type="button">Next</button>
                     <button class="btn btn-primary" id="confirmStatementExportBtn" type="button">Generate PDF</button>
                 </div>
             </div>
