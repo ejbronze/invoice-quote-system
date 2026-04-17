@@ -944,6 +944,50 @@
         </div>
     </div>
 
+    <div class="modal settings-modal" id="statementEditModal" aria-hidden="true">
+        <div class="modal-content settings-modal-content statement-edit-modal-content">
+            <div class="modal-header">
+                <h3 id="statementEditTitle">Edit Statement of Account</h3>
+                <button class="close-btn" id="closeStatementEditModalBtn" type="button" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body settings-modal-body">
+                <p class="settings-copy" id="statementEditCopy">Adjust statement rows, notes, and deductions without changing the original invoice selection.</p>
+                <div class="statement-edit-summary" id="statementEditSummary"></div>
+                <div class="statement-edit-layout">
+                    <section class="statement-edit-card">
+                        <div class="statement-edit-card-head">
+                            <div>
+                                <strong>Statement Rows</strong>
+                                <span>Edit the values that appear in the exported statement.</span>
+                            </div>
+                            <button class="btn btn-secondary" id="addStatementRowBtn" type="button">Add Line Item</button>
+                        </div>
+                        <div class="statement-edit-rows" id="statementEditRows"></div>
+                    </section>
+                    <section class="statement-edit-card">
+                        <div class="statement-edit-card-head">
+                            <div>
+                                <strong>Deductions & Notes</strong>
+                                <span>Use deductions for advances, credits, or other offsets.</span>
+                            </div>
+                            <button class="btn btn-secondary" id="addStatementDeductionBtn" type="button">Add Deduction</button>
+                        </div>
+                        <div class="statement-edit-deductions" id="statementEditDeductions"></div>
+                        <label class="form-group statement-edit-note-field">
+                            <span>Statement Note</span>
+                            <textarea id="statementEditNoteInput" rows="4" placeholder="Optional note for this statement."></textarea>
+                        </label>
+                        <div class="statement-edit-totals" id="statementEditTotals"></div>
+                    </section>
+                </div>
+                <div class="settings-actions statement-edit-actions">
+                    <button class="btn btn-secondary" id="previewStatementEditBtn" type="button">Save & Open PDF</button>
+                    <button class="btn btn-primary" id="saveStatementEditBtn" type="button">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal" id="documentModal" aria-hidden="true">
         <div class="modal-content">
             <div class="modal-header">

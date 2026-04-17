@@ -36,6 +36,7 @@ const state = {
     activityLogs: [],
     editingSavedItemId: null,
     editingCatalogItemId: null,
+    editingStatementExportId: null,
     pendingSavedItemImageUploadId: null,
     openItemMenuId: null,
     openDocumentMenuId: null,
@@ -1391,6 +1392,17 @@ function cacheElements() {
     elements.statementExportBackBtn = document.getElementById("statementExportBackBtn");
     elements.statementExportNextBtn = document.getElementById("statementExportNextBtn");
     elements.confirmStatementExportBtn = document.getElementById("confirmStatementExportBtn");
+    elements.statementEditModal = document.getElementById("statementEditModal");
+    elements.closeStatementEditModalBtn = document.getElementById("closeStatementEditModalBtn");
+    elements.statementEditSummary = document.getElementById("statementEditSummary");
+    elements.statementEditRows = document.getElementById("statementEditRows");
+    elements.statementEditDeductions = document.getElementById("statementEditDeductions");
+    elements.statementEditTotals = document.getElementById("statementEditTotals");
+    elements.statementEditNoteInput = document.getElementById("statementEditNoteInput");
+    elements.addStatementRowBtn = document.getElementById("addStatementRowBtn");
+    elements.addStatementDeductionBtn = document.getElementById("addStatementDeductionBtn");
+    elements.previewStatementEditBtn = document.getElementById("previewStatementEditBtn");
+    elements.saveStatementEditBtn = document.getElementById("saveStatementEditBtn");
     elements.companyProfileModal = document.getElementById("companyProfileModal");
     elements.savedItemsModal = document.getElementById("savedItemsModal");
     elements.savedItemCreateModal = document.getElementById("savedItemCreateModal");
@@ -1653,6 +1665,16 @@ function bindEvents() {
     elements.statementExportBackBtn.addEventListener("click", goToPreviousStatementExportStep);
     elements.statementExportNextBtn.addEventListener("click", goToNextStatementExportStep);
     elements.confirmStatementExportBtn.addEventListener("click", exportStatementOfAccountPdf);
+    elements.closeStatementEditModalBtn?.addEventListener("click", closeStatementEditModal);
+    elements.addStatementRowBtn?.addEventListener("click", addStatementEditRow);
+    elements.addStatementDeductionBtn?.addEventListener("click", addStatementEditDeduction);
+    elements.statementEditRows?.addEventListener("click", handleStatementEditRowsClick);
+    elements.statementEditRows?.addEventListener("input", syncStatementEditTotalsUi);
+    elements.statementEditDeductions?.addEventListener("click", handleStatementEditDeductionsClick);
+    elements.statementEditDeductions?.addEventListener("input", syncStatementEditTotalsUi);
+    elements.statementEditNoteInput?.addEventListener("input", syncStatementEditTotalsUi);
+    elements.previewStatementEditBtn?.addEventListener("click", () => saveStatementEdit({ openPreview: true }));
+    elements.saveStatementEditBtn?.addEventListener("click", () => saveStatementEdit({ openPreview: false }));
     elements.saveCompanyProfileBtn.addEventListener("click", saveCompanyProfile);
     elements.addSavedItemBtn.addEventListener("click", addSavedItemFromModal);
     elements.savedItemsList.addEventListener("click", handleSavedItemsListClick);
@@ -1806,6 +1828,11 @@ function bindEvents() {
     elements.statementExportModal.addEventListener("click", event => {
         if (event.target === elements.statementExportModal) {
             closeStatementExportModal();
+        }
+    });
+    elements.statementEditModal?.addEventListener("click", event => {
+        if (event.target === elements.statementEditModal) {
+            closeStatementEditModal();
         }
     });
 
@@ -2461,16 +2488,25 @@ function normalizeStatementExports(items) {
     return Array.isArray(items)
         ? items
             .filter(item => item && typeof item === "object")
-            .map(item => ({
-                id: String(item.id || `statement-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
-                title: String(item.title || "Statement of Account").trim(),
-                clientName: String(item.clientName || t("unknown_client")).trim() || t("unknown_client"),
-                generatedAt: String(item.generatedAt || new Date().toISOString()),
-                rowCount: Number.parseInt(item.rowCount, 10) || 0,
-                totalSelectedFormatted: String(item.totalSelectedFormatted || "").trim(),
-                totalOutstandingFormatted: String(item.totalOutstandingFormatted || "").trim(),
-                payload: item.payload && typeof item.payload === "object" ? item.payload : null
-            }))
+            .map(item => {
+                const payload = item.payload && typeof item.payload === "object"
+                    ? window.StatementOfAccount.normalizeStatementPayload(item.payload)
+                    : null;
+                const totals = payload
+                    ? window.StatementOfAccount.calculateStatementTotals(payload)
+                    : null;
+
+                return {
+                    id: String(item.id || `statement-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+                    title: String(item.title || payload?.title || "Statement of Account").trim(),
+                    clientName: String(item.clientName || payload?.clientName || t("unknown_client")).trim() || t("unknown_client"),
+                    generatedAt: String(item.generatedAt || new Date().toISOString()),
+                    rowCount: Number.parseInt(item.rowCount, 10) || Number(payload?.rows?.length || 0),
+                    totalSelectedFormatted: String(item.totalSelectedFormatted || payload?.totalSelectedFormatted || totals?.selectedTotalFormatted || "").trim(),
+                    totalOutstandingFormatted: String(item.totalOutstandingFormatted || payload?.grandTotalFormatted || totals?.grandTotalFormatted || "").trim(),
+                    payload
+                };
+            })
             .filter(item => item.payload)
             .sort((left, right) => Date.parse(right.generatedAt || 0) - Date.parse(left.generatedAt || 0))
         : [];
@@ -3096,10 +3132,11 @@ function renderStatementsPage() {
             <div class="client-row-copy">
                 <strong>${escapeHtml(statement.clientName)}</strong>
                 <span>${escapeHtml(formatPrintedDate(statement.generatedAt))} • ${escapeHtml(String(statement.rowCount))} ${escapeHtml(t("report_total_invoices").toLowerCase())}</span>
-                <span>${escapeHtml(statement.totalSelectedFormatted)} • Outstanding ${escapeHtml(statement.totalOutstandingFormatted)}</span>
+                <span>${escapeHtml(statement.totalSelectedFormatted)} • Grand total ${escapeHtml(statement.totalOutstandingFormatted)}</span>
             </div>
             <div class="client-row-actions">
                 <button class="btn btn-secondary" type="button" data-statement-action="open" data-statement-id="${escapeHtml(statement.id)}">${escapeHtml(t("open_statement"))}</button>
+                <button class="btn btn-secondary" type="button" data-statement-action="edit" data-statement-id="${escapeHtml(statement.id)}">${escapeHtml(t("edit"))}</button>
                 <button class="btn btn-secondary" type="button" data-statement-action="delete" data-statement-id="${escapeHtml(statement.id)}">${escapeHtml(t("delete"))}</button>
             </div>
         </article>
@@ -3122,9 +3159,257 @@ function handleStatementExportsListClick(event) {
         return;
     }
 
+    if (button.dataset.statementAction === "edit") {
+        openStatementEditModal(statement.id);
+        return;
+    }
+
     if (button.dataset.statementAction === "delete") {
         deleteStatementExport(statement.id);
     }
+}
+
+function createEmptyStatementEditRow() {
+    return {
+        id: `statement-row-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        invoiceNumber: "",
+        poNumbers: "—",
+        invoiceDate: "",
+        dueDate: "",
+        invoiceValue: 0,
+        invoiceValueFormatted: formatCurrency(0),
+        status: "Unpaid",
+        rawStatus: "unpaid"
+    };
+}
+
+function createEmptyStatementDeduction() {
+    return {
+        id: `statement-deduction-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        label: "",
+        amount: 0
+    };
+}
+
+function getEditingStatementExport() {
+    return state.statementExports.find(entry => entry.id === state.editingStatementExportId) || null;
+}
+
+function buildStatementEditRowMarkup(row) {
+    return `
+        <article class="statement-edit-row" data-statement-row-id="${escapeHtml(String(row.id))}">
+            <div class="statement-edit-row-grid">
+                <label class="form-group">
+                    <span>Invoice Number</span>
+                    <input type="text" data-statement-row-field="invoiceNumber" value="${escapeHtml(row.invoiceNumber || "")}">
+                </label>
+                <label class="form-group">
+                    <span>PO Number(s)</span>
+                    <input type="text" data-statement-row-field="poNumbers" value="${escapeHtml(row.poNumbers || "")}">
+                </label>
+                <label class="form-group">
+                    <span>Status</span>
+                    <input type="text" data-statement-row-field="status" value="${escapeHtml(row.status || "")}">
+                </label>
+                <label class="form-group">
+                    <span>Invoice Date</span>
+                    <input type="text" data-statement-row-field="invoiceDate" value="${escapeHtml(row.invoiceDate || "")}">
+                </label>
+                <label class="form-group">
+                    <span>Due Date</span>
+                    <input type="text" data-statement-row-field="dueDate" value="${escapeHtml(row.dueDate || "")}">
+                </label>
+                <label class="form-group">
+                    <span>Value</span>
+                    <input type="number" step="0.01" data-statement-row-field="invoiceValue" value="${escapeHtml(String(Number(row.invoiceValue || 0).toFixed(2)))}">
+                </label>
+            </div>
+            <div class="statement-edit-inline-actions">
+                <button class="statement-edit-inline-btn" type="button" data-statement-row-remove="${escapeHtml(String(row.id))}">Remove row</button>
+            </div>
+        </article>
+    `;
+}
+
+function buildStatementEditDeductionMarkup(deduction) {
+    return `
+        <article class="statement-edit-deduction" data-statement-deduction-id="${escapeHtml(String(deduction.id))}">
+            <div class="statement-edit-row-grid">
+                <label class="form-group">
+                    <span>Deduction Label</span>
+                    <input type="text" data-statement-deduction-field="label" value="${escapeHtml(deduction.label || "")}" placeholder="Advance payment">
+                </label>
+                <label class="form-group">
+                    <span>Amount</span>
+                    <input type="number" step="0.01" data-statement-deduction-field="amount" value="${escapeHtml(String(Number(deduction.amount || 0).toFixed(2)))}">
+                </label>
+            </div>
+            <div class="statement-edit-inline-actions">
+                <button class="statement-edit-inline-btn" type="button" data-statement-deduction-remove="${escapeHtml(String(deduction.id))}">Remove deduction</button>
+            </div>
+        </article>
+    `;
+}
+
+function collectStatementEditPayload() {
+    const statement = getEditingStatementExport();
+    if (!statement) {
+        return null;
+    }
+
+    const rows = Array.from(elements.statementEditRows.querySelectorAll("[data-statement-row-id]")).map(card => {
+        const id = String(card.dataset.statementRowId || "");
+        const getField = name => card.querySelector(`[data-statement-row-field="${name}"]`)?.value || "";
+        const invoiceNumberValue = getField("invoiceNumber").trim();
+        const poNumbersValue = getField("poNumbers").trim();
+        const invoiceDateValue = getField("invoiceDate").trim();
+        const dueDateValue = getField("dueDate").trim();
+        const statusValue = getField("status").trim();
+        const amount = Number.parseFloat(getField("invoiceValue")) || 0;
+        return {
+            id,
+            invoiceNumber: invoiceNumberValue || "—",
+            poNumbers: poNumbersValue || "—",
+            invoiceDate: invoiceDateValue || "—",
+            dueDate: dueDateValue || "—",
+            invoiceValue: amount,
+            invoiceValueFormatted: window.StatementOfAccount.formatStatementCurrency(amount, { locale: statement.payload.locale, currency: statement.payload.currency }),
+            status: statusValue || "—",
+            rawStatus: statusValue || "",
+            _hasUserInput: Boolean(invoiceNumberValue || poNumbersValue || invoiceDateValue || dueDateValue || statusValue || amount)
+        };
+    }).filter(row => row._hasUserInput).map(({ _hasUserInput, ...row }) => row);
+
+    const deductions = Array.from(elements.statementEditDeductions.querySelectorAll("[data-statement-deduction-id]")).map(card => {
+        const id = String(card.dataset.statementDeductionId || "");
+        const label = card.querySelector('[data-statement-deduction-field="label"]')?.value || "";
+        const amount = Number.parseFloat(card.querySelector('[data-statement-deduction-field="amount"]')?.value || "0") || 0;
+        return { id, label: label.trim(), amount };
+    }).filter(entry => entry.label || entry.amount);
+
+    return window.StatementOfAccount.normalizeStatementPayload({
+        ...statement.payload,
+        rows,
+        deductions,
+        statementNote: elements.statementEditNoteInput.value.trim()
+    });
+}
+
+function syncStatementEditTotalsUi() {
+    if (!elements.statementEditTotals || !state.editingStatementExportId) {
+        return;
+    }
+    const payload = collectStatementEditPayload();
+    if (!payload) {
+        return;
+    }
+    const totals = window.StatementOfAccount.calculateStatementTotals(payload);
+    elements.statementEditTotals.innerHTML = `
+        <div class="statement-edit-total-row"><span>Outstanding subtotal</span><strong>${escapeHtml(totals.selectedTotalFormatted)}</strong></div>
+        <div class="statement-edit-total-row"><span>Total deductions</span><strong>${escapeHtml(totals.deductionTotalFormatted)}</strong></div>
+        <div class="statement-edit-total-row is-grand"><span>Grand total</span><strong>${escapeHtml(totals.grandTotalFormatted)}</strong></div>
+    `;
+}
+
+function renderStatementEditModal() {
+    const statement = getEditingStatementExport();
+    if (!statement) {
+        return;
+    }
+    const payload = window.StatementOfAccount.normalizeStatementPayload(statement.payload);
+    elements.statementEditSummary.innerHTML = `
+        <article class="invoice-report-summary-card">
+            <span>Client</span>
+            <strong>${escapeHtml(statement.clientName)}</strong>
+        </article>
+        <article class="invoice-report-summary-card">
+            <span>Reference</span>
+            <strong>${escapeHtml(payload.referenceNumber || "—")}</strong>
+        </article>
+        <article class="invoice-report-summary-card">
+            <span>Currency</span>
+            <strong>${escapeHtml(payload.currency || "USD")}</strong>
+        </article>
+        <article class="invoice-report-summary-card">
+            <span>Rows</span>
+            <strong>${escapeHtml(String(payload.rows.length))}</strong>
+        </article>
+    `;
+    elements.statementEditRows.innerHTML = payload.rows.map(buildStatementEditRowMarkup).join("");
+    elements.statementEditDeductions.innerHTML = payload.deductions.map(buildStatementEditDeductionMarkup).join("");
+    elements.statementEditNoteInput.value = payload.statementNote || "";
+    syncStatementEditTotalsUi();
+}
+
+function openStatementEditModal(statementId) {
+    state.editingStatementExportId = statementId;
+    renderStatementEditModal();
+    setModalState(elements.statementEditModal, true);
+}
+
+function closeStatementEditModal() {
+    state.editingStatementExportId = null;
+    setModalState(elements.statementEditModal, false);
+}
+
+function addStatementEditRow() {
+    if (!elements.statementEditRows) {
+        return;
+    }
+    elements.statementEditRows.insertAdjacentHTML("beforeend", buildStatementEditRowMarkup(createEmptyStatementEditRow()));
+    syncStatementEditTotalsUi();
+}
+
+function addStatementEditDeduction() {
+    if (!elements.statementEditDeductions) {
+        return;
+    }
+    elements.statementEditDeductions.insertAdjacentHTML("beforeend", buildStatementEditDeductionMarkup(createEmptyStatementDeduction()));
+    syncStatementEditTotalsUi();
+}
+
+function handleStatementEditRowsClick(event) {
+    const removeButton = event.target.closest("[data-statement-row-remove]");
+    if (!removeButton) {
+        return;
+    }
+    removeButton.closest("[data-statement-row-id]")?.remove();
+    syncStatementEditTotalsUi();
+}
+
+function handleStatementEditDeductionsClick(event) {
+    const removeButton = event.target.closest("[data-statement-deduction-remove]");
+    if (!removeButton) {
+        return;
+    }
+    removeButton.closest("[data-statement-deduction-id]")?.remove();
+    syncStatementEditTotalsUi();
+}
+
+async function saveStatementEdit(options = {}) {
+    const statement = getEditingStatementExport();
+    const payload = collectStatementEditPayload();
+    if (!statement || !payload) {
+        return;
+    }
+    const updatedStatement = {
+        ...statement,
+        clientName: payload.clientName || statement.clientName,
+        rowCount: payload.rows.length,
+        totalSelectedFormatted: payload.totalSelectedFormatted,
+        totalOutstandingFormatted: payload.grandTotalFormatted,
+        payload
+    };
+    await saveStatementExportsState(state.statementExports.map(entry => (
+        entry.id === statement.id ? updatedStatement : entry
+    )));
+    if (options.openPreview) {
+        window.StatementOfAccount.generateStatementOfAccountPdf(payload);
+        setImportStatus("Statement changes saved and preview opened.");
+    } else {
+        setImportStatus("Statement changes saved.");
+    }
+    closeStatementEditModal();
 }
 
 async function deleteStatementExport(statementId) {
@@ -4061,7 +4346,7 @@ function getStatementPayload() {
         getStatusLabel: getPaymentStatusLabel
     });
 
-    return {
+    return window.StatementOfAccount.normalizeStatementPayload({
         locale: getCurrentLocale(),
         title: window.StatementOfAccount.createStatementFileName(selection.clientName || "client", generatedAt),
         generatedIsoDate: generatedAt.toISOString(),
@@ -4079,6 +4364,7 @@ function getStatementPayload() {
         referenceNumber: `TL-Statement-${String(Date.now()).slice(-6)}`,
         currency: "USD",
         rows,
+        deductions: [],
         totalSelectedFormatted: formatCurrency(selection.totalSelected),
         totalOutstandingFormatted: formatCurrency(selection.outstandingTotal),
         letterheadUrl: getLetterheadUrl(),
@@ -4086,7 +4372,7 @@ function getStatementPayload() {
         signatureUrl: getSignatureUrl(),
         stampUrl: getStampUrl(),
         statementNote: "This statement reflects all outstanding invoices issued to your company as of the date above."
-    };
+    });
 }
 
 async function exportStatementOfAccountPdf() {
@@ -4118,7 +4404,7 @@ async function exportStatementOfAccountPdf() {
                 generatedAt: new Date().toISOString(),
                 rowCount: payload.rows.length,
                 totalSelectedFormatted: payload.totalSelectedFormatted,
-                totalOutstandingFormatted: payload.totalOutstandingFormatted,
+                totalOutstandingFormatted: payload.grandTotalFormatted,
                 payload
             },
             ...state.statementExports

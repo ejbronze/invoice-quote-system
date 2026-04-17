@@ -3936,6 +3936,122 @@ body::after {
     justify-content: space-between;
 }
 
+.statement-edit-modal-content {
+    max-width: 1180px;
+}
+
+.statement-edit-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.statement-edit-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.95fr);
+    gap: 1rem;
+}
+
+.statement-edit-card {
+    border: 1px solid rgba(214, 223, 234, 0.82);
+    border-radius: 16px;
+    background: rgba(251, 252, 255, 0.96);
+    padding: 1rem;
+}
+
+.statement-edit-card-head {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.9rem;
+}
+
+.statement-edit-card-head strong {
+    display: block;
+    color: #173453;
+    font-size: 0.94rem;
+}
+
+.statement-edit-card-head span {
+    color: #6d8097;
+    font-size: 0.78rem;
+}
+
+.statement-edit-rows,
+.statement-edit-deductions {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.statement-edit-row,
+.statement-edit-deduction {
+    border: 1px solid rgba(214, 223, 234, 0.82);
+    border-radius: 12px;
+    background: #fff;
+    padding: 0.85rem;
+}
+
+.statement-edit-row-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.statement-edit-row-grid .form-group {
+    margin: 0;
+}
+
+.statement-edit-inline-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.7rem;
+}
+
+.statement-edit-inline-btn {
+    border: 0;
+    background: transparent;
+    color: #b42318;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.statement-edit-note-field {
+    margin-top: 1rem;
+}
+
+.statement-edit-totals {
+    display: grid;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.statement-edit-total-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: #5e728c;
+    font-size: 0.82rem;
+}
+
+.statement-edit-total-row strong {
+    color: #173453;
+    font-size: 0.9rem;
+}
+
+.statement-edit-total-row.is-grand {
+    padding-top: 0.55rem;
+    border-top: 1px solid rgba(214, 223, 234, 0.82);
+}
+
+.statement-edit-actions {
+    margin-top: 1rem;
+    justify-content: space-between;
+}
+
 /* ── Step 3 document thumbnail ─────────────────────────────────── */
 .soa-thumb-wrap {
     display: grid;
@@ -7044,7 +7160,9 @@ body.print-window .print-preview-sheet {
     }
 
     .statement-export-steps,
-    .statement-export-confirm-grid {
+    .statement-export-confirm-grid,
+    .statement-edit-layout,
+    .statement-edit-row-grid {
         grid-template-columns: 1fr;
     }
 
@@ -7715,4 +7833,3 @@ body {
 .sidebar-label {
     letter-spacing: 0.05em;
 }
-
