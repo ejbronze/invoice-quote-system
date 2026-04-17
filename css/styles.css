@@ -3476,7 +3476,7 @@ body::after {
     justify-content: space-between;
     gap: 0.9rem;
     padding: 0.9rem 1rem;
-    margin-bottom: 1rem;
+    margin-top: 0.75rem;
     border: 1px solid rgba(66, 99, 235, 0.18);
     border-radius: 14px;
     background: linear-gradient(135deg, rgba(242, 246, 255, 0.98), rgba(249, 252, 255, 0.96));
@@ -7244,3 +7244,486 @@ body.print-window .print-preview-sheet {
         grid-template-columns: 1fr;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   REFINEMENT PASS — elevated visual layer
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Background depth ─────────────────────────────────────────── */
+body {
+    background:
+        radial-gradient(ellipse at 0% 0%, rgba(66, 99, 235, 0.2) 0%, transparent 30%),
+        radial-gradient(ellipse at 100% 8%, rgba(29, 191, 140, 0.17) 0%, transparent 27%),
+        radial-gradient(ellipse at 78% 100%, rgba(255, 127, 80, 0.15) 0%, transparent 24%),
+        linear-gradient(180deg, #f5f8ff 0%, #f0f5ff 50%, #fafcff 100%);
+}
+
+/* ── Topbar — depth and brand weight ─────────────────────────── */
+.app-topbar {
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    padding: 0.78rem 0.95rem;
+}
+
+.app-topbar-copy strong {
+    font-size: 1.04rem;
+    font-weight: 800;
+    letter-spacing: -0.028em;
+}
+
+.cart-trigger,
+.menu-trigger {
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.cart-trigger:hover,
+.menu-trigger:hover {
+    transform: translateY(-2px);
+    border-color: rgba(66, 99, 235, 0.22);
+    box-shadow: 0 8px 18px rgba(66, 99, 235, 0.12);
+    background: rgba(242, 246, 255, 0.96);
+}
+
+/* ── Eyebrow pill — add left accent dot ──────────────────────── */
+.eyebrow::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.75;
+    flex-shrink: 0;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.btn {
+    letter-spacing: -0.015em;
+}
+
+.btn-primary {
+    background: linear-gradient(155deg, #3c6aec 0%, var(--blue) 50%, var(--blue-deep) 100%);
+    box-shadow: 0 12px 24px rgba(66, 99, 235, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    font-weight: 800;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(155deg, #4a76f0 0%, #2d62e8 50%, #2750cc 100%);
+    box-shadow: 0 18px 34px rgba(66, 99, 235, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.btn-success {
+    background: linear-gradient(155deg, #22d49f 0%, var(--mint) 50%, var(--mint-deep) 100%);
+    box-shadow: 0 12px 24px rgba(29, 191, 140, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    font-weight: 800;
+}
+
+.btn-success:hover {
+    background: linear-gradient(155deg, #28e0a8 0%, #19cc8a 50%, #11896a 100%);
+    box-shadow: 0 18px 32px rgba(29, 191, 140, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 2px 6px rgba(20, 50, 100, 0.05);
+}
+
+.btn-secondary:hover {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 8px 20px rgba(66, 99, 235, 0.1);
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(1px) scale(0.99) !important;
+    transition-duration: 0.08s !important;
+    box-shadow: none !important;
+}
+
+/* ── Hero headline ───────────────────────────────────────────── */
+.hero-copy h1 {
+    font-size: clamp(1.5rem, 2.6vw, 2.4rem);
+    letter-spacing: -0.033em;
+    line-height: 1.01;
+}
+
+.hero-copy p {
+    font-size: 0.87rem;
+    line-height: 1.42;
+    color: #5d6fa0;
+}
+
+/* ── Workspace action buttons ────────────────────────────────── */
+.workspace-actions .btn {
+    padding: 0.64rem 1.05rem;
+    font-size: 0.8rem;
+}
+
+/* ── Stat cards ──────────────────────────────────────────────── */
+.stat-card {
+    background: linear-gradient(175deg, rgba(255, 255, 255, 0.99) 0%, rgba(246, 250, 255, 0.97) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), var(--shadow-sm);
+}
+
+.stat-card::after {
+    display: none;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.stat-card-toggle .stat-value {
+    font-size: clamp(1.05rem, 1.5vw, 1.35rem);
+}
+
+.stat-label {
+    letter-spacing: 0.04em;
+}
+
+/* ── Dashboard container ─────────────────────────────────────── */
+.dashboard {
+    background:
+        radial-gradient(ellipse at 2% 0%, rgba(66, 99, 235, 0.04) 0%, transparent 38%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(248, 252, 255, 0.98) 100%);
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.dashboard h2 {
+    font-size: 1.28rem;
+    letter-spacing: -0.028em;
+}
+
+/* ── Filter chips ────────────────────────────────────────────── */
+.filter-chip {
+    font-size: 0.74rem;
+    letter-spacing: -0.01em;
+    transition: all 0.18s ease;
+}
+
+.filter-chip.active,
+.filter-chip:hover {
+    box-shadow: 0 8px 18px rgba(66, 99, 235, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    transform: translateY(-1px);
+}
+
+/* ── Document rows — type accent + richer surfaces ───────────── */
+.document-row {
+    padding: 0.95rem 1rem 0.95rem 1.1rem;
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+/* Remove the weak decorative circle */
+.document-row::after {
+    display: none;
+}
+
+/* Quote row — blue left accent */
+.document-row-quote {
+    border-left: 3px solid rgba(66, 99, 235, 0.48);
+    background:
+        radial-gradient(ellipse at -8% 50%, rgba(66, 99, 235, 0.065) 0%, transparent 50%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(248, 251, 255, 0.98) 100%);
+}
+
+/* Invoice row — mint green left accent */
+.document-row-invoice {
+    border-left: 3px solid rgba(29, 191, 140, 0.52);
+    background:
+        radial-gradient(ellipse at -8% 50%, rgba(29, 191, 140, 0.075) 0%, transparent 50%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(248, 253, 250, 0.98) 100%);
+}
+
+.document-row:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md), 0 0 0 1px rgba(66, 99, 235, 0.07);
+}
+
+/* ── Document card typography ────────────────────────────────── */
+.doc-type-icon {
+    width: 2.15rem;
+    height: 2.15rem;
+    flex: 0 0 2.15rem;
+    border-radius: 11px;
+}
+
+.doc-ref {
+    font-size: 1.06rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.doc-total {
+    font-size: 1.28rem;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    font-variant-numeric: tabular-nums;
+}
+
+.doc-client {
+    font-weight: 600;
+    color: #3a516c;
+}
+
+.doc-date {
+    font-size: 0.76rem;
+    letter-spacing: 0.01em;
+}
+
+/* ── Payment badges — add subtle border for definition ───────── */
+.doc-payment-badge {
+    font-weight: 800;
+    font-size: 0.68rem;
+    letter-spacing: 0.01em;
+}
+
+.doc-payment-badge.paid {
+    background: rgba(29, 191, 140, 0.15);
+    border: 1px solid rgba(29, 191, 140, 0.22);
+    color: #116c50;
+}
+
+.doc-payment-badge.pending {
+    background: rgba(244, 200, 74, 0.18);
+    border: 1px solid rgba(214, 160, 20, 0.22);
+    color: #8a5c09;
+}
+
+.doc-payment-badge.unpaid {
+    background: rgba(255, 90, 70, 0.1);
+    border: 1px solid rgba(220, 90, 70, 0.18);
+    color: #a54030;
+}
+
+/* ── Empty state ─────────────────────────────────────────────── */
+.empty-state {
+    background:
+        radial-gradient(ellipse at center 40%, rgba(66, 99, 235, 0.055) 0%, transparent 60%),
+        linear-gradient(180deg, rgba(248, 251, 255, 0.98), rgba(242, 246, 255, 0.98));
+    border-color: rgba(115, 145, 200, 0.26);
+    padding: 3.5rem 1.5rem;
+}
+
+.empty-state svg {
+    opacity: 0.36;
+    filter: drop-shadow(0 4px 10px rgba(66, 99, 235, 0.14));
+}
+
+/* ── Modal — entrance animation ──────────────────────────────── */
+@keyframes modal-content-in {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.984);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal.active .modal-content,
+.modal.active .settings-modal-content {
+    animation: modal-content-in 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Modal header — richer gradient with mesh highlight ──────── */
+.modal-header {
+    background: linear-gradient(135deg, #193aaa 0%, #2654d8 48%, #1e48c6 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-header::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at 102% 0%, rgba(255, 255, 255, 0.14) 0%, transparent 52%),
+        radial-gradient(ellipse at 0% 110%, rgba(29, 191, 140, 0.16) 0%, transparent 48%);
+    pointer-events: none;
+}
+
+.modal-header h3 {
+    position: relative;
+    font-size: 1.14rem;
+    font-weight: 800;
+    letter-spacing: -0.022em;
+}
+
+.close-btn {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.24);
+    transform: scale(1.1) rotate(8deg);
+}
+
+/* ── Form elements — hover states + sharper focus ────────────── */
+.form-group input,
+.form-group select,
+.form-group textarea {
+    border-radius: 13px;
+    box-shadow: inset 0 1px 3px rgba(20, 50, 100, 0.04);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.form-group input:hover,
+.form-group select:hover,
+.form-group textarea:hover {
+    border-color: rgba(66, 99, 235, 0.22);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: rgba(66, 99, 235, 0.5);
+    box-shadow: 0 0 0 4px rgba(66, 99, 235, 0.1), inset 0 1px 3px rgba(20, 50, 100, 0.04);
+}
+
+.form-group label {
+    font-size: 0.8rem;
+    letter-spacing: -0.01em;
+}
+
+/* ── Search & sort inputs ────────────────────────────────────── */
+.search-field input,
+.sort-field select {
+    border-radius: 13px;
+    box-shadow: inset 0 1px 3px rgba(20, 50, 100, 0.04);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.search-field input:focus,
+.sort-field select:focus {
+    border-color: rgba(66, 99, 235, 0.46);
+    box-shadow: 0 0 0 4px rgba(66, 99, 235, 0.1), inset 0 1px 3px rgba(20, 50, 100, 0.04);
+}
+
+/* ── Review section step headers ─────────────────────────────── */
+.review-section-step {
+    background: rgba(66, 99, 235, 0.1);
+    color: var(--blue-deep);
+    font-family: inherit;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    padding: 0.22rem 0.55rem;
+}
+
+.review-section-header h5 {
+    font-size: 1.06rem;
+    font-weight: 800;
+    letter-spacing: -0.022em;
+    color: #14304c;
+}
+
+.review-section-header p {
+    font-family: inherit;
+    font-size: 0.83rem;
+    color: #5b728c;
+}
+
+.modal.review-mode .form-step.active {
+    border-radius: 18px;
+    border-color: rgba(208, 222, 238, 0.9);
+}
+
+/* ── Step indicator — active number polish ───────────────────── */
+.step.active .step-number {
+    background: linear-gradient(155deg, #3b6aed 0%, var(--blue-deep) 100%);
+    box-shadow: 0 6px 14px rgba(66, 99, 235, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    color: white;
+}
+
+.step.active .step-label {
+    color: var(--blue);
+    font-weight: 700;
+}
+
+.step.completed .step-number {
+    background: linear-gradient(155deg, #22c98a 0%, var(--mint-deep) 100%);
+    box-shadow: 0 6px 12px rgba(29, 191, 140, 0.28);
+}
+
+/* ── Sidebar cards ───────────────────────────────────────────── */
+.sidebar-card {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 10px 24px rgba(24, 46, 72, 0.04);
+}
+
+/* ── Topbar menu ─────────────────────────────────────────────── */
+.topbar-menu {
+    box-shadow: 0 20px 40px rgba(18, 36, 70, 0.14), 0 2px 8px rgba(18, 36, 70, 0.07);
+}
+
+.topbar-menu-item {
+    border-radius: 10px;
+    font-weight: 600;
+    transition: background 0.14s ease, color 0.14s ease;
+}
+
+.topbar-menu-item:hover {
+    background: rgba(234, 240, 255, 0.94);
+    color: var(--blue-deep);
+}
+
+/* ── Language picker ─────────────────────────────────────────── */
+.language-picker select {
+    box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.82);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* ── Catalog cards ───────────────────────────────────────────── */
+.catalog-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.catalog-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 32px rgba(28, 55, 90, 0.1);
+    border-color: rgba(66, 99, 235, 0.16);
+}
+
+/* ── Access form inputs ──────────────────────────────────────── */
+.access-form input:focus {
+    border-color: rgba(66, 99, 235, 0.55);
+    box-shadow: 0 0 0 4px rgba(66, 99, 235, 0.12), inset 0 1px 3px rgba(20, 50, 100, 0.05);
+}
+
+/* ── Access card — richer background mesh ────────────────────── */
+.access-card::before {
+    background: radial-gradient(circle, rgba(66, 99, 235, 0.14), transparent 68%);
+}
+
+/* ── dashboard-subtitle ──────────────────────────────────────── */
+.dashboard-subtitle {
+    font-size: 0.8rem;
+    color: #5f738e;
+}
+
+/* ── Doc actions menu ────────────────────────────────────────── */
+.doc-actions-menu,
+.item-actions-menu {
+    box-shadow: 0 18px 38px rgba(18, 38, 72, 0.13), 0 2px 8px rgba(18, 38, 72, 0.07);
+}
+
+/* ── Misc text refinements ───────────────────────────────────── */
+.overview-kicker {
+    letter-spacing: 0.1em;
+    font-size: 0.6rem;
+}
+
+.sidebar-label {
+    letter-spacing: 0.05em;
+}
+

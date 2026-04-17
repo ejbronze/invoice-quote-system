@@ -249,7 +249,7 @@
         .document-title {
             text-align: center;
             color: #e1462d;
-            font-size: 1.92rem;
+            font-size: 1.65rem;
             font-weight: 700;
             margin: 0.45rem 0 1.5rem;
         }
@@ -384,7 +384,7 @@
             justify-content: space-between;
             gap: 0.8rem;
             align-items: end;
-            margin-top: 0.15rem;
+            margin-top: 2rem;
         }
         .statement-approval {
             display: grid;
@@ -406,24 +406,50 @@
             display: flex;
             align-items: flex-end;
         }
+        .statement-sig-line {
+            border-bottom: none;
+            height: 3rem;
+            position: relative;
+            overflow: visible;
+            align-self: flex-end;
+        }
+        .statement-sig-line::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 16px;
+            border-bottom: 1px solid #1f2937;
+            z-index: 3;
+        }
         .statement-line-label {
             font-size: 0.78rem;
             white-space: nowrap;
         }
         .statement-signature-image {
+            display: block;
             position: absolute;
-            left: 118px;
-            bottom: -2px;
-            width: 126px;
+            left: 50%;
+            bottom: -4px;
+            transform: translateX(-50%);
+            max-width: 240px;
+            max-height: 96px;
+            width: auto;
             height: auto;
+            object-fit: contain;
+            z-index: 1;
         }
         .statement-stamp-image {
             position: absolute;
-            left: 54px;
-            bottom: -18px;
-            width: 112px;
-            height: auto;
-            opacity: 0.75;
+            width: 1.15in;
+            height: 1.15in;
+            object-fit: contain;
+            opacity: 0.36;
+            pointer-events: none;
+            z-index: 6;
+            right: 8px;
+            bottom: 2px;
+            transform: rotate(8deg);
         }
         .statement-date-line {
             display: grid;
@@ -490,17 +516,96 @@
             }
         }
         @media print {
-            @page { size: auto; margin: 10mm; }
-            body { background: #fff; }
+            @page { size: letter portrait; margin: 8mm 10mm; }
+            *, *::before, *::after {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            body { background: #fff; margin: 0; padding: 0; }
             .statement-toolbar { display: none !important; }
             .statement-shell {
-                max-width: 1080px;
+                max-width: 100%;
                 padding: 0;
+                margin: 0;
             }
             .document-sheet {
                 box-shadow: none;
-                max-width: 820px;
+                width: 100%;
+                max-width: 100%;
+                margin: 0;
+                padding: 0.2in 0 0;
+                page-break-inside: avoid;
+                break-inside: avoid;
+                overflow: visible;
+            }
+            .letterhead {
+                margin: 0 auto 0.8rem;
+                max-width: 78%;
+                text-align: center;
+            }
+            .letterhead img {
+                width: 100%;
+                display: block;
                 margin: 0 auto;
+            }
+            .footer-wave {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                max-height: 56px;
+                object-fit: cover;
+                display: block;
+            }
+            .document-title {
+                font-size: 1.5rem;
+                margin: 0.25rem 0 0.8rem;
+            }
+            .document-meta {
+                margin-bottom: 0.55rem;
+            }
+            .statement-party-lines {
+                gap: 0.2rem;
+                margin-bottom: 0.55rem;
+            }
+            .statement-balance-row {
+                margin: 0.15rem 0 0.3rem;
+            }
+            .statement-rule {
+                margin: 0 0 0.3rem;
+            }
+            .statement-note {
+                min-height: 2rem;
+                margin-bottom: 0.5rem;
+            }
+            .statement-signoff {
+                grid-template-columns: auto auto;
+                justify-content: space-between;
+                gap: 1rem;
+                max-width: 100%;
+                margin-top: 1.6rem;
+            }
+            .statement-approval {
+                max-width: 300px;
+            }
+            .statement-line-row {
+                grid-template-columns: auto 165px;
+            }
+            .statement-sig-line {
+                height: 2.6rem;
+            }
+            .statement-sig-line::after {
+                bottom: 14px;
+            }
+            .statement-stamp-image {
+                width: 1in;
+                height: 1in;
+            }
+            .statement-date-line {
+                grid-template-columns: auto 150px;
+                justify-self: end;
+                margin-top: 0;
+                align-self: end;
             }
         }
     </style>
@@ -580,10 +685,11 @@
                         </div>
                         <div class="statement-line-row">
                             <span class="statement-line-label">Signature:</span>
-                            <div class="statement-line"></div>
+                            <div class="statement-line statement-sig-line">
+                                ${signatureUrl ? `<img class="statement-signature-image" src="${escapeHtml(signatureUrl)}" alt="Signature">` : ""}
+                            </div>
                         </div>
                         ${stampUrl ? `<img class="statement-stamp-image" src="${escapeHtml(stampUrl)}" alt="Company stamp">` : ""}
-                        ${signatureUrl ? `<img class="statement-signature-image" src="${escapeHtml(signatureUrl)}" alt="Signature">` : ""}
                     </div>
                     <div class="statement-date-line">
                         <span class="statement-line-label">Date:</span>
