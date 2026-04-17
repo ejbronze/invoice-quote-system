@@ -8,7 +8,7 @@ const state = {
     convertingFromQuoteId: null,
     activeFilter: "all",
     searchQuery: "",
-    sortOrder: "date_desc",
+    sortOrder: "ref_date_desc",
     valueView: "pipeline",
     calculatorExpression: "0",
     isCalculatorOpen: false,
@@ -315,6 +315,8 @@ const TRANSLATIONS = {
         sort: "Sort",
         search: "Search",
         search_placeholder: "Search by ref, date, client, type, or keyword",
+        sort_ref_date_desc: "Reference: Newest First",
+        sort_ref_date_asc: "Reference: Oldest First",
         sort_date_desc: "Date: Newest First",
         sort_date_asc: "Date: Oldest First",
         sort_created_desc: "Created: Newest First",
@@ -574,6 +576,8 @@ const TRANSLATIONS = {
         sort: "Ordenar",
         search: "Buscar",
         search_placeholder: "Buscar por ref., fecha, cliente, tipo o palabra clave",
+        sort_ref_date_desc: "Referencia: más reciente primero",
+        sort_ref_date_asc: "Referencia: más antigua primero",
         sort_date_desc: "Fecha: más reciente primero",
         sort_date_asc: "Fecha: más antigua primero",
         sort_created_desc: "Creado: más reciente primero",
@@ -1078,10 +1082,12 @@ function applyTranslations() {
     setElementText(document.querySelector('.sort-field .search-label'), t("sort"));
     setElementText(document.querySelector('.search-field .search-label'), t("search"));
     elements.documentSearch.placeholder = t("search_placeholder");
-    elements.documentSort.options[0].textContent = t("sort_date_desc");
-    elements.documentSort.options[1].textContent = t("sort_date_asc");
-    elements.documentSort.options[2].textContent = t("sort_created_desc");
-    elements.documentSort.options[3].textContent = t("sort_created_asc");
+    elements.documentSort.options[0].textContent = t("sort_ref_date_desc");
+    elements.documentSort.options[1].textContent = t("sort_ref_date_asc");
+    elements.documentSort.options[2].textContent = t("sort_date_desc");
+    elements.documentSort.options[3].textContent = t("sort_date_asc");
+    elements.documentSort.options[4].textContent = t("sort_created_desc");
+    elements.documentSort.options[5].textContent = t("sort_created_asc");
     elements.filterButtons[0].textContent = t("filter_all");
     elements.filterButtons[1].textContent = t("quotes");
     elements.filterButtons[2].textContent = t("invoices");
@@ -7985,15 +7991,17 @@ async function persistDocument(options = {}) {
         nextDocuments = state.documents.map(entry => isSameDocumentId(entry.id, state.editingDocumentId) ? doc : entry);
     } else {
         if (state.convertingFromQuoteId !== null) {
-            doc.sourceQuoteId = state.convertingFromQuoteId;
-            nextDocuments = state.documents.map(entry => isSameDocumentId(entry.id, state.convertingFromQuoteId)
-                ? {
-                    ...entry,
-                    lockedAfterConversion: true,
-                    convertedDocumentId: doc.id
-                }
-                : entry);
-            nextDocuments.unshift(doc);
+            // When converting from a quote, update the quote in-place to become an invoice
+            // This transforms the quote directly instead of creating a separate locked record
+            const sourceQuoteIndex = state.documents.findIndex(entry => isSameDocumentId(entry.id, state.convertingFromQuoteId));
+            if (sourceQuoteIndex !== -1) {
+                // Update the original quote document to be the invoice
+                doc.id = state.convertingFromQuoteId;
+                nextDocuments = state.documents.map((entry, index) => index === sourceQuoteIndex ? doc : entry);
+                state.editingDocumentId = state.convertingFromQuoteId;
+            } else {
+                nextDocuments = [doc, ...state.documents];
+            }
         } else {
             nextDocuments = [doc, ...state.documents];
         }
@@ -8024,10 +8032,6 @@ async function persistDocument(options = {}) {
 
     closeModal();
     const actionLabel = isEditing ? "updated" : "saved";
-    const wasConvertedFromQuote = state.convertingFromQuoteId !== null;
-    const completionMessage = wasConvertedFromQuote
-        ? `Invoice ${actionLabel} successfully.\n\nYour original quote has been locked as a source record and is still visible in the dashboard with a "Converted to Invoice" label.`
-        : `${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.`;
     if (exportAfterSave) {
         openPrintWindow(doc, previewWindow);
         if (!silent) {
@@ -8037,7 +8041,7 @@ async function persistDocument(options = {}) {
     }
 
     if (!silent) {
-        alert(completionMessage);
+        alert(`${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.`);
     }
 }
 
@@ -8194,6 +8198,32 @@ function getFilteredDocuments() {
 }
 
 function compareDocuments(left, right, sortOrder) {
+    // Check if we're sorting by ref number date
+    if (sortOrder === "ref_date_desc" || sortOrder === "ref_date_asc") {
+        const leftRefInfo = getDocumentRefInfo(left);
+        const rightRefInfo = getDocumentRefInfo(right);
+
+        // If both have ref info, sort by date first, then by sequence
+        if (leftRefInfo && rightRefInfo) {
+            const direction = sortOrder.endsWith("_desc") ? 1 : -1;
+
+            // Sort by date first (newest first by default)
+            if (leftRefInfo.date !== rightRefInfo.date) {
+                return (rightRefInfo.date - leftRefInfo.date) * direction;
+            }
+
+            // Same date, sort by sequence (highest first)
+            if (leftRefInfo.sequence !== rightRefInfo.sequence) {
+                return (rightRefInfo.sequence - leftRefInfo.sequence) * direction;
+            }
+        }
+
+        // If one has ref info and the other doesn't, prioritize the one with ref info
+        if (leftRefInfo && !rightRefInfo) return -1;
+        if (!leftRefInfo && rightRefInfo) return 1;
+    }
+
+    // Fall back to original date sorting logic
     const isDateSort = sortOrder.startsWith("date_");
     const leftTimestamp = isDateSort ? getDocumentDateAt(left) : getDocumentCreatedAt(left);
     const rightTimestamp = isDateSort ? getDocumentDateAt(right) : getDocumentCreatedAt(right);
@@ -8220,14 +8250,29 @@ function compareDocuments(left, right, sortOrder) {
 
 function getDocumentRefInfo(doc) {
     const refNumber = String(doc?.refNumber || "").trim().toUpperCase();
-    const match = refNumber.match(/^(TL-\d{4}-\d{4})-(\d+)$/);
+    const match = refNumber.match(/^(TL-\d{4}-(\d{2})(\d{2}))-(\d+)$/);
     if (!match) {
         return null;
     }
 
+    // Extract date from ref number: TL-2026-MMDD-Seq
+    const year = match[1].substring(3, 7); // "2026"
+    const month = match[2]; // "03"
+    const day = match[3]; // "29"
+    const sequence = Number(match[4]); // "01"
+
+    // Create a date object for sorting (using current year if needed)
+    const currentYear = new Date().getFullYear();
+    const refYear = parseInt(year) || currentYear;
+    const refDate = new Date(refYear, parseInt(month) - 1, parseInt(day));
+
     return {
         prefix: match[1],
-        sequence: Number(match[2])
+        sequence: sequence,
+        date: refDate.getTime(),
+        year: refYear,
+        month: parseInt(month),
+        day: parseInt(day)
     };
 }
 
@@ -8318,15 +8363,10 @@ function renderDocuments() {
 
     elements.documentsGrid.innerHTML = visibleDocuments.map(doc => {
         const date = formatDisplayDate(doc.date);
-        const isLockedSourceQuote = Boolean(doc.lockedAfterConversion);
-        const convertedInvoice = isLockedSourceQuote ? state.documents.find(d => isSameDocumentId(d.id, doc.convertedDocumentId)) : null;
         const statusLabel = doc.status === "draft" ? t("status_draft") : t("status_logged");
         const statusClass = doc.status === "draft" ? "draft" : "logged";
         const paymentStatus = doc.type === "invoice" ? normalizePaymentStatus(doc.paymentStatus) : null;
-        const cardViewId = isLockedSourceQuote ? "" : ` data-view-id="${doc.id}"`;
-        const statusBadge = isLockedSourceQuote
-            ? `<span class="doc-lock-badge">Converted to Invoice ${convertedInvoice ? escapeHtml(convertedInvoice.refNumber) : ""}</span>`
-            : "";
+        const cardViewId = ` data-view-id="${doc.id}"`;
         const legacyBadge = doc.legacyPdfUrl
             ? `<span class="doc-lock-badge">${escapeHtml(t("legacy_pdf_attached"))}</span>`
             : "";
@@ -8361,7 +8401,7 @@ function renderDocuments() {
         `;
 
         return `
-            <div class="document-row document-row-${doc.type}${doc.status === "draft" ? " document-row-draft" : ""}${isLockedSourceQuote ? " document-row-locked" : ""}"${cardViewId}${isLockedSourceQuote ? "" : ' tabindex="0" role="button"'} aria-label="${escapeHtml(rowAriaLabel)}">
+            <div class="document-row document-row-${doc.type}${doc.status === "draft" ? " document-row-draft" : ""}"${cardViewId} tabindex="0" role="button" aria-label="${escapeHtml(rowAriaLabel)}">
                 <div class="doc-row-main">
                     <div class="doc-row-primary">
                         <span class="doc-type-icon ${doc.type}" aria-label="${escapeHtml(docTypeLabel)}" title="${escapeHtml(docTypeLabel)}">${docTypeIcon}</span>
@@ -8375,7 +8415,6 @@ function renderDocuments() {
                     ${isLockedSourceQuote && convertedInvoice ? `<div class="doc-row-tertiary"><button class="doc-view-converted-btn" type="button" onclick="editDocument('${String(convertedInvoice.id)}')" title="View the converted invoice">View converted invoice →</button></div>` : ""}
                 </div>
                 <div class="doc-row-badges">
-                    ${statusBadge}
                     ${legacyBadge}
                     ${paymentBadge}
                 </div>
@@ -8384,31 +8423,29 @@ function renderDocuments() {
                     <div class="doc-total">${formatCurrency(doc.total || 0)}</div>
                 </div>
                 <div class="doc-actions">
-                    ${isLockedSourceQuote ? `<span class="doc-lock-note">${escapeHtml(t("locked_after_conversion"))}</span>` : `
-                        <div class="doc-actions-menu-wrap">
-                            <button
-                                type="button"
-                                class="doc-menu-toggle"
-                                data-toggle-document-menu="${doc.id}"
-                                aria-expanded="false"
-                                aria-haspopup="menu"
-                                aria-label="${escapeHtml(t("menu"))}"
-                                title="${escapeHtml(t("menu"))}"
-                            >
-                                <span></span><span></span><span></span>
-                            </button>
-                            <div class="doc-actions-menu" data-document-menu="${doc.id}" hidden style="display: none;">
-                                <button type="button" class="doc-actions-menu-btn" data-action="edit" data-id="${doc.id}">${escapeHtml(t("edit"))}</button>
-                                <button type="button" class="doc-actions-menu-btn" data-action="export-pdf" data-id="${doc.id}">${escapeHtml(t("open_pdf_preview"))}</button>
-                                ${doc.legacyPdfUrl ? `<button type="button" class="doc-actions-menu-btn" data-action="view-pdf" data-id="${doc.id}">${escapeHtml(t("view_pdf"))}</button>` : ""}
-                                ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="unpaid" data-id="${doc.id}">${escapeHtml(t("mark_as_unpaid"))}</button>` : ""}
-                                ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="pending" data-id="${doc.id}">${escapeHtml(t("mark_as_pending"))}</button>` : ""}
-                                ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="paid" data-id="${doc.id}">${escapeHtml(t("mark_as_paid"))}</button>` : ""}
-                                ${doc.type === "quote" ? `<button type="button" class="doc-actions-menu-btn" data-action="convert" data-id="${doc.id}">${escapeHtml(t("convert_to_invoice"))}</button>` : ""}
-                                <button type="button" class="doc-actions-menu-btn doc-actions-menu-btn-danger" data-action="delete" data-id="${doc.id}">${escapeHtml(t("delete"))}</button>
-                            </div>
+                    <div class="doc-actions-menu-wrap">
+                        <button
+                            type="button"
+                            class="doc-menu-toggle"
+                            data-toggle-document-menu="${doc.id}"
+                            aria-expanded="false"
+                            aria-haspopup="menu"
+                            aria-label="${escapeHtml(t("menu"))}"
+                            title="${escapeHtml(t("menu"))}"
+                        >
+                            <span></span><span></span><span></span>
+                        </button>
+                        <div class="doc-actions-menu" data-document-menu="${doc.id}" hidden style="display: none;">
+                            <button type="button" class="doc-actions-menu-btn" data-action="edit" data-id="${doc.id}">${escapeHtml(t("edit"))}</button>
+                            <button type="button" class="doc-actions-menu-btn" data-action="export-pdf" data-id="${doc.id}">${escapeHtml(t("open_pdf_preview"))}</button>
+                            ${doc.legacyPdfUrl ? `<button type="button" class="doc-actions-menu-btn" data-action="view-pdf" data-id="${doc.id}">${escapeHtml(t("view_pdf"))}</button>` : ""}
+                            ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="unpaid" data-id="${doc.id}">${escapeHtml(t("mark_as_unpaid"))}</button>` : ""}
+                            ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="pending" data-id="${doc.id}">${escapeHtml(t("mark_as_pending"))}</button>` : ""}
+                            ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="paid" data-id="${doc.id}">${escapeHtml(t("mark_as_paid"))}</button>` : ""}
+                            ${doc.type === "quote" ? `<button type="button" class="doc-actions-menu-btn" data-action="convert" data-id="${doc.id}">${escapeHtml(t("convert_to_invoice"))}</button>` : ""}
+                            <button type="button" class="doc-actions-menu-btn doc-actions-menu-btn-danger" data-action="delete" data-id="${doc.id}">${escapeHtml(t("delete"))}</button>
                         </div>
-                    `}
+                    </div>
                 </div>
             </div>
         `;
@@ -8655,11 +8692,6 @@ function editDocument(id) {
         return;
     }
 
-    if (doc.lockedAfterConversion) {
-        alert("This quote is kept as a locked source record after conversion and can no longer be edited.");
-        return;
-    }
-
     state.editingDocumentId = id;
     state.convertingFromQuoteId = null;
     state.openDocumentMenuId = null;
@@ -8673,11 +8705,6 @@ function editDocument(id) {
 async function deleteDocument(id) {
     const doc = getDocumentById(id);
     if (!doc) {
-        return;
-    }
-
-    if (doc.lockedAfterConversion) {
-        alert("This quote is kept as a locked source record after conversion and can no longer be deleted.");
         return;
     }
 
@@ -8700,11 +8727,6 @@ async function deleteDocument(id) {
 function convertQuoteToInvoice(id) {
     const doc = state.documents.find(entry => isSameDocumentId(entry.id, id) && entry.type === "quote");
     if (!doc) {
-        return;
-    }
-
-    if (doc.lockedAfterConversion) {
-        alert("This quote has already been converted and is now kept as a locked source record.");
         return;
     }
 

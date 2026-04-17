@@ -2383,17 +2383,6 @@ body::after {
     box-shadow: 0 0 0 4px rgba(66, 99, 235, 0.12);
 }
 
-.document-row-locked {
-    cursor: default;
-    opacity: 0.92;
-}
-
-.document-row-locked:hover {
-    border-color: #dbe5ef;
-    box-shadow: 0 10px 26px rgba(28, 52, 84, 0.05);
-    transform: none;
-}
-
 .doc-row-main {
     min-width: 0;
     display: flex;
@@ -2633,32 +2622,6 @@ body::after {
     font-size: 0.76rem;
     font-weight: 700;
     align-self: center;
-}
-
-.doc-view-converted-btn {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.45rem 0.75rem;
-    border-radius: 8px;
-    border: 1px solid rgba(66, 99, 235, 0.25);
-    background: rgba(66, 99, 235, 0.08);
-    color: #4263eb;
-    font-family: inherit;
-    font-size: 0.78rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.doc-view-converted-btn:hover {
-    border-color: rgba(66, 99, 235, 0.4);
-    background: rgba(66, 99, 235, 0.12);
-    color: #3952d4;
-}
-
-.doc-row-tertiary {
-    width: 100%;
-    padding-top: 0.25rem;
 }
 
 .doc-actions-menu-wrap {
