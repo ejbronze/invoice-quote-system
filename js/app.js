@@ -1354,6 +1354,8 @@ function cacheElements() {
     elements.selectVisibleInvoiceReportsBtn = document.getElementById("selectVisibleInvoiceReportsBtn");
     elements.clearVisibleInvoiceReportsBtn = document.getElementById("clearVisibleInvoiceReportsBtn");
     elements.openStatementExportBtn = document.getElementById("openStatementExportBtn");
+    elements.invoiceReportExportMoreBtn = document.getElementById("invoiceReportExportMoreBtn");
+    elements.invoiceReportExportMoreMenu = document.getElementById("invoiceReportExportMoreMenu");
     elements.printInvoiceReportBtn = document.getElementById("printInvoiceReportBtn");
     elements.exportInvoiceReportCsvBtn = document.getElementById("exportInvoiceReportCsvBtn");
     elements.statementSelectionToolbar = document.getElementById("statementSelectionToolbar");
@@ -1609,6 +1611,7 @@ function bindEvents() {
     elements.selectVisibleInvoiceReportsBtn.addEventListener("click", selectVisibleInvoiceReports);
     elements.clearVisibleInvoiceReportsBtn.addEventListener("click", clearSelectedInvoiceReports);
     elements.openStatementExportBtn.addEventListener("click", openStatementExportModal);
+    elements.invoiceReportExportMoreBtn?.addEventListener("click", toggleInvoiceReportExportMenu);
     elements.printInvoiceReportBtn.addEventListener("click", printSelectedInvoiceReports);
     elements.exportInvoiceReportCsvBtn.addEventListener("click", exportSelectedInvoiceReportCsv);
     elements.invoiceReportFilterButtons.forEach(button => {
@@ -3164,6 +3167,10 @@ function handleGlobalClick(event) {
         closeTopbarMenu();
     }
 
+    if (!event.target.closest(".invoice-report-export-more-wrap")) {
+        closeInvoiceReportExportMenu();
+    }
+
     if (!event.target.closest(".item-actions-menu-wrap") && state.openItemMenuId !== null) {
         state.openItemMenuId = null;
         syncItemActionMenus();
@@ -3288,6 +3295,33 @@ function syncInvoiceReportActionTabUi() {
 function handleInvoiceReportActionTabClick(event) {
     state.invoiceReportActionTab = event.currentTarget.dataset.invoiceReportActionTab || "export";
     syncInvoiceReportActionTabUi();
+}
+
+function syncInvoiceReportExportMenu() {
+    if (!elements.invoiceReportExportMoreBtn || !elements.invoiceReportExportMoreMenu) {
+        return;
+    }
+
+    const isOpen = elements.invoiceReportExportMoreMenu.hidden === false;
+    elements.invoiceReportExportMoreBtn.setAttribute("aria-expanded", String(isOpen));
+}
+
+function closeInvoiceReportExportMenu() {
+    if (!elements.invoiceReportExportMoreMenu) {
+        return;
+    }
+
+    elements.invoiceReportExportMoreMenu.hidden = true;
+    syncInvoiceReportExportMenu();
+}
+
+function toggleInvoiceReportExportMenu() {
+    if (!elements.invoiceReportExportMoreMenu) {
+        return;
+    }
+
+    elements.invoiceReportExportMoreMenu.hidden = !elements.invoiceReportExportMoreMenu.hidden;
+    syncInvoiceReportExportMenu();
 }
 
 function getSelectedInvoiceReportInvoices() {
@@ -3632,6 +3666,7 @@ function escapeCsvCell(value) {
 }
 
 function exportSelectedInvoiceReportCsv() {
+    closeInvoiceReportExportMenu();
     const selection = getSelectedInvoiceStatementContext();
     if (!selection.selectedInvoices.length) {
         setImportStatus(t("statement_select_first_error"), true);
@@ -3652,6 +3687,7 @@ function exportSelectedInvoiceReportCsv() {
 }
 
 function printSelectedInvoiceReports() {
+    closeInvoiceReportExportMenu();
     const selectedIds = new Set(state.selectedInvoiceReportIds.map(String));
     const selectedInvoices = getVisibleInvoiceReportInvoices().filter(doc => selectedIds.has(String(doc.id)));
 
@@ -3832,6 +3868,7 @@ function getStatementPayload() {
     return {
         locale: getCurrentLocale(),
         title: window.StatementOfAccount.createStatementFileName(selection.clientName || "client", generatedAt),
+        generatedIsoDate: generatedAt.toISOString(),
         company: {
             companyName: profile.companyName || BRAND.name,
             address: profile.address || "",
@@ -3842,12 +3879,16 @@ function getStatementPayload() {
         vendorName: profile.companyName || BRAND.name,
         clientName: selection.clientName || t("unknown_client"),
         generatedDate: formatPrintedDate(generatedAt),
+        referenceNumber: `TL-Statement-${String(Date.now()).slice(-6)}`,
         currency: "USD",
         rows,
         totalSelectedFormatted: formatCurrency(selection.totalSelected),
         totalOutstandingFormatted: formatCurrency(selection.outstandingTotal),
         letterheadUrl: getLetterheadUrl(),
-        footerWaveUrl: getFooterWaveUrl()
+        footerWaveUrl: getFooterWaveUrl(),
+        signatureUrl: getSignatureUrl(),
+        stampUrl: getStampUrl(),
+        statementNote: "This statement reflects all outstanding invoices issued to your company as of the date above."
     };
 }
 

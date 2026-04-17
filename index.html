@@ -725,8 +725,13 @@
                         </div>
                         <div class="settings-actions invoice-report-actions" id="invoiceReportExportActions" data-invoice-report-action-panel="export" hidden>
                             <button class="btn btn-primary" id="openStatementExportBtn" type="button" disabled>Export Statement of Account PDF</button>
-                            <button class="btn btn-secondary" id="printInvoiceReportBtn" type="button">Print Selected</button>
-                            <button class="btn btn-secondary" id="exportInvoiceReportCsvBtn" type="button" disabled>Export Selected as CSV</button>
+                            <div class="invoice-report-export-more-wrap">
+                                <button class="btn btn-secondary invoice-report-export-more-btn" id="invoiceReportExportMoreBtn" type="button" aria-expanded="false" aria-haspopup="menu">More</button>
+                                <div class="invoice-report-export-more-menu" id="invoiceReportExportMoreMenu" hidden>
+                                    <button class="invoice-report-export-more-item" id="printInvoiceReportBtn" type="button">Print Selected</button>
+                                    <button class="invoice-report-export-more-item" id="exportInvoiceReportCsvBtn" type="button" disabled>Export Selected as CSV</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

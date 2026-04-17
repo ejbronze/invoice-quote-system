@@ -163,10 +163,14 @@
             totalSelectedFormatted,
             totalOutstandingFormatted,
             letterheadUrl,
-            footerWaveUrl
+            footerWaveUrl,
+            referenceNumber,
+            signatureUrl,
+            stampUrl,
+            statementNote
         } = payload;
 
-        const companyContact = [company?.phone, company?.email].filter(Boolean).join("  •  ");
+        const companyContact = [company?.address, company?.phone, company?.email].filter(Boolean);
 
         return `<!DOCTYPE html>
 <html lang="${escapeHtml(payload.locale || "en-US")}">
@@ -257,144 +261,173 @@
             justify-content: space-between;
             gap: 1rem;
             align-items: start;
-            margin-bottom: 1rem;
-            font-size: 0.88rem;
+            margin-bottom: 1.3rem;
+            font-size: 0.94rem;
         }
         .document-meta strong,
-        .statement-summary-label,
+        .statement-label,
         .statement-note strong,
-        .statement-line-label {
+        .statement-line-label,
+        .statement-section-title {
             color: #3c67a7;
         }
-        .statement-vendor {
+        .statement-ref {
             display: grid;
-            gap: 0.2rem;
-            max-width: 430px;
+            gap: 0.5rem;
+            align-items: start;
         }
-        .statement-vendor strong {
-            font-size: 0.95rem;
+        .statement-date {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            justify-self: end;
         }
-        .statement-vendor span,
-        .statement-meta-card span,
-        .statement-summary-card span,
-        .statement-note span {
-            color: var(--muted);
-            font-size: 0.82rem;
-            line-height: 1.45;
+        .statement-date-chip {
+            display: inline-flex;
+            align-items: center;
+            min-height: 2rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            background: #eef0f4;
+            color: #1f2937;
         }
-        .statement-meta-card {
-            min-width: 220px;
-            padding: 0.7rem 0.85rem;
-            border: 1px solid #d6dbe6;
-            background: #f8fafc;
-            font-size: 0.82rem;
-        }
-        .statement-meta-card strong {
-            display: block;
-            color: #374151;
-            margin: 0.12rem 0 0.4rem;
-            font-size: 0.88rem;
-        }
-        .statement-summary-grid {
+        .statement-party-lines {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 0.75rem;
-            margin-bottom: 1rem;
+            gap: 0.4rem;
+            margin-bottom: 1.35rem;
+            font-size: 0.92rem;
         }
-        .statement-summary-card {
-            border: 1px solid #d6dbe6;
-            background: #f8fafc;
-            padding: 0.72rem 0.85rem;
+        .statement-party-line {
+            display: flex;
+            gap: 0.35rem;
+            flex-wrap: wrap;
         }
-        .statement-summary-card strong {
-            display: block;
-            margin-top: 0.2rem;
-            font-size: 0.95rem;
-            color: #173453;
+        .statement-party-line strong {
+            font-size: 0.92rem;
         }
         .statement-table-wrap {
             border: 0;
             overflow: hidden;
+            margin-bottom: 0.35rem;
         }
-        table {
+        .statement-table {
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
         }
-        th, td {
-            padding: 0.22rem 0.28rem;
+        .statement-table th,
+        .statement-table td {
+            padding: 0.38rem 0.4rem;
             border: 1px solid #51555d;
             text-align: left;
             vertical-align: top;
-            font-size: 0.82rem;
+            font-size: 0.78rem;
         }
-        th {
+        .statement-table th {
             background: #eef3fb;
             color: #1f2937;
             font-size: 0.72rem;
             font-weight: 800;
-            text-transform: uppercase;
             text-align: center;
         }
-        td.amount, th.amount {
+        .statement-table td.amount,
+        .statement-table th.amount {
             text-align: right;
             white-space: nowrap;
         }
-        .statement-divider {
-            height: 3px;
-            background: #86a6d4;
-            margin: 1.1rem 0 0.8rem;
+        .statement-balance-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 2rem;
+            align-items: center;
+            margin: 0.35rem 0 0.7rem;
+            padding-right: 0.2rem;
+            font-size: 0.88rem;
         }
-        .statement-totals {
-            display: grid;
-            grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
-            gap: 1rem;
-            margin-top: 0;
-            align-items: start;
+        .statement-balance-label {
+            color: #3b6fca;
+            font-weight: 700;
+        }
+        .statement-balance-value {
+            color: #e21c13;
+            font-weight: 800;
+            font-size: 0.96rem;
+        }
+        .statement-rule {
+            height: 3px;
+            background: #1f6ea1;
+            margin: 0 0 0.6rem;
+        }
+        .statement-section-title {
+            font-size: 0.84rem;
+            font-weight: 700;
+            margin-bottom: 0.35rem;
         }
         .statement-note {
             min-height: 4.5rem;
-            margin-bottom: 0.8rem;
+            margin-bottom: 1.3rem;
             font-size: 0.84rem;
         }
-        .statement-note strong {
-            display: block;
-            margin-bottom: 0.35rem;
-        }
-        .statement-total-card {
-            width: 280px;
-            justify-self: end;
-            border: 1px solid #51555d;
-            background: #fff;
-        }
-        .statement-total-row {
-            display: flex;
-            justify-content: space-between;
-            gap: 0.75rem;
-            padding: 0.42rem 0.7rem;
-            font-size: 0.88rem;
-        }
-        .statement-total-row + .statement-total-row {
-            border-top: 1px solid #51555d;
-        }
-        .statement-total-row strong {
-            font-size: 1rem;
+        .statement-note-body {
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.84rem;
+            line-height: 1.45;
+            padding: 0.35rem 1.2rem 0;
         }
         .statement-signoff {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 1rem;
-            margin-top: 1.2rem;
+            grid-template-columns: minmax(0, 1fr) 340px;
+            gap: 1.1rem;
+            align-items: end;
+        }
+        .statement-approval {
+            display: grid;
+            gap: 0.9rem;
+            position: relative;
+            min-height: 125px;
+        }
+        .statement-line-row {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr);
+            align-items: end;
+            gap: 0.6rem;
         }
         .statement-line {
-            padding-top: 1.2rem;
             border-bottom: 1px solid #1f2937;
-            min-height: 2.4rem;
+            min-height: 1.2rem;
         }
         .statement-line-label {
-            display: block;
-            margin-top: 0.45rem;
-            font-size: 0.76rem;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+        .statement-signature-image {
+            position: absolute;
+            left: 118px;
+            bottom: 6px;
+            width: 160px;
+            height: auto;
+        }
+        .statement-stamp-image {
+            position: absolute;
+            left: 72px;
+            bottom: -12px;
+            width: 136px;
+            height: auto;
+            opacity: 0.75;
+        }
+        .statement-date-line {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr);
+            align-items: end;
+            gap: 0.6rem;
+            margin-top: 1.1rem;
+        }
+        .statement-date-value {
+            border-bottom: 1px solid #1f2937;
+            min-height: 1.2rem;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
         }
         .footer-wave {
             position: absolute;
@@ -411,20 +444,25 @@
             .document-sheet {
                 padding-top: 0.3in;
             }
-            .statement-summary-grid,
-            .statement-totals,
-            .statement-signoff {
+            .statement-signoff,
+            .document-meta {
                 grid-template-columns: 1fr;
+                display: grid;
             }
             .document-body {
                 padding: 0 0.3in;
             }
-            th, td {
+            .statement-table th,
+            .statement-table td {
                 font-size: 0.78rem;
             }
-            .statement-total-card {
-                width: 100%;
-                justify-self: stretch;
+            .statement-date {
+                justify-self: start;
+            }
+            .statement-balance-row {
+                justify-content: space-between;
+                gap: 0.7rem;
+                flex-wrap: wrap;
             }
         }
         @media print {
@@ -450,43 +488,23 @@
             <div class="document-title">STATEMENT OF ACCOUNT</div>
             <div class="document-body">
                 <div class="document-meta">
-                    <div class="statement-vendor">
-                        <strong>${escapeHtml(company?.companyName || vendorName || "Vendor")}</strong>
-                        ${company?.address ? `<span>${escapeHtml(company.address).replace(/\n/g, "<br>")}</span>` : ""}
-                        ${companyContact ? `<span>${escapeHtml(companyContact)}</span>` : ""}
-                        ${company?.website ? `<span>${escapeHtml(company.website)}</span>` : ""}
+                    <div class="statement-ref">
+                        <div><strong class="statement-label">Reference:</strong> ${escapeHtml(referenceNumber || title.replace(/\.pdf$/i, ""))}</div>
                     </div>
-                    <div class="statement-meta-card">
-                        <span>Document</span>
-                        <strong>${escapeHtml("STATEMENT OF ACCOUNT")}</strong>
-                        <span>Date Generated</span>
-                        <strong>${escapeHtml(generatedDate)}</strong>
-                        <span>Currency</span>
-                        <strong>${escapeHtml(currency)}</strong>
+                    <div class="statement-date">
+                        <strong class="statement-label">Date:</strong>
+                        <span class="statement-date-chip">${escapeHtml(generatedDate)}</span>
                     </div>
                 </div>
 
-                <div class="statement-summary-grid">
-                    <div class="statement-summary-card">
-                        <span class="statement-summary-label">Vendor Name</span>
-                        <strong>${escapeHtml(vendorName || company?.companyName || "Vendor")}</strong>
-                    </div>
-                    <div class="statement-summary-card">
-                        <span class="statement-summary-label">Client Name</span>
-                        <strong>${escapeHtml(clientName || "Client")}</strong>
-                    </div>
-                    <div class="statement-summary-card">
-                        <span class="statement-summary-label">Invoices Selected</span>
-                        <strong>${escapeHtml(String(rows.length))}</strong>
-                    </div>
-                    <div class="statement-summary-card">
-                        <span class="statement-summary-label">Total Selected Value</span>
-                        <strong>${escapeHtml(totalSelectedFormatted)}</strong>
-                    </div>
+                <div class="statement-party-lines">
+                    <div class="statement-party-line"><strong class="statement-label">Vendor:</strong> <span>${escapeHtml(vendorName || company?.companyName || "Vendor")}</span></div>
+                    <div class="statement-party-line"><strong class="statement-label">Client:</strong> <span>${escapeHtml(clientName || "Client")}</span></div>
+                    <div class="statement-party-line"><strong class="statement-label">Currency:</strong> <span>${escapeHtml(currency)}</span></div>
                 </div>
 
                 <div class="statement-table-wrap">
-                    <table>
+                    <table class="statement-table">
                         <thead>
                             <tr>
                                 <th>Invoice Number</th>
@@ -512,33 +530,36 @@
                     </table>
                 </div>
 
-                <div class="statement-divider"></div>
+                <div class="statement-balance-row">
+                    <span class="statement-balance-label">Total Outstanding Balance:</span>
+                    <span class="statement-balance-value">USD ${escapeHtml(String(totalOutstandingFormatted).replace(/^[A-Z$ ]+/i, "").trim() || totalOutstandingFormatted)}</span>
+                </div>
 
-                <div class="statement-totals">
-                    <div class="statement-note">
-                        <strong>Account Summary</strong>
-                        <span>This statement reflects only the invoices selected in the workspace at the time of export.</span>
-                    </div>
-                    <div class="statement-total-card">
-                        <div class="statement-total-row">
-                            <span>Total Selected Value</span>
-                            <span>${escapeHtml(totalSelectedFormatted)}</span>
-                        </div>
-                        <div class="statement-total-row">
-                            <span>Total Outstanding Balance</span>
-                            <strong>${escapeHtml(totalOutstandingFormatted)}</strong>
-                        </div>
+                <div class="statement-rule"></div>
+
+                <div class="statement-note">
+                    <div class="statement-section-title">Notes:</div>
+                    <div class="statement-note-body">
+                        ${escapeHtml(statementNote || "This statement reflects all outstanding invoices issued to your company as of the date above.")}
                     </div>
                 </div>
 
                 <div class="statement-signoff">
-                    <div>
-                        <div class="statement-line"></div>
-                        <span class="statement-line-label">Approved By</span>
+                    <div class="statement-approval">
+                        <div class="statement-line-row">
+                            <span class="statement-line-label">Approved By:</span>
+                            <div class="statement-line">David Forman</div>
+                        </div>
+                        <div class="statement-line-row">
+                            <span class="statement-line-label">Signature:</span>
+                            <div class="statement-line"></div>
+                        </div>
+                        ${stampUrl ? `<img class="statement-stamp-image" src="${escapeHtml(stampUrl)}" alt="Company stamp">` : ""}
+                        ${signatureUrl ? `<img class="statement-signature-image" src="${escapeHtml(signatureUrl)}" alt="Signature">` : ""}
                     </div>
-                    <div>
-                        <div class="statement-line"></div>
-                        <span class="statement-line-label">Signature</span>
+                    <div class="statement-date-line">
+                        <span class="statement-line-label">Date:</span>
+                        <div class="statement-date-value">${escapeHtml(new Date(payload.generatedIsoDate || Date.now()).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" }).replace(/\//g, " / "))}</div>
                     </div>
                 </div>
             </div>
