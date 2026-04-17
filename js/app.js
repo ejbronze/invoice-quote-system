@@ -5936,37 +5936,113 @@ function exportCsvTemplate() {
         "date",
         "clientName",
         "clientAddress",
+        "consigneeName",
+        "consigneeAddress",
         "poNumber",
         "tags",
         "notes",
         "paymentTerms",
+        "includeSignature",
+        "includeStamp",
         "itemDescription",
         "itemQuantity",
         "itemUnitPrice",
         "itemTotalPrice",
+        "itemInternalCost",
         "total"
     ];
 
-    const exampleRow = [
+    const exampleRow1 = [
         "quote",
         "TL-2026-0329-01",
         "2026-03-29",
         "CCXpress S.A | Chatelain Cargo Services",
         "\"42 Airport Road, Port Au Prince, Haiti\"",
+        "\"ABC Shipping Corp\"",
+        "\"Port Terminal A, Port-au-Prince, Haiti\"",
         "PO-1001",
         "\"Priority, Port-au-Prince\"",
         "\"Legacy bulk import example\"",
         `"${DEFAULT_PAYMENT_TERMS}"`,
+        "true",
+        "false",
         "Freight coordination services",
         "1",
         "850.00",
         "850.00",
+        "750.00",
         "850.00"
     ];
 
+    const exampleRow2 = [
+        "invoice",
+        "TL-2026-0329-02",
+        "2026-03-29",
+        "CCXpress S.A | Chatelain Cargo Services",
+        "\"42 Airport Road, Port Au Prince, Haiti\"",
+        "\"XYZ Logistics Ltd\"",
+        "\"Industrial Zone, Santo Domingo, DR\"",
+        "INV-2026-001",
+        "\"Urgent, Express\"",
+        "\"Monthly service invoice\"",
+        `"${DEFAULT_PAYMENT_TERMS}"`,
+        "true",
+        "true",
+        "Customs clearance and documentation",
+        "2",
+        "450.00",
+        "900.00",
+        "400.00",
+        "1350.00"
+    ];
+
+    const exampleRow3 = [
+        "quote",
+        "TL-2026-0329-03",
+        "2026-03-29",
+        "CCXpress S.A | Chatelain Cargo Services",
+        "\"42 Airport Road, Port Au Prince, Haiti\"",
+        "",
+        "",
+        "QT-2026-001",
+        "\"Standard\"",
+        "\"Quote for multiple services\"",
+        `"${DEFAULT_PAYMENT_TERMS}"`,
+        "true",
+        "false",
+        "Port handling and storage",
+        "3",
+        "200.00",
+        "600.00",
+        "150.00",
+        "600.00"
+    ];
+
+    const exampleRow4 = [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "Documentation and permits",
+        "1",
+        "300.00",
+        "300.00",
+        "250.00",
+        ""
+    ];
+
     closeSettingsModal();
-    downloadTextFile("invoice-quote-template.csv", `${headers.join(",")}\n${exampleRow.join(",")}\n`, "text/csv;charset=utf-8");
-    setImportStatus("CSV template exported. Fill in one row per quote or invoice, then import it.");
+    downloadTextFile("invoice-quote-template.csv", `${headers.join(",")}\n${exampleRow1.join(",")}\n${exampleRow2.join(",")}\n${exampleRow3.join(",")}\n${exampleRow4.join(",")}\n`, "text/csv;charset=utf-8");
+    setImportStatus("Enhanced CSV template exported. Each document can have multiple item rows. Fill in one row per item, leaving document fields blank for additional items.");
 }
 
 function openCsvImportPicker() {
@@ -6046,26 +6122,35 @@ function buildDocumentFromCsvRow(row, indexMap) {
     const itemQuantity = numberOrZero(csvValue(row, indexMap, "itemQuantity")) || 1;
     const itemUnitPrice = numberOrZero(csvValue(row, indexMap, "itemUnitPrice"));
     const itemTotalPrice = numberOrZero(csvValue(row, indexMap, "itemTotalPrice")) || (itemQuantity * itemUnitPrice);
+    const itemInternalCost = numberOrZero(csvValue(row, indexMap, "itemInternalCost")) || 0;
     const total = numberOrZero(csvValue(row, indexMap, "total")) || itemTotalPrice;
     const itemDescription = csvValue(row, indexMap, "itemDescription") || "Imported line item";
     const date = csvValue(row, indexMap, "date") || getLocalDateInputValue();
     const clientName = csvValue(row, indexMap, "clientName") || "Imported Client";
     const clientAddress = csvValue(row, indexMap, "clientAddress");
+    const consigneeName = csvValue(row, indexMap, "consigneeName") || "";
+    const consigneeAddress = csvValue(row, indexMap, "consigneeAddress") || "";
     const refNumber = csvValue(row, indexMap, "refNumber") || `${getRefPrefix()}-${getNextRefSequence()}`;
+    const includeSignature = csvValue(row, indexMap, "includeSignature").toLowerCase() === "true";
+    const includeStamp = csvValue(row, indexMap, "includeStamp").toLowerCase() === "true";
 
     return {
         id: Date.now() + Math.floor(Math.random() * 100000),
         type,
+        status: "draft",
+        paymentStatus: type === "invoice" ? "unpaid" : null,
         refNumber,
         date,
         clientName,
         clientAddress,
+        consigneeName,
+        consigneeAddress,
         poNumber: csvValue(row, indexMap, "poNumber"),
         tags: parseTags(csvValue(row, indexMap, "tags")),
         notes: csvValue(row, indexMap, "notes"),
         paymentTerms: csvValue(row, indexMap, "paymentTerms") || DEFAULT_PAYMENT_TERMS,
-        includeSignature: false,
-        includeStamp: false,
+        includeSignature,
+        includeStamp,
         printedAt: new Date().toISOString(),
         subtotal: total,
         total,
@@ -6077,13 +6162,72 @@ function buildDocumentFromCsvRow(row, indexMap) {
                 unitPrice: itemUnitPrice,
                 totalPrice: itemTotalPrice,
                 totalPriceDop: 0,
-                internalCost: 0,
-                upchargePercent: 0,
+                internalCost: itemInternalCost,
+                upchargePercent: itemInternalCost > 0 ? (((itemTotalPrice - itemInternalCost) / itemInternalCost) * 100) : 0,
                 usesDopTotal: false,
-                manualUnitPrice: false
+                manualUnitPrice: false,
+                itemImageDataUrl: ""
             }
         ]
     };
+}
+
+function groupCsvRowsByDocument(rows, indexMap) {
+    const documents = [];
+    let currentDoc = null;
+
+    for (const row of rows) {
+        const type = csvValue(row, indexMap, "type");
+        const refNumber = csvValue(row, indexMap, "refNumber");
+        const clientName = csvValue(row, indexMap, "clientName");
+        const date = csvValue(row, indexMap, "date");
+        const itemDescription = csvValue(row, indexMap, "itemDescription");
+
+        // Check if this row starts a new document
+        const startsNewDocument = type || clientName || date ||
+            (refNumber && (!currentDoc || currentDoc.refNumber !== refNumber));
+
+        if (startsNewDocument) {
+            // Save the previous document if it exists
+            if (currentDoc) {
+                documents.push(currentDoc);
+            }
+            // Start a new document
+            currentDoc = buildDocumentFromCsvRow(row, indexMap);
+        } else if (currentDoc && itemDescription) {
+            // Add item to current document
+            const itemQuantity = numberOrZero(csvValue(row, indexMap, "itemQuantity")) || 1;
+            const itemUnitPrice = numberOrZero(csvValue(row, indexMap, "itemUnitPrice"));
+            const itemTotalPrice = numberOrZero(csvValue(row, indexMap, "itemTotalPrice")) || (itemQuantity * itemUnitPrice);
+            const itemInternalCost = numberOrZero(csvValue(row, indexMap, "itemInternalCost")) || 0;
+
+            currentDoc.items.push({
+                description: itemDescription,
+                quantity: itemQuantity,
+                price: itemUnitPrice,
+                unitPrice: itemUnitPrice,
+                totalPrice: itemTotalPrice,
+                totalPriceDop: 0,
+                internalCost: itemInternalCost,
+                upchargePercent: itemInternalCost > 0 ? (((itemTotalPrice - itemInternalCost) / itemInternalCost) * 100) : 0,
+                usesDopTotal: false,
+                manualUnitPrice: false,
+                itemImageDataUrl: ""
+            });
+
+            // Update document totals
+            currentDoc.subtotal += itemTotalPrice;
+            currentDoc.total += itemTotalPrice;
+        }
+        // Skip rows that have neither document fields nor item description
+    }
+
+    // Add the last document
+    if (currentDoc) {
+        documents.push(currentDoc);
+    }
+
+    return documents;
 }
 
 async function handleCsvImportSelect(event) {
@@ -6106,7 +6250,7 @@ async function handleCsvImportSelect(event) {
         }
 
         const headers = rows[0].map(value => String(value || "").trim());
-        const requiredHeaders = ["type", "clientName"];
+        const requiredHeaders = ["type", "clientName", "itemDescription"];
         for (const header of requiredHeaders) {
             if (!headers.includes(header)) {
                 throw new Error(`Missing required CSV column: ${header}`);
@@ -6114,9 +6258,7 @@ async function handleCsvImportSelect(event) {
         }
 
         const indexMap = Object.fromEntries(headers.map((header, index) => [header, index]));
-        const importedDocuments = rows.slice(1)
-            .filter(row => row.some(cell => String(cell || "").trim() !== ""))
-            .map(row => buildDocumentFromCsvRow(row, indexMap));
+        const importedDocuments = groupCsvRowsByDocument(rows.slice(1), indexMap);
 
         if (!importedDocuments.length) {
             throw new Error("No valid document rows were found in the CSV.");
