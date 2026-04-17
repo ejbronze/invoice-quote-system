@@ -1765,6 +1765,33 @@ body::after {
     white-space: nowrap;
 }
 
+.session-badge.is-test-mirror,
+.environment-badge.is-test-mirror {
+    position: relative;
+    padding-left: 1.55rem;
+}
+
+.session-badge.is-test-mirror::before,
+.environment-badge.is-test-mirror::before {
+    content: "";
+    position: absolute;
+    left: 0.68rem;
+    top: 50%;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 999px;
+    background: #ef4444;
+    transform: translateY(-50%);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45);
+    animation: mode-badge-pulse 1.8s ease-in-out infinite;
+}
+
+.session-badge.is-test-mirror {
+    border-color: rgba(239, 68, 68, 0.2);
+    background: rgba(255, 244, 244, 0.98);
+    color: #9f1239;
+}
+
 .environment-badge {
     display: inline-flex;
     align-items: center;
@@ -1779,6 +1806,33 @@ body::after {
     font-size: 0.72rem;
     font-weight: 800;
     white-space: nowrap;
+}
+
+.environment-badge.is-local-sandbox {
+    border-color: rgba(19, 173, 128, 0.16);
+    background: rgba(237, 251, 246, 0.96);
+    color: #0d7d5b;
+}
+
+.environment-badge.is-test-mirror {
+    border-color: rgba(245, 158, 11, 0.2);
+    background: rgba(255, 248, 235, 0.98);
+    color: #9a5b00;
+}
+
+@keyframes mode-badge-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+        opacity: 0.9;
+    }
+    70% {
+        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+        opacity: 1;
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+        opacity: 0.9;
+    }
 }
 
 .session-trigger:hover {
@@ -3180,8 +3234,50 @@ body::after {
     flex-wrap: wrap;
 }
 
+.invoice-report-actions-shell {
+    margin-left: auto;
+    display: grid;
+    gap: 0.55rem;
+    justify-items: end;
+}
+
+.invoice-report-action-tabs {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem;
+    border: 1px solid rgba(214, 223, 234, 0.9);
+    border-radius: 10px;
+    background: rgba(248, 250, 255, 0.96);
+}
+
+.invoice-report-action-tab {
+    border: 0;
+    background: transparent;
+    color: #6d8097;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.45rem 0.8rem;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.invoice-report-action-tab.active {
+    background: rgba(66, 99, 235, 0.12);
+    color: #214b93;
+}
+
 .invoice-report-actions {
     margin-left: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.55rem;
+    max-width: 560px;
+}
+
+.invoice-report-actions .btn {
+    min-width: 0;
 }
 
 .statement-selection-toolbar {
@@ -6419,6 +6515,20 @@ body.print-window .print-preview-sheet {
     .statement-export-actions {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .invoice-report-actions-shell {
+        justify-items: stretch;
+    }
+
+    .invoice-report-action-tabs,
+    .invoice-report-actions {
+        width: 100%;
+    }
+
+    .invoice-report-actions {
+        justify-content: stretch;
+        max-width: none;
     }
 }
 

@@ -33,6 +33,11 @@ async function cleanup(exitCode = 0) {
 
 console.log(`Starting SantoSync local sandbox on http://127.0.0.1:${port}`);
 console.log(`Local sandbox data directory: ${sandboxDir}`);
+if (env.LOCAL_SEED_FROM_BLOB === "true") {
+    console.log("Mode: live-read / local-write. The sandbox will seed from live Blob data once, then keep all edits local.");
+} else {
+    console.log("Mode: local sandbox only. No live data will be pulled in.");
+}
 console.log("Writes stay local to this temp folder and will be removed when the server stops.");
 
 child = spawn("npx", ["vercel", "dev", "--listen", port], {

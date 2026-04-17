@@ -279,6 +279,11 @@ Stop the server with `Ctrl+C`.
 
 The `dev:sandbox` wrapper removes the temporary local data directory automatically, so the next sandbox session starts fresh and reseeds from live again.
 
+When `LOCAL_SEED_FROM_BLOB=true` (the default), local sandbox runs in a safe `live-read / local-write` mode:
+- documents, clients, and workspace data seed from the live Blob datasets once
+- every change after that is written only to the temporary local sandbox directory
+- nothing is pushed back to the live datasets
+
 ### Optional: start without cloning live data
 
 If you want a blank disposable sandbox instead of a live-seeded one:

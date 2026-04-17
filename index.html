@@ -115,6 +115,7 @@
                     <div class="topbar-menu" id="topbarMenu" hidden>
                         <button class="topbar-menu-item" id="topbarAccountAdminBtn" type="button" hidden>Account Admin</button>
                         <button class="topbar-menu-item" id="topbarInvoiceReportsBtn" type="button">Invoice Reports</button>
+                        <button class="topbar-menu-item" id="topbarStatementsBtn" type="button">Statements</button>
                         <div class="topbar-menu-divider"></div>
                         <button class="topbar-menu-item" id="topbarCatalogBtn" type="button">Catalog</button>
                         <button class="topbar-menu-item" id="topbarSettingsBtn" type="button">Settings</button>
@@ -237,6 +238,23 @@
                     </svg>
                     <p>No catalog items yet.</p>
                 </div>
+            </div>
+        </section>
+
+        <section class="catalog-page statements-page" id="statementsPage" hidden>
+            <div class="dashboard-topbar">
+                <div>
+                    <h2 id="statementsHeading">Statements</h2>
+                    <p class="dashboard-subtitle" id="statementsCopy">Open previously generated Statement of Account exports and keep them alongside the rest of your workspace output.</p>
+                </div>
+                <div class="dashboard-actions-row" aria-label="Statement actions">
+                    <div class="hero-action-grid">
+                        <button class="btn btn-secondary" id="backToDocumentsFromStatementsBtn" type="button">Documents</button>
+                    </div>
+                </div>
+            </div>
+            <div class="client-management-list" id="statementExportsList">
+                <p class="client-list-empty">No statements generated yet.</p>
             </div>
         </section>
 
@@ -696,12 +714,20 @@
                         <button class="filter-chip" id="invoiceReportFilterPendingBtn" type="button" data-invoice-report-filter="pending">Pending</button>
                         <button class="filter-chip" id="invoiceReportFilterPaidBtn" type="button" data-invoice-report-filter="paid">Paid</button>
                     </div>
-                    <div class="settings-actions invoice-report-actions">
-                        <button class="btn btn-secondary" id="selectVisibleInvoiceReportsBtn" type="button">Select Visible</button>
-                        <button class="btn btn-secondary" id="clearVisibleInvoiceReportsBtn" type="button">Clear Selection</button>
-                        <button class="btn btn-primary" id="openStatementExportBtn" type="button" disabled>Export Statement of Account PDF</button>
-                        <button class="btn btn-secondary" id="printInvoiceReportBtn" type="button">Print Selected</button>
-                        <button class="btn btn-secondary" id="exportInvoiceReportCsvBtn" type="button" disabled>Export Selected as CSV</button>
+                    <div class="invoice-report-actions-shell">
+                        <div class="invoice-report-action-tabs" role="tablist" aria-label="Invoice report actions">
+                            <button class="invoice-report-action-tab active" id="invoiceReportSelectionTabBtn" type="button" data-invoice-report-action-tab="selection" aria-selected="true">Selection</button>
+                            <button class="invoice-report-action-tab" id="invoiceReportExportTabBtn" type="button" data-invoice-report-action-tab="export" aria-selected="false">Export</button>
+                        </div>
+                        <div class="settings-actions invoice-report-actions" id="invoiceReportSelectionActions" data-invoice-report-action-panel="selection">
+                            <button class="btn btn-secondary" id="selectVisibleInvoiceReportsBtn" type="button">Select Visible</button>
+                            <button class="btn btn-secondary" id="clearVisibleInvoiceReportsBtn" type="button">Clear Selection</button>
+                        </div>
+                        <div class="settings-actions invoice-report-actions" id="invoiceReportExportActions" data-invoice-report-action-panel="export" hidden>
+                            <button class="btn btn-primary" id="openStatementExportBtn" type="button" disabled>Export Statement of Account PDF</button>
+                            <button class="btn btn-secondary" id="printInvoiceReportBtn" type="button">Print Selected</button>
+                            <button class="btn btn-secondary" id="exportInvoiceReportCsvBtn" type="button" disabled>Export Selected as CSV</button>
+                        </div>
                     </div>
                 </div>
                 <div class="statement-selection-toolbar" id="statementSelectionToolbar" hidden>
@@ -757,7 +783,6 @@
                     </table>
                 </div>
                 <div class="settings-actions statement-export-actions">
-                    <button class="btn btn-secondary" id="statementEmailPlaceholderBtn" type="button">Email Statement of Account</button>
                     <button class="btn btn-primary" id="confirmStatementExportBtn" type="button">Generate PDF</button>
                 </div>
             </div>

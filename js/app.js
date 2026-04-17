@@ -31,6 +31,7 @@ const state = {
     exchangeRateUsdToDop: 59,
     savedItems: [],
     catalogItems: [],
+    statementExports: [],
     sessionLogs: [],
     activityLogs: [],
     editingSavedItemId: null,
@@ -45,7 +46,8 @@ const state = {
     documentEditorDirty: false,
     mobileOverviewCollapsed: true,
     selectedInvoiceReportIds: [],
-    statementExportInProgress: false
+    statementExportInProgress: false,
+    invoiceReportActionTab: "export"
 };
 
 const DOP_PER_USD = 59;
@@ -78,6 +80,7 @@ const ISSUE_REPORTS_STORAGE_KEY = "todosIssueReports";
 const COMPANY_PROFILE_STORAGE_KEY = "santosyncCompanyProfile";
 const SAVED_ITEMS_STORAGE_KEY = "santosyncSavedItems";
 const CATALOG_ITEMS_STORAGE_KEY = "santosyncCatalogItems";
+const STATEMENT_EXPORTS_STORAGE_KEY = "santosyncStatementExports";
 const SESSION_LOGS_STORAGE_KEY = "santosyncSessionLogs";
 const ACTIVITY_LOGS_STORAGE_KEY = "santosyncActivityLogs";
 const DEFAULT_ACCESS_ERROR_MESSAGE = "That username or password is incorrect. Try again.";
@@ -239,10 +242,16 @@ const TRANSLATIONS = {
         new_quote: "New Quote",
         new_invoice: "New Invoice",
         invoice_reports: "Invoice Reports",
+        statements: "Statements",
+        statements_copy: "Open previously generated Statement of Account exports and keep them alongside the rest of your workspace output.",
+        no_statements: "No statements generated yet.",
+        open_statement: "Open Statement",
         invoice_reports_copy: "Review invoice totals by client, switch between unpaid, pending, and paid invoices, and keep the list sorted by client.",
         export_report_csv: "Export CSV",
         select_visible_reports: "Select Visible",
         clear_selection_reports: "Clear Selection",
+        selection_tab: "Selection",
+        export_tab: "Export",
         print_selected_reports: "Print Selected",
         open_statement_export: "Export Statement of Account PDF",
         export_selected_csv: "Export Selected as CSV",
@@ -253,8 +262,6 @@ const TRANSLATIONS = {
         statement_selected_value: "Selected value",
         statement_outstanding_balance: "Outstanding balance",
         statement_generate_pdf: "Generate PDF",
-        statement_email_placeholder: "Email Statement of Account",
-        statement_email_placeholder_message: "Email Statement of Account is ready as a placeholder action.",
         statement_export_success: "Statement of Account preview opened. Use Print or Save as PDF to finish the export.",
         statement_mixed_clients_error: "Select invoices for one client at a time before exporting a statement.",
         statement_popup_error: "Please allow pop-ups to export the statement PDF.",
@@ -293,6 +300,8 @@ const TRANSLATIONS = {
         mark_as_unpaid: "Mark As Unpaid",
         report_pending: "Pending",
         local_mode: "LOCAL MODE",
+        live_read_local_write: "LIVE READ / LOCAL WRITE",
+        test_mode: "TEST MODE",
         pipeline_value: "Pipeline Value",
         amount_invoiced: "Amount Invoiced",
         income_received: "Income Received",
@@ -1027,6 +1036,9 @@ function applyTranslations() {
     if (elements.topbarInvoiceReportsBtn) {
         elements.topbarInvoiceReportsBtn.textContent = t("invoice_reports");
     }
+    if (elements.topbarStatementsBtn) {
+        elements.topbarStatementsBtn.textContent = t("statements");
+    }
     if (!elements.importDocumentStatus.dataset.customized) {
         elements.importDocumentStatus.textContent = t("import_status_default");
         elements.importDocumentStatus.hidden = true;
@@ -1134,6 +1146,8 @@ function applyTranslations() {
     setElementText("#invoiceReportsSortLabel", t("sort"));
     setElementText("#invoiceReportStartLabel", t("report_from"));
     setElementText("#invoiceReportEndLabel", t("report_to"));
+    setElementText("#invoiceReportSelectionTabBtn", t("selection_tab"));
+    setElementText("#invoiceReportExportTabBtn", t("export_tab"));
     setElementText("#selectVisibleInvoiceReportsBtn", t("select_visible_reports"));
     setElementText("#clearVisibleInvoiceReportsBtn", t("clear_selection_reports"));
     setElementText("#openStatementExportBtn", t("open_statement_export"));
@@ -1149,8 +1163,9 @@ function applyTranslations() {
     setElementText("#statementExportCopy", t("statement_of_account_copy"));
     setElementText("#statementSelectionTitle", t("statement_no_selection"));
     setElementText("#statementSelectionMeta", t("statement_selection_help"));
-    setElementText("#statementEmailPlaceholderBtn", t("statement_email_placeholder"));
     setElementText("#confirmStatementExportBtn", t("statement_generate_pdf"));
+    setElementText("#statementsHeading", t("statements"));
+    setElementText("#statementsCopy", t("statements_copy"));
     setElementText("#companyProfileTitle", t("company_profile"));
     setElementText("#companyProfileCopy", t("company_profile_copy"));
     const companyProfileLabels = elements.companyProfileModal.querySelectorAll(".form-group > span");
@@ -1294,6 +1309,7 @@ function cacheElements() {
     elements.topbarMenu = document.getElementById("topbarMenu");
     elements.topbarAccountAdminBtn = document.getElementById("topbarAccountAdminBtn");
     elements.topbarInvoiceReportsBtn = document.getElementById("topbarInvoiceReportsBtn");
+    elements.topbarStatementsBtn = document.getElementById("topbarStatementsBtn");
     elements.topbarCatalogBtn = document.getElementById("topbarCatalogBtn");
     elements.topbarSettingsBtn = document.getElementById("topbarSettingsBtn");
     elements.topbarSignOutBtn = document.getElementById("topbarSignOutBtn");
@@ -1331,6 +1347,10 @@ function cacheElements() {
     elements.invoiceReportFilterButtons = Array.from(document.querySelectorAll("[data-invoice-report-filter]"));
     elements.invoiceReportSummary = document.getElementById("invoiceReportSummary");
     elements.invoiceReportList = document.getElementById("invoiceReportList");
+    elements.invoiceReportActionTabs = Array.from(document.querySelectorAll("[data-invoice-report-action-tab]"));
+    elements.invoiceReportActionPanels = Array.from(document.querySelectorAll("[data-invoice-report-action-panel]"));
+    elements.invoiceReportSelectionTabBtn = document.getElementById("invoiceReportSelectionTabBtn");
+    elements.invoiceReportExportTabBtn = document.getElementById("invoiceReportExportTabBtn");
     elements.selectVisibleInvoiceReportsBtn = document.getElementById("selectVisibleInvoiceReportsBtn");
     elements.clearVisibleInvoiceReportsBtn = document.getElementById("clearVisibleInvoiceReportsBtn");
     elements.openStatementExportBtn = document.getElementById("openStatementExportBtn");
@@ -1345,13 +1365,15 @@ function cacheElements() {
     elements.closeStatementExportModalBtn = document.getElementById("closeStatementExportModalBtn");
     elements.statementExportOverview = document.getElementById("statementExportOverview");
     elements.statementExportTableBody = document.getElementById("statementExportTableBody");
-    elements.statementEmailPlaceholderBtn = document.getElementById("statementEmailPlaceholderBtn");
     elements.confirmStatementExportBtn = document.getElementById("confirmStatementExportBtn");
     elements.companyProfileModal = document.getElementById("companyProfileModal");
     elements.savedItemsModal = document.getElementById("savedItemsModal");
     elements.savedItemCreateModal = document.getElementById("savedItemCreateModal");
     elements.savedItemImageModal = document.getElementById("savedItemImageModal");
     elements.catalogPage = document.getElementById("catalogPage");
+    elements.statementsPage = document.getElementById("statementsPage");
+    elements.statementExportsList = document.getElementById("statementExportsList");
+    elements.backToDocumentsFromStatementsBtn = document.getElementById("backToDocumentsFromStatementsBtn");
     elements.accountAdminPage = document.getElementById("accountAdminPage");
     elements.accountAdminWorkspaceBtn = document.getElementById("accountAdminWorkspaceBtn");
     elements.accountAdminCatalogBtn = document.getElementById("accountAdminCatalogBtn");
@@ -1531,6 +1553,7 @@ function bindEvents() {
         openModal("quote");
     });
     elements.topbarInvoiceReportsBtn?.addEventListener("click", () => { closeTopbarMenu(); openInvoiceReportsModal(); });
+    elements.topbarStatementsBtn?.addEventListener("click", openStatementsPage);
     elements.newInvoiceBtn.addEventListener("click", () => {
         prepareNewDocument("invoice");
         openModal("invoice");
@@ -1563,6 +1586,7 @@ function bindEvents() {
     elements.closeSavedItemImageModalBtn?.addEventListener("click", closeSavedItemImageModal);
     elements.toggleSavedItemsFormBtn.addEventListener("click", openSavedItemCreateModal);
     elements.backToDocumentsBtn.addEventListener("click", () => setActivePage("documents"));
+    elements.backToDocumentsFromStatementsBtn?.addEventListener("click", () => setActivePage("documents"));
     elements.accountAdminWorkspaceBtn?.addEventListener("click", () => setActivePage("documents"));
     elements.accountAdminCatalogBtn?.addEventListener("click", openCatalogPage);
     elements.openCatalogItemModalBtn.addEventListener("click", openCatalogItemModal);
@@ -1570,6 +1594,7 @@ function bindEvents() {
     elements.closeCatalogDetailsModalBtn.addEventListener("click", closeCatalogDetailsModal);
     elements.saveCatalogItemBtn.addEventListener("click", saveCatalogItemFromModal);
     elements.catalogGrid.addEventListener("click", handleCatalogGridClick);
+    elements.statementExportsList?.addEventListener("click", handleStatementExportsListClick);
     elements.closeAboutModalBtn.addEventListener("click", closeAboutModal);
     elements.issueScreenshotInput.addEventListener("change", handleIssueScreenshotChange);
     elements.submitIssueReportBtn.addEventListener("click", submitIssueReport);
@@ -1578,6 +1603,9 @@ function bindEvents() {
     elements.invoiceReportSort.addEventListener("change", renderInvoiceReport);
     elements.invoiceReportStartDate.addEventListener("change", () => { document.querySelectorAll(".preset-chip").forEach(b => b.classList.remove("active")); renderInvoiceReport(); });
     elements.invoiceReportEndDate.addEventListener("change", () => { document.querySelectorAll(".preset-chip").forEach(b => b.classList.remove("active")); renderInvoiceReport(); });
+    elements.invoiceReportActionTabs.forEach(button => {
+        button.addEventListener("click", handleInvoiceReportActionTabClick);
+    });
     elements.selectVisibleInvoiceReportsBtn.addEventListener("click", selectVisibleInvoiceReports);
     elements.clearVisibleInvoiceReportsBtn.addEventListener("click", clearSelectedInvoiceReports);
     elements.openStatementExportBtn.addEventListener("click", openStatementExportModal);
@@ -1592,7 +1620,6 @@ function bindEvents() {
         btn?.addEventListener("click", handleDatePresetClick);
     });
     elements.closeStatementExportModalBtn.addEventListener("click", closeStatementExportModal);
-    elements.statementEmailPlaceholderBtn.addEventListener("click", handleStatementEmailPlaceholder);
     elements.confirmStatementExportBtn.addEventListener("click", exportStatementOfAccountPdf);
     elements.saveCompanyProfileBtn.addEventListener("click", saveCompanyProfile);
     elements.addSavedItemBtn.addEventListener("click", addSavedItemFromModal);
@@ -1816,9 +1843,19 @@ function updateEnvironmentBadge() {
         return;
     }
 
+    elements.environmentBadge.classList.remove("is-local-sandbox", "is-test-mirror");
+
+    if (state.runtimeMode === "live-read-local-write") {
+        elements.environmentBadge.textContent = t("live_read_local_write");
+        elements.environmentBadge.hidden = false;
+        elements.environmentBadge.classList.add("is-test-mirror");
+        return;
+    }
+
     if (state.runtimeMode === "local-sandbox") {
         elements.environmentBadge.textContent = "Local Sandbox";
         elements.environmentBadge.hidden = false;
+        elements.environmentBadge.classList.add("is-local-sandbox");
         return;
     }
 
@@ -2101,6 +2138,7 @@ function loadLocalWorkspaceState() {
     state.companyProfile = loadCompanyProfile();
     state.savedItems = loadSavedItems();
     state.catalogItems = loadCatalogItems();
+    state.statementExports = loadStatementExports();
     state.sessionLogs = loadSessionLogs();
     state.activityLogs = loadActivityLogs();
     updateRuntimeModeBadge();
@@ -2112,6 +2150,7 @@ function cacheWorkspaceStateLocally() {
     writeLocalDataset(COMPANY_PROFILE_STORAGE_KEY, state.companyProfile);
     writeLocalDataset(SAVED_ITEMS_STORAGE_KEY, state.savedItems);
     writeLocalDataset(CATALOG_ITEMS_STORAGE_KEY, state.catalogItems);
+    writeLocalDataset(STATEMENT_EXPORTS_STORAGE_KEY, state.statementExports);
     writeLocalDataset(SESSION_LOGS_STORAGE_KEY, state.sessionLogs);
     writeLocalDataset(ACTIVITY_LOGS_STORAGE_KEY, state.activityLogs);
 }
@@ -2122,6 +2161,7 @@ function applyWorkspaceState(payload) {
     state.companyProfile = normalizeCompanyProfile(payload?.companyProfile || DEFAULT_COMPANY_PROFILE);
     state.savedItems = normalizeSavedItems(payload?.savedItems || []);
     state.catalogItems = normalizeCatalogItems(payload?.catalogItems || []);
+    state.statementExports = normalizeStatementExports(payload?.statementExports || []);
     state.sessionLogs = normalizeSessionLogs(payload?.sessionLogs || []);
     state.activityLogs = normalizeActivityLogs(payload?.activityLogs || []);
     cacheWorkspaceStateLocally();
@@ -2131,6 +2171,7 @@ function applyWorkspaceState(payload) {
     updateInboxBadge();
     renderSavedItemsList();
     renderCatalog();
+    renderStatementsPage();
     renderAccountAdminPage();
 }
 
@@ -2163,6 +2204,7 @@ async function persistSharedWorkspaceData() {
                 companyProfile: state.companyProfile,
                 savedItems: state.savedItems,
                 catalogItems: state.catalogItems,
+                statementExports: state.statementExports,
                 sessionLogs: state.sessionLogs,
                 activityLogs: state.activityLogs
             })
@@ -2383,6 +2425,37 @@ function normalizeCatalogItems(items) {
         : [];
 }
 
+function normalizeStatementExports(items) {
+    return Array.isArray(items)
+        ? items
+            .filter(item => item && typeof item === "object")
+            .map(item => ({
+                id: String(item.id || `statement-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+                title: String(item.title || "Statement of Account").trim(),
+                clientName: String(item.clientName || t("unknown_client")).trim() || t("unknown_client"),
+                generatedAt: String(item.generatedAt || new Date().toISOString()),
+                rowCount: Number.parseInt(item.rowCount, 10) || 0,
+                totalSelectedFormatted: String(item.totalSelectedFormatted || "").trim(),
+                totalOutstandingFormatted: String(item.totalOutstandingFormatted || "").trim(),
+                payload: item.payload && typeof item.payload === "object" ? item.payload : null
+            }))
+            .filter(item => item.payload)
+            .sort((left, right) => Date.parse(right.generatedAt || 0) - Date.parse(left.generatedAt || 0))
+        : [];
+}
+
+function loadStatementExports() {
+    const items = normalizeStatementExports(readLocalDataset(STATEMENT_EXPORTS_STORAGE_KEY, []));
+    writeLocalDataset(STATEMENT_EXPORTS_STORAGE_KEY, items);
+    return items;
+}
+
+async function saveStatementExportsState(items) {
+    state.statementExports = normalizeStatementExports(items);
+    await persistSharedWorkspaceData();
+    renderStatementsPage();
+}
+
 function loadCatalogItems() {
     const items = normalizeCatalogItems(readLocalDataset(CATALOG_ITEMS_STORAGE_KEY, []));
     writeLocalDataset(CATALOG_ITEMS_STORAGE_KEY, items);
@@ -2448,7 +2521,16 @@ function updateRuntimeModeBadge() {
         return;
     }
 
-    const isLocalMode = state.dataMode === "local" || state.workspaceDataMode === "local";
+    elements.runtimeModeBadge.classList.remove("is-test-mirror");
+
+    if (state.runtimeMode === "live-read-local-write") {
+        elements.runtimeModeBadge.hidden = false;
+        elements.runtimeModeBadge.textContent = t("test_mode");
+        elements.runtimeModeBadge.classList.add("is-test-mirror");
+        return;
+    }
+
+    const isLocalMode = state.dataMode === "local" || state.workspaceDataMode === "local" || state.runtimeMode === "local-sandbox";
     elements.runtimeModeBadge.hidden = !isLocalMode;
     elements.runtimeModeBadge.textContent = t("local_mode");
 }
@@ -2677,7 +2759,7 @@ function closeTopbarMenu() {
 }
 
 function setActivePage(page) {
-    state.activePage = ["catalog", "accountAdmin"].includes(page) ? page : "documents";
+    state.activePage = ["catalog", "accountAdmin", "statements"].includes(page) ? page : "documents";
     applyPageState();
     closeTopbarMenu();
 }
@@ -2685,6 +2767,9 @@ function setActivePage(page) {
 function applyPageState() {
     if (elements.catalogPage) {
         elements.catalogPage.hidden = state.activePage !== "catalog";
+    }
+    if (elements.statementsPage) {
+        elements.statementsPage.hidden = state.activePage !== "statements";
     }
     if (elements.accountAdminPage) {
         elements.accountAdminPage.hidden = state.activePage !== "accountAdmin";
@@ -2700,6 +2785,11 @@ function applyPageState() {
 function openCatalogPage() {
     setActivePage("catalog");
     renderCatalog();
+}
+
+function openStatementsPage() {
+    setActivePage("statements");
+    renderStatementsPage();
 }
 
 function openAccountAdminPage() {
@@ -2915,6 +3005,66 @@ function renderCatalog() {
     `).join("");
 }
 
+function renderStatementsPage() {
+    if (!elements.statementExportsList) {
+        return;
+    }
+
+    if (!state.statementExports.length) {
+        elements.statementExportsList.innerHTML = `<p class="client-list-empty">${escapeHtml(t("no_statements"))}</p>`;
+        return;
+    }
+
+    elements.statementExportsList.innerHTML = state.statementExports.map(statement => `
+        <article class="client-row">
+            <div class="client-row-copy">
+                <strong>${escapeHtml(statement.clientName)}</strong>
+                <span>${escapeHtml(formatPrintedDate(statement.generatedAt))} • ${escapeHtml(String(statement.rowCount))} ${escapeHtml(t("report_total_invoices").toLowerCase())}</span>
+                <span>${escapeHtml(statement.totalSelectedFormatted)} • Outstanding ${escapeHtml(statement.totalOutstandingFormatted)}</span>
+            </div>
+            <div class="client-row-actions">
+                <button class="btn btn-secondary" type="button" data-statement-action="open" data-statement-id="${escapeHtml(statement.id)}">${escapeHtml(t("open_statement"))}</button>
+                <button class="btn btn-secondary" type="button" data-statement-action="delete" data-statement-id="${escapeHtml(statement.id)}">${escapeHtml(t("delete"))}</button>
+            </div>
+        </article>
+    `).join("");
+}
+
+function handleStatementExportsListClick(event) {
+    const button = event.target.closest("[data-statement-action]");
+    if (!button) {
+        return;
+    }
+
+    const statement = state.statementExports.find(entry => entry.id === button.dataset.statementId);
+    if (!statement) {
+        return;
+    }
+
+    if (button.dataset.statementAction === "open") {
+        window.StatementOfAccount.generateStatementOfAccountPdf(statement.payload);
+        return;
+    }
+
+    if (button.dataset.statementAction === "delete") {
+        deleteStatementExport(statement.id);
+    }
+}
+
+async function deleteStatementExport(statementId) {
+    const statement = state.statementExports.find(entry => entry.id === statementId);
+    if (!statement) {
+        return;
+    }
+
+    if (!window.confirm(`Delete saved statement for "${statement.clientName}"?`)) {
+        return;
+    }
+
+    await saveStatementExportsState(state.statementExports.filter(entry => entry.id !== statementId));
+    setImportStatus(`Deleted saved statement for ${statement.clientName}.`);
+}
+
 function handleCatalogGridClick(event) {
     const openButton = event.target.closest("[data-catalog-action=\"open\"]");
     if (openButton) {
@@ -3077,6 +3227,7 @@ function closeIssueInboxModal() {
 
 function openInvoiceReportsModal() {
     state.selectedInvoiceReportIds = [];
+    syncInvoiceReportActionTabUi();
     renderInvoiceReport();
     setModalState(elements.invoiceReportsModal, true);
 }
@@ -3086,6 +3237,8 @@ function closeInvoiceReportsModal() {
 }
 
 function openStatementExportModal() {
+    state.invoiceReportActionTab = "export";
+    syncInvoiceReportActionTabUi();
     const selection = getSelectedInvoiceStatementContext();
     if (!selection.selectedInvoices.length) {
         setImportStatus(t("statement_select_first_error"), true);
@@ -3114,6 +3267,27 @@ function getInvoiceReportFilter() {
 
 function getVisibleInvoiceReportInvoices() {
     return getInvoiceReportData().clientGroups.flatMap(group => group.invoices);
+}
+
+function syncInvoiceReportActionTabUi() {
+    if (!elements.invoiceReportActionTabs?.length || !elements.invoiceReportActionPanels?.length) {
+        return;
+    }
+
+    const activeTab = state.invoiceReportActionTab || "export";
+    elements.invoiceReportActionTabs.forEach(button => {
+        const isActive = button.dataset.invoiceReportActionTab === activeTab;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-selected", String(isActive));
+    });
+    elements.invoiceReportActionPanels.forEach(panel => {
+        panel.hidden = panel.dataset.invoiceReportActionPanel !== activeTab;
+    });
+}
+
+function handleInvoiceReportActionTabClick(event) {
+    state.invoiceReportActionTab = event.currentTarget.dataset.invoiceReportActionTab || "export";
+    syncInvoiceReportActionTabUi();
 }
 
 function getSelectedInvoiceReportInvoices() {
@@ -3360,6 +3534,8 @@ function renderInvoiceReport() {
     if (!elements.invoiceReportList || !elements.invoiceReportSummary || !elements.invoiceReportSort) {
         return;
     }
+
+    syncInvoiceReportActionTabUi();
 
     const { allInvoices, clientGroups, summary } = getInvoiceReportData();
     const selectedIds = new Set(state.selectedInvoiceReportIds.map(String));
@@ -3675,10 +3851,6 @@ function getStatementPayload() {
     };
 }
 
-function handleStatementEmailPlaceholder() {
-    setImportStatus(t("statement_email_placeholder_message"));
-}
-
 async function exportStatementOfAccountPdf() {
     const selection = getSelectedInvoiceStatementContext();
     if (!selection.selectedInvoices.length) {
@@ -3699,6 +3871,19 @@ async function exportStatementOfAccountPdf() {
     try {
         const payload = getStatementPayload();
         window.StatementOfAccount.generateStatementOfAccountPdf(payload);
+        await saveStatementExportsState([
+            {
+                id: `statement-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                title: payload.title,
+                clientName: payload.clientName,
+                generatedAt: new Date().toISOString(),
+                rowCount: payload.rows.length,
+                totalSelectedFormatted: payload.totalSelectedFormatted,
+                totalOutstandingFormatted: payload.totalOutstandingFormatted,
+                payload
+            },
+            ...state.statementExports
+        ]);
         closeStatementExportModal();
         setImportStatus(t("statement_export_success"));
         recordActivity("exported statement of account", `Statement of Account generated for ${selection.clientName || "unknown client"} (${selection.selectedInvoices.length} invoices).`);

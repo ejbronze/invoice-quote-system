@@ -551,14 +551,56 @@
     }
 
     function generateStatementOfAccountPdf(payload) {
-        const previewWindow = window.open("", "_blank", "noopener,noreferrer,width=1180,height=920");
+        const previewWindow = window.open("", "_blank", "width=1180,height=920");
         if (!previewWindow) {
             throw new Error("Please allow pop-ups to export the statement PDF.");
         }
 
         previewWindow.document.open();
-        previewWindow.document.write(buildStatementDocumentMarkup(payload));
+        previewWindow.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preparing Statement</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background: #eef3fb;
+            color: #1f2937;
+            font-family: Arial, sans-serif;
+        }
+        .statement-loading {
+            display: grid;
+            gap: 0.7rem;
+            justify-items: center;
+            padding: 2rem;
+            text-align: center;
+        }
+        .statement-loading strong {
+            font-size: 1rem;
+        }
+        .statement-loading span {
+            color: #5b6b81;
+            font-size: 0.92rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="statement-loading">
+        <strong>Preparing Statement of Account</strong>
+        <span>${escapeHtml(payload.title || "Statement of Account")}</span>
+    </div>
+</body>
+</html>`);
         previewWindow.document.close();
+
+        const markup = buildStatementDocumentMarkup(payload);
+        const blobUrl = URL.createObjectURL(new Blob([markup], { type: "text/html" }));
+        previewWindow.location.replace(blobUrl);
         previewWindow.focus();
         return previewWindow;
     }

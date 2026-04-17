@@ -302,6 +302,24 @@ function normalizeCatalogItems(items) {
         : [];
 }
 
+function normalizeStatementExports(items) {
+    return Array.isArray(items)
+        ? items
+            .filter(item => item && typeof item === "object")
+            .map(item => ({
+                id: String(item.id || `statement-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+                title: String(item.title || "Statement of Account").trim(),
+                clientName: String(item.clientName || "Unknown client").trim(),
+                generatedAt: String(item.generatedAt || new Date().toISOString()),
+                rowCount: Number.parseInt(item.rowCount, 10) || 0,
+                totalSelectedFormatted: String(item.totalSelectedFormatted || "").trim(),
+                totalOutstandingFormatted: String(item.totalOutstandingFormatted || "").trim(),
+                payload: item.payload && typeof item.payload === "object" ? item.payload : null
+            }))
+            .filter(item => item.payload)
+        : [];
+}
+
 function normalizeWorkspaceState(payload) {
     return {
         userAccounts: normalizeUserAccounts(payload?.userAccounts || []),
@@ -309,6 +327,7 @@ function normalizeWorkspaceState(payload) {
         companyProfile: normalizeCompanyProfile(payload?.companyProfile || DEFAULT_COMPANY_PROFILE),
         savedItems: normalizeSavedItems(payload?.savedItems || []),
         catalogItems: normalizeCatalogItems(payload?.catalogItems || []),
+        statementExports: normalizeStatementExports(payload?.statementExports || []),
         sessionLogs: normalizeSessionLogs(payload?.sessionLogs || []),
         activityLogs: normalizeActivityLogs(payload?.activityLogs || [])
     };
@@ -536,6 +555,7 @@ module.exports = {
     normalizeDocuments,
     normalizeIssueReports,
     normalizeCatalogItems,
+    normalizeStatementExports,
     normalizeSavedItems,
     normalizeUserAccounts,
     normalizeWorkspaceState,
