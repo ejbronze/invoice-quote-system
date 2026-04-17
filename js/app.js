@@ -8250,29 +8250,34 @@ function compareDocuments(left, right, sortOrder) {
 
 function getDocumentRefInfo(doc) {
     const refNumber = String(doc?.refNumber || "").trim().toUpperCase();
-    const match = refNumber.match(/^(TL-\d{4}-(\d{2})(\d{2}))-(\d+)$/);
+    const parentheticalMatch = refNumber.match(/^TL-(\d{4})\s*\((\d{2})\/(\d{2})\)-DOC\s*(\d+)$/);
+    const compactMatch = refNumber.match(/^TL-(\d{4})-(\d{2})(\d{2})-(\d+)$/);
+    const match = parentheticalMatch || compactMatch;
     if (!match) {
         return null;
     }
 
-    // Extract date from ref number: TL-2026-MMDD-Seq
-    const year = match[1].substring(3, 7); // "2026"
-    const month = match[2]; // "03"
-    const day = match[3]; // "29"
-    const sequence = Number(match[4]); // "01"
+    const [, year, month, day, sequenceText] = match;
+    const refYear = Number.parseInt(year, 10);
+    const refMonth = Number.parseInt(month, 10);
+    const refDay = Number.parseInt(day, 10);
+    const sequence = Number.parseInt(sequenceText, 10);
+    if (!Number.isInteger(refYear) || !Number.isInteger(refMonth) || !Number.isInteger(refDay) || !Number.isInteger(sequence)) {
+        return null;
+    }
 
-    // Create a date object for sorting (using current year if needed)
-    const currentYear = new Date().getFullYear();
-    const refYear = parseInt(year) || currentYear;
-    const refDate = new Date(refYear, parseInt(month) - 1, parseInt(day));
+    const refDate = new Date(refYear, refMonth - 1, refDay);
+    if (Number.isNaN(refDate.getTime())) {
+        return null;
+    }
 
     return {
-        prefix: match[1],
+        prefix: `TL-${refYear}-${String(refMonth).padStart(2, "0")}${String(refDay).padStart(2, "0")}`,
         sequence: sequence,
         date: refDate.getTime(),
         year: refYear,
-        month: parseInt(month),
-        day: parseInt(day)
+        month: refMonth,
+        day: refDay
     };
 }
 
@@ -8374,6 +8379,10 @@ function renderDocuments() {
             ? `<span class="doc-payment-badge ${paymentStatus}">${escapeHtml(getPaymentStatusLabel(paymentStatus))}</span>`
             : "";
         const rowAriaLabel = `${doc.type} ${doc.refNumber || "document"} for ${doc.clientName || "unknown client"}`;
+        const convertedInvoice = doc.type === "quote"
+            ? state.documents.find(entry => entry.type === "invoice" && String(entry.convertedFromQuoteId || "") === String(doc.id))
+            : null;
+        const isLockedSourceQuote = Boolean(convertedInvoice);
         const docTypeLabel = doc.type === "quote" ? t("quote_singular") : t("invoice_singular");
         const docTypeIcon = doc.type === "quote"
             ? `
