@@ -2590,6 +2590,50 @@ function getStoredSessionUser() {
     }
 }
 
+async function migrateLocalDataToServer() {
+    // Check if we have local data that needs to be migrated
+    const localDocuments = readLocalDataset(LOCAL_DOCUMENTS_STORAGE_KEY, []);
+    const localClients = readLocalDataset(LOCAL_CLIENTS_STORAGE_KEY, []);
+
+    const hasLocalDocuments = Array.isArray(localDocuments) && localDocuments.length > 0;
+    const hasLocalClients = Array.isArray(localClients) && localClients.length > 0;
+
+    // Only migrate if we have local data and server data is empty/minimal
+    const serverHasDocuments = state.documents.length > 1; // More than just default
+    const serverHasClients = state.clients.length > 1; // More than just default CCXpress
+
+    if ((hasLocalDocuments && !serverHasDocuments) || (hasLocalClients && !serverHasClients)) {
+        console.log("Migrating local data to server...");
+
+        try {
+            // Migrate documents if server is empty but local has data
+            if (hasLocalDocuments && !serverHasDocuments) {
+                await saveDocumentsToServer(localDocuments);
+                console.log(`Migrated ${localDocuments.length} documents to server`);
+            }
+
+            // Migrate clients if server only has default client
+            if (hasLocalClients && !serverHasClients) {
+                await saveClientsToServer(localClients);
+                console.log(`Migrated ${localClients.length} clients to server`);
+            }
+
+            // Clear local data after successful migration
+            if (hasLocalDocuments && !serverHasDocuments) {
+                clearLocalDataset(LOCAL_DOCUMENTS_STORAGE_KEY);
+            }
+            if (hasLocalClients && !serverHasClients) {
+                clearLocalDataset(LOCAL_CLIENTS_STORAGE_KEY);
+            }
+
+            setImportStatus("✓ Local data has been migrated to server storage.");
+        } catch (error) {
+            console.error("Data migration failed:", error);
+            setImportStatus("⚠️ Data migration failed. Your local data is still safe in browser storage.", true);
+        }
+    }
+}
+
 function hasActiveSession() {
     return Boolean(state.currentUser);
 }
@@ -5772,6 +5816,10 @@ async function bootstrapAppData() {
         updateRuntimeModeBadge();
         state.documents = normalizeDocuments(documentsResponse.documents);
         state.clients = normalizeClients(clientsResponse.clients);
+
+        // Check for local data migration
+        await migrateLocalDataToServer();
+
         renderClientOptions();
         prepareNewDocument("quote");
         renderDocuments();
