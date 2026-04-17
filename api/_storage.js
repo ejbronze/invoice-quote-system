@@ -431,27 +431,19 @@ async function readDataset(name, fallbackValue) {
 
 async function writeBlobDataset(name, value) {
     ensureBlobToken();
-    const { put, list, del } = await loadBlobSdk();
+    const { put } = await loadBlobSdk();
     const token = getBlobToken();
-    const prefix = `todos-logistics/${name}/`;
 
-    const newBlob = await put(`${prefix}${Date.now()}.json`, JSON.stringify(value, null, 2), {
+    // Use a fixed filename per dataset to avoid accumulating old versions
+    // Blob storage will handle versioning transparently
+    const blobPath = `todos-logistics/${name}/current.json`;
+
+    const newBlob = await put(blobPath, JSON.stringify(value), {
         token,
         access: getBlobAccessMode(),
         contentType: "application/json",
         addRandomSuffix: false
     });
-
-    // Prune all older blobs for this dataset, keeping only the one just written
-    try {
-        const { blobs } = await list({ token, prefix });
-        const stale = blobs.filter(b => b.url !== newBlob.url).map(b => b.url);
-        if (stale.length > 0) {
-            await del(stale, { token });
-        }
-    } catch (_) {
-        // Pruning is best-effort — a failure here should not break the write
-    }
 
     return newBlob;
 }
