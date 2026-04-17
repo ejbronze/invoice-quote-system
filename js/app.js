@@ -8024,6 +8024,10 @@ async function persistDocument(options = {}) {
 
     closeModal();
     const actionLabel = isEditing ? "updated" : "saved";
+    const wasConvertedFromQuote = state.convertingFromQuoteId !== null;
+    const completionMessage = wasConvertedFromQuote
+        ? `Invoice ${actionLabel} successfully.\n\nYour original quote has been locked as a source record and is still visible in the dashboard with a "Converted to Invoice" label.`
+        : `${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.`;
     if (exportAfterSave) {
         openPrintWindow(doc, previewWindow);
         if (!silent) {
@@ -8033,7 +8037,7 @@ async function persistDocument(options = {}) {
     }
 
     if (!silent) {
-        alert(`${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.`);
+        alert(completionMessage);
     }
 }
 
@@ -8315,12 +8319,13 @@ function renderDocuments() {
     elements.documentsGrid.innerHTML = visibleDocuments.map(doc => {
         const date = formatDisplayDate(doc.date);
         const isLockedSourceQuote = Boolean(doc.lockedAfterConversion);
+        const convertedInvoice = isLockedSourceQuote ? state.documents.find(d => isSameDocumentId(d.id, doc.convertedDocumentId)) : null;
         const statusLabel = doc.status === "draft" ? t("status_draft") : t("status_logged");
         const statusClass = doc.status === "draft" ? "draft" : "logged";
         const paymentStatus = doc.type === "invoice" ? normalizePaymentStatus(doc.paymentStatus) : null;
         const cardViewId = isLockedSourceQuote ? "" : ` data-view-id="${doc.id}"`;
         const statusBadge = isLockedSourceQuote
-            ? `<span class="doc-lock-badge">${escapeHtml(t("converted_source"))}</span>`
+            ? `<span class="doc-lock-badge">Converted to Invoice ${convertedInvoice ? escapeHtml(convertedInvoice.refNumber) : ""}</span>`
             : "";
         const legacyBadge = doc.legacyPdfUrl
             ? `<span class="doc-lock-badge">${escapeHtml(t("legacy_pdf_attached"))}</span>`
@@ -8367,6 +8372,7 @@ function renderDocuments() {
                         <div class="doc-client">${escapeHtml(doc.clientName)}</div>
                         <div class="doc-date">${escapeHtml(t("date_label"))} ${date}</div>
                     </div>
+                    ${isLockedSourceQuote && convertedInvoice ? `<div class="doc-row-tertiary"><button class="doc-view-converted-btn" type="button" onclick="editDocument('${String(convertedInvoice.id)}')" title="View the converted invoice">View converted invoice →</button></div>` : ""}
                 </div>
                 <div class="doc-row-badges">
                     ${statusBadge}
