@@ -44,7 +44,8 @@ const state = {
     documentEditorBaseline: "",
     documentEditorDirty: false,
     mobileOverviewCollapsed: true,
-    selectedInvoiceReportIds: []
+    selectedInvoiceReportIds: [],
+    statementExportInProgress: false
 };
 
 const DOP_PER_USD = 59;
@@ -241,7 +242,24 @@ const TRANSLATIONS = {
         invoice_reports_copy: "Review invoice totals by client, switch between unpaid, pending, and paid invoices, and keep the list sorted by client.",
         export_report_csv: "Export CSV",
         select_visible_reports: "Select Visible",
+        clear_selection_reports: "Clear Selection",
         print_selected_reports: "Print Selected",
+        open_statement_export: "Export Statement of Account PDF",
+        export_selected_csv: "Export Selected as CSV",
+        statement_of_account_title: "Statement of Account Export",
+        statement_of_account_copy: "Review the selected invoices before opening the print-ready PDF statement.",
+        statement_no_selection: "No invoices selected",
+        statement_selection_help: "Select invoices from a single client to prepare a statement.",
+        statement_selected_value: "Selected value",
+        statement_outstanding_balance: "Outstanding balance",
+        statement_generate_pdf: "Generate PDF",
+        statement_email_placeholder: "Email Statement of Account",
+        statement_email_placeholder_message: "Email Statement of Account is ready as a placeholder action.",
+        statement_export_success: "Statement of Account preview opened. Use Print or Save as PDF to finish the export.",
+        statement_mixed_clients_error: "Select invoices for one client at a time before exporting a statement.",
+        statement_popup_error: "Please allow pop-ups to export the statement PDF.",
+        statement_select_first_error: "Select at least one invoice before exporting a statement.",
+        statement_csv_success: "Selected invoices exported as CSV.",
         open_service_reports: "Open Service Reports",
         report_select: "Select",
         report_print_title: "Invoice Report",
@@ -1117,14 +1135,22 @@ function applyTranslations() {
     setElementText("#invoiceReportStartLabel", t("report_from"));
     setElementText("#invoiceReportEndLabel", t("report_to"));
     setElementText("#selectVisibleInvoiceReportsBtn", t("select_visible_reports"));
+    setElementText("#clearVisibleInvoiceReportsBtn", t("clear_selection_reports"));
+    setElementText("#openStatementExportBtn", t("open_statement_export"));
     setElementText("#printInvoiceReportBtn", t("print_selected_reports"));
-    setElementText("#exportInvoiceReportCsvBtn", t("export_report_csv"));
+    setElementText("#exportInvoiceReportCsvBtn", t("export_selected_csv"));
     elements.invoiceReportSort.options[0].textContent = t("sort_client_asc");
     elements.invoiceReportSort.options[1].textContent = t("sort_client_desc");
     elements.invoiceReportFilterButtons[0].textContent = t("filter_all");
     elements.invoiceReportFilterButtons[1].textContent = t("payment_unpaid");
     elements.invoiceReportFilterButtons[2].textContent = t("payment_pending");
     elements.invoiceReportFilterButtons[3].textContent = t("payment_paid");
+    setElementText("#statementExportTitle", t("statement_of_account_title"));
+    setElementText("#statementExportCopy", t("statement_of_account_copy"));
+    setElementText("#statementSelectionTitle", t("statement_no_selection"));
+    setElementText("#statementSelectionMeta", t("statement_selection_help"));
+    setElementText("#statementEmailPlaceholderBtn", t("statement_email_placeholder"));
+    setElementText("#confirmStatementExportBtn", t("statement_generate_pdf"));
     setElementText("#companyProfileTitle", t("company_profile"));
     setElementText("#companyProfileCopy", t("company_profile_copy"));
     const companyProfileLabels = elements.companyProfileModal.querySelectorAll(".form-group > span");
@@ -1306,8 +1332,21 @@ function cacheElements() {
     elements.invoiceReportSummary = document.getElementById("invoiceReportSummary");
     elements.invoiceReportList = document.getElementById("invoiceReportList");
     elements.selectVisibleInvoiceReportsBtn = document.getElementById("selectVisibleInvoiceReportsBtn");
+    elements.clearVisibleInvoiceReportsBtn = document.getElementById("clearVisibleInvoiceReportsBtn");
+    elements.openStatementExportBtn = document.getElementById("openStatementExportBtn");
     elements.printInvoiceReportBtn = document.getElementById("printInvoiceReportBtn");
     elements.exportInvoiceReportCsvBtn = document.getElementById("exportInvoiceReportCsvBtn");
+    elements.statementSelectionToolbar = document.getElementById("statementSelectionToolbar");
+    elements.statementSelectionTitle = document.getElementById("statementSelectionTitle");
+    elements.statementSelectionMeta = document.getElementById("statementSelectionMeta");
+    elements.statementSelectionTotal = document.getElementById("statementSelectionTotal");
+    elements.statementSelectionOutstanding = document.getElementById("statementSelectionOutstanding");
+    elements.statementExportModal = document.getElementById("statementExportModal");
+    elements.closeStatementExportModalBtn = document.getElementById("closeStatementExportModalBtn");
+    elements.statementExportOverview = document.getElementById("statementExportOverview");
+    elements.statementExportTableBody = document.getElementById("statementExportTableBody");
+    elements.statementEmailPlaceholderBtn = document.getElementById("statementEmailPlaceholderBtn");
+    elements.confirmStatementExportBtn = document.getElementById("confirmStatementExportBtn");
     elements.companyProfileModal = document.getElementById("companyProfileModal");
     elements.savedItemsModal = document.getElementById("savedItemsModal");
     elements.savedItemCreateModal = document.getElementById("savedItemCreateModal");
@@ -1540,15 +1579,21 @@ function bindEvents() {
     elements.invoiceReportStartDate.addEventListener("change", () => { document.querySelectorAll(".preset-chip").forEach(b => b.classList.remove("active")); renderInvoiceReport(); });
     elements.invoiceReportEndDate.addEventListener("change", () => { document.querySelectorAll(".preset-chip").forEach(b => b.classList.remove("active")); renderInvoiceReport(); });
     elements.selectVisibleInvoiceReportsBtn.addEventListener("click", selectVisibleInvoiceReports);
+    elements.clearVisibleInvoiceReportsBtn.addEventListener("click", clearSelectedInvoiceReports);
+    elements.openStatementExportBtn.addEventListener("click", openStatementExportModal);
     elements.printInvoiceReportBtn.addEventListener("click", printSelectedInvoiceReports);
-    elements.exportInvoiceReportCsvBtn.addEventListener("click", exportInvoiceReportCsv);
+    elements.exportInvoiceReportCsvBtn.addEventListener("click", exportSelectedInvoiceReportCsv);
     elements.invoiceReportFilterButtons.forEach(button => {
         button.addEventListener("click", handleInvoiceReportFilterClick);
     });
     elements.invoiceReportList.addEventListener("change", handleInvoiceReportListChange);
+    elements.invoiceReportList.addEventListener("click", handleInvoiceReportListClick);
     [elements.presetThisMonthBtn, elements.presetLast30Btn, elements.presetThisYearBtn, elements.presetClearDatesBtn].forEach(btn => {
         btn?.addEventListener("click", handleDatePresetClick);
     });
+    elements.closeStatementExportModalBtn.addEventListener("click", closeStatementExportModal);
+    elements.statementEmailPlaceholderBtn.addEventListener("click", handleStatementEmailPlaceholder);
+    elements.confirmStatementExportBtn.addEventListener("click", exportStatementOfAccountPdf);
     elements.saveCompanyProfileBtn.addEventListener("click", saveCompanyProfile);
     elements.addSavedItemBtn.addEventListener("click", addSavedItemFromModal);
     elements.savedItemsList.addEventListener("click", handleSavedItemsListClick);
@@ -1697,6 +1742,11 @@ function bindEvents() {
     elements.invoiceReportsModal.addEventListener("click", event => {
         if (event.target === elements.invoiceReportsModal) {
             closeInvoiceReportsModal();
+        }
+    });
+    elements.statementExportModal.addEventListener("click", event => {
+        if (event.target === elements.statementExportModal) {
+            closeStatementExportModal();
         }
     });
 
@@ -3035,6 +3085,28 @@ function closeInvoiceReportsModal() {
     setModalState(elements.invoiceReportsModal, false);
 }
 
+function openStatementExportModal() {
+    const selection = getSelectedInvoiceStatementContext();
+    if (!selection.selectedInvoices.length) {
+        setImportStatus(t("statement_select_first_error"), true);
+        window.alert(t("statement_select_first_error"));
+        return;
+    }
+
+    if (!selection.isSingleClient) {
+        setImportStatus(t("statement_mixed_clients_error"), true);
+        window.alert(t("statement_mixed_clients_error"));
+        return;
+    }
+
+    renderStatementExportModal();
+    setModalState(elements.statementExportModal, true);
+}
+
+function closeStatementExportModal() {
+    setModalState(elements.statementExportModal, false);
+}
+
 function getInvoiceReportFilter() {
     const activeButton = elements.invoiceReportFilterButtons.find(button => button.classList.contains("active"));
     return activeButton?.dataset?.invoiceReportFilter || "all";
@@ -3042,6 +3114,60 @@ function getInvoiceReportFilter() {
 
 function getVisibleInvoiceReportInvoices() {
     return getInvoiceReportData().clientGroups.flatMap(group => group.invoices);
+}
+
+function getSelectedInvoiceReportInvoices() {
+    const selectedIds = new Set(state.selectedInvoiceReportIds.map(String));
+    return getVisibleInvoiceReportInvoices().filter(doc => selectedIds.has(String(doc.id)));
+}
+
+function getSelectedInvoiceStatementContext() {
+    const selectedInvoices = getSelectedInvoiceReportInvoices();
+    const clientNames = Array.from(new Set(
+        selectedInvoices.map(doc => String(doc.clientName || t("unknown_client")).trim() || t("unknown_client"))
+    ));
+    const totalSelected = selectedInvoices.reduce((sum, doc) => sum + Number(doc.total || 0), 0);
+    const outstandingTotal = selectedInvoices.reduce((sum, doc) => {
+        return normalizePaymentStatus(doc.paymentStatus) === "paid"
+            ? sum
+            : sum + Number(doc.total || 0);
+    }, 0);
+
+    return {
+        selectedInvoices,
+        clientNames,
+        isSingleClient: clientNames.length <= 1,
+        clientName: clientNames[0] || "",
+        totalSelected,
+        outstandingTotal
+    };
+}
+
+function syncInvoiceReportSelectionUi() {
+    if (!elements.statementSelectionToolbar) {
+        return;
+    }
+
+    const selection = getSelectedInvoiceStatementContext();
+    const selectedCount = selection.selectedInvoices.length;
+    const mixedClients = !selection.isSingleClient;
+
+    elements.statementSelectionToolbar.hidden = false;
+    elements.statementSelectionTitle.textContent = selectedCount
+        ? `${selectedCount} ${t("report_total_invoices").toLowerCase()} selected`
+        : t("statement_no_selection");
+    elements.statementSelectionMeta.textContent = !selectedCount
+        ? t("statement_selection_help")
+        : mixedClients
+        ? t("statement_mixed_clients_error")
+        : selection.clientName;
+    elements.statementSelectionTotal.textContent = formatCurrency(selection.totalSelected);
+    elements.statementSelectionOutstanding.textContent = formatCurrency(selection.outstandingTotal);
+
+    const canExportStatement = selectedCount > 0 && !mixedClients && !state.statementExportInProgress;
+    elements.openStatementExportBtn.disabled = !canExportStatement;
+    elements.exportInvoiceReportCsvBtn.disabled = selectedCount === 0;
+    elements.confirmStatementExportBtn.disabled = !canExportStatement;
 }
 
 function handleInvoiceReportFilterClick(event) {
@@ -3057,6 +3183,23 @@ function handleInvoiceReportFilterClick(event) {
 
 function handleInvoiceReportListChange(event) {
     const checkbox = event.target.closest("[data-invoice-report-select]");
+    const groupCheckbox = event.target.closest("[data-invoice-report-group-select]");
+    if (groupCheckbox) {
+        const clientName = String(groupCheckbox.dataset.invoiceReportGroupSelect || "");
+        const clientInvoices = getVisibleInvoiceReportInvoices().filter(doc => (String(doc.clientName || t("unknown_client")).trim() || t("unknown_client")) === clientName);
+        const nextSelection = new Set(state.selectedInvoiceReportIds.map(String));
+        clientInvoices.forEach(doc => {
+            if (groupCheckbox.checked) {
+                nextSelection.add(String(doc.id));
+            } else {
+                nextSelection.delete(String(doc.id));
+            }
+        });
+        state.selectedInvoiceReportIds = [...nextSelection];
+        renderInvoiceReport();
+        return;
+    }
+
     if (!checkbox) {
         return;
     }
@@ -3073,11 +3216,30 @@ function handleInvoiceReportListChange(event) {
         nextSelection.delete(documentId);
     }
     state.selectedInvoiceReportIds = [...nextSelection];
+    syncInvoiceReportSelectionUi();
+}
+
+function handleInvoiceReportListClick(event) {
+    const generateButton = event.target.closest("[data-generate-statement-client]");
+    if (!generateButton) {
+        return;
+    }
+
+    const clientName = String(generateButton.dataset.generateStatementClient || "");
+    const clientInvoices = getVisibleInvoiceReportInvoices().filter(doc => (String(doc.clientName || t("unknown_client")).trim() || t("unknown_client")) === clientName);
+    state.selectedInvoiceReportIds = clientInvoices.map(doc => String(doc.id));
+    renderInvoiceReport();
+    openStatementExportModal();
 }
 
 function selectVisibleInvoiceReports() {
     const visibleIds = getVisibleInvoiceReportInvoices().map(doc => String(doc.id));
     state.selectedInvoiceReportIds = visibleIds;
+    renderInvoiceReport();
+}
+
+function clearSelectedInvoiceReports() {
+    state.selectedInvoiceReportIds = [];
     renderInvoiceReport();
 }
 
@@ -3227,11 +3389,13 @@ function renderInvoiceReport() {
 
     if (!allInvoices.length) {
         elements.invoiceReportList.innerHTML = `<p class="invoice-report-empty">${escapeHtml(t("report_no_invoices"))}</p>`;
+        syncInvoiceReportSelectionUi();
         return;
     }
 
     if (!clientGroups.length) {
         elements.invoiceReportList.innerHTML = `<p class="invoice-report-empty">${escapeHtml(t("report_no_matches"))}</p>`;
+        syncInvoiceReportSelectionUi();
         return;
     }
 
@@ -3242,7 +3406,18 @@ function renderInvoiceReport() {
                     <strong>${escapeHtml(group.clientName)}</strong>
                     <span>${escapeHtml(`${group.invoices.length} ${t("report_total_invoices").toLowerCase()}`)}</span>
                 </div>
-                <div class="invoice-report-client-total">${escapeHtml(formatCurrency(group.total))}</div>
+                <div class="invoice-report-client-actions">
+                    <label class="invoice-report-select-cell" title="${escapeHtml(t("select_visible_reports"))}">
+                        <input
+                            class="invoice-report-group-toggle"
+                            type="checkbox"
+                            data-invoice-report-group-select="${escapeHtml(group.clientName)}"
+                            ${group.invoices.every(doc => selectedIds.has(String(doc.id))) ? "checked" : ""}
+                        >
+                    </label>
+                    <button class="btn btn-secondary" type="button" data-generate-statement-client="${escapeHtml(group.clientName)}">Generate Statement</button>
+                    <div class="invoice-report-client-total">${escapeHtml(formatCurrency(group.total))}</div>
+                </div>
             </div>
             <table class="invoice-report-table">
                 <thead>
@@ -3272,6 +3447,7 @@ function renderInvoiceReport() {
             </table>
         </article>
     `).join("");
+    syncInvoiceReportSelectionUi();
 }
 
 function escapeCsvCell(value) {
@@ -3279,45 +3455,24 @@ function escapeCsvCell(value) {
     return `"${normalized.replace(/"/g, '""')}"`;
 }
 
-function exportInvoiceReportCsv() {
-    const { allInvoices, clientGroups } = getInvoiceReportData();
-    if (!allInvoices.length || !clientGroups.length) {
-        setImportStatus(t("report_no_matches"), true);
+function exportSelectedInvoiceReportCsv() {
+    const selection = getSelectedInvoiceStatementContext();
+    if (!selection.selectedInvoices.length) {
+        setImportStatus(t("statement_select_first_error"), true);
         return;
     }
 
-    const rows = [[
-        t("report_client"),
-        t("report_ref"),
-        t("report_date"),
-        t("report_status"),
-        t("report_total")
-    ]];
-
-    clientGroups.forEach(group => {
-        group.invoices.forEach(doc => {
-            rows.push([
-                group.clientName,
-                doc.refNumber || "",
-                formatDisplayDate(doc.date) || t("no_date"),
-                getPaymentStatusLabel(doc.paymentStatus),
-                formatCurrency(doc.total || 0)
-            ]);
-        });
-        rows.push([
-            group.clientName + " — Subtotal",
-            "",
-            "",
-            `${group.invoices.length} invoice${group.invoices.length !== 1 ? "s" : ""}`,
-            formatCurrency(group.total)
-        ]);
-        rows.push(["", "", "", "", ""]);
+    const rows = window.StatementOfAccount.mapInvoicesToStatementRows(selection.selectedInvoices, {
+        locale: getCurrentLocale(),
+        getStatusLabel: getPaymentStatusLabel
     });
-
-    const csv = rows.map(row => row.map(escapeCsvCell).join(",")).join("\n");
-    const filter = getInvoiceReportFilter();
+    const csv = window.StatementOfAccount.buildStatementCsv(rows);
     const timestamp = new Date().toISOString().slice(0, 10);
-    downloadTextFile(`invoice-report-${filter}-${timestamp}.csv`, `${csv}\n`, "text/csv;charset=utf-8");
+    const baseName = selection.clientName
+        ? `statement-of-account-${String(selection.clientName).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")}-${timestamp}.csv`
+        : `statement-of-account-${timestamp}.csv`;
+    downloadTextFile(baseName, `${csv}\n`, "text/csv;charset=utf-8");
+    setImportStatus(t("statement_csv_success"));
 }
 
 function printSelectedInvoiceReports() {
@@ -3447,6 +3602,114 @@ function printSelectedInvoiceReports() {
         </html>`);
     printWindow.document.close();
     printWindow.focus();
+}
+
+function renderStatementExportModal() {
+    const selection = getSelectedInvoiceStatementContext();
+    const rows = window.StatementOfAccount.mapInvoicesToStatementRows(selection.selectedInvoices, {
+        locale: getCurrentLocale(),
+        getStatusLabel: getPaymentStatusLabel
+    });
+
+    elements.statementExportOverview.innerHTML = `
+        <article class="invoice-report-summary-card">
+            <span>Client</span>
+            <strong>${escapeHtml(selection.clientName || t("unknown_client"))}</strong>
+        </article>
+        <article class="invoice-report-summary-card">
+            <span>Invoices Selected</span>
+            <strong>${escapeHtml(String(rows.length))}</strong>
+        </article>
+        <article class="invoice-report-summary-card">
+            <span>${escapeHtml(t("statement_selected_value"))}</span>
+            <strong>${escapeHtml(formatCurrency(selection.totalSelected))}</strong>
+        </article>
+        <article class="invoice-report-summary-card">
+            <span>${escapeHtml(t("statement_outstanding_balance"))}</span>
+            <strong>${escapeHtml(formatCurrency(selection.outstandingTotal))}</strong>
+        </article>
+    `;
+
+    elements.statementExportTableBody.innerHTML = rows.length
+        ? rows.map(row => `
+            <tr>
+                <td><strong>${escapeHtml(row.invoiceNumber)}</strong></td>
+                <td>${escapeHtml(row.poNumbers)}</td>
+                <td>${escapeHtml(row.invoiceDate)}</td>
+                <td>${escapeHtml(row.dueDate)}</td>
+                <td>${escapeHtml(row.invoiceValueFormatted)}</td>
+                <td>${escapeHtml(row.status)}</td>
+            </tr>
+        `).join("")
+        : `<tr><td colspan="6">${escapeHtml(t("statement_no_selection"))}</td></tr>`;
+}
+
+function getStatementPayload() {
+    const selection = getSelectedInvoiceStatementContext();
+    const profile = state.companyProfile || DEFAULT_COMPANY_PROFILE;
+    const generatedAt = new Date();
+    const rows = window.StatementOfAccount.mapInvoicesToStatementRows(selection.selectedInvoices, {
+        locale: getCurrentLocale(),
+        getStatusLabel: getPaymentStatusLabel
+    });
+
+    return {
+        locale: getCurrentLocale(),
+        title: window.StatementOfAccount.createStatementFileName(selection.clientName || "client", generatedAt),
+        company: {
+            companyName: profile.companyName || BRAND.name,
+            address: profile.address || "",
+            email: profile.email || "",
+            phone: profile.phone || "",
+            website: profile.website || ""
+        },
+        vendorName: profile.companyName || BRAND.name,
+        clientName: selection.clientName || t("unknown_client"),
+        generatedDate: formatPrintedDate(generatedAt),
+        currency: "USD",
+        rows,
+        totalSelectedFormatted: formatCurrency(selection.totalSelected),
+        totalOutstandingFormatted: formatCurrency(selection.outstandingTotal),
+        letterheadUrl: getLetterheadUrl(),
+        footerWaveUrl: getFooterWaveUrl()
+    };
+}
+
+function handleStatementEmailPlaceholder() {
+    setImportStatus(t("statement_email_placeholder_message"));
+}
+
+async function exportStatementOfAccountPdf() {
+    const selection = getSelectedInvoiceStatementContext();
+    if (!selection.selectedInvoices.length) {
+        setImportStatus(t("statement_select_first_error"), true);
+        return;
+    }
+
+    if (!selection.isSingleClient) {
+        setImportStatus(t("statement_mixed_clients_error"), true);
+        return;
+    }
+
+    state.statementExportInProgress = true;
+    syncInvoiceReportSelectionUi();
+    elements.confirmStatementExportBtn.disabled = true;
+    elements.confirmStatementExportBtn.textContent = "Generating...";
+
+    try {
+        const payload = getStatementPayload();
+        window.StatementOfAccount.generateStatementOfAccountPdf(payload);
+        closeStatementExportModal();
+        setImportStatus(t("statement_export_success"));
+        recordActivity("exported statement of account", `Statement of Account generated for ${selection.clientName || "unknown client"} (${selection.selectedInvoices.length} invoices).`);
+    } catch (error) {
+        setImportStatus(error.message || t("statement_popup_error"), true);
+        window.alert(error.message || t("statement_popup_error"));
+    } finally {
+        state.statementExportInProgress = false;
+        elements.confirmStatementExportBtn.textContent = t("statement_generate_pdf");
+        syncInvoiceReportSelectionUi();
+    }
 }
 
 function syncCompanyProfileForm() {
