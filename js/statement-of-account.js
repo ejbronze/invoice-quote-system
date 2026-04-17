@@ -453,8 +453,9 @@
             margin-top: 0.2rem;
             padding-top: 0.3rem;
             border-top: 1px solid #9eb2ca;
-            color: #173453;
+            color: #e21c13;
             font-size: 0.84rem;
+            font-weight: 800;
         }
         .statement-rule {
             height: 3px;

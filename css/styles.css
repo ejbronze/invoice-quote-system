@@ -6389,61 +6389,23 @@ body.print-window .print-preview-sheet {
     }
 
     .modal.final-preview-mode .preview-container {
-        padding: 0.4rem 0.82rem 0.6rem;
+        padding: 0;
         border: 0;
         border-radius: 0;
-        background: transparent;
+        background: #f5f7fa;
         height: 100%;
         min-height: 0;
-        overflow: visible;
+        overflow: auto;
         width: 100%;
     }
 
-    .modal.final-preview-mode .document-sheet {
+    .modal.final-preview-mode .print-preview-sheet {
         min-width: 0;
         width: 100%;
-        max-width: 100%;
-        margin: 0 auto;
-        padding: 0.82rem 0.72rem 2.8rem;
-        box-shadow: 0 6px 16px rgba(23, 43, 77, 0.08);
-    }
-
-    .modal.final-preview-mode .document-title {
-        font-size: 1.18rem;
-        margin: 0.35rem 0 0.95rem;
-    }
-
-    .modal.final-preview-mode .document-meta,
-    .modal.final-preview-mode .document-parties,
-    .modal.final-preview-mode .document-bottom,
-    .modal.final-preview-mode .document-signatures {
-        gap: 0.7rem;
-        margin-bottom: 0.82rem;
-        font-size: 0.74rem;
-    }
-
-    .modal.final-preview-mode .document-items {
-        font-size: 0.64rem;
-        margin: 0.58rem 0 0.82rem;
-    }
-
-    .modal.final-preview-mode .document-items th,
-    .modal.final-preview-mode .document-items td {
-        padding: 0.12rem 0.14rem;
-    }
-
-    .modal.final-preview-mode .document-item-thumb {
-        width: 24px;
-        height: 24px;
-        border-radius: 7px;
-    }
-
-    .modal.final-preview-mode .document-notes,
-    .modal.final-preview-mode .document-terms,
-    .modal.final-preview-mode .document-totals,
-    .modal.final-preview-mode .approved-by-name,
-    .modal.final-preview-mode .print-date-text {
-        font-size: 0.72rem;
+        max-width: none;
+        margin: 0;
+        padding: 0.42in 0 28mm;
+        box-shadow: none;
     }
 
     .modal.final-preview-mode .modal-footer {
@@ -7212,7 +7174,7 @@ body.print-window .print-preview-sheet {
     }
 
     .modal.final-preview-mode .preview-container {
-        padding: 0.3rem 0.55rem 0.5rem;
+        padding: 0;
     }
 
     .document-sheet {
@@ -7221,32 +7183,10 @@ body.print-window .print-preview-sheet {
         padding: 1rem 0.88rem 3.6rem;
     }
 
-    .modal.final-preview-mode .document-sheet {
+    .modal.final-preview-mode .print-preview-sheet {
         min-width: 0;
         width: 100%;
-        padding: 0.72rem 0.58rem 2.45rem;
-    }
-
-    .modal.final-preview-mode .step-indicator {
-        padding-left: 0.55rem;
-        padding-right: 0.55rem;
-    }
-
-    .modal.final-preview-mode .step {
-        flex-basis: 92px;
-    }
-
-    .modal.final-preview-mode .document-title {
-        font-size: 1.04rem;
-    }
-
-    .modal.final-preview-mode .document-items {
-        font-size: 0.58rem;
-    }
-
-    .modal.final-preview-mode .document-items th,
-    .modal.final-preview-mode .document-items td {
-        padding: 0.1rem 0.1rem;
+        padding: 0.42in 0 28mm;
     }
 
     .modal.review-mode .editor-sidebar {
