@@ -2,11 +2,23 @@
 
 SantoSync is a premium quote-and-invoice workspace for modern trade teams. It combines document creation, client history, per-user preferences, admin tools, and branded export output in one polished operational dashboard.
 
-Version: `1.0.0`
+Version: `1.1.0` — Last updated: April 17, 2026
+
+## Version 1.1.0 Summary
+
+This release focuses on UI consistency, navigation improvements, and help system upgrades.
+
+Document cards now use the same icon-button system introduced for statement rows: a filled blue eye icon opens the PDF preview and a ghost-blue pencil icon opens the editor — both with animated tooltip labels on hover, matching the visual language of the statements panel exactly. The edit button inside the PDF preview popup window has been fixed; it now correctly navigates back to the editor with the document loaded.
+
+The Statements tab has been restructured to render inline within the main dashboard section. The filter tabs (All / Quotes / Invoices / Statements) remain visible at all times, so switching between document types feels like a true tab panel rather than a page transition. The separate "Back to Documents" button has been removed — any other tab takes you back naturally.
+
+The Help & FAQ modal has been fully upgraded: it now opens with a live search bar that filters topics as you type, a quick-jump index of pill-style section links, and inline visual demonstrations of the actual action buttons (rendered using the app's own CSS, so they look exactly as they do in the workspace). New help topics cover the Document Cards section, the PDF preview workflow, the Statements tab, and data backup/restore.
+
+The footer "Updated" date now reflects April 17, 2026.
 
 ## Version 1.0.0 Summary
 
-This version brings SantoSync into a more complete shared-workspace release. The app now supports server-backed shared workspace data for online use, invoice payment tracking, a three-state commercial snapshot card, stronger quote-versus-invoice card styling, compact overflow menus for document and line-item actions, a more refined pending-items cart flow, per-item image handling across the editor and cart, a dedicated catalog page, compact export thumbnails for imaged line items, admin issue inbox controls, stronger mobile modal behavior, and a cleaner branded dashboard shell. The quote/invoice workflow, cart behavior, catalog flow, document preview/export flow, and admin tooling all remain intact while the product identity and UI structure are more polished and easier to navigate.
+This version brought SantoSync into a more complete shared-workspace release. The app now supports server-backed shared workspace data for online use, invoice payment tracking, a three-state commercial snapshot card, stronger quote-versus-invoice card styling, compact overflow menus for document and line-item actions, a more refined pending-items cart flow, per-item image handling across the editor and cart, a dedicated catalog page, compact export thumbnails for imaged line items, admin issue inbox controls, stronger mobile modal behavior, and a cleaner branded dashboard shell. The quote/invoice workflow, cart behavior, catalog flow, document preview/export flow, and admin tooling all remain intact while the product identity and UI structure are more polished and easier to navigate.
 
 ## Brand Identity
 
@@ -112,7 +124,7 @@ When the app is online with the API available, user accounts are stored in the s
 
 - Create, edit, delete, and convert quotes and invoices
 - Daily reference numbering using the app’s document naming convention
-- Reference numbering now resolves against the selected local document date and checks existing same-day refs before choosing the next sequence
+- Reference numbering resolves against the selected local document date and checks existing same-day refs before choosing the next sequence
 - Admin-only user management
 - Admin-only client record management
 - Admin-only company profile management
@@ -131,13 +143,18 @@ When the app is online with the API available, user accounts are stored in the s
 - Calculator inside the document editor
 - Compact dashboard actions and snapshot strip
 - Document cards use stronger quote/invoice color separation plus text badges for `Draft` / `Logged`
-- Invoice cards support `Paid` / `Unpaid` status badges and a menu action for payment tracking
+- Invoice cards support `Paid` / `Unpaid` / `Pending` status badges and a menu action for payment tracking
 - The top commercial snapshot value card cycles through `Pipeline Value`, `Amount Invoiced`, and `Income Received`
-- Document cards use a compact overflow menu for actions such as edit, PDF preview, conversion, payment status, and delete
+- Document cards use icon-based action buttons (eye for PDF preview, pencil for edit) with animated tooltip labels on hover, visually consistent with the statement rows
+- Document card icon buttons use the same `statement-action-btn` style class system introduced for statement rows, keeping the visual language unified across the dashboard
+- The PDF preview popup window’s Edit button now correctly navigates back to the editor with the document loaded
 - Quote and invoice menus intentionally differ so payment actions appear only on invoices
+- The Statements tab renders inline within the main dashboard — the filter tab bar stays visible while browsing statements, behaving like a true tab panel
+- Statement rows show the same open/edit/delete icon buttons as document cards for a unified control language across the app
 - Mobile-tuned modal sizing for cart, issue reporting, and document preview/export flows
 - Branded splash, auth, session-loading, about, and dashboard identity
 - Branded print/PDF preview output with SantoSync company identity
+- Help & FAQ modal with live keyword search, a quick-jump section index, and inline visual button demos rendered using the app’s own CSS
 
 ## Document Output Rules
 

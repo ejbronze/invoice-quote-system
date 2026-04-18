@@ -99,7 +99,7 @@ const LANGUAGE_LOCALES = {
     es: "es-DO",
     fr: "fr-FR"
 };
-const APP_LAST_UPDATED = "2026-04-16T12:00:00";
+const APP_LAST_UPDATED = "2026-04-17T12:00:00";
 const BRAND = window.SANTO_BRAND || {
     name: "SantoSync",
     studioName: "Palmchat Innovations Lab",
@@ -1357,6 +1357,8 @@ function cacheElements() {
     elements.footerHelpWrap = document.getElementById("footerHelpWrap");
     elements.helpModal = document.getElementById("helpModal");
     elements.closeHelpModalBtn = document.getElementById("closeHelpModalBtn");
+    elements.helpSearch = document.getElementById("helpSearch");
+    elements.helpNoResults = document.getElementById("helpNoResults");
     elements.closeIssueReportModalBtn = document.getElementById("closeIssueReportModalBtn");
     elements.issueSummaryInput = document.getElementById("issueSummaryInput");
     elements.issueDetailsInput = document.getElementById("issueDetailsInput");
@@ -1650,6 +1652,8 @@ function bindEvents() {
     elements.footerHelpMenu?.addEventListener("click", handleHelpMenuItemClick);
     elements.closeHelpModalBtn?.addEventListener("click", closeHelpModal);
     document.addEventListener("click", handleHelpMenuOutsideClick);
+    initHelpSearch();
+    initHelpIndex();
     elements.issueScreenshotInput.addEventListener("change", handleIssueScreenshotChange);
     elements.submitIssueReportBtn.addEventListener("click", submitIssueReport);
     elements.closeIssueInboxModalBtn.addEventListener("click", closeIssueInboxModal);
@@ -5105,6 +5109,11 @@ function handleHelpMenuOutsideClick(event) {
 function openHelpModal(sectionId) {
     closeHelpMenu();
     setModalState(elements.helpModal, true);
+    if (elements.helpSearch) {
+        elements.helpSearch.value = "";
+        elements.helpModal.querySelectorAll(".help-item, .help-section").forEach(el => { el.hidden = false; });
+        if (elements.helpNoResults) elements.helpNoResults.classList.remove("visible");
+    }
     if (sectionId) {
         const target = document.getElementById(`help-section-${sectionId}`);
         if (target) {
@@ -5115,6 +5124,40 @@ function openHelpModal(sectionId) {
 
 function closeHelpModal() {
     setModalState(elements.helpModal, false);
+}
+
+function initHelpSearch() {
+    const input = elements.helpSearch;
+    if (!input) return;
+    input.addEventListener("input", () => {
+        const query = input.value.trim().toLowerCase();
+        const sections = elements.helpModal.querySelectorAll(".help-section");
+        let anyVisible = false;
+        sections.forEach(section => {
+            const items = section.querySelectorAll(".help-item");
+            let sectionVisible = false;
+            items.forEach(item => {
+                const matches = !query || item.textContent.toLowerCase().includes(query);
+                item.hidden = !matches;
+                if (matches) { sectionVisible = true; anyVisible = true; }
+            });
+            section.hidden = !sectionVisible;
+        });
+        if (elements.helpNoResults) {
+            elements.helpNoResults.classList.toggle("visible", !anyVisible && query.length > 0);
+        }
+    });
+}
+
+function initHelpIndex() {
+    if (!elements.helpModal) return;
+    elements.helpModal.querySelectorAll(".help-index-link").forEach(link => {
+        link.addEventListener("click", e => {
+            e.preventDefault();
+            const target = document.getElementById(link.getAttribute("href").slice(1));
+            if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+    });
 }
 
 function handleHelpMenuItemClick(event) {

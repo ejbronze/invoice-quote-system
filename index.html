@@ -500,22 +500,50 @@
         <div class="modal-content settings-modal-content help-modal-content">
             <div class="modal-header">
                 <h3>Help &amp; FAQ</h3>
-                <button class="close-btn" id="closeHelpModalBtn" type="button" aria-label="Close">x</button>
+                <button class="close-btn" id="closeHelpModalBtn" type="button" aria-label="Close">&#x2715;</button>
             </div>
-            <div class="modal-body settings-modal-body">
+
+            <div class="help-search-bar">
+                <svg class="help-search-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+                <input type="search" id="helpSearch" class="help-search-input" placeholder="Search help topics…" autocomplete="off" spellcheck="false">
+            </div>
+
+            <nav class="help-index" aria-label="Jump to section">
+                <a class="help-index-link" href="#help-section-getting-started">Getting Started</a>
+                <a class="help-index-link" href="#help-section-documents">Documents</a>
+                <a class="help-index-link" href="#help-section-document-cards">Document Cards</a>
+                <a class="help-index-link" href="#help-section-clients">Clients &amp; Statements</a>
+                <a class="help-index-link" href="#help-section-tips">Tips &amp; Shortcuts</a>
+            </nav>
+
+            <div class="modal-body settings-modal-body" id="helpModalBody">
+                <p class="help-no-results" id="helpNoResults">No results found. Try a different keyword.</p>
+
                 <section class="help-section" id="help-section-getting-started">
                     <h4 class="help-section-title">Getting Started</h4>
                     <details class="help-item">
                         <summary>How do I create a new quote or invoice?</summary>
-                        <p>From the home screen, click <strong>New Quote</strong> or <strong>New Invoice</strong> in the top toolbar. The editor opens in a 6-step flow — fill in document details, client info, line items, keywords, then review before exporting.</p>
+                        <p>From the home screen, click <strong>New Quote</strong> or <strong>New Invoice</strong> in the top toolbar. The editor opens in a step-by-step flow — fill in document details, client info, line items, keywords, then review before exporting.</p>
                     </details>
                     <details class="help-item">
                         <summary>How do I edit an existing document?</summary>
-                        <p>Click any document card on the home screen to open it in the editor. All fields are editable and changes are saved automatically when you advance steps or click Save.</p>
+                        <p>Click the <strong>pencil icon</strong> on any document card, or click <strong>Edit</strong> inside the PDF preview window. The editor reopens with all fields intact and ready to update.</p>
+                        <div class="help-visual" aria-hidden="true">
+                            <span class="help-visual-label">Edit button</span>
+                            <span class="help-visual-demo">
+                                <button class="statement-action-btn is-edit" type="button" tabindex="-1" style="pointer-events:none">
+                                    <svg viewBox="0 0 24 24"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                                </button>
+                                <span class="help-visual-caption">Edit</span>
+                            </span>
+                        </div>
                     </details>
                     <details class="help-item">
                         <summary>How do I set up my company profile?</summary>
-                        <p>Open <strong>Tools</strong> from the top toolbar, then click <strong>Open Company Profile</strong>. Your name, address, logo, and payment info will appear on every document you generate.</p>
+                        <p>Open <strong>Tools</strong> from the top toolbar, then click <strong>Open Company Profile</strong>. Your name, address, logo, letterhead, and payment info will appear on every document you generate.</p>
                     </details>
                 </section>
 
@@ -527,15 +555,63 @@
                     </details>
                     <details class="help-item">
                         <summary>How do I export a document to PDF?</summary>
-                        <p>Complete all steps in the editor and proceed to <strong>Step 6 – Final Preview</strong>. Click <strong>Open PDF Preview</strong> to open the print-ready view, then use your browser's print dialog to save as PDF.</p>
+                        <p>Click the <strong>eye icon</strong> on any document card to open the PDF preview window, then use your browser's print dialog to save as PDF. You can also reach the preview from <strong>Step 6 – Final Preview</strong> inside the editor.</p>
+                        <div class="help-visual" aria-hidden="true">
+                            <span class="help-visual-label">Open PDF preview</span>
+                            <span class="help-visual-demo">
+                                <button class="statement-action-btn is-open" type="button" tabindex="-1" style="pointer-events:none">
+                                    <svg viewBox="0 0 24 24"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>
+                                </button>
+                                <span class="help-visual-caption">Preview PDF</span>
+                            </span>
+                        </div>
                     </details>
                     <details class="help-item">
                         <summary>Can I save line items to reuse later?</summary>
-                        <p>Yes. In Step 3, use the cart icon next to <strong>Add Item</strong> to open your saved items. Any item you have saved from a previous document appears there and can be added with one click.</p>
+                        <p>Yes. In Step 3, use the cart icon next to <strong>Add Item</strong> to open your saved items. Any item saved from a previous document appears there and can be added with one click. The Catalog page aggregates all captured items across documents.</p>
                     </details>
                     <details class="help-item">
                         <summary>How do I add or update payment terms?</summary>
                         <p>Scroll to the <strong>Document Notes &amp; Terms</strong> panel at the bottom of Step 3. The <strong>Terms of Payment</strong> field is pre-filled with a NET 15 default — update it to match your agreement.</p>
+                    </details>
+                    <details class="help-item">
+                        <summary>How do I back up or restore my data?</summary>
+                        <p>Open <strong>Tools</strong> and use the <strong>JSON Backup</strong> option to export a full snapshot of your documents and clients. Use <strong>JSON Restore</strong> to import a previously saved backup. CSV import is also available for bulk document creation.</p>
+                    </details>
+                </section>
+
+                <section class="help-section" id="help-section-document-cards">
+                    <h4 class="help-section-title">Document Cards</h4>
+                    <details class="help-item">
+                        <summary>What do the action icons on document cards do?</summary>
+                        <p>Each card shows two icon buttons on the right. The <strong>eye icon</strong> opens the PDF preview in a new window. The <strong>pencil icon</strong> opens the document in the editor. A three-dot menu gives access to additional actions like payment status, type conversion, and delete.</p>
+                        <div class="help-visual" aria-hidden="true">
+                            <span class="help-visual-label">Card action buttons</span>
+                            <span class="help-visual-demo">
+                                <button class="statement-action-btn is-open" type="button" tabindex="-1" style="pointer-events:none">
+                                    <svg viewBox="0 0 24 24"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>
+                                </button>
+                                <span class="help-visual-caption">Preview PDF</span>
+                            </span>
+                            <span class="help-visual-demo">
+                                <button class="statement-action-btn is-edit" type="button" tabindex="-1" style="pointer-events:none">
+                                    <svg viewBox="0 0 24 24"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                                </button>
+                                <span class="help-visual-caption">Edit</span>
+                            </span>
+                        </div>
+                    </details>
+                    <details class="help-item">
+                        <summary>How do I use the PDF preview window?</summary>
+                        <p>The preview window shows the print-ready document. Use <strong>Print</strong> to open your browser's print dialog and save as PDF. Use <strong>Edit</strong> to jump back to the editor with the document loaded. <strong>Close Preview</strong> dismisses the window.</p>
+                    </details>
+                    <details class="help-item">
+                        <summary>How do I filter documents by type?</summary>
+                        <p>Use the <strong>All / Quotes / Invoices / Statements</strong> tabs directly below the search bar. Clicking a tab shows only documents of that type in the same view — no page reload. The Statements tab shows previously generated Statement of Account exports.</p>
+                    </details>
+                    <details class="help-item">
+                        <summary>How do I mark an invoice as paid?</summary>
+                        <p>On the home screen, open the invoice card's three-dot menu and select the appropriate payment status — <strong>Unpaid</strong>, <strong>Pending</strong>, or <strong>Paid</strong>. Paid invoices are visually flagged and excluded from outstanding balance calculations in Invoice Reports.</p>
                     </details>
                 </section>
 
@@ -543,15 +619,36 @@
                     <h4 class="help-section-title">Clients &amp; Statements</h4>
                     <details class="help-item">
                         <summary>How do I save a client for reuse?</summary>
-                        <p>In Step 2 of the editor, enter the client name and address, then click <strong>Save Client</strong>. Saved clients appear in the dropdown on future documents so you don't have to retype their details.</p>
+                        <p>In Step 2 of the editor, enter the client name and address, then click <strong>Save Client</strong>. Saved clients appear in the dropdown on future documents so you don't need to retype their details. Switching clients also restores their saved consignee fields.</p>
                     </details>
                     <details class="help-item">
                         <summary>What is a Statement of Account?</summary>
-                        <p>A Statement of Account is a PDF summary of all selected invoices for a specific client — useful for reconciliation and payment follow-up. Access it from the <strong>Invoice Reports</strong> section and use the export wizard to choose invoices and generate the PDF.</p>
+                        <p>A Statement of Account is a branded PDF summary of selected invoices for a specific client — useful for reconciliation and payment follow-up. Access it from the <strong>Invoice Reports</strong> section. Generated statements are saved and appear under the <strong>Statements</strong> tab on the home screen.</p>
                     </details>
                     <details class="help-item">
-                        <summary>How do I mark an invoice as paid?</summary>
-                        <p>On the home screen, open the invoice card's options menu and select the appropriate payment status. Paid invoices are visually flagged and excluded from outstanding balance calculations in reports.</p>
+                        <summary>What do the action icons on statement rows do?</summary>
+                        <p>Each saved statement has three action buttons. The <strong>eye icon</strong> reopens the PDF export. The <strong>pencil icon</strong> opens the statement editor so you can adjust it. The <strong>trash icon</strong> permanently deletes the saved statement.</p>
+                        <div class="help-visual" aria-hidden="true">
+                            <span class="help-visual-label">Statement action buttons</span>
+                            <span class="help-visual-demo">
+                                <button class="statement-action-btn is-open" type="button" tabindex="-1" style="pointer-events:none">
+                                    <svg viewBox="0 0 24 24"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>
+                                </button>
+                                <span class="help-visual-caption">Open</span>
+                            </span>
+                            <span class="help-visual-demo">
+                                <button class="statement-action-btn is-edit" type="button" tabindex="-1" style="pointer-events:none">
+                                    <svg viewBox="0 0 24 24"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                                </button>
+                                <span class="help-visual-caption">Edit</span>
+                            </span>
+                            <span class="help-visual-demo">
+                                <button class="statement-action-btn is-delete" type="button" tabindex="-1" style="pointer-events:none">
+                                    <svg viewBox="0 0 24 24"><path d="M4 7h16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M9 4h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M7 7l1 12h8l1-12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v5M14 11v5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                                </button>
+                                <span class="help-visual-caption">Delete</span>
+                            </span>
+                        </div>
                     </details>
                 </section>
 
@@ -559,19 +656,23 @@
                     <h4 class="help-section-title">Tips &amp; Shortcuts</h4>
                     <details class="help-item">
                         <summary>How do I switch the display language?</summary>
-                        <p>Use the language selector in the top toolbar (EN / ES / FR). The interface and generated document labels will update to match your selected language.</p>
+                        <p>Use the language selector in the top toolbar (<strong>EN / ES / FR</strong>). The interface and generated document labels will update to match your selected language immediately.</p>
                     </details>
                     <details class="help-item">
                         <summary>Can I add my company logo and signature to documents?</summary>
-                        <p>Yes. Open <strong>Company Profile</strong> from the Tools menu. You can upload a letterhead image, signature, stamp, and footer wave — all of which appear in exported PDFs.</p>
+                        <p>Yes. Open <strong>Company Profile</strong> from the Tools menu. You can upload a letterhead image, signature, stamp, and footer wave — all of which appear in exported PDFs automatically.</p>
                     </details>
                     <details class="help-item">
                         <summary>How do I search for a document?</summary>
-                        <p>Use the search bar at the top of the home screen. You can search by client name, reference number, or any keyword you added to the document in Step 4 of the editor.</p>
+                        <p>Use the search bar at the top of the home screen. You can search by client name, reference number, date, or any keyword added in Step 4 of the editor. The search works across all document types.</p>
+                    </details>
+                    <details class="help-item">
+                        <summary>How do I use the Catalog?</summary>
+                        <p>Click <strong>Catalog</strong> in the top navigation. It shows every line item captured from quotes, invoices, and the cart. You can also add manual catalog entries. Items in the catalog can be inserted into new documents quickly from the cart.</p>
                     </details>
                     <details class="help-item">
                         <summary>How do I report a bug or request a feature?</summary>
-                        <p>Click <strong>Submit / Report Issues</strong> in the footer. Fill in a summary, add any relevant screenshots, and submit. Your report is logged and visible to the admin in the Service Reports panel.</p>
+                        <p>Click <strong>Submit / Report Issues</strong> in the footer. Fill in a summary, add any relevant screenshots, and submit. Your report is logged and visible to the admin in the Service Reports panel under <strong>Tools</strong>.</p>
                     </details>
                 </section>
             </div>
