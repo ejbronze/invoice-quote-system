@@ -7112,12 +7112,64 @@ body.print-window .print-preview-sheet {
         width: 100%;
     }
 
+    .statement-export-row {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.55rem 0.65rem;
+    }
+
+    .statement-export-row .statement-export-copy {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .statement-export-row .statement-export-card-head {
+        flex-wrap: nowrap;
+        gap: 0.35rem;
+    }
+
+    .statement-export-row .statement-export-ref,
+    .statement-export-row .statement-export-date {
+        font-size: 0.66rem;
+        padding: 0.18rem 0.42rem;
+        min-height: 1.4rem;
+    }
+
+    .statement-export-row .statement-export-client {
+        display: none;
+    }
+
+    .statement-export-row .statement-export-copy strong {
+        font-size: 0.82rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
     .statement-export-metrics {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        width: auto;
+    }
+
+    .statement-export-row .statement-export-metric {
+        padding: 0.3rem 0.38rem;
+    }
+
+    .statement-export-row .statement-export-metric span {
+        font-size: 0.57rem;
+    }
+
+    .statement-export-row .statement-export-metric strong {
+        font-size: 0.72rem;
     }
 
     .statement-export-actions-bar {
-        min-width: 0;
+        flex-direction: column;
+        align-self: center;
+        gap: 0.25rem;
+        flex-shrink: 0;
+        justify-content: center;
     }
 
     .calculator-widget {
