@@ -2251,6 +2251,33 @@ body::after {
     background: rgba(255, 255, 255, 1);
 }
 
+/* Quotes tab — blue, matching the New Quote button */
+.documents-toolbar .document-folder-tabs .filter-chip[data-filter="quote"].active {
+    background: linear-gradient(180deg, #fff 0%, rgba(235, 240, 255, 0.95) 100%);
+    color: #1d3a8a;
+}
+.documents-toolbar .document-folder-tabs .filter-chip[data-filter="quote"].active::after {
+    background: linear-gradient(90deg, var(--blue), var(--blue-deep));
+}
+
+/* Invoices tab — green, matching the New Invoice button */
+.documents-toolbar .document-folder-tabs .filter-chip[data-filter="invoice"].active {
+    background: linear-gradient(180deg, #fff 0%, rgba(236, 253, 245, 0.95) 100%);
+    color: #065f46;
+}
+.documents-toolbar .document-folder-tabs .filter-chip[data-filter="invoice"].active::after {
+    background: linear-gradient(90deg, var(--mint), var(--mint-deep));
+}
+
+/* Statements tab — amber, matching the statement card theme */
+.documents-toolbar .document-folder-tabs .filter-chip[data-doc-nav="statements"].active {
+    background: linear-gradient(180deg, #fff 0%, rgba(255, 248, 225, 0.95) 100%);
+    color: #78510a;
+}
+.documents-toolbar .document-folder-tabs .filter-chip[data-doc-nav="statements"].active::after {
+    background: linear-gradient(90deg, #d97706, #b45309);
+}
+
 .documents-grid {
     display: flex;
     flex-direction: column;
