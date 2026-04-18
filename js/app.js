@@ -1071,7 +1071,7 @@ function applyTranslations() {
     setElementText(".dashboard-subtitle", t("documents_subtitle"));
     setElementText("#catalogHeading", t("catalog_heading"));
     setElementText("#catalogCopy", t("catalog_copy"));
-    setElementText("#backToDocumentsBtn", t("documents"));
+    setElementText("#backToDocumentsBtn", "Back to Documents");
     setElementText("#openCatalogItemModalBtn", t("add_catalog_item"));
     setElementText("#catalogItemModalTitle", state.editingCatalogItemId ? t("update_catalog_item") : t("add_catalog_item"));
     setElementText("#catalogItemNameLabel", t("item_name"));
@@ -1176,6 +1176,7 @@ function applyTranslations() {
     setElementText("#confirmStatementExportBtn", t("statement_generate_pdf"));
     setElementText("#statementsHeading", t("statements"));
     setElementText("#statementsCopy", t("statements_copy"));
+    setElementText("#backToDocumentsFromStatementsBtn", "Back to Documents");
     setElementText("#companyProfileTitle", t("company_profile"));
     setElementText("#companyProfileCopy", t("company_profile_copy"));
     const companyProfileLabels = elements.companyProfileModal.querySelectorAll(".form-group > span");
@@ -2485,31 +2486,86 @@ function normalizeCatalogItems(items) {
 }
 
 function normalizeStatementExports(items) {
-    return Array.isArray(items)
-        ? items
-            .filter(item => item && typeof item === "object")
-            .map(item => {
-                const payload = item.payload && typeof item.payload === "object"
-                    ? window.StatementOfAccount.normalizeStatementPayload(item.payload)
-                    : null;
-                const totals = payload
-                    ? window.StatementOfAccount.calculateStatementTotals(payload)
-                    : null;
+    if (!Array.isArray(items)) {
+        return [];
+    }
 
-                return {
-                    id: String(item.id || `statement-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
-                    title: String(item.title || payload?.title || "Statement of Account").trim(),
-                    clientName: String(item.clientName || payload?.clientName || t("unknown_client")).trim() || t("unknown_client"),
-                    generatedAt: String(item.generatedAt || new Date().toISOString()),
-                    rowCount: Number.parseInt(item.rowCount, 10) || Number(payload?.rows?.length || 0),
-                    totalSelectedFormatted: String(item.totalSelectedFormatted || payload?.totalSelectedFormatted || totals?.selectedTotalFormatted || "").trim(),
-                    totalOutstandingFormatted: String(item.totalOutstandingFormatted || payload?.grandTotalFormatted || totals?.grandTotalFormatted || "").trim(),
-                    payload
-                };
-            })
-            .filter(item => item.payload)
-            .sort((left, right) => Date.parse(right.generatedAt || 0) - Date.parse(left.generatedAt || 0))
-        : [];
+    const normalizedItems = items
+        .filter(item => item && typeof item === "object")
+        .map(item => {
+            const payload = item.payload && typeof item.payload === "object"
+                ? window.StatementOfAccount.normalizeStatementPayload(item.payload)
+                : null;
+            const totals = payload
+                ? window.StatementOfAccount.calculateStatementTotals(payload)
+                : null;
+
+            return {
+                id: String(item.id || `statement-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+                title: String(item.title || payload?.title || "Statement of Account").trim(),
+                clientName: String(item.clientName || payload?.clientName || t("unknown_client")).trim() || t("unknown_client"),
+                vendorName: String(item.vendorName || payload?.vendorName || payload?.company?.companyName || BRAND.name).trim() || BRAND.name,
+                referenceNumber: String(item.referenceNumber || payload?.referenceNumber || "").trim(),
+                generatedAt: String(item.generatedAt || new Date().toISOString()),
+                rowCount: Number.parseInt(item.rowCount, 10) || Number(payload?.rows?.length || 0),
+                totalSelectedFormatted: String(item.totalSelectedFormatted || payload?.totalSelectedFormatted || totals?.selectedTotalFormatted || "").trim(),
+                totalOutstandingFormatted: String(item.totalOutstandingFormatted || payload?.grandTotalFormatted || totals?.grandTotalFormatted || "").trim(),
+                payload
+            };
+        })
+        .filter(item => item.payload);
+
+    let nextSequence = Math.max(0, ...normalizedItems.map(item => parseStatementReferenceSequence(item.referenceNumber)));
+    normalizedItems
+        .sort((left, right) => Date.parse(left.generatedAt || 0) - Date.parse(right.generatedAt || 0))
+        .forEach(item => {
+            if (!parseStatementReferenceSequence(item.referenceNumber)) {
+                nextSequence += 1;
+                item.referenceNumber = formatStatementReferenceNumber(nextSequence);
+            }
+
+            item.payload = window.StatementOfAccount.normalizeStatementPayload({
+                ...item.payload,
+                referenceNumber: item.referenceNumber
+            });
+
+            item.title = window.StatementOfAccount.createStatementFileName(item.referenceNumber, item.clientName, item.generatedAt);
+        });
+
+    return normalizedItems.sort(compareStatementExports);
+}
+
+function parseStatementReferenceSequence(referenceNumber) {
+    const match = String(referenceNumber || "").trim().match(/^TL-S-(\d+)$/i);
+    return match ? Number.parseInt(match[1], 10) || 0 : 0;
+}
+
+function formatStatementReferenceNumber(sequence) {
+    return `TL-S-${String(Math.max(1, Number(sequence) || 1)).padStart(2, "0")}`;
+}
+
+function getNextStatementReferenceNumber() {
+    const maxSequence = Math.max(0, ...state.statementExports.map(statement => parseStatementReferenceSequence(statement.referenceNumber)));
+    return formatStatementReferenceNumber(maxSequence + 1);
+}
+
+function compareStatementExports(left, right) {
+    const vendorComparison = String(left.vendorName || "").localeCompare(String(right.vendorName || ""), getCurrentLocale(), { sensitivity: "base" });
+    if (vendorComparison !== 0) {
+        return vendorComparison;
+    }
+
+    const clientComparison = String(left.clientName || "").localeCompare(String(right.clientName || ""), getCurrentLocale(), { sensitivity: "base" });
+    if (clientComparison !== 0) {
+        return clientComparison;
+    }
+
+    const referenceComparison = parseStatementReferenceSequence(right.referenceNumber) - parseStatementReferenceSequence(left.referenceNumber);
+    if (referenceComparison !== 0) {
+        return referenceComparison;
+    }
+
+    return Date.parse(right.generatedAt || 0) - Date.parse(left.generatedAt || 0);
 }
 
 function loadStatementExports() {
@@ -3128,16 +3184,33 @@ function renderStatementsPage() {
     }
 
     elements.statementExportsList.innerHTML = state.statementExports.map(statement => `
-        <article class="client-row">
-            <div class="client-row-copy">
-                <strong>${escapeHtml(statement.clientName)}</strong>
-                <span>${escapeHtml(formatPrintedDate(statement.generatedAt))} • ${escapeHtml(String(statement.rowCount))} ${escapeHtml(t("report_total_invoices").toLowerCase())}</span>
-                <span>${escapeHtml(statement.totalSelectedFormatted)} • Grand total ${escapeHtml(statement.totalOutstandingFormatted)}</span>
+        <article class="client-row statement-export-row">
+            <div class="client-row-copy statement-export-copy">
+                <div class="statement-export-card-head">
+                    <span class="statement-export-ref">${escapeHtml(statement.referenceNumber || "TL-S-01")}</span>
+                    <span class="statement-export-date">${escapeHtml(formatPrintedDate(statement.generatedAt))}</span>
+                </div>
+                <strong>${escapeHtml(statement.vendorName || BRAND.name)}</strong>
+                <span class="statement-export-client">Client: ${escapeHtml(statement.clientName)}</span>
+                <div class="statement-export-metrics">
+                    <div class="statement-export-metric">
+                        <span>Invoices</span>
+                        <strong>${escapeHtml(String(statement.rowCount))}</strong>
+                    </div>
+                    <div class="statement-export-metric">
+                        <span>Selected Total</span>
+                        <strong>${escapeHtml(statement.totalSelectedFormatted)}</strong>
+                    </div>
+                    <div class="statement-export-metric is-grand">
+                        <span>Grand Total</span>
+                        <strong>${escapeHtml(statement.totalOutstandingFormatted)}</strong>
+                    </div>
+                </div>
             </div>
-            <div class="client-row-actions">
-                <button class="btn btn-secondary" type="button" data-statement-action="open" data-statement-id="${escapeHtml(statement.id)}">${escapeHtml(t("open_statement"))}</button>
-                <button class="btn btn-secondary" type="button" data-statement-action="edit" data-statement-id="${escapeHtml(statement.id)}">${escapeHtml(t("edit"))}</button>
-                <button class="btn btn-secondary" type="button" data-statement-action="delete" data-statement-id="${escapeHtml(statement.id)}">${escapeHtml(t("delete"))}</button>
+            <div class="client-row-actions statement-export-actions-bar">
+                <button class="statement-action-btn is-open" type="button" data-statement-action="open" data-statement-id="${escapeHtml(statement.id)}">${escapeHtml(t("open_statement"))}</button>
+                <button class="statement-action-btn is-edit" type="button" data-statement-action="edit" data-statement-id="${escapeHtml(statement.id)}">${escapeHtml(t("edit"))}</button>
+                <button class="statement-action-btn is-delete" type="button" data-statement-action="delete" data-statement-id="${escapeHtml(statement.id)}">${escapeHtml(t("delete"))}</button>
             </div>
         </article>
     `).join("");
@@ -3319,6 +3392,10 @@ function renderStatementEditModal() {
     const payload = window.StatementOfAccount.normalizeStatementPayload(statement.payload);
     elements.statementEditSummary.innerHTML = `
         <article class="invoice-report-summary-card">
+            <span>Vendor</span>
+            <strong>${escapeHtml(payload.vendorName || statement.vendorName || BRAND.name)}</strong>
+        </article>
+        <article class="invoice-report-summary-card">
             <span>Client</span>
             <strong>${escapeHtml(statement.clientName)}</strong>
         </article>
@@ -3394,6 +3471,8 @@ async function saveStatementEdit(options = {}) {
     }
     const updatedStatement = {
         ...statement,
+        vendorName: payload.vendorName || statement.vendorName || BRAND.name,
+        referenceNumber: payload.referenceNumber || statement.referenceNumber,
         clientName: payload.clientName || statement.clientName,
         rowCount: payload.rows.length,
         totalSelectedFormatted: payload.totalSelectedFormatted,
@@ -3418,12 +3497,12 @@ async function deleteStatementExport(statementId) {
         return;
     }
 
-    if (!window.confirm(`Delete saved statement for "${statement.clientName}"?`)) {
+    if (!window.confirm(`Delete saved statement "${statement.referenceNumber || "TL-S"}" for "${statement.clientName}"?`)) {
         return;
     }
 
     await saveStatementExportsState(state.statementExports.filter(entry => entry.id !== statementId));
-    setImportStatus(`Deleted saved statement for ${statement.clientName}.`);
+    setImportStatus(`Deleted saved statement ${statement.referenceNumber || ""} for ${statement.clientName}.`);
 }
 
 function handleCatalogGridClick(event) {
@@ -4341,6 +4420,7 @@ function getStatementPayload() {
     const selection = getSelectedInvoiceStatementContext();
     const profile = state.companyProfile || DEFAULT_COMPANY_PROFILE;
     const generatedAt = new Date();
+    const referenceNumber = getNextStatementReferenceNumber();
     const rows = window.StatementOfAccount.mapInvoicesToStatementRows(selection.selectedInvoices, {
         locale: getCurrentLocale(),
         getStatusLabel: getPaymentStatusLabel
@@ -4348,7 +4428,7 @@ function getStatementPayload() {
 
     return window.StatementOfAccount.normalizeStatementPayload({
         locale: getCurrentLocale(),
-        title: window.StatementOfAccount.createStatementFileName(selection.clientName || "client", generatedAt),
+        title: window.StatementOfAccount.createStatementFileName(referenceNumber, selection.clientName || "client", generatedAt),
         generatedIsoDate: generatedAt.toISOString(),
         sourceInvoiceIds: selection.selectedInvoices.map(doc => String(doc.id)),
         company: {
@@ -4361,7 +4441,7 @@ function getStatementPayload() {
         vendorName: profile.companyName || BRAND.name,
         clientName: selection.clientName || t("unknown_client"),
         generatedDate: formatPrintedDate(generatedAt),
-        referenceNumber: `TL-Statement-${String(Date.now()).slice(-6)}`,
+        referenceNumber,
         currency: "USD",
         rows,
         deductions: [],
@@ -4400,7 +4480,9 @@ async function exportStatementOfAccountPdf() {
             {
                 id: `statement-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
                 title: payload.title,
+                referenceNumber: payload.referenceNumber,
                 clientName: payload.clientName,
+                vendorName: payload.vendorName,
                 generatedAt: new Date().toISOString(),
                 rowCount: payload.rows.length,
                 totalSelectedFormatted: payload.totalSelectedFormatted,
@@ -7801,7 +7883,7 @@ function getStampUrl() {
     return url.href;
 }
 
-function getStampStyle() {
+function getStampStyle(seedText = "") {
     const offsets = [
         { x: -22, y: 4, rotate: -13 },
         { x: 26, y: -5, rotate: 9 },
@@ -7816,8 +7898,34 @@ function getStampStyle() {
         { x: 34, y: 18, rotate: -14 },
         { x: -30, y: 10, rotate: 8 },
     ];
-    const choice = offsets[Math.floor(Math.random() * offsets.length)];
+    const normalizedSeed = String(seedText || "").trim();
+    if (!normalizedSeed) {
+        const choice = offsets[Math.floor(Math.random() * offsets.length)];
+        return `left: calc(50% + ${choice.x}px); bottom: ${choice.y}px; transform: translateX(-50%) rotate(${choice.rotate}deg);`;
+    }
+
+    let hash = 0;
+    for (let index = 0; index < normalizedSeed.length; index += 1) {
+        hash = ((hash * 31) + normalizedSeed.charCodeAt(index)) >>> 0;
+    }
+
+    const choice = offsets[hash % offsets.length];
     return `left: calc(50% + ${choice.x}px); bottom: ${choice.y}px; transform: translateX(-50%) rotate(${choice.rotate}deg);`;
+}
+
+function getDocumentStampStyle(doc) {
+    if (!doc) {
+        return getStampStyle();
+    }
+
+    return getStampStyle([
+        doc.type,
+        doc.refNumber,
+        doc.date,
+        doc.clientName,
+        doc.total,
+        doc.includeStamp ? "stamp" : "no-stamp"
+    ].join("|"));
 }
 
 function getFooterWaveUrl() {
@@ -7880,6 +7988,7 @@ function buildDocumentMarkup(doc, stampStyle, options = {}) {
     const safeNotes = doc.notes && doc.notes.trim()
         ? escapeHtml(doc.notes.trim())
         : "<em>*No additional notes provided.</em>";
+    const resolvedStampStyle = stampStyle || getDocumentStampStyle(doc);
     const sheetClassName = ["document-sheet", printPreview ? "print-preview-sheet" : ""]
         .filter(Boolean)
         .join(" ");
@@ -7979,7 +8088,7 @@ function buildDocumentMarkup(doc, stampStyle, options = {}) {
                         class="signature-stamp"
                         src="${escapeHtml(getStampUrl())}"
                         alt="Company stamp"
-                        style="${escapeHtml(stampStyle || getStampStyle())}"
+                        style="${escapeHtml(resolvedStampStyle)}"
                     >
                     ` : ""}
                 </div>
@@ -8039,12 +8148,13 @@ function buildLineItemsPreviewMarkup(doc) {
 
 function generatePreviews() {
     const doc = buildDocumentData();
+    const stampStyle = getDocumentStampStyle(doc);
     if (elements.lineItemsPreviewContainer) {
         elements.lineItemsPreviewContainer.innerHTML = buildLineItemsPreviewMarkup(doc);
     }
     elements.previewContainer.innerHTML = shouldUseMobilePreviewLauncher()
         ? buildMobilePreviewLauncherMarkup(doc)
-        : buildDocumentMarkup(doc, null, { printPreview: true });
+        : buildDocumentMarkup(doc, stampStyle, { printPreview: true });
 }
 
 function shouldUseMobilePreviewLauncher() {
@@ -8142,7 +8252,7 @@ function openPrintWindow(doc, existingWindow = null) {
         return null;
     }
 
-    const stampStyle = getStampStyle();
+    const stampStyle = getDocumentStampStyle(doc);
     printWindow.document.open();
     printWindow.document.write(`
         <!DOCTYPE html>

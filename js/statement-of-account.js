@@ -118,11 +118,12 @@
             || "client";
     }
 
-    function createStatementFileName(clientName, dateValue = new Date()) {
+    function createStatementFileName(referenceNumber, clientName, dateValue = new Date()) {
         const stamp = typeof dateValue === "string"
             ? dateValue.slice(0, 10)
             : new Date(dateValue).toISOString().slice(0, 10);
-        return `statement-of-account-${slugifyFilePart(clientName)}-${stamp}.pdf`;
+        const referencePart = slugifyFilePart(referenceNumber || "statement");
+        return `${referencePart}-statement-of-account-${slugifyFilePart(clientName)}-${stamp}.pdf`;
     }
 
     function buildStatementCsv(rows) {
