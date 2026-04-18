@@ -2973,8 +2973,14 @@ function applyPageState() {
     if (elements.workspaceShell) {
         elements.workspaceShell.hidden = state.activePage === "accountAdmin";
     }
-    if (elements.documentsGrid?.closest(".dashboard")) {
-        elements.documentsGrid.closest(".dashboard").hidden = state.activePage !== "documents";
+    const dashboard = elements.documentsGrid?.closest(".dashboard");
+    if (dashboard) {
+        const onDocumentTab = state.activePage === "documents" || state.activePage === "statements";
+        dashboard.hidden = !onDocumentTab;
+        dashboard.classList.toggle("statements-active", state.activePage === "statements");
+    }
+    if (elements.documentsGrid) {
+        elements.documentsGrid.hidden = state.activePage !== "documents";
     }
 }
 
@@ -8318,7 +8324,7 @@ function openPrintWindow(doc, existingWindow = null) {
     }
 
     const stampStyle = getDocumentStampStyle(doc);
-    const docId = JSON.stringify(String(doc.id));
+    const docId = String(doc.id);
     printWindow.document.open();
     printWindow.document.write(`
         <!DOCTYPE html>
@@ -8379,7 +8385,7 @@ function openPrintWindow(doc, existingWindow = null) {
         <body class="print-window">
             <div class="pdf-preview-toolbar">
                 <button class="secondary" type="button" onclick="window.close()">Close Preview</button>
-                <button class="edit" type="button" onclick="if (window.opener && !window.opener.closed && typeof window.opener.editDocument === 'function') { window.opener.focus(); window.opener.editDocument(${docId}); window.close(); }">Edit</button>
+                <button class="edit" type="button" onclick="if (window.opener && !window.opener.closed && typeof window.opener.editDocument === 'function') { window.opener.focus(); window.opener.editDocument('${docId}'); window.close(); }">Edit</button>
                 <button type="button" onclick="window.print()">Print</button>
             </div>
             <div id="previewContainer" class="preview-container">${buildDocumentMarkup(doc, stampStyle, { printPreview: true })}</div>
@@ -8931,12 +8937,13 @@ function renderDocuments() {
                     <div class="doc-quick-actions">
                         <button
                             type="button"
-                            class="doc-quick-btn doc-quick-btn-preview"
+                            class="statement-action-btn is-open"
                             data-action="export-pdf"
                             data-id="${doc.id}"
                             aria-label="${escapeHtml(t("open_pdf_preview"))}"
-                        >Preview</button>
-                        <button type="button" class="doc-quick-btn doc-quick-btn-edit" data-action="edit" data-id="${doc.id}">${escapeHtml(t("edit"))}</button>
+                            title="${escapeHtml(t("open_pdf_preview"))}"
+                        ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.9"/></svg><span class="visually-hidden">${escapeHtml(t("open_pdf_preview"))}</span></button>
+                        <button type="button" class="statement-action-btn is-edit" data-action="edit" data-id="${doc.id}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg><span class="visually-hidden">${escapeHtml(t("edit"))}</span></button>
                     </div>
                     <div class="doc-actions-menu-wrap">
                         <button

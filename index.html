@@ -219,7 +219,16 @@
                     <p>No documents yet. Create your first quote or invoice!</p>
                 </div>
             </div>
+
+            <div id="statementsPage" hidden>
+                <div class="client-management-list" id="statementExportsList">
+                    <p class="client-list-empty">No statements generated yet.</p>
+                </div>
+            </div>
         </section>
+
+        <span id="statementsHeading" hidden></span>
+        <span id="statementsCopy" hidden></span>
 
         <section class="catalog-page" id="catalogPage" hidden>
             <div class="dashboard-topbar">
@@ -241,23 +250,6 @@
                     </svg>
                     <p>No catalog items yet.</p>
                 </div>
-            </div>
-        </section>
-
-        <section class="catalog-page statements-page" id="statementsPage" hidden>
-            <div class="dashboard-topbar">
-                <div>
-                    <h2 id="statementsHeading">Statements</h2>
-                    <p class="dashboard-subtitle" id="statementsCopy">Open previously generated Statement of Account exports and keep them alongside the rest of your workspace output.</p>
-                </div>
-                <div class="dashboard-actions-row" aria-label="Statement actions">
-                    <div class="hero-action-grid">
-                        <button class="btn btn-primary statements-back-btn" id="backToDocumentsFromStatementsBtn" type="button">Back to Documents</button>
-                    </div>
-                </div>
-            </div>
-            <div class="client-management-list" id="statementExportsList">
-                <p class="client-list-empty">No statements generated yet.</p>
             </div>
         </section>
 

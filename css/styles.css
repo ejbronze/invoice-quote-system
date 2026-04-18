@@ -2700,6 +2700,11 @@ body::after {
     border-color: rgba(20, 89, 217, 0.16);
 }
 
+.dashboard.statements-active .sort-field,
+.dashboard.statements-active .search-field {
+    display: none;
+}
+
 .doc-lock-note {
     color: var(--text-faint);
     font-size: 0.76rem;
