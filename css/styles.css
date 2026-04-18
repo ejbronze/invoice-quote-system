@@ -8468,3 +8468,17 @@ body {
 .sidebar-label {
     letter-spacing: 0.05em;
 }
+
+/* ── Hidden features (catalog, cart) ────────────────────────── */
+#topbarCatalogBtn,
+#catalogPage,
+#catalogItemModal,
+#catalogDetailsModal,
+#accountAdminCatalogBtn,
+#openSavedItemsTopbarBtn,
+#openSavedItemsBtn,
+#savedItemsModal,
+#savedItemCreateModal,
+#savedItemImageModal {
+    display: none !important;
+}

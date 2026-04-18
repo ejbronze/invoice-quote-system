@@ -7669,8 +7669,7 @@ function hasMeaningfulDraftContent() {
         const description = row.querySelector(".item-description")?.value.trim();
         const total = parseFloat(row.querySelector(".item-total-price")?.value) || 0;
         const quantity = parseFloat(row.querySelector(".item-quantity")?.value) || 0;
-        const image = row.dataset.itemImageDataUrl || "";
-        return Boolean(description || total > 0 || quantity > 1 || image);
+        return Boolean(description || total > 0 || quantity > 1);
     });
 }
 
@@ -7732,7 +7731,6 @@ function addItem() {
                         <span></span><span></span><span></span>
                     </button>
                     <div class="item-actions-menu" data-item-menu="${itemId}" hidden style="display: none;">
-                        <button type="button" class="item-actions-menu-btn" data-save-item-later="${itemId}">${escapeHtml(t("save_for_later"))}</button>
                         <button type="button" class="item-actions-menu-btn item-actions-menu-btn-danger" data-remove-item="${itemId}">${escapeHtml(t("delete"))}</button>
                     </div>
                 </div>
@@ -7758,34 +7756,6 @@ function addItem() {
                             <label>Total Price (USD)</label>
                             <input type="number" class="item-total-price" value="0.00" min="0" step="0.01">
                         </div>
-                    </div>
-                </div>
-                <div class="form-group item-image-group">
-                    <div class="item-image-uploader">
-                        <label class="item-image-upload-btn" aria-label="${escapeHtml(t("upload_item_image"))}" title="${escapeHtml(t("upload_item_image"))}">
-                            <input type="file" class="item-image-input" accept="image/*" hidden>
-                            <span class="item-image-upload-art" aria-hidden="true">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M5 7.5A2.5 2.5 0 0 1 7.5 5h9A2.5 2.5 0 0 1 19 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 16.5z" fill="none" stroke="currentColor" stroke-width="1.7"/>
-                                    <path d="M8 15l2.4-2.4a1 1 0 0 1 1.4 0l1.1 1.1 2.1-2.1a1 1 0 0 1 1.4 0L19 14.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <circle cx="10" cy="9.5" r="1.2" fill="currentColor"/>
-                                </svg>
-                            </span>
-                            <span class="item-image-upload-copy">
-                                <strong>${escapeHtml(t("item_image"))}</strong>
-                                <small>Add image</small>
-                            </span>
-                        </label>
-                        <button type="button" class="item-image-remove-btn" hidden aria-label="${escapeHtml(t("remove_item_image"))}" title="${escapeHtml(t("remove_item_image"))}">
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M6 7h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                <path d="M9.5 7V5.6c0-.4.3-.6.6-.6h3.8c.3 0 .6.2.6.6V7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                <path d="M8.2 7l.7 10.2c0 .4.3.8.8.8h4.6c.4 0 .7-.3.8-.8L16 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="item-image-preview" hidden>
-                        <img class="item-image-preview-img" alt="Item preview">
                     </div>
                 </div>
             </div>
