@@ -203,10 +203,11 @@
             </div>
 
             <div class="documents-toolbar">
-                <div class="filter-row" role="tablist" aria-label="Document filters">
-                    <button class="filter-chip active" id="filterAllBtn" type="button" data-filter="all">All</button>
-                    <button class="filter-chip" id="filterQuotesBtn" type="button" data-filter="quote">Quotes</button>
-                    <button class="filter-chip" id="filterInvoicesBtn" type="button" data-filter="invoice">Invoices</button>
+                <div class="filter-row document-folder-tabs" role="tablist" aria-label="Document folders">
+                    <button class="filter-chip active" id="filterAllBtn" type="button" data-doc-nav="all" data-filter="all" role="tab" aria-selected="true">All</button>
+                    <button class="filter-chip" id="filterQuotesBtn" type="button" data-doc-nav="quote" data-filter="quote" role="tab" aria-selected="false">Quotes</button>
+                    <button class="filter-chip" id="filterInvoicesBtn" type="button" data-doc-nav="invoice" data-filter="invoice" role="tab" aria-selected="false">Invoices</button>
+                    <button class="filter-chip" id="filterStatementsBtn" type="button" data-doc-nav="statements" role="tab" aria-selected="false">Statements</button>
                 </div>
             </div>
 
@@ -660,33 +661,13 @@
                         <span>Show internal pricing fields in line items</span>
                     </label>
                 </div>
-                <div class="settings-panel">
+                <div class="settings-panel" id="dataTransferPanel">
                     <div class="settings-panel-header">
-                        <h4>CSV Tools</h4>
-                        <p>Download the spreadsheet template or import rows to create multiple documents at once.</p>
+                        <h4 id="dataTransferPanelTitle">Data Export &amp; Import</h4>
+                        <p id="dataTransferPanelCopy">Open a smaller data tools menu when you need templates, backups, imports, or selective export.</p>
                     </div>
                     <div class="settings-actions">
-                        <button class="btn btn-secondary" id="exportCsvTemplateBtn" type="button">Export CSV Template</button>
-                        <button class="btn btn-secondary" id="importCsvBtn" type="button">Import CSV</button>
-                    </div>
-                </div>
-                <div class="settings-panel">
-                    <div class="settings-panel-header">
-                        <h4>JSON Backup</h4>
-                        <p>Export a full backup or restore documents and clients from a JSON file.</p>
-                    </div>
-                    <div class="settings-actions">
-                        <button class="btn btn-secondary" id="exportBackupBtn" type="button">Export Backup</button>
-                        <button class="btn btn-secondary" id="importBackupBtn" type="button">Import Backup</button>
-                    </div>
-                </div>
-                <div class="settings-panel">
-                    <div class="settings-panel-header">
-                        <h4>Selective Export</h4>
-                        <p>Open the export window and choose only the quotes or invoices you want in the JSON file.</p>
-                    </div>
-                    <div class="settings-actions">
-                        <button class="btn btn-secondary" id="openExportSelectionBtn" type="button">Export Selected JSON</button>
+                        <button class="btn btn-secondary" id="openDataToolsBtn" type="button">Open Data Tools</button>
                     </div>
                 </div>
                 <div class="settings-panel settings-panel-danger">
@@ -698,6 +679,49 @@
                         <button class="btn btn-secondary" id="clearLocalTestDataBtn" type="button">Clear Local Test Data</button>
                     </div>
                 </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal settings-modal" id="dataToolsModal" aria-hidden="true">
+        <div class="modal-content settings-modal-content export-tools-modal-content">
+            <div class="modal-header">
+                <h3 id="dataToolsTitle">Data Tools</h3>
+                <button class="close-btn" id="closeDataToolsModalBtn" type="button" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body settings-modal-body">
+                <p class="settings-copy" id="dataToolsCopy">Choose the export or import action you want, without crowding the main Tools page.</p>
+                <div class="data-tools-grid">
+                    <div class="settings-panel data-tool-card">
+                        <div class="settings-panel-header">
+                            <h4 id="csvToolsTitle">CSV Tools</h4>
+                            <p id="csvToolsCopy">Download the spreadsheet template or import rows to create multiple documents at once.</p>
+                        </div>
+                        <div class="settings-actions">
+                            <button class="btn btn-secondary" id="exportCsvTemplateBtn" type="button">Export CSV Template</button>
+                            <button class="btn btn-secondary" id="importCsvBtn" type="button">Import CSV</button>
+                        </div>
+                    </div>
+                    <div class="settings-panel data-tool-card">
+                        <div class="settings-panel-header">
+                            <h4 id="jsonBackupTitle">JSON Backup</h4>
+                            <p id="jsonBackupCopy">Export a full backup or restore documents and clients from a JSON file.</p>
+                        </div>
+                        <div class="settings-actions">
+                            <button class="btn btn-secondary" id="exportBackupBtn" type="button">Export Backup</button>
+                            <button class="btn btn-secondary" id="importBackupBtn" type="button">Import Backup</button>
+                        </div>
+                    </div>
+                    <div class="settings-panel data-tool-card">
+                        <div class="settings-panel-header">
+                            <h4 id="selectiveExportTitle">Selective Export</h4>
+                            <p id="selectiveExportCopy">Open the export window and choose only the quotes or invoices you want in the JSON file.</p>
+                        </div>
+                        <div class="settings-actions">
+                            <button class="btn btn-secondary" id="openExportSelectionBtn" type="button">Export Selected JSON</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -960,25 +984,33 @@
                                 <strong>Statement Rows</strong>
                                 <span>Edit the values that appear in the exported statement.</span>
                             </div>
-                            <button class="btn btn-secondary" id="addStatementRowBtn" type="button">Add Line Item</button>
+                            <button class="btn btn-primary" id="addStatementRowBtn" type="button">Add Line Item</button>
                         </div>
                         <div class="statement-edit-rows" id="statementEditRows"></div>
+                        <div class="statement-edit-subsection">
+                            <div class="statement-edit-card-head statement-edit-subsection-head">
+                                <div>
+                                    <strong>Deductions & Notes</strong>
+                                    <span>Use deductions for advances, credits, or other offsets.</span>
+                                </div>
+                                <button class="btn btn-primary" id="addStatementDeductionBtn" type="button">Add Deduction</button>
+                            </div>
+                            <div class="statement-edit-deductions" id="statementEditDeductions"></div>
+                            <label class="form-group statement-edit-note-field">
+                                <span>Statement Note</span>
+                                <textarea id="statementEditNoteInput" rows="4" placeholder="Optional note for this statement."></textarea>
+                            </label>
+                        </div>
                     </section>
-                    <section class="statement-edit-card">
+                    <aside class="statement-edit-card statement-edit-summary-card">
                         <div class="statement-edit-card-head">
                             <div>
-                                <strong>Deductions & Notes</strong>
-                                <span>Use deductions for advances, credits, or other offsets.</span>
+                                <strong>Statement Summary</strong>
+                                <span>Review the financial impact as you adjust rows and deductions.</span>
                             </div>
-                            <button class="btn btn-secondary" id="addStatementDeductionBtn" type="button">Add Deduction</button>
                         </div>
-                        <div class="statement-edit-deductions" id="statementEditDeductions"></div>
-                        <label class="form-group statement-edit-note-field">
-                            <span>Statement Note</span>
-                            <textarea id="statementEditNoteInput" rows="4" placeholder="Optional note for this statement."></textarea>
-                        </label>
                         <div class="statement-edit-totals" id="statementEditTotals"></div>
-                    </section>
+                    </aside>
                 </div>
                 <div class="settings-actions statement-edit-actions">
                     <button class="btn btn-secondary" id="previewStatementEditBtn" type="button">Save & Open PDF</button>

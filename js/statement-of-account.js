@@ -715,7 +715,7 @@
 <body>
     <div class="statement-toolbar">
         <button class="secondary" type="button" onclick="window.close()">Close Preview</button>
-        <button type="button" onclick="window.print()">Print or Save as PDF</button>
+        <button type="button" onclick="window.print()">Print</button>
     </div>
     <main class="statement-shell">
         <article class="document-sheet">
@@ -815,7 +815,6 @@
             ${footerWaveUrl ? `<img class="footer-wave" src="${escapeHtml(footerWaveUrl)}" alt="" aria-hidden="true">` : ""}
         </article>
     </main>
-    <script>window.addEventListener("load", function () { setTimeout(function () { window.print(); }, 180); });<\/script>
 </body>
 </html>`;
     }

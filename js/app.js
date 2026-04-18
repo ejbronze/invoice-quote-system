@@ -1095,6 +1095,7 @@ function applyTranslations() {
     elements.filterButtons[0].textContent = t("filter_all");
     elements.filterButtons[1].textContent = t("quotes");
     elements.filterButtons[2].textContent = t("invoices");
+    setElementText("#filterStatementsBtn", t("statements"));
 
     setElementText("#settingsModal h3", t("tools"));
     setElementText("#settingsModal .settings-copy", t("tools_copy"));
@@ -1123,19 +1124,24 @@ function applyTranslations() {
     settingsPanels[4].querySelector("h4").textContent = t("editor_preferences");
     settingsPanels[4].querySelector(".settings-panel-header p").textContent = t("editor_preferences_copy");
     settingsPanels[4].querySelector("span").textContent = t("show_internal_pricing");
-    settingsPanels[5].querySelector("h4").textContent = t("csv_tools");
-    settingsPanels[5].querySelector(".settings-panel-header p").textContent = t("csv_tools_copy");
+    settingsPanels[5].querySelector("h4").textContent = "Data Export & Import";
+    settingsPanels[5].querySelector(".settings-panel-header p").textContent = "Open a smaller data tools menu when you need templates, backups, imports, or selective export.";
+    setElementText("#openDataToolsBtn", "Open Data Tools");
+    setElementText("#dataToolsTitle", "Data Tools");
+    setElementText("#dataToolsCopy", "Choose the export or import action you want, without crowding the main Tools page.");
+    setElementText("#csvToolsTitle", t("csv_tools"));
+    setElementText("#csvToolsCopy", t("csv_tools_copy"));
     elements.exportCsvTemplateBtn.textContent = t("export_csv_template");
     elements.importCsvBtn.textContent = t("import_csv");
-    settingsPanels[6].querySelector("h4").textContent = t("json_backup");
-    settingsPanels[6].querySelector(".settings-panel-header p").textContent = t("json_backup_copy");
+    setElementText("#jsonBackupTitle", t("json_backup"));
+    setElementText("#jsonBackupCopy", t("json_backup_copy"));
     elements.exportBackupBtn.textContent = t("export_backup");
     elements.importBackupBtn.textContent = t("import_backup");
-    settingsPanels[7].querySelector("h4").textContent = t("selective_export");
-    settingsPanels[7].querySelector(".settings-panel-header p").textContent = t("selective_export_copy");
+    setElementText("#selectiveExportTitle", t("selective_export"));
+    setElementText("#selectiveExportCopy", t("selective_export_copy"));
     elements.openExportSelectionBtn.textContent = t("export_selected_json");
-    settingsPanels[8].querySelector("h4").textContent = t("local_testing");
-    settingsPanels[8].querySelector(".settings-panel-header p").textContent = t("local_testing_copy");
+    settingsPanels[6].querySelector("h4").textContent = t("local_testing");
+    settingsPanels[6].querySelector(".settings-panel-header p").textContent = t("local_testing_copy");
     elements.clearLocalTestDataBtn.textContent = t("clear_local_test_data");
 
     setElementText("#exportModal h3", t("export_json_title"));
@@ -1329,6 +1335,9 @@ function cacheElements() {
     elements.languageSelect = document.getElementById("languageSelect");
     elements.openSettingsBtn = document.getElementById("openSettingsBtn");
     elements.closeSettingsBtn = document.getElementById("closeSettingsBtn");
+    elements.dataToolsModal = document.getElementById("dataToolsModal");
+    elements.openDataToolsBtn = document.getElementById("openDataToolsBtn");
+    elements.closeDataToolsModalBtn = document.getElementById("closeDataToolsModalBtn");
     elements.exportModal = document.getElementById("exportModal");
     elements.openExportSelectionBtn = document.getElementById("openExportSelectionBtn");
     elements.closeExportModalBtn = document.getElementById("closeExportModalBtn");
@@ -1564,6 +1573,7 @@ function cacheElements() {
     elements.documentSearch = document.getElementById("documentSearch");
     elements.documentSort = document.getElementById("documentSort");
     elements.filterButtons = Array.from(document.querySelectorAll("[data-filter]"));
+    elements.documentNavButtons = Array.from(document.querySelectorAll("[data-doc-nav]"));
     elements.stepIntroTitle = document.getElementById("stepIntroTitle");
     elements.stepIntroText = document.getElementById("stepIntroText");
     elements.summaryDocType = document.getElementById("summaryDocType");
@@ -1606,6 +1616,8 @@ function bindEvents() {
     elements.topbarSignOutBtn.addEventListener("click", handleEndSessionClick);
     elements.openSettingsBtn?.addEventListener("click", openSettingsModal);
     elements.closeSettingsBtn.addEventListener("click", closeSettingsModal);
+    elements.openDataToolsBtn?.addEventListener("click", openDataToolsModal);
+    elements.closeDataToolsModalBtn?.addEventListener("click", closeDataToolsModal);
     elements.exportCsvTemplateBtn.addEventListener("click", exportCsvTemplate);
     elements.importCsvBtn.addEventListener("click", openCsvImportPicker);
     elements.exportBackupBtn.addEventListener("click", exportSystemBackup);
@@ -1734,8 +1746,18 @@ function bindEvents() {
     elements.calculatorDragHandle.addEventListener("pointerdown", startCalculatorDrag);
     window.addEventListener("pointermove", handleCalculatorDrag);
     window.addEventListener("pointerup", stopCalculatorDrag);
-    elements.filterButtons.forEach(button => {
-        button.addEventListener("click", () => setActiveFilter(button.dataset.filter));
+    elements.documentNavButtons.forEach(button => {
+        button.addEventListener("click", () => {
+            if (button.dataset.docNav === "statements") {
+                openStatementsPage();
+                return;
+            }
+
+            if (state.activePage !== "documents") {
+                setActivePage("documents");
+            }
+            setActiveFilter(button.dataset.filter);
+        });
     });
 
     [
@@ -1834,6 +1856,11 @@ function bindEvents() {
     elements.statementEditModal?.addEventListener("click", event => {
         if (event.target === elements.statementEditModal) {
             closeStatementEditModal();
+        }
+    });
+    elements.dataToolsModal?.addEventListener("click", event => {
+        if (event.target === elements.dataToolsModal) {
+            closeDataToolsModal();
         }
     });
 
@@ -2929,6 +2956,7 @@ function closeTopbarMenu() {
 function setActivePage(page) {
     state.activePage = ["catalog", "accountAdmin", "statements"].includes(page) ? page : "documents";
     applyPageState();
+    syncDocumentNavTabs();
     closeTopbarMenu();
 }
 
@@ -2958,6 +2986,22 @@ function openCatalogPage() {
 function openStatementsPage() {
     setActivePage("statements");
     renderStatementsPage();
+}
+
+function syncDocumentNavTabs() {
+    if (!elements.documentNavButtons?.length) {
+        return;
+    }
+
+    elements.documentNavButtons.forEach(button => {
+        const isStatementsTab = button.dataset.docNav === "statements";
+        const isActive = isStatementsTab
+            ? state.activePage === "statements"
+            : (state.activePage === "documents" && button.dataset.filter === state.activeFilter);
+
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
 }
 
 function openAccountAdminPage() {
@@ -3190,15 +3234,15 @@ function renderStatementsPage() {
                     <span class="statement-export-ref">${escapeHtml(statement.referenceNumber || "TL-S-01")}</span>
                     <span class="statement-export-date">${escapeHtml(formatPrintedDate(statement.generatedAt))}</span>
                 </div>
-                <strong>${escapeHtml(statement.vendorName || BRAND.name)}</strong>
-                <span class="statement-export-client">Client: ${escapeHtml(statement.clientName)}</span>
+                <span class="statement-export-client">Client</span>
+                <strong>${escapeHtml(statement.clientName)}</strong>
                 <div class="statement-export-metrics">
                     <div class="statement-export-metric">
                         <span>Invoices</span>
                         <strong>${escapeHtml(String(statement.rowCount))}</strong>
                     </div>
                     <div class="statement-export-metric">
-                        <span>Selected Total</span>
+                        <span>Total</span>
                         <strong>${escapeHtml(statement.totalSelectedFormatted)}</strong>
                     </div>
                     <div class="statement-export-metric is-grand">
@@ -3208,9 +3252,18 @@ function renderStatementsPage() {
                 </div>
             </div>
             <div class="client-row-actions statement-export-actions-bar">
-                <button class="statement-action-btn is-open" type="button" data-statement-action="open" data-statement-id="${escapeHtml(statement.id)}">${escapeHtml(t("open_statement"))}</button>
-                <button class="statement-action-btn is-edit" type="button" data-statement-action="edit" data-statement-id="${escapeHtml(statement.id)}">${escapeHtml(t("edit"))}</button>
-                <button class="statement-action-btn is-delete" type="button" data-statement-action="delete" data-statement-id="${escapeHtml(statement.id)}">${escapeHtml(t("delete"))}</button>
+                <button class="statement-action-btn is-open" type="button" data-statement-action="open" data-statement-id="${escapeHtml(statement.id)}" aria-label="${escapeHtml(t("open_statement"))}" title="${escapeHtml(t("open_statement"))}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>
+                    <span class="visually-hidden">${escapeHtml(t("open_statement"))}</span>
+                </button>
+                <button class="statement-action-btn is-edit" type="button" data-statement-action="edit" data-statement-id="${escapeHtml(statement.id)}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                    <span class="visually-hidden">${escapeHtml(t("edit"))}</span>
+                </button>
+                <button class="statement-action-btn is-delete" type="button" data-statement-action="delete" data-statement-id="${escapeHtml(statement.id)}" aria-label="${escapeHtml(t("delete"))}" title="${escapeHtml(t("delete"))}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M9 4h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M7 7l1 12h8l1-12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v5M14 11v5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                    <span class="visually-hidden">${escapeHtml(t("delete"))}</span>
+                </button>
             </div>
         </article>
     `).join("");
@@ -3271,34 +3324,35 @@ function getEditingStatementExport() {
 function buildStatementEditRowMarkup(row) {
     return `
         <article class="statement-edit-row" data-statement-row-id="${escapeHtml(String(row.id))}">
+            <div class="statement-edit-row-head">
+                <strong>${escapeHtml(row.invoiceNumber || "Statement Row")}</strong>
+                <button class="statement-edit-inline-btn" type="button" data-statement-row-remove="${escapeHtml(String(row.id))}">Remove row</button>
+            </div>
             <div class="statement-edit-row-grid">
-                <label class="form-group">
+                <label class="form-group statement-edit-field">
                     <span>Invoice Number</span>
                     <input type="text" data-statement-row-field="invoiceNumber" value="${escapeHtml(row.invoiceNumber || "")}">
                 </label>
-                <label class="form-group">
+                <label class="form-group statement-edit-field">
                     <span>PO Number(s)</span>
                     <input type="text" data-statement-row-field="poNumbers" value="${escapeHtml(row.poNumbers || "")}">
                 </label>
-                <label class="form-group">
+                <label class="form-group statement-edit-field">
                     <span>Status</span>
                     <input type="text" data-statement-row-field="status" value="${escapeHtml(row.status || "")}">
                 </label>
-                <label class="form-group">
+                <label class="form-group statement-edit-field">
                     <span>Invoice Date</span>
                     <input type="text" data-statement-row-field="invoiceDate" value="${escapeHtml(row.invoiceDate || "")}">
                 </label>
-                <label class="form-group">
+                <label class="form-group statement-edit-field">
                     <span>Due Date</span>
                     <input type="text" data-statement-row-field="dueDate" value="${escapeHtml(row.dueDate || "")}">
                 </label>
-                <label class="form-group">
+                <label class="form-group statement-edit-field statement-edit-amount-field">
                     <span>Value</span>
                     <input type="number" step="0.01" data-statement-row-field="invoiceValue" value="${escapeHtml(String(Number(row.invoiceValue || 0).toFixed(2)))}">
                 </label>
-            </div>
-            <div class="statement-edit-inline-actions">
-                <button class="statement-edit-inline-btn" type="button" data-statement-row-remove="${escapeHtml(String(row.id))}">Remove row</button>
             </div>
         </article>
     `;
@@ -3307,18 +3361,19 @@ function buildStatementEditRowMarkup(row) {
 function buildStatementEditDeductionMarkup(deduction) {
     return `
         <article class="statement-edit-deduction" data-statement-deduction-id="${escapeHtml(String(deduction.id))}">
-            <div class="statement-edit-row-grid">
-                <label class="form-group">
+            <div class="statement-edit-row-head">
+                <strong>${escapeHtml(deduction.label || "Deduction")}</strong>
+                <button class="statement-edit-inline-btn" type="button" data-statement-deduction-remove="${escapeHtml(String(deduction.id))}">Remove deduction</button>
+            </div>
+            <div class="statement-edit-row-grid statement-edit-deduction-grid">
+                <label class="form-group statement-edit-field">
                     <span>Deduction Label</span>
                     <input type="text" data-statement-deduction-field="label" value="${escapeHtml(deduction.label || "")}" placeholder="Advance payment">
                 </label>
-                <label class="form-group">
+                <label class="form-group statement-edit-field statement-edit-amount-field">
                     <span>Amount</span>
                     <input type="number" step="0.01" data-statement-deduction-field="amount" value="${escapeHtml(String(Number(deduction.amount || 0).toFixed(2)))}">
                 </label>
-            </div>
-            <div class="statement-edit-inline-actions">
-                <button class="statement-edit-inline-btn" type="button" data-statement-deduction-remove="${escapeHtml(String(deduction.id))}">Remove deduction</button>
             </div>
         </article>
     `;
@@ -3631,6 +3686,11 @@ function openSettingsModal() {
     setModalState(elements.settingsModal, true);
 }
 
+function openDataToolsModal() {
+    closeSettingsModal();
+    setModalState(elements.dataToolsModal, true);
+}
+
 function openCompanyProfileFromSettings() {
     closeSettingsModal();
     openCompanyProfileModal();
@@ -3638,6 +3698,10 @@ function openCompanyProfileFromSettings() {
 
 function closeSettingsModal() {
     setModalState(elements.settingsModal, false);
+}
+
+function closeDataToolsModal() {
+    setModalState(elements.dataToolsModal, false);
 }
 
 function openIssueInboxFromSettings() {
@@ -5617,6 +5681,7 @@ function openExportModal() {
         return;
     }
 
+    closeDataToolsModal();
     closeSettingsModal();
     renderExportSelectionList();
     setModalState(elements.exportModal, true);
@@ -8253,6 +8318,7 @@ function openPrintWindow(doc, existingWindow = null) {
     }
 
     const stampStyle = getDocumentStampStyle(doc);
+    const docId = JSON.stringify(String(doc.id));
     printWindow.document.open();
     printWindow.document.write(`
         <!DOCTYPE html>
@@ -8292,6 +8358,12 @@ function openPrintWindow(doc, existingWindow = null) {
                     color: #28415b;
                 }
 
+                .pdf-preview-toolbar button.edit {
+                    background: rgba(20, 89, 217, 0.1);
+                    color: #1459d9;
+                    border: 1px solid rgba(20, 89, 217, 0.16);
+                }
+
                 .print-preview-sheet {
                     min-height: 100vh;
                 }
@@ -8307,7 +8379,8 @@ function openPrintWindow(doc, existingWindow = null) {
         <body class="print-window">
             <div class="pdf-preview-toolbar">
                 <button class="secondary" type="button" onclick="window.close()">Close Preview</button>
-                <button type="button" onclick="window.print()">Print or Save as PDF</button>
+                <button class="edit" type="button" onclick="if (window.opener && !window.opener.closed && typeof window.opener.editDocument === 'function') { window.opener.focus(); window.opener.editDocument(${docId}); window.close(); }">Edit</button>
+                <button type="button" onclick="window.print()">Print</button>
             </div>
             <div id="previewContainer" class="preview-container">${buildDocumentMarkup(doc, stampStyle, { printPreview: true })}</div>
         </body>
@@ -8833,7 +8906,7 @@ function renderDocuments() {
         `;
 
         return `
-            <div class="document-row document-row-${doc.type}${doc.status === "draft" ? " document-row-draft" : ""}"${cardViewId} tabindex="0" role="button" aria-label="${escapeHtml(rowAriaLabel)}">
+            <div class="document-row document-row-${doc.type}${doc.status === "draft" ? " document-row-draft" : ""}"${cardViewId} aria-label="${escapeHtml(rowAriaLabel)}">
                 <div class="doc-row-main">
                     <div class="doc-row-primary">
                         <span class="doc-type-icon ${doc.type}" aria-label="${escapeHtml(docTypeLabel)}" title="${escapeHtml(docTypeLabel)}">${docTypeIcon}</span>
@@ -8855,6 +8928,16 @@ function renderDocuments() {
                     <div class="doc-total">${formatCurrency(doc.total || 0)}</div>
                 </div>
                 <div class="doc-actions">
+                    <div class="doc-quick-actions">
+                        <button
+                            type="button"
+                            class="doc-quick-btn doc-quick-btn-preview"
+                            data-action="export-pdf"
+                            data-id="${doc.id}"
+                            aria-label="${escapeHtml(t("open_pdf_preview"))}"
+                        >Preview</button>
+                        <button type="button" class="doc-quick-btn doc-quick-btn-edit" data-action="edit" data-id="${doc.id}">${escapeHtml(t("edit"))}</button>
+                    </div>
                     <div class="doc-actions-menu-wrap">
                         <button
                             type="button"
@@ -8868,8 +8951,6 @@ function renderDocuments() {
                             <span></span><span></span><span></span>
                         </button>
                         <div class="doc-actions-menu" data-document-menu="${doc.id}" hidden style="display: none;">
-                            <button type="button" class="doc-actions-menu-btn" data-action="edit" data-id="${doc.id}">${escapeHtml(t("edit"))}</button>
-                            <button type="button" class="doc-actions-menu-btn" data-action="export-pdf" data-id="${doc.id}">${escapeHtml(t("open_pdf_preview"))}</button>
                             ${doc.legacyPdfUrl ? `<button type="button" class="doc-actions-menu-btn" data-action="view-pdf" data-id="${doc.id}">${escapeHtml(t("view_pdf"))}</button>` : ""}
                             ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="unpaid" data-id="${doc.id}">${escapeHtml(t("mark_as_unpaid"))}</button>` : ""}
                             ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="pending" data-id="${doc.id}">${escapeHtml(t("mark_as_pending"))}</button>` : ""}
@@ -8898,9 +8979,7 @@ function handleSortChange(event) {
 
 function setActiveFilter(filter) {
     state.activeFilter = filter;
-    elements.filterButtons.forEach(button => {
-        button.classList.toggle("active", button.dataset.filter === filter);
-    });
+    syncDocumentNavTabs();
     renderDocuments();
 }
 
@@ -9036,22 +9115,10 @@ async function handleDocumentCardClick(event) {
     if (!card) {
         return;
     }
-
-    editDocument(card.dataset.viewId);
 }
 
 function handleDocumentCardKeydown(event) {
-    if (event.key !== "Enter" && event.key !== " ") {
-        return;
-    }
-
-    const row = event.target.closest("[data-view-id]");
-    if (!row || event.target.closest("[data-action]") || event.target.closest("[data-show-tags]") || event.target.closest("[data-toggle-document-menu]")) {
-        return;
-    }
-
-    event.preventDefault();
-    editDocument(row.dataset.viewId);
+    return;
 }
 
 async function updateDocumentPaymentStatus(id, status) {
@@ -9133,6 +9200,8 @@ function editDocument(id) {
     goToStep(getTotalSteps());
     updateEditorSummary();
 }
+
+window.editDocument = editDocument;
 
 function convertDocumentType(id, nextType) {
     const doc = getDocumentById(id);
