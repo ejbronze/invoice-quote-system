@@ -3247,7 +3247,24 @@ function renderStatementsPage() {
         return;
     }
 
-    elements.statementExportsList.innerHTML = state.statementExports.map(statement => {
+    const filtered = state.searchQuery
+        ? state.statementExports.filter(statement => {
+            const haystack = [
+                statement.clientName,
+                statement.vendorName,
+                statement.referenceNumber,
+                formatPrintedDate(statement.generatedAt)
+            ].join(" ").toLowerCase();
+            return haystack.includes(state.searchQuery);
+        })
+        : state.statementExports;
+
+    if (!filtered.length) {
+        elements.statementExportsList.innerHTML = `<p class="client-list-empty">${escapeHtml(t("no_results") || "No statements match your search.")}</p>`;
+        return;
+    }
+
+    elements.statementExportsList.innerHTML = filtered.map(statement => {
         const accentClass = `merchant-${merchantColorIndex(statement.clientName || statement.payload?.clientName || "")}`;
         return `
         <article class="client-row statement-export-row ${accentClass}">
@@ -9032,6 +9049,7 @@ function renderDocuments() {
 function handleSearchInput(event) {
     state.searchQuery = event.target.value.trim().toLowerCase();
     renderDocuments();
+    renderStatementsPage();
 }
 
 function handleSortChange(event) {

@@ -2,7 +2,11 @@
 
 SantoSync is a premium quote-and-invoice workspace for modern trade teams. It combines document creation, client history, per-user preferences, admin tools, and branded export output in one polished operational dashboard.
 
-Version: `1.1.0` — Last updated: April 17, 2026
+Version: `1.1.1` — Last updated: April 17, 2026
+
+## Version 1.1.1 Summary
+
+Statement exports are now indexed by the main search bar. Typing in the search field on the Documents page filters statements by client name, vendor name, reference number, and generated date — the same query applies simultaneously to whichever tab is active. The Statements tab shows a "No statements match your search" empty state when a query returns no results. No separate search UI is needed; the single search bar covers all content in the workspace.
 
 ## Version 1.1.0 Summary
 
@@ -155,6 +159,7 @@ When the app is online with the API available, user accounts are stored in the s
 - Branded splash, auth, session-loading, about, and dashboard identity
 - Branded print/PDF preview output with SantoSync company identity
 - Help & FAQ modal with live keyword search, a quick-jump section index, and inline visual button demos rendered using the app’s own CSS
+- The main search bar indexes both documents and statements — searching by client name, vendor, reference number, or date filters whichever tab is active with a single query
 
 ## Document Output Rules
 
