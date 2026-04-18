@@ -2804,11 +2804,6 @@ body::after {
     border-color: rgba(20, 89, 217, 0.16);
 }
 
-.dashboard.statements-active .sort-field,
-.dashboard.statements-active .search-field {
-    display: none;
-}
-
 .doc-lock-note {
     color: var(--text-faint);
     font-size: 0.76rem;
@@ -3520,8 +3515,10 @@ body::after {
 
 .statement-export-metrics {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(54px, 88px));
     gap: 0.45rem;
+    width: fit-content;
+    flex-shrink: 0;
 }
 
 .statement-export-metric {
@@ -3562,6 +3559,15 @@ body::after {
     flex-wrap: nowrap;
     gap: 0.35rem;
 }
+
+.statement-export-row.merchant-0 { border-left: 3px solid #1459d9; }
+.statement-export-row.merchant-1 { border-left: 3px solid #0f766e; }
+.statement-export-row.merchant-2 { border-left: 3px solid #7c3aed; }
+.statement-export-row.merchant-3 { border-left: 3px solid #b45309; }
+.statement-export-row.merchant-4 { border-left: 3px solid #b91c1c; }
+.statement-export-row.merchant-5 { border-left: 3px solid #0369a1; }
+.statement-export-row.merchant-6 { border-left: 3px solid #1d6f42; }
+.statement-export-row.merchant-7 { border-left: 3px solid #9d174d; }
 
 .statement-action-btn {
     position: relative;

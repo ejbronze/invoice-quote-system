@@ -3227,6 +3227,16 @@ function renderCatalog() {
     `).join("");
 }
 
+function merchantColorIndex(name) {
+    let hash = 0;
+    const str = String(name || "");
+    for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+    }
+    return Math.abs(hash) % 8;
+}
+
 function renderStatementsPage() {
     if (!elements.statementExportsList) {
         return;
@@ -3237,8 +3247,10 @@ function renderStatementsPage() {
         return;
     }
 
-    elements.statementExportsList.innerHTML = state.statementExports.map(statement => `
-        <article class="client-row statement-export-row">
+    elements.statementExportsList.innerHTML = state.statementExports.map(statement => {
+        const accentClass = `merchant-${merchantColorIndex(statement.clientName || statement.payload?.clientName || "")}`;
+        return `
+        <article class="client-row statement-export-row ${accentClass}">
             <div class="client-row-copy statement-export-copy">
                 <div class="statement-export-card-head">
                     <span class="statement-export-ref">${escapeHtml(statement.referenceNumber || "TL-S-01")}</span>
@@ -3276,7 +3288,7 @@ function renderStatementsPage() {
                 </button>
             </div>
         </article>
-    `).join("");
+    `; }).join("");
 }
 
 function handleStatementExportsListClick(event) {
