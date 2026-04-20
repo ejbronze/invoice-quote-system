@@ -25,7 +25,7 @@ const state = {
     dataMode: "server",
     workspaceDataMode: "server",
     runtimeMode: "unknown",
-    activePage: "documents",
+    activePage: "overview",
     issueReports: [],
     companyProfile: null,
     exchangeRateUsdToDop: 59,
@@ -40,6 +40,7 @@ const state = {
     pendingSavedItemImageUploadId: null,
     openItemMenuId: null,
     openDocumentMenuId: null,
+    editingClientId: null,
     draftAutosaveTimerId: null,
     editingManagedUserId: null,
     highlightedSavedItemId: null,
@@ -1125,6 +1126,7 @@ const elements = {};
 
 document.addEventListener("DOMContentLoaded", () => {
     cacheElements();
+    renderBrandAssets();
     bindEvents();
     init();
 });
@@ -1165,6 +1167,9 @@ function setElementHtml(selector, value) {
 function updateHeroOperationalSummary() {
     setElementText(".hero-copy h1", formatPrintedDate(new Date()));
     setElementText(".hero-copy p", `USD 1.00 = DOP ${formatAmount(getUsdToDopRate())}`);
+    if (elements.currencyDisplayValue) {
+        elements.currencyDisplayValue.textContent = formatAmount(getUsdToDopRate());
+    }
 }
 
 function updateExchangeRateCopy() {
@@ -1192,7 +1197,9 @@ function applyTranslations() {
     if (typeof window.applySantoBrandTheme === "function") {
         window.applySantoBrandTheme(document);
     }
-    elements.languageSelect.value = getCurrentLanguage();
+    const currentLang = getCurrentLanguage();
+    elements.languageSelect.value = currentLang;
+    if (elements.mobileDrawerLanguageSelect) elements.mobileDrawerLanguageSelect.value = currentLang;
 
     setElementText(".access-card .eyebrow", t("login_kicker"));
     setElementText(".access-card h1", t("login_title"));
@@ -1210,28 +1217,23 @@ function applyTranslations() {
     setElementText("#brandSplashTagline", BRAND.tagline);
     setElementText("#accessBrandName", BRAND.name);
     setElementText("#accessBrandTagline", BRAND.tagline);
-    setElementText(".app-topbar-kicker", t("workspace"));
-    setElementText(".app-topbar-copy strong", t("dashboard_title_top"));
     document.getElementById("languagePickerLabel").textContent = t("language");
     elements.navMenuBtn.setAttribute("aria-label", t("menu"));
-    elements.topbarCatalogBtn.textContent = t("catalog");
-    elements.topbarSettingsBtn.textContent = t("settings");
     elements.topbarSignOutBtn.textContent = t("sign_out");
+    if (elements.mobileDrawerSignOutBtn) elements.mobileDrawerSignOutBtn.textContent = t("sign_out");
+    elements.newMenuBtn.textContent = `+ ${t("new_quote").split(" ")[0]}`;
+    elements.newQuoteMenuBtn.textContent = t("new_quote");
+    elements.newInvoiceMenuBtn.textContent = t("new_invoice");
+    elements.newStatementMenuBtn.textContent = t("open_statement_export");
     updateRuntimeModeBadge();
-    elements.languageSelect.options[0].textContent = "🇺🇸";
-    elements.languageSelect.options[1].textContent = "🇩🇴";
-    elements.languageSelect.options[2].textContent = "🇫🇷";
+    elements.languageSelect.options[0].textContent = "🇺🇸 English";
+    elements.languageSelect.options[1].textContent = "🇩🇴 Español";
+    elements.languageSelect.options[2].textContent = "🇫🇷 Français";
 
     setElementText(".workspace-hero .eyebrow", t("hero_kicker"));
     updateHeroOperationalSummary();
-    elements.newQuoteBtn.textContent = t("new_quote");
-    elements.newInvoiceBtn.textContent = t("new_invoice");
-    if (elements.topbarInvoiceReportsBtn) {
-        elements.topbarInvoiceReportsBtn.textContent = t("invoice_reports");
-    }
-    if (elements.topbarStatementsBtn) {
-        elements.topbarStatementsBtn.textContent = t("statements");
-    }
+    setElementText("#viewAllDocumentsBtn", t("documents"));
+    setElementText("#reportsOpenInvoiceReportsBtn", t("invoice_reports"));
     if (!elements.importDocumentStatus.dataset.customized) {
         elements.importDocumentStatus.textContent = t("import_status_default");
         elements.importDocumentStatus.hidden = true;
@@ -1239,7 +1241,6 @@ function applyTranslations() {
     setElementText(".overview-kicker", t("snapshot"));
     setElementText(elements.totalDocumentsStat.previousElementSibling, t("documents"));
     setElementText(elements.quoteCountStat.previousElementSibling, t("quotes"));
-    setElementText(elements.invoiceCountStat.previousElementSibling, t("invoices"));
     if (state.valueView === "invoiced") {
         elements.totalValueLabel.textContent = t("amount_invoiced");
         elements.totalValueHint.textContent = t("tap_view_income");
@@ -1250,11 +1251,8 @@ function applyTranslations() {
         elements.totalValueLabel.textContent = t("pipeline_value");
         elements.totalValueHint.textContent = t("tap_view_invoiced");
     }
-    setElementText(".dashboard-topbar h2", t("documents_heading"));
-    setElementText(".dashboard-subtitle", t("documents_subtitle"));
     setElementText("#catalogHeading", t("catalog_heading"));
     setElementText("#catalogCopy", t("catalog_copy"));
-    setElementText("#backToDocumentsBtn", "Back to Documents");
     setElementText("#openCatalogItemModalBtn", t("add_catalog_item"));
     setElementText("#catalogItemModalTitle", state.editingCatalogItemId ? t("update_catalog_item") : t("add_catalog_item"));
     setElementText("#catalogItemNameLabel", t("item_name"));
@@ -1280,35 +1278,17 @@ function applyTranslations() {
     elements.filterButtons[2].textContent = t("invoices");
     setElementText("#filterStatementsBtn", t("statements"));
 
-    setElementText("#settingsModal h3", t("tools"));
-    setElementText("#settingsModal .settings-copy", t("tools_copy"));
-    setElementText(elements.newUserDisplayName.closest("label").querySelector("span"), t("display_name"));
-    setElementText(elements.newUserUsername.closest("label").querySelector("span"), t("username"));
-    setElementText(elements.newUserPassword.closest("label").querySelector("span"), t("temp_password"));
-    setElementText(elements.newUserRole.closest("label").querySelector("span"), t("role"));
-    elements.newUserDisplayName.placeholder = t("display_name_placeholder");
-    elements.newUserUsername.placeholder = t("username_placeholder");
-    elements.newUserPassword.placeholder = t("temp_password_placeholder");
-    elements.newUserRole.options[0].textContent = t("role_user");
-    elements.newUserRole.options[1].textContent = t("role_admin");
-    elements.addUserBtn.textContent = t("add_user");
+    setElementText("#settingsModal h2", t("settings"));
 
     const settingsPanels = elements.settingsModal.querySelectorAll(".settings-panel");
-    settingsPanels[0].querySelector("h4").textContent = t("company_profile");
-    settingsPanels[0].querySelector(".settings-panel-header p").textContent = t("company_profile_copy");
-    elements.settingsCompanyProfileBtn.textContent = t("company_profile");
-    settingsPanels[1].querySelector("h4").textContent = t("issue_inbox");
-    settingsPanels[1].querySelector(".settings-panel-header p").textContent = t("issue_inbox_copy");
+    settingsPanels[0].querySelector("h4").textContent = t("issue_inbox");
+    settingsPanels[0].querySelector(".settings-panel-header p").textContent = t("issue_inbox_copy");
     elements.settingsIssueInboxBtn.textContent = t("open_service_reports");
-    settingsPanels[2].querySelector("h4").textContent = t("user_management");
-    settingsPanels[2].querySelector(".settings-panel-header p").textContent = t("user_management_copy");
-    settingsPanels[3].querySelector("h4").textContent = t("client_records");
-    settingsPanels[3].querySelector(".settings-panel-header p").textContent = t("client_records_copy");
-    settingsPanels[4].querySelector("h4").textContent = t("editor_preferences");
-    settingsPanels[4].querySelector(".settings-panel-header p").textContent = t("editor_preferences_copy");
-    settingsPanels[4].querySelector("span").textContent = t("show_internal_pricing");
-    settingsPanels[5].querySelector("h4").textContent = "Data Export & Import";
-    settingsPanels[5].querySelector(".settings-panel-header p").textContent = "Open a smaller data tools menu when you need templates, backups, imports, or selective export.";
+    settingsPanels[1].querySelector("h4").textContent = t("editor_preferences");
+    settingsPanels[1].querySelector(".settings-panel-header p").textContent = t("editor_preferences_copy");
+    settingsPanels[1].querySelector("span").textContent = t("show_internal_pricing");
+    settingsPanels[2].querySelector("h4").textContent = "Data Export & Import";
+    settingsPanels[2].querySelector(".settings-panel-header p").textContent = "Open a smaller data tools menu when you need templates, backups, imports, or selective export.";
     setElementText("#openDataToolsBtn", "Open Data Tools");
     setElementText("#dataToolsTitle", "Data Tools");
     setElementText("#dataToolsCopy", "Choose the export or import action you want, without crowding the main Tools page.");
@@ -1323,8 +1303,8 @@ function applyTranslations() {
     setElementText("#selectiveExportTitle", t("selective_export"));
     setElementText("#selectiveExportCopy", t("selective_export_copy"));
     elements.openExportSelectionBtn.textContent = t("export_selected_json");
-    settingsPanels[6].querySelector("h4").textContent = t("local_testing");
-    settingsPanels[6].querySelector(".settings-panel-header p").textContent = t("local_testing_copy");
+    settingsPanels[3].querySelector("h4").textContent = t("local_testing");
+    settingsPanels[3].querySelector(".settings-panel-header p").textContent = t("local_testing_copy");
     elements.clearLocalTestDataBtn.textContent = t("clear_local_test_data");
 
     setElementText("#exportModal h3", t("export_json_title"));
@@ -1365,7 +1345,6 @@ function applyTranslations() {
     setElementText("#confirmStatementExportBtn", t("statement_generate_pdf"));
     setElementText("#statementsHeading", t("statements"));
     setElementText("#statementsCopy", t("statements_copy"));
-    setElementText("#backToDocumentsFromStatementsBtn", "Back to Documents");
     setElementText("#companyProfileTitle", t("company_profile"));
     setElementText("#companyProfileCopy", t("company_profile_copy"));
     const companyProfileLabels = elements.companyProfileModal.querySelectorAll(".form-group > span");
@@ -1408,8 +1387,6 @@ function applyTranslations() {
     elements.toggleSavedItemsFormBtn.setAttribute("title", t("add_cart_item"));
     elements.openSavedItemsBtn.setAttribute("aria-label", t("open_pending_cart"));
     elements.openSavedItemsBtn.setAttribute("title", t("open_pending_cart"));
-    elements.openSavedItemsTopbarBtn.setAttribute("aria-label", t("open_pending_cart"));
-    elements.openSavedItemsTopbarBtn.setAttribute("title", t("open_pending_cart"));
     setElementText("#aboutModalTitle", t("about_veloris"));
     setElementText("#aboutBrandName", BRAND.name);
     setElementText("#aboutBrandMeaning", t("about_brand_meaning"));
@@ -1446,7 +1423,7 @@ function renderBrandAssets() {
     window.renderSantoLogo(elements.brandSplashLogo, "monogram");
     window.renderSantoLogo(elements.accessBrandLogo, "monogram");
     window.renderSantoLogo(elements.sessionLoaderLogo, "monogram");
-    window.renderSantoLogo(elements.topbarBrandLogo, "monogram");
+    window.renderSantoLogo(elements.sidebarBrandLogo, "monogram");
     window.renderSantoLogo(elements.aboutBrandLogo, "monogram");
 }
 
@@ -1474,6 +1451,8 @@ function updateStaticEditorTranslations() {
 async function handleLanguageChange(event) {
     const nextLanguage = event.target.value;
     state.currentLanguage = TRANSLATIONS[nextLanguage] ? nextLanguage : "en";
+    if (elements.languageSelect) elements.languageSelect.value = state.currentLanguage;
+    if (elements.mobileDrawerLanguageSelect) elements.mobileDrawerLanguageSelect.value = state.currentLanguage;
 
     if (state.currentUser) {
         state.currentUser.language = state.currentLanguage;
@@ -1498,27 +1477,36 @@ function cacheElements() {
     elements.brandSplashLogo = document.getElementById("brandSplashLogo");
     elements.accessBrandLogo = document.getElementById("accessBrandLogo");
     elements.sessionLoaderLogo = document.getElementById("sessionLoaderLogo");
-    elements.topbarBrandLogo = document.getElementById("topbarBrandLogo");
     elements.sessionLoader = document.getElementById("sessionLoader");
     elements.sessionLoaderMessage = document.getElementById("sessionLoaderMessage");
     elements.runtimeModeBadge = document.getElementById("runtimeModeBadge");
     elements.environmentBadge = document.getElementById("environmentBadge");
+    elements.currencyDisplayValue = document.getElementById("currencyDisplayValue");
     elements.workspaceShell = document.querySelector(".workspace-shell");
+    elements.overviewPage = document.getElementById("overviewPage");
+    elements.documentsPage = document.getElementById("documentsPage");
+    elements.clientsPage = document.getElementById("clientsPage");
+    elements.reportsPage = document.getElementById("reportsPage");
+    elements.sidebarNav = document.getElementById("sidebarNav");
+    elements.sidebarBrandLogo = document.getElementById("sidebarBrandLogo");
+    elements.pageNavButtons = Array.from(document.querySelectorAll("[data-page-nav]"));
+    elements.settingsNavBtn = document.getElementById("settingsNavBtn");
+    elements.settingsDrawerBtn = document.getElementById("settingsDrawerBtn");
+    elements.mobileDrawer = document.getElementById("mobileDrawer");
+    elements.mobileNavBackdrop = document.getElementById("mobileNavBackdrop");
+    elements.closeMobileDrawerBtn = document.getElementById("closeMobileDrawerBtn");
     elements.settingsModal = document.getElementById("settingsModal");
     elements.sessionBadge = document.getElementById("sessionBadge");
-    elements.openSavedItemsTopbarBtn = document.getElementById("openSavedItemsTopbarBtn");
-    elements.savedItemsCountBadge = document.getElementById("savedItemsCountBadge");
     elements.navMenuBtn = document.getElementById("navMenuBtn");
-    elements.topbarMenu = document.getElementById("topbarMenu");
-    elements.topbarAccountAdminBtn = document.getElementById("topbarAccountAdminBtn");
-    elements.topbarInvoiceReportsBtn = document.getElementById("topbarInvoiceReportsBtn");
-    elements.topbarStatementsBtn = document.getElementById("topbarStatementsBtn");
-    elements.topbarCatalogBtn = document.getElementById("topbarCatalogBtn");
-    elements.topbarSettingsBtn = document.getElementById("topbarSettingsBtn");
+    elements.newMenuBtn = document.getElementById("newMenuBtn");
+    elements.newMenu = document.getElementById("newMenu");
+    elements.newQuoteMenuBtn = document.getElementById("newQuoteMenuBtn");
+    elements.newInvoiceMenuBtn = document.getElementById("newInvoiceMenuBtn");
+    elements.newStatementMenuBtn = document.getElementById("newStatementMenuBtn");
     elements.topbarSignOutBtn = document.getElementById("topbarSignOutBtn");
+    elements.mobileDrawerSignOutBtn = document.getElementById("mobileDrawerSignOutBtn");
     elements.languageSelect = document.getElementById("languageSelect");
-    elements.openSettingsBtn = document.getElementById("openSettingsBtn");
-    elements.closeSettingsBtn = document.getElementById("closeSettingsBtn");
+    elements.mobileDrawerLanguageSelect = document.querySelector(".mobile-drawer-language-select");
     elements.dataToolsModal = document.getElementById("dataToolsModal");
     elements.openDataToolsBtn = document.getElementById("openDataToolsBtn");
     elements.closeDataToolsModalBtn = document.getElementById("closeDataToolsModalBtn");
@@ -1554,6 +1542,7 @@ function cacheElements() {
     elements.issueInboxList = document.getElementById("issueInboxList");
     elements.settingsIssueInboxBtn = document.getElementById("settingsIssueInboxBtn");
     elements.invoiceReportsModal = document.getElementById("invoiceReportsModal");
+    elements.reportsOpenInvoiceReportsBtn = document.getElementById("reportsOpenInvoiceReportsBtn");
     elements.closeInvoiceReportsModalBtn = document.getElementById("closeInvoiceReportsModalBtn");
     elements.invoiceReportSort = document.getElementById("invoiceReportSort");
     elements.invoiceReportStartDate = document.getElementById("invoiceReportStartDate");
@@ -1606,7 +1595,6 @@ function cacheElements() {
     elements.catalogPage = document.getElementById("catalogPage");
     elements.statementsPage = document.getElementById("statementsPage");
     elements.statementExportsList = document.getElementById("statementExportsList");
-    elements.backToDocumentsFromStatementsBtn = document.getElementById("backToDocumentsFromStatementsBtn");
     elements.accountAdminPage = document.getElementById("accountAdminPage");
     elements.accountAdminWorkspaceBtn = document.getElementById("accountAdminWorkspaceBtn");
     elements.accountAdminCatalogBtn = document.getElementById("accountAdminCatalogBtn");
@@ -1640,7 +1628,6 @@ function cacheElements() {
     elements.accountSessionLogList = document.getElementById("accountSessionLogList");
     elements.accountActivityLogList = document.getElementById("accountActivityLogList");
     elements.catalogGrid = document.getElementById("catalogGrid");
-    elements.backToDocumentsBtn = document.getElementById("backToDocumentsBtn");
     elements.openCatalogItemModalBtn = document.getElementById("openCatalogItemModalBtn");
     elements.catalogItemModal = document.getElementById("catalogItemModal");
     elements.closeCatalogItemModalBtn = document.getElementById("closeCatalogItemModalBtn");
@@ -1667,7 +1654,6 @@ function cacheElements() {
     elements.catalogItemDetailsInput = document.getElementById("catalogItemDetailsInput");
     elements.catalogItemNotesInput = document.getElementById("catalogItemNotesInput");
     elements.saveCatalogItemBtn = document.getElementById("saveCatalogItemBtn");
-    elements.settingsCompanyProfileBtn = document.getElementById("settingsCompanyProfileBtn");
     elements.openSavedItemsBtn = document.getElementById("openSavedItemsBtn");
     elements.openSavedItemsInlineCount = document.getElementById("openSavedItemsInlineCount");
     elements.closeCompanyProfileModalBtn = document.getElementById("closeCompanyProfileModalBtn");
@@ -1698,14 +1684,29 @@ function cacheElements() {
     elements.aboutBrandLogo = document.getElementById("aboutBrandLogo");
     elements.closeAboutModalBtn = document.getElementById("closeAboutModalBtn");
     elements.showInternalPricingToggle = document.getElementById("showInternalPricingToggle");
-    elements.newUserDisplayName = document.getElementById("newUserDisplayName");
-    elements.newUserUsername = document.getElementById("newUserUsername");
-    elements.newUserPassword = document.getElementById("newUserPassword");
-    elements.newUserRole = document.getElementById("newUserRole");
-    elements.addUserBtn = document.getElementById("addUserBtn");
-    elements.userManagementList = document.getElementById("userManagementList");
     elements.clientManagementList = document.getElementById("clientManagementList");
+    elements.clientsPageHeaderActions = document.getElementById("clientsPageHeaderActions");
+    elements.addClientBtn = document.getElementById("addClientBtn");
+    elements.clientModal = document.getElementById("clientModal");
+    elements.clientModalTitle = document.getElementById("clientModalTitle");
+    elements.clientModalName = document.getElementById("clientModalName");
+    elements.clientModalAddress = document.getElementById("clientModalAddress");
+    elements.clientModalConsigneeName = document.getElementById("clientModalConsigneeName");
+    elements.clientModalConsigneeAddress = document.getElementById("clientModalConsigneeAddress");
+    elements.clientModalContactsList = document.getElementById("clientModalContactsList");
+    elements.addClientContactBtn = document.getElementById("addClientContactBtn");
+    elements.saveClientModalBtn = document.getElementById("saveClientModalBtn");
+    elements.cancelClientModalBtn = document.getElementById("cancelClientModalBtn");
+    elements.closeClientModalBtn = document.getElementById("closeClientModalBtn");
     elements.documentModal = document.getElementById("documentModal");
+    elements.editorProgressStep = document.getElementById("editorProgressStep");
+    elements.editorProgressTitle = document.getElementById("editorProgressTitle");
+    elements.editorProgressFill = document.getElementById("editorProgressFill");
+    elements.editorMobileSummary = document.getElementById("editorMobileSummary");
+    elements.editorMobileSummaryType = document.getElementById("editorMobileSummaryType");
+    elements.editorMobileSummaryRef = document.getElementById("editorMobileSummaryRef");
+    elements.editorMobileSummaryClient = document.getElementById("editorMobileSummaryClient");
+    elements.editorMobileSummaryTotal = document.getElementById("editorMobileSummaryTotal");
     elements.stepIndicator = document.querySelector(".step-indicator");
     elements.modalTitle = document.getElementById("modalTitle");
     elements.documentsGrid = document.getElementById("documentsGrid");
@@ -1730,8 +1731,14 @@ function cacheElements() {
     elements.nextBtn = document.getElementById("nextBtn");
     elements.saveBtn = document.getElementById("saveBtn");
     elements.exportPdfBtn = document.getElementById("exportPdfBtn");
-    elements.newQuoteBtn = document.getElementById("newQuoteBtn");
-    elements.newInvoiceBtn = document.getElementById("newInvoiceBtn");
+    elements.overviewNewBtn = document.getElementById("overviewNewBtn");
+    elements.overviewNewMenu = document.getElementById("overviewNewMenu");
+    elements.overviewNewQuoteBtn = document.getElementById("overviewNewQuoteBtn");
+    elements.overviewNewInvoiceBtn = document.getElementById("overviewNewInvoiceBtn");
+    elements.overviewNewStatementBtn = document.getElementById("overviewNewStatementBtn");
+    elements.viewAllDocumentsBtn = document.getElementById("viewAllDocumentsBtn");
+    elements.overviewRecentDocuments = document.getElementById("overviewRecentDocuments");
+    elements.overviewSummaryGrid = document.getElementById("overviewSummaryGrid");
     elements.calculatorLauncherModal = document.getElementById("calculatorLauncherModal");
     elements.exportCsvTemplateBtn = document.getElementById("exportCsvTemplateBtn");
     elements.importCsvBtn = document.getElementById("importCsvBtn");
@@ -1743,9 +1750,9 @@ function cacheElements() {
     elements.closeModalBtn = document.getElementById("closeModalBtn");
     elements.saveClientBtn = document.getElementById("saveClientBtn");
     elements.addItemBtn = document.getElementById("addItemBtn");
+    elements.addAnotherItemBtn = document.getElementById("addAnotherItemBtn");
     elements.totalDocumentsStat = document.getElementById("totalDocumentsStat");
     elements.quoteCountStat = document.getElementById("quoteCountStat");
-    elements.invoiceCountStat = document.getElementById("invoiceCountStat");
     elements.totalValueStat = document.getElementById("totalValueStat");
     elements.totalValueLabel = document.getElementById("totalValueLabel");
     elements.totalValueHint = document.getElementById("totalValueHint");
@@ -1759,7 +1766,6 @@ function cacheElements() {
     elements.documentSearch = document.getElementById("documentSearch");
     elements.documentSort = document.getElementById("documentSort");
     elements.filterButtons = Array.from(document.querySelectorAll("[data-filter]"));
-    elements.documentNavButtons = Array.from(document.querySelectorAll("[data-doc-nav]"));
     elements.stepIntroTitle = document.getElementById("stepIntroTitle");
     elements.stepIntroText = document.getElementById("stepIntroText");
     elements.summaryDocType = document.getElementById("summaryDocType");
@@ -1782,26 +1788,50 @@ function cacheElements() {
 
 function bindEvents() {
     elements.accessForm.addEventListener("submit", handleAccessSubmit);
-    elements.newQuoteBtn.addEventListener("click", () => {
+    elements.overviewNewBtn?.addEventListener("click", toggleOverviewNewMenu);
+    elements.overviewNewQuoteBtn?.addEventListener("click", () => {
+        closeOverviewNewMenu();
         prepareNewDocument("quote");
         openModal("quote");
     });
-    elements.topbarInvoiceReportsBtn?.addEventListener("click", () => { closeTopbarMenu(); openInvoiceReportsModal(); });
-    elements.topbarStatementsBtn?.addEventListener("click", openStatementsPage);
-    elements.newInvoiceBtn.addEventListener("click", () => {
+    elements.overviewNewInvoiceBtn?.addEventListener("click", () => {
+        closeOverviewNewMenu();
         prepareNewDocument("invoice");
         openModal("invoice");
     });
+    elements.overviewNewStatementBtn?.addEventListener("click", () => {
+        closeOverviewNewMenu();
+        openInvoiceReportsModal();
+    });
+    elements.newQuoteMenuBtn?.addEventListener("click", () => {
+        closeNewMenu();
+        prepareNewDocument("quote");
+        openModal("quote");
+    });
+    elements.newInvoiceMenuBtn?.addEventListener("click", () => {
+        closeNewMenu();
+        prepareNewDocument("invoice");
+        openModal("invoice");
+    });
+    elements.newStatementMenuBtn?.addEventListener("click", () => {
+        closeNewMenu();
+        openInvoiceReportsModal();
+    });
     elements.languageSelect.addEventListener("change", handleLanguageChange);
+    elements.mobileDrawerLanguageSelect?.addEventListener("change", handleLanguageChange);
     elements.settingsIssueInboxBtn.addEventListener("click", openIssueInboxFromSettings);
-    elements.openSavedItemsTopbarBtn.addEventListener("click", openSavedItemsModal);
-    elements.navMenuBtn.addEventListener("click", toggleTopbarMenu);
-    elements.topbarAccountAdminBtn?.addEventListener("click", openAccountAdminPage);
-    elements.topbarCatalogBtn.addEventListener("click", openCatalogPage);
-    elements.topbarSettingsBtn.addEventListener("click", handleTopbarSettingsClick);
+    elements.navMenuBtn.addEventListener("click", toggleMobileDrawer);
+    elements.newMenuBtn?.addEventListener("click", toggleNewMenu);
+    elements.closeMobileDrawerBtn?.addEventListener("click", closeMobileDrawer);
+    elements.mobileNavBackdrop?.addEventListener("click", closeMobileDrawer);
+    elements.pageNavButtons.forEach(button => {
+        button.addEventListener("click", () => {
+            setActivePage(button.dataset.pageNav);
+            closeMobileDrawer();
+        });
+    });
     elements.topbarSignOutBtn.addEventListener("click", handleEndSessionClick);
-    elements.openSettingsBtn?.addEventListener("click", openSettingsModal);
-    elements.closeSettingsBtn.addEventListener("click", closeSettingsModal);
+    elements.mobileDrawerSignOutBtn?.addEventListener("click", handleEndSessionClick);
     elements.openDataToolsBtn?.addEventListener("click", openDataToolsModal);
     elements.closeDataToolsModalBtn?.addEventListener("click", closeDataToolsModal);
     elements.exportCsvTemplateBtn.addEventListener("click", exportCsvTemplate);
@@ -1812,7 +1842,6 @@ function bindEvents() {
     elements.selectAllExportsToggle.addEventListener("change", handleSelectAllExportsToggle);
     elements.exportSelectedJsonBtn.addEventListener("click", exportSelectedDocuments);
     elements.openIssueReportBtn.addEventListener("click", openIssueReportModal);
-    elements.settingsCompanyProfileBtn.addEventListener("click", openCompanyProfileFromSettings);
     elements.openSavedItemsBtn.addEventListener("click", openSavedItemsModal);
     elements.openAboutBtn.addEventListener("click", openAboutModal);
     elements.closeIssueReportModalBtn.addEventListener("click", closeIssueReportModal);
@@ -1821,9 +1850,7 @@ function bindEvents() {
     elements.closeSavedItemCreateModalBtn.addEventListener("click", closeSavedItemCreateModal);
     elements.closeSavedItemImageModalBtn?.addEventListener("click", closeSavedItemImageModal);
     elements.toggleSavedItemsFormBtn.addEventListener("click", openSavedItemCreateModal);
-    elements.backToDocumentsBtn.addEventListener("click", () => setActivePage("documents"));
-    elements.backToDocumentsFromStatementsBtn?.addEventListener("click", () => setActivePage("documents"));
-    elements.accountAdminWorkspaceBtn?.addEventListener("click", () => setActivePage("documents"));
+    elements.accountAdminWorkspaceBtn?.addEventListener("click", () => setActivePage("overview"));
     elements.accountAdminCatalogBtn?.addEventListener("click", openCatalogPage);
     elements.openCatalogItemModalBtn.addEventListener("click", openCatalogItemModal);
     elements.closeCatalogItemModalBtn.addEventListener("click", closeCatalogItemModal);
@@ -1842,6 +1869,7 @@ function bindEvents() {
     elements.submitIssueReportBtn.addEventListener("click", submitIssueReport);
     elements.closeIssueInboxModalBtn.addEventListener("click", closeIssueInboxModal);
     elements.closeInvoiceReportsModalBtn.addEventListener("click", closeInvoiceReportsModal);
+    elements.reportsOpenInvoiceReportsBtn?.addEventListener("click", openInvoiceReportsModal);
     elements.invoiceReportSort.addEventListener("change", renderInvoiceReport);
     elements.invoiceReportStartDate.addEventListener("change", () => { document.querySelectorAll(".preset-chip").forEach(b => b.classList.remove("active")); renderInvoiceReport(); });
     elements.invoiceReportEndDate.addEventListener("change", () => { document.querySelectorAll(".preset-chip").forEach(b => b.classList.remove("active")); renderInvoiceReport(); });
@@ -1880,14 +1908,20 @@ function bindEvents() {
     elements.addSavedItemBtn.addEventListener("click", addSavedItemFromModal);
     elements.savedItemsList.addEventListener("click", handleSavedItemsListClick);
     elements.savedItemsList.addEventListener("keydown", handleSavedItemsListKeydown);
+    elements.overviewRecentDocuments?.addEventListener("click", event => {
+        const button = event.target.closest("[data-open-overview-doc]");
+        if (!button) {
+            return;
+        }
+        setActivePage("documents");
+        editDocument(button.dataset.openOverviewDoc);
+    });
     document.addEventListener("click", handleImageUploadTriggerClick);
     elements.savedItemImageInput.addEventListener("change", handleSavedItemImageInputChange);
     elements.savedItemImageRemoveBtn.addEventListener("click", clearSavedItemImageSelection);
     elements.savedItemQuantityInput.addEventListener("input", syncSavedItemsTotal);
     elements.savedItemUnitPriceInput.addEventListener("input", syncSavedItemsTotal);
     elements.clearLocalTestDataBtn.addEventListener("click", clearLocalTestData);
-    elements.addUserBtn.addEventListener("click", handleAddUser);
-    elements.userManagementList.addEventListener("click", handleUserManagementClick);
     elements.accountAdminSaveBtn?.addEventListener("click", handleAccountAdminSaveUser);
     elements.accountAdminCancelEditBtn?.addEventListener("click", resetAccountAdminForm);
     elements.accountAdminUserList?.addEventListener("click", handleAccountAdminUserListClick);
@@ -1897,9 +1931,22 @@ function bindEvents() {
     elements.clearStampAssetBtn?.addEventListener("click", () => clearBrandAsset("stamp"));
     elements.saveBrandAssetsBtn?.addEventListener("click", saveBrandAssets);
     elements.clientManagementList.addEventListener("click", handleClientManagementClick);
+    elements.clientManagementList.addEventListener("click", handleClientRowToggle);
+    elements.clientManagementList.addEventListener("keydown", e => {
+        if ((e.key === "Enter" || e.key === " ") && e.target.closest("[data-toggle-client]") && !e.target.closest("[data-client-action]")) {
+            e.preventDefault();
+            handleClientRowToggle(e);
+        }
+    });
+    elements.addClientBtn?.addEventListener("click", () => openClientModal(null));
+    elements.addClientContactBtn?.addEventListener("click", addClientContactRow);
+    elements.saveClientModalBtn?.addEventListener("click", saveClientFromModal);
+    elements.cancelClientModalBtn?.addEventListener("click", closeClientModal);
+    elements.closeClientModalBtn?.addEventListener("click", closeClientModal);
     elements.issueInboxList.addEventListener("click", handleIssueInboxClick);
     elements.valueToggleCard.addEventListener("click", toggleValueView);
     elements.overviewMobileToggle?.addEventListener("click", toggleMobileOverview);
+    elements.viewAllDocumentsBtn?.addEventListener("click", () => setActivePage("documents"));
     elements.showInternalPricingToggle.addEventListener("change", handleInternalPricingToggleChange);
     elements.importBackupBtn.addEventListener("click", () => {
         elements.importBackupInput.click();
@@ -1912,6 +1959,7 @@ function bindEvents() {
     elements.clientSelect.addEventListener("change", onClientSelectChange);
     elements.saveClientBtn.addEventListener("click", saveClient);
     elements.addItemBtn.addEventListener("click", addItem);
+    elements.addAnotherItemBtn?.addEventListener("click", addItem);
     elements.prevBtn.addEventListener("click", prevStep);
     elements.nextBtn.addEventListener("click", nextStep);
     elements.saveBtn.addEventListener("click", saveDocumentOnly);
@@ -1923,6 +1971,7 @@ function bindEvents() {
     elements.itemsContainer.addEventListener("input", handleItemsChange);
     elements.itemsContainer.addEventListener("change", handleItemsChange);
     elements.itemsContainer.addEventListener("change", handleItemImageInputChange);
+    elements.itemsContainer.addEventListener("keydown", handleItemEditorKeydown);
     elements.documentSearch.addEventListener("input", handleSearchInput);
     elements.documentSort.addEventListener("change", handleSortChange);
     elements.documentsGrid.addEventListener("keydown", handleDocumentCardKeydown);
@@ -1934,13 +1983,8 @@ function bindEvents() {
     elements.calculatorDragHandle.addEventListener("pointerdown", startCalculatorDrag);
     window.addEventListener("pointermove", handleCalculatorDrag);
     window.addEventListener("pointerup", stopCalculatorDrag);
-    elements.documentNavButtons.forEach(button => {
+    elements.filterButtons.forEach(button => {
         button.addEventListener("click", () => {
-            if (button.dataset.docNav === "statements") {
-                openStatementsPage();
-                return;
-            }
-
             if (state.activePage !== "documents") {
                 setActivePage("documents");
             }
@@ -1973,12 +2017,6 @@ function bindEvents() {
     elements.documentModal.addEventListener("click", event => {
         if (event.target === elements.documentModal) {
             closeModal();
-        }
-    });
-
-    elements.settingsModal.addEventListener("click", event => {
-        if (event.target === elements.settingsModal) {
-            closeSettingsModal();
         }
     });
 
@@ -2095,7 +2133,7 @@ async function init() {
     if (isOwnerSession()) {
         resetAccountAdminForm();
     }
-    setActivePage(isOwnerSession() ? "accountAdmin" : "documents");
+    setActivePage("overview");
     applyRoleAccess();
     applyAccessState(true);
     setSessionLoader(false);
@@ -2985,26 +3023,22 @@ function clearCurrentSession() {
 
 function applyRoleAccess() {
     const isAdmin = isAdminSession();
-    const isOwner = isOwnerSession();
     const hasSession = hasActiveSession();
 
-    if (elements.openSettingsBtn) {
-        elements.openSettingsBtn.hidden = !isAdmin;
-        elements.openSettingsBtn.setAttribute("aria-hidden", String(!isAdmin));
-        elements.openSettingsBtn.tabIndex = isAdmin ? 0 : -1;
-    }
     elements.sessionBadge.hidden = !hasSession;
     elements.sessionBadge.textContent = hasSession
         ? state.currentUser.displayName
         : "";
-    elements.topbarAccountAdminBtn.hidden = !isOwner;
-    elements.topbarSettingsBtn.hidden = !isAdmin;
-    elements.settingsCompanyProfileBtn.hidden = !isAdmin;
     elements.settingsIssueInboxBtn.hidden = !isAdmin;
-    elements.topbarAccountAdminBtn?.setAttribute("aria-hidden", String(!isOwner));
-    elements.topbarSettingsBtn.setAttribute("aria-hidden", String(!isAdmin));
-    elements.settingsCompanyProfileBtn.setAttribute("aria-hidden", String(!isAdmin));
     elements.settingsIssueInboxBtn.setAttribute("aria-hidden", String(!isAdmin));
+    if (elements.settingsNavBtn) {
+        elements.settingsNavBtn.hidden = !isAdmin;
+        elements.settingsNavBtn.setAttribute("aria-hidden", String(!isAdmin));
+    }
+    if (elements.settingsDrawerBtn) {
+        elements.settingsDrawerBtn.hidden = !isAdmin;
+        elements.settingsDrawerBtn.setAttribute("aria-hidden", String(!isAdmin));
+    }
     updateInboxBadge();
 
     if (!isAdmin) {
@@ -3012,8 +3046,8 @@ function applyRoleAccess() {
         closeIssueInboxModal();
     }
 
-    if (!isOwner && state.activePage === "accountAdmin") {
-        state.activePage = "documents";
+    if (!isAdmin && state.activePage === "settings") {
+        state.activePage = "overview";
     }
 
     renderUserManagementList();
@@ -3066,7 +3100,7 @@ async function unlockAccess(user) {
     state.currentUser = getStoredSessionUser() || { ...user, sessionLogId };
     recordActivity("signed in", "Opened the SantoSync workspace.");
     await bootstrapAppData();
-    setActivePage(isOwnerSession() ? "accountAdmin" : "documents");
+    setActivePage("overview");
     applyRoleAccess();
     applyAccessState(true);
 }
@@ -3131,44 +3165,95 @@ function handleEndSessionClick() {
 }
 
 function toggleTopbarMenu() {
+    if (!elements.topbarMenu) return;
     const isOpen = !elements.topbarMenu.hidden;
     elements.topbarMenu.hidden = isOpen;
-    elements.navMenuBtn.setAttribute("aria-expanded", String(!isOpen));
+    elements.userMenuBtn?.setAttribute("aria-expanded", String(!isOpen));
+    if (!isOpen) {
+        closeNewMenu();
+    }
 }
 
 function closeTopbarMenu() {
+    if (!elements.topbarMenu) return;
     elements.topbarMenu.hidden = true;
-    elements.navMenuBtn.setAttribute("aria-expanded", "false");
+    elements.userMenuBtn?.setAttribute("aria-expanded", "false");
+}
+
+function toggleNewMenu() {
+    const isOpen = !elements.newMenu.hidden;
+    elements.newMenu.hidden = isOpen;
+    elements.newMenuBtn?.setAttribute("aria-expanded", String(!isOpen));
+    if (!isOpen) {
+        closeTopbarMenu();
+    }
+}
+
+function closeNewMenu() {
+    if (!elements.newMenu) {
+        return;
+    }
+    elements.newMenu.hidden = true;
+    elements.newMenuBtn?.setAttribute("aria-expanded", "false");
+}
+
+function toggleOverviewNewMenu() {
+    if (!elements.overviewNewMenu) return;
+    const isOpen = !elements.overviewNewMenu.hidden;
+    elements.overviewNewMenu.hidden = isOpen;
+    elements.overviewNewBtn?.setAttribute("aria-expanded", String(!isOpen));
+    if (!isOpen) closeNewMenu();
+}
+
+function closeOverviewNewMenu() {
+    if (!elements.overviewNewMenu) return;
+    elements.overviewNewMenu.hidden = true;
+    elements.overviewNewBtn?.setAttribute("aria-expanded", "false");
+}
+
+function toggleMobileDrawer() {
+    const isOpen = !elements.mobileDrawer.hidden;
+    if (isOpen) {
+        closeMobileDrawer();
+        return;
+    }
+
+    elements.mobileDrawer.hidden = false;
+    elements.mobileDrawer.setAttribute("aria-hidden", "false");
+    elements.mobileNavBackdrop.hidden = false;
+    elements.navMenuBtn?.setAttribute("aria-expanded", "true");
+}
+
+function closeMobileDrawer() {
+    if (!elements.mobileDrawer || !elements.mobileNavBackdrop) {
+        return;
+    }
+
+    elements.mobileDrawer.hidden = true;
+    elements.mobileDrawer.setAttribute("aria-hidden", "true");
+    elements.mobileNavBackdrop.hidden = true;
+    elements.navMenuBtn?.setAttribute("aria-expanded", "false");
 }
 
 function setActivePage(page) {
-    state.activePage = ["catalog", "accountAdmin", "statements"].includes(page) ? page : "documents";
+    const validPages = ["overview", "documents", "clients", "catalog", "reports", "settings"];
+    state.activePage = validPages.includes(page) ? page : "overview";
     applyPageState();
-    syncDocumentNavTabs();
+    syncPageNavigation();
     closeTopbarMenu();
+    closeNewMenu();
+    closeOverviewNewMenu();
 }
 
 function applyPageState() {
-    if (elements.catalogPage) {
-        elements.catalogPage.hidden = state.activePage !== "catalog";
-    }
-    if (elements.statementsPage) {
-        elements.statementsPage.hidden = state.activePage !== "statements";
-    }
+    if (elements.overviewPage) elements.overviewPage.hidden = state.activePage !== "overview";
+    if (elements.documentsPage) elements.documentsPage.hidden = state.activePage !== "documents";
+    if (elements.clientsPage) elements.clientsPage.hidden = state.activePage !== "clients";
+    if (elements.catalogPage) elements.catalogPage.hidden = state.activePage !== "catalog";
+    if (elements.reportsPage) elements.reportsPage.hidden = state.activePage !== "reports";
+    if (elements.settingsModal) elements.settingsModal.hidden = state.activePage !== "settings";
     if (elements.accountAdminPage) {
-        elements.accountAdminPage.hidden = state.activePage !== "accountAdmin";
-    }
-    if (elements.workspaceShell) {
-        elements.workspaceShell.hidden = state.activePage === "accountAdmin";
-    }
-    const dashboard = elements.documentsGrid?.closest(".dashboard");
-    if (dashboard) {
-        const onDocumentTab = state.activePage === "documents" || state.activePage === "statements";
-        dashboard.hidden = !onDocumentTab;
-        dashboard.classList.toggle("statements-active", state.activePage === "statements");
-    }
-    if (elements.documentsGrid) {
-        elements.documentsGrid.hidden = state.activePage !== "documents";
+        elements.accountAdminPage.hidden = !(state.activePage === "settings" && isOwnerSession());
     }
 }
 
@@ -3178,35 +3263,24 @@ function openCatalogPage() {
 }
 
 function openStatementsPage() {
-    setActivePage("statements");
+    setActivePage("reports");
     renderStatementsPage();
 }
 
-function syncDocumentNavTabs() {
-    if (!elements.documentNavButtons?.length) {
+function syncPageNavigation() {
+    if (!elements.pageNavButtons?.length) {
         return;
     }
 
-    elements.documentNavButtons.forEach(button => {
-        const isStatementsTab = button.dataset.docNav === "statements";
-        const isActive = isStatementsTab
-            ? state.activePage === "statements"
-            : (state.activePage === "documents" && button.dataset.filter === state.activeFilter);
-
+    elements.pageNavButtons.forEach(button => {
+        const isActive = button.dataset.pageNav === state.activePage;
         button.classList.toggle("active", isActive);
         button.setAttribute("aria-selected", isActive ? "true" : "false");
     });
 }
 
 function openAccountAdminPage() {
-    if (!isOwnerSession()) {
-        setImportStatus("Only the owner account can open Account Admin.", true);
-        return;
-    }
-
-    resetAccountAdminForm();
-    setActivePage("accountAdmin");
-    renderAccountAdminPage();
+    setActivePage("settings");
 }
 
 function syncModalOpenState() {
@@ -3222,6 +3296,7 @@ function setModalState(modal, isOpen) {
         return;
     }
 
+    if (isOpen) modal.removeAttribute("hidden");
     modal.classList.toggle("active", isOpen);
     modal.setAttribute("aria-hidden", isOpen ? "false" : "true");
 
@@ -3862,7 +3937,7 @@ function syncDocumentActionMenus() {
         const isOpen = menu.dataset.documentMenu === state.openDocumentMenuId;
         menu.hidden = !isOpen;
         menu.style.display = isOpen ? "grid" : "none";
-        const row = menu.closest(".document-row");
+        const row = menu.closest(".document-card");
         if (row) {
             row.classList.toggle("has-open-menu", isOpen);
         }
@@ -3878,8 +3953,12 @@ function handleTopbarSettingsClick() {
 }
 
 function handleGlobalClick(event) {
-    if (!event.target.closest(".topbar-menu-wrap")) {
+    if (!event.target.closest(".topbar-menu-wrap") && !event.target.closest(".docs-new-wrap")) {
         closeTopbarMenu();
+        closeNewMenu();
+    }
+    if (!event.target.closest(".workspace-new-wrap")) {
+        closeOverviewNewMenu();
     }
 
     if (!event.target.closest(".invoice-report-export-more-wrap")) {
@@ -3906,21 +3985,21 @@ function openSettingsModal() {
     syncEditorPreferenceControls();
     renderUserManagementList();
     renderClientManagementList();
-    setModalState(elements.settingsModal, true);
+    setActivePage("settings");
 }
 
 function openDataToolsModal() {
-    closeSettingsModal();
     setModalState(elements.dataToolsModal, true);
 }
 
 function openCompanyProfileFromSettings() {
-    closeSettingsModal();
     openCompanyProfileModal();
 }
 
 function closeSettingsModal() {
-    setModalState(elements.settingsModal, false);
+    if (state.activePage === "settings") {
+        setActivePage("overview");
+    }
 }
 
 function closeDataToolsModal() {
@@ -3928,7 +4007,6 @@ function closeDataToolsModal() {
 }
 
 function openIssueInboxFromSettings() {
-    closeSettingsModal();
     void openIssueInboxModal();
 }
 
@@ -5731,35 +5809,99 @@ function renderUserManagementList() {
 }
 
 function renderClientManagementList() {
-    if (!elements.clientManagementList) {
-        return;
-    }
+    if (!elements.clientManagementList) return;
 
-    if (!isAdminSession()) {
-        elements.clientManagementList.innerHTML = "";
-        return;
+    if (elements.clientsPageHeaderActions) {
+        elements.clientsPageHeaderActions.hidden = !isAdminSession();
     }
 
     if (!state.clients.length) {
-        elements.clientManagementList.innerHTML = `<p class="client-list-empty">${escapeHtml(t("no_clients"))}</p>`;
+        elements.clientManagementList.innerHTML = `
+            <div class="empty-state">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <p>${escapeHtml(t("no_clients"))}</p>
+            </div>`;
         return;
     }
 
-    elements.clientManagementList.innerHTML = state.clients.map(client => `
-        <article class="client-row">
-            <div class="client-row-copy">
-                <strong>${escapeHtml(client.name)}</strong>
-                <span>${escapeHtml(client.address || "No address saved").replace(/\n/g, "<br>")}</span>
-                ${client.consigneeName || client.consigneeAddress
-                    ? `<span><strong>Consignee:</strong> ${escapeHtml(client.consigneeName || "No consignee name saved")}${client.consigneeAddress ? `<br>${escapeHtml(client.consigneeAddress).replace(/\n/g, "<br>")}` : ""}</span>`
-                    : ""}
+    const admin = isAdminSession();
+
+    elements.clientManagementList.innerHTML = state.clients.map(client => {
+        const contacts = Array.isArray(client.contacts) ? client.contacts : [];
+
+        const badges = [
+            client.address ? `<span class="client-row-badge"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a4.5 4.5 0 0 1 4.5 4.5c0 3-4.5 8.5-4.5 8.5S3.5 9 3.5 6A4.5 4.5 0 0 1 8 1.5Z"/><circle cx="8" cy="6" r="1.5"/></svg>${escapeHtml(client.address.split(/\n|,/)[0].trim())}</span>` : "",
+            client.consigneeName ? `<span class="client-row-badge client-row-badge-consignee"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none"><path d="M8 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm-5 10c0-2.2 2.24-4 5-4s5 1.8 5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>${escapeHtml(client.consigneeName)}</span>` : "",
+            contacts.length ? `<span class="client-row-badge client-row-badge-contacts"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="5" cy="5" r="2.5"/><path d="M1 13c0-2.2 1.8-4 4-4s4 1.8 4 4"/><path d="M11 8a2 2 0 0 0 0-4"/><path d="M13 13c0-1.86-1.27-3.41-3-3.87"/></svg>${contacts.length} contact${contacts.length > 1 ? "s" : ""}</span>` : ""
+        ].filter(Boolean).join("");
+
+        const contactsDetail = contacts.length ? `
+            <div class="client-detail-section">
+                <span class="client-detail-label">Contacts</span>
+                <div class="client-detail-contacts">
+                    ${contacts.map(c => `
+                        <div class="client-detail-contact">
+                            <span class="client-detail-contact-name">${escapeHtml(c.name || "—")}</span>
+                            ${c.email ? `<a class="client-detail-contact-link" href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>` : ""}
+                            ${c.phone ? `<span class="client-detail-contact-phone">${escapeHtml(c.phone)}${c.isWhatsapp ? `<span class="client-contact-wa-badge">WA</span>` : ""}</span>` : ""}
+                        </div>`).join("")}
+                </div>
+            </div>` : "";
+
+        return `
+        <article class="client-row" data-client-id="${escapeHtml(client.id)}">
+            <div class="client-row-header" data-toggle-client="${escapeHtml(client.id)}" role="button" tabindex="0" aria-expanded="false">
+                <svg class="client-row-chevron" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 8 10 12 14 8"/></svg>
+                <div class="client-row-headline">
+                    <strong class="client-row-name">${escapeHtml(client.name)}</strong>
+                    <div class="client-row-badges">${badges}</div>
+                </div>
+                ${admin ? `<div class="client-row-actions" role="group">
+                    <button class="statement-action-btn is-edit" type="button" data-client-action="edit-client" data-client-id="${escapeHtml(client.id)}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                    </button>
+                    <button class="statement-action-btn is-delete" type="button" data-client-action="delete-client" data-client-id="${escapeHtml(client.id)}" aria-label="${escapeHtml(t("delete"))}" title="${escapeHtml(t("delete"))}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M9 4h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M7 7l1 12h8l1-12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v5M14 11v5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                    </button>
+                </div>` : ""}
             </div>
-            <div class="client-row-actions">
-                <button class="btn btn-secondary" type="button" data-client-action="edit-client" data-client-id="${escapeHtml(client.id)}">${escapeHtml(t("edit"))}</button>
-                <button class="btn btn-secondary" type="button" data-client-action="delete-client" data-client-id="${escapeHtml(client.id)}">${escapeHtml(t("delete"))}</button>
+            <div class="client-row-body" hidden>
+                ${client.address ? `
+                <div class="client-detail-section">
+                    <span class="client-detail-label">
+                        <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a4.5 4.5 0 0 1 4.5 4.5c0 3-4.5 8.5-4.5 8.5S3.5 9 3.5 6A4.5 4.5 0 0 1 8 1.5Z"/><circle cx="8" cy="6" r="1.5"/></svg>
+                        Location
+                    </span>
+                    <p class="client-detail-value">${escapeHtml(client.address)}</p>
+                </div>` : ""}
+                ${client.consigneeName ? `
+                <div class="client-detail-section">
+                    <span class="client-detail-label">
+                        <svg viewBox="0 0 16 16" aria-hidden="true" fill="none"><path d="M8 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm-5 10c0-2.2 2.24-4 5-4s5 1.8 5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        Consignee
+                    </span>
+                    <p class="client-detail-value">${escapeHtml(client.consigneeName)}${client.consigneeAddress ? `<span class="client-detail-sub">${escapeHtml(client.consigneeAddress)}</span>` : ""}</p>
+                </div>` : ""}
+                ${contactsDetail}
             </div>
-        </article>
-    `).join("");
+        </article>`;
+    }).join("");
+}
+
+function handleClientRowToggle(event) {
+    const header = event.target.closest("[data-toggle-client]");
+    if (!header) return;
+    if (event.target.closest("[data-client-action]")) return;
+
+    const card = header.closest(".client-row");
+    const body = card.querySelector(".client-row-body");
+    const expanded = !card.classList.contains("is-expanded");
+
+    card.classList.toggle("is-expanded", expanded);
+    header.setAttribute("aria-expanded", String(expanded));
+    body.hidden = !expanded;
 }
 
 async function handleAddUser() {
@@ -5858,85 +6000,20 @@ async function handleUserManagementClick(event) {
 
 async function handleClientManagementClick(event) {
     const button = event.target.closest("[data-client-action]");
-    if (!button || !isAdminSession()) {
-        return;
-    }
+    if (!button || !isAdminSession()) return;
 
     const clientId = button.dataset.clientId;
     const action = button.dataset.clientAction;
     const client = state.clients.find(entry => isSameDocumentId(entry.id, clientId));
-    if (!client) {
-        return;
-    }
+    if (!client) return;
 
     if (action === "edit-client") {
-        const nextName = window.prompt("Update client name:", client.name);
-        if (nextName === null) {
-            return;
-        }
-
-        const trimmedName = nextName.trim();
-        if (!trimmedName) {
-            alert("Client name cannot be empty.");
-            return;
-        }
-
-        const nextAddress = window.prompt("Update client address:", client.address || "");
-        if (nextAddress === null) {
-            return;
-        }
-
-        const trimmedAddress = nextAddress.trim();
-        if (!trimmedAddress) {
-            alert("Client address cannot be empty.");
-            return;
-        }
-
-        const nextConsigneeName = window.prompt("Update consignee name:", client.consigneeName || "");
-        if (nextConsigneeName === null) {
-            return;
-        }
-
-        const nextConsigneeAddress = window.prompt("Update consignee address:", client.consigneeAddress || "");
-        if (nextConsigneeAddress === null) {
-            return;
-        }
-
-        const duplicateClient = state.clients.find(entry =>
-            !isSameDocumentId(entry.id, client.id) && entry.name.toLowerCase() === trimmedName.toLowerCase()
-        );
-        if (duplicateClient) {
-            alert("Another saved client already uses that name.");
-            return;
-        }
-
-        try {
-            await saveClientsToServer(state.clients.map(entry =>
-                isSameDocumentId(entry.id, client.id)
-                    ? {
-                        ...entry,
-                        name: trimmedName,
-                        address: trimmedAddress,
-                        consigneeName: nextConsigneeName.trim(),
-                        consigneeAddress: nextConsigneeAddress.trim()
-                    }
-                    : entry
-            ));
-        } catch (error) {
-            alert(`Unable to update this client.\n\n${error.message}`);
-            return;
-        }
-
-        renderClientOptions();
-        renderClientManagementList();
-        setImportStatus(`Updated saved client ${trimmedName}.`);
+        openClientModal(clientId);
         return;
     }
 
     if (action === "delete-client") {
-        if (!window.confirm(`Delete saved client "${client.name}"?`)) {
-            return;
-        }
+        if (!window.confirm(`Delete saved client "${client.name}"?`)) return;
 
         try {
             await saveClientsToServer(state.clients.filter(entry => !isSameDocumentId(entry.id, client.id)));
@@ -5952,6 +6029,140 @@ async function handleClientManagementClick(event) {
         }
         setImportStatus(`Deleted saved client ${client.name}.`);
     }
+}
+
+// ── Client modal ──────────────────────────────────────────────────
+
+function openClientModal(clientId) {
+    state.editingClientId = clientId || null;
+    const client = clientId ? state.clients.find(c => isSameDocumentId(c.id, clientId)) : null;
+
+    elements.clientModalTitle.textContent = client ? "Edit Client" : "Add Client";
+    elements.clientModalName.value = client?.name || "";
+    elements.clientModalAddress.value = client?.address || "";
+    elements.clientModalConsigneeName.value = client?.consigneeName || "";
+    elements.clientModalConsigneeAddress.value = client?.consigneeAddress || "";
+
+    const contacts = Array.isArray(client?.contacts) ? client.contacts : [];
+    elements.clientModalContactsList.innerHTML = "";
+    contacts.forEach(c => appendClientContactRow(c));
+
+    setModalState(elements.clientModal, true);
+    elements.clientModalName.focus();
+}
+
+function closeClientModal() {
+    setModalState(elements.clientModal, false);
+    state.editingClientId = null;
+}
+
+function buildContactRowHTML(contact, index) {
+    const id = contact?.id || `contact-new-${index}`;
+    const name = escapeHtml(contact?.name || "");
+    const email = escapeHtml(contact?.email || "");
+    const phone = escapeHtml(contact?.phone || "");
+    const wa = contact?.isWhatsapp ? "checked" : "";
+    return `
+        <div class="client-contact-row" data-contact-row="${index}">
+            <div class="client-contact-fields">
+                <input type="text" class="client-contact-input client-contact-name" placeholder="Full Name" value="${name}" aria-label="Contact name">
+                <input type="email" class="client-contact-input client-contact-email" placeholder="Email address" value="${email}" aria-label="Contact email">
+                <div class="client-contact-phone-group">
+                    <input type="tel" class="client-contact-input client-contact-phone" placeholder="Phone number" value="${phone}" aria-label="Contact phone">
+                    <label class="client-contact-wa-label" title="This number is on WhatsApp">
+                        <input type="checkbox" class="client-contact-wa-check" ${wa}>
+                        <span class="client-contact-wa-badge-toggle">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.944-1.42A9.956 9.956 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
+                            WA
+                        </span>
+                    </label>
+                </div>
+            </div>
+            <button type="button" class="client-contact-remove-btn" data-remove-contact="${index}" aria-label="Remove contact">
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>`;
+}
+
+function appendClientContactRow(contact) {
+    const index = elements.clientModalContactsList.children.length;
+    const div = document.createElement("div");
+    div.innerHTML = buildContactRowHTML(contact, index);
+    elements.clientModalContactsList.appendChild(div.firstElementChild);
+    rebindContactRemoveButtons();
+}
+
+function addClientContactRow() {
+    appendClientContactRow(null);
+}
+
+function rebindContactRemoveButtons() {
+    elements.clientModalContactsList.querySelectorAll("[data-remove-contact]").forEach(btn => {
+        btn.onclick = () => {
+            btn.closest(".client-contact-row").remove();
+        };
+    });
+}
+
+function collectContactsFromModal() {
+    return Array.from(elements.clientModalContactsList.querySelectorAll(".client-contact-row")).map(row => ({
+        id: `contact-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        name: row.querySelector(".client-contact-name")?.value.trim() || "",
+        email: row.querySelector(".client-contact-email")?.value.trim() || "",
+        phone: row.querySelector(".client-contact-phone")?.value.trim() || "",
+        isWhatsapp: row.querySelector(".client-contact-wa-check")?.checked || false
+    })).filter(c => c.name || c.email || c.phone);
+}
+
+async function saveClientFromModal() {
+    const name = elements.clientModalName.value.trim();
+    const address = elements.clientModalAddress.value.trim();
+
+    if (!name) {
+        elements.clientModalName.focus();
+        return;
+    }
+    if (!address) {
+        elements.clientModalAddress.focus();
+        return;
+    }
+
+    const duplicate = state.clients.find(c =>
+        !isSameDocumentId(c.id, state.editingClientId) &&
+        c.name.toLowerCase() === name.toLowerCase()
+    );
+    if (duplicate) {
+        alert("Another saved client already uses that name.");
+        return;
+    }
+
+    const updatedClient = {
+        id: state.editingClientId || `client-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        name,
+        address,
+        consigneeName: elements.clientModalConsigneeName.value.trim(),
+        consigneeAddress: elements.clientModalConsigneeAddress.value.trim(),
+        contacts: collectContactsFromModal()
+    };
+
+    let updatedList;
+    if (state.editingClientId) {
+        updatedList = state.clients.map(c => isSameDocumentId(c.id, state.editingClientId) ? updatedClient : c);
+    } else {
+        updatedList = [...state.clients, updatedClient];
+    }
+
+    try {
+        await saveClientsToServer(updatedList);
+    } catch (error) {
+        alert(`Unable to save client.\n\n${error.message}`);
+        return;
+    }
+
+    renderClientOptions();
+    renderClientManagementList();
+    setImportStatus(state.editingClientId ? `Updated client ${name}.` : `Added client ${name}.`);
+    closeClientModal();
 }
 
 function openExportModal() {
@@ -6400,6 +6611,17 @@ function normalizeDocuments(documents) {
     return consolidated;
 }
 
+function normalizeClientContacts(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw.map(c => ({
+        id: c?.id || `contact-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        name: c?.name || "",
+        email: c?.email || "",
+        phone: c?.phone || "",
+        isWhatsapp: Boolean(c?.isWhatsapp)
+    })).filter(c => c.name || c.email || c.phone);
+}
+
 function normalizeClients(clients) {
     const validClients = (Array.isArray(clients) ? clients : [])
         .map(client => ({
@@ -6407,7 +6629,8 @@ function normalizeClients(clients) {
             name: client?.name || "",
             address: client?.address || "",
             consigneeName: client?.consigneeName || "",
-            consigneeAddress: client?.consigneeAddress || ""
+            consigneeAddress: client?.consigneeAddress || "",
+            contacts: normalizeClientContacts(client?.contacts)
         }))
         .filter(client => client.name && client.address);
 
@@ -7198,10 +7421,15 @@ function updateEditorSummary() {
     const tags = parseTags(elements.docTags.value);
     const itemCount = elements.itemsContainer.querySelectorAll(".item-row").length;
     const stepContent = getStepContent(state.currentStep);
+    const totalSteps = getTotalSteps();
+    const currentTotal = formatCurrency(calculateTotals());
 
     elements.stepIntroTitle.textContent = stepContent.title;
     elements.stepIntroText.textContent = stepContent.text;
     elements.sidebarTip.textContent = stepContent.tip;
+    elements.editorProgressStep.textContent = `Step ${state.currentStep} of ${totalSteps}`;
+    elements.editorProgressTitle.textContent = stepContent.title;
+    elements.editorProgressFill.style.width = `${(state.currentStep / totalSteps) * 100}%`;
 
     elements.summaryDocType.textContent = docType;
     elements.summaryRef.textContent = elements.refNumber.value ? `Ref ${elements.refNumber.value}` : t("ref_pending");
@@ -7209,7 +7437,11 @@ function updateEditorSummary() {
     elements.summaryClient.textContent = clientName || t("no_client_selected");
     elements.summaryAddress.textContent = clientAddress || t("choose_or_enter_client");
     elements.summaryItems.textContent = String(itemCount);
-    elements.summaryTotal.textContent = formatCurrency(calculateTotals());
+    elements.summaryTotal.textContent = currentTotal;
+    elements.editorMobileSummaryType.textContent = docType;
+    elements.editorMobileSummaryRef.textContent = elements.refNumber.value ? `Ref ${elements.refNumber.value}` : t("ref_pending");
+    elements.editorMobileSummaryClient.textContent = clientName || t("no_client_selected");
+    elements.editorMobileSummaryTotal.textContent = currentTotal;
 
     elements.summaryTags.innerHTML = tags.length
         ? tags.map(tag => `<span class="sidebar-tag">${escapeHtml(tag)}</span>`).join("")
@@ -7577,6 +7809,8 @@ function goToStep(step) {
 
     elements.prevBtn.style.display = isPrefilled ? "none" : (step > 1 ? "block" : "none");
     elements.nextBtn.style.display = isPrefilled ? "none" : (step < totalSteps ? "block" : "none");
+    elements.prevBtn.textContent = step === totalSteps ? "Back to Edit" : "Previous";
+    elements.nextBtn.textContent = step === totalSteps - 1 ? "Review Document" : step === totalSteps - 2 ? "Continue to Preview" : "Continue";
     elements.saveBtn.style.display = (isPrefilled || step === totalSteps) ? "block" : "none";
     elements.exportPdfBtn.style.display = step === totalSteps ? "block" : "none";
 
@@ -7586,6 +7820,10 @@ function goToStep(step) {
 
     updateEditorSummary();
     resetDocumentModalViewport(step);
+    const activeStep = elements.stepIndicator.querySelector(`.step[data-step="${step}"]`);
+    if (activeStep && isMobileViewport()) {
+        activeStep.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
     window.requestAnimationFrame(syncActivePreviewScale);
 }
 
@@ -7706,7 +7944,6 @@ function addItem() {
         <div class="item-row-header">
             <button type="button" class="item-summary-toggle" data-toggle-item="${itemId}" aria-expanded="true">
                 <span class="item-summary-thumb" aria-hidden="true">
-                    <img class="item-summary-thumb-img" alt="">
                     <span class="item-summary-thumb-fallback">${state.itemCounter}</span>
                 </span>
                 <span class="item-summary-copy">
@@ -7714,26 +7951,28 @@ function addItem() {
                         <span class="item-number">Item #${state.itemCounter}</span>
                         <span class="item-summary-title">New line item</span>
                     </span>
-                    <span class="item-summary-meta">Qty 1 | Unit $0.00 | Total $0.00</span>
+                    <span class="item-summary-meta">Add the item description, then set quantity and pricing.</span>
+                    <span class="item-summary-stats" aria-hidden="true">
+                        <span class="item-summary-stat">
+                            <span class="item-summary-stat-label">Qty</span>
+                            <strong class="item-summary-qty">1</strong>
+                        </span>
+                        <span class="item-summary-stat">
+                            <span class="item-summary-stat-label">Unit</span>
+                            <strong class="item-summary-unit">$0.00</strong>
+                        </span>
+                        <span class="item-summary-stat item-summary-stat-total">
+                            <span class="item-summary-stat-label">Total</span>
+                            <strong class="item-summary-total">$0.00</strong>
+                        </span>
+                    </span>
                 </span>
             </button>
             <div class="item-row-header-actions">
-                <div class="item-actions-menu-wrap">
-                    <button
-                        type="button"
-                        class="item-menu-toggle"
-                        data-toggle-item-menu="${itemId}"
-                        aria-expanded="false"
-                        aria-haspopup="menu"
-                        aria-label="${escapeHtml(t("menu"))}"
-                        title="${escapeHtml(t("menu"))}"
-                    >
-                        <span></span><span></span><span></span>
-                    </button>
-                    <div class="item-actions-menu" data-item-menu="${itemId}" hidden style="display: none;">
-                        <button type="button" class="item-actions-menu-btn item-actions-menu-btn-danger" data-remove-item="${itemId}">${escapeHtml(t("delete"))}</button>
-                    </div>
-                </div>
+                <button type="button" class="item-quick-action item-quick-action-primary" data-toggle-item="${itemId}">
+                    <span class="item-edit-label">Done</span>
+                </button>
+                <button type="button" class="item-quick-action item-quick-action-danger" data-remove-item="${itemId}">${escapeHtml(t("delete"))}</button>
             </div>
         </div>
         <div class="item-editor">
@@ -7785,8 +8024,25 @@ function addItem() {
     syncItemImageUI(itemDiv);
     updateItemPricing(itemDiv);
     setExpandedItem(itemDiv);
+    focusItemPrimaryField(itemDiv);
     syncItemActionMenus();
     queueDraftAutosave();
+}
+
+function focusItemPrimaryField(row) {
+    if (!row || state.currentStep !== 3) {
+        return;
+    }
+
+    const target = row.querySelector(".item-description");
+    if (!target) {
+        return;
+    }
+
+    window.requestAnimationFrame(() => {
+        target.focus();
+        target.setSelectionRange?.(target.value.length, target.value.length);
+    });
 }
 
 function removeItem(id) {
@@ -7885,9 +8141,56 @@ async function handleItemContainerClick(event) {
     if (toggleButton) {
         const item = elements.itemsContainer.querySelector(`[data-item-id="${toggleButton.dataset.toggleItem}"]`);
         if (item) {
-            setExpandedItem(item);
+            if (item.classList.contains("expanded")) {
+                setExpandedItem(null);
+            } else {
+                setExpandedItem(item);
+                focusItemPrimaryField(item);
+            }
         }
     }
+}
+
+function handleItemEditorKeydown(event) {
+    const target = event.target;
+    const itemRow = target.closest(".item-row");
+    if (!itemRow || event.key !== "Enter") {
+        return;
+    }
+
+    if (target.classList.contains("item-description")) {
+        if ((event.metaKey || event.ctrlKey) && !event.shiftKey) {
+            event.preventDefault();
+            addItem();
+        }
+        return;
+    }
+
+    if (!target.matches("input")) {
+        return;
+    }
+
+    event.preventDefault();
+
+    const sequence = [
+        ".item-quantity",
+        ".item-unit-price",
+        ".item-total-price",
+        ".item-internal-cost"
+    ];
+    const currentIndex = sequence.findIndex(selector => target.matches(selector));
+    const nextSelector = currentIndex >= 0 ? sequence[currentIndex + 1] : null;
+
+    if (nextSelector && (!target.matches(".item-total-price") || state.showInternalPricing)) {
+        const nextField = itemRow.querySelector(nextSelector);
+        if (nextField && !nextField.closest("[hidden]")) {
+            nextField.focus();
+            nextField.select?.();
+            return;
+        }
+    }
+
+    addItem();
 }
 
 async function handleItemImageInputChange(event) {
@@ -8031,6 +8334,18 @@ function updateItemSummary(row) {
 
     row.querySelector(".item-summary-title").textContent = compactTitle;
     row.querySelector(".item-summary-meta").textContent = summaryMeta;
+    const qtyNode = row.querySelector(".item-summary-qty");
+    const unitNode = row.querySelector(".item-summary-unit");
+    const totalNode = row.querySelector(".item-summary-total");
+    if (qtyNode) {
+        qtyNode.textContent = String(quantity || 0);
+    }
+    if (unitNode) {
+        unitNode.textContent = formatCurrency(unitPrice);
+    }
+    if (totalNode) {
+        totalNode.textContent = formatCurrency(totalPrice);
+    }
 }
 
 function documentHasItemImages(doc) {
@@ -8124,6 +8439,10 @@ function setExpandedItem(targetRow) {
         const toggle = row.querySelector(".item-summary-toggle");
         if (toggle) {
             toggle.setAttribute("aria-expanded", String(isTarget));
+        }
+        const actionLabel = row.querySelector(".item-edit-label");
+        if (actionLabel) {
+            actionLabel.textContent = isTarget ? "Done" : "Edit Item";
         }
     });
     if (targetRow) {
@@ -8901,7 +9220,6 @@ function updateOverviewStats() {
 
     elements.totalDocumentsStat.textContent = String(state.documents.length);
     elements.quoteCountStat.textContent = String(quoteCount);
-    elements.invoiceCountStat.textContent = String(invoiceCount);
     elements.totalValueStat.textContent = formatCurrency(totalValue);
     elements.totalValueLabel.textContent = t(currentLabelKey);
     elements.totalValueHint.textContent = t(nextHintKey);
@@ -9080,8 +9398,118 @@ function getDocumentById(id) {
     return state.documents.find(entry => isSameDocumentId(entry.id, id));
 }
 
+function getStatusBadgeMarkup(label, className = "") {
+    return `<span class="status-badge ${className}">${escapeHtml(label)}</span>`;
+}
+
+function getKpiCardMarkup(label, value, meta = "") {
+    return `
+        <article class="summary-card">
+            <span class="summary-card-label">${escapeHtml(label)}</span>
+            <strong class="summary-card-value">${escapeHtml(value)}</strong>
+            ${meta ? `<span class="summary-card-meta">${escapeHtml(meta)}</span>` : ""}
+        </article>
+    `;
+}
+
+function getDocumentCardMarkup(doc) {
+    const statusLabel = doc.status === "draft" ? t("status_draft") : t("status_logged");
+    const paymentStatus = doc.type === "invoice" ? normalizePaymentStatus(doc.paymentStatus) : "";
+    const statusMarkup = doc.type === "invoice"
+        ? [
+            getStatusBadgeMarkup(statusLabel, doc.status === "draft" ? "is-draft" : "is-logged"),
+            getStatusBadgeMarkup(getPaymentStatusLabel(paymentStatus), `is-${paymentStatus}`)
+        ].join("")
+        : getStatusBadgeMarkup(statusLabel, doc.status === "draft" ? "is-draft" : "is-logged");
+
+    return `
+        <article class="document-card document-card-${doc.type}" data-view-id="${escapeHtml(String(doc.id))}">
+            <div class="document-card-copy">
+                <div class="document-card-head">
+                    <strong class="document-card-ref">${escapeHtml(doc.refNumber || "Reference pending")}</strong>
+                    <div class="document-card-statuses">${statusMarkup}</div>
+                </div>
+                <div class="document-card-meta">
+                    <span class="document-card-client">${escapeHtml(doc.clientName || "Unknown client")}</span>
+                    <span class="document-card-date">${escapeHtml(formatDisplayDate(doc.date || ""))}</span>
+                    <strong class="document-card-total">${escapeHtml(formatCurrency(doc.total || 0))}</strong>
+                </div>
+            </div>
+            <div class="document-card-actions">
+                <button type="button" class="statement-action-btn is-open" data-action="export-pdf" data-id="${escapeHtml(String(doc.id))}" aria-label="${escapeHtml(t("view_pdf"))}" title="${escapeHtml(t("view_pdf"))}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>
+                </button>
+                <button type="button" class="statement-action-btn is-edit" data-action="edit" data-id="${escapeHtml(String(doc.id))}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                </button>
+                <div class="doc-actions-menu-wrap">
+                    <button
+                        type="button"
+                        class="statement-action-btn is-more"
+                        data-toggle-document-menu="${escapeHtml(String(doc.id))}"
+                        aria-expanded="false"
+                        aria-haspopup="menu"
+                        aria-label="More options"
+                        title="More options"
+                    >
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg>
+                    </button>
+                    <div class="doc-actions-menu" data-document-menu="${escapeHtml(String(doc.id))}" hidden style="display:none;">
+                        ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="unpaid" data-id="${escapeHtml(String(doc.id))}">${escapeHtml(t("mark_as_unpaid"))}</button>` : ""}
+                        ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="pending" data-id="${escapeHtml(String(doc.id))}">${escapeHtml(t("mark_as_pending"))}</button>` : ""}
+                        ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="paid" data-id="${escapeHtml(String(doc.id))}">${escapeHtml(t("mark_as_paid"))}</button>` : ""}
+                        <button type="button" class="doc-actions-menu-btn" data-action="convert" data-id="${escapeHtml(String(doc.id))}" data-target-type="${doc.type === "quote" ? "invoice" : "quote"}">${escapeHtml(t(doc.type === "quote" ? "convert_to_invoice" : "convert_to_quote"))}</button>
+                        <button type="button" class="doc-actions-menu-btn doc-actions-menu-btn-danger" data-action="delete" data-id="${escapeHtml(String(doc.id))}">${escapeHtml(t("delete"))}</button>
+                    </div>
+                </div>
+            </div>
+        </article>
+    `;
+}
+
+function renderOverviewPanels() {
+    if (elements.overviewRecentDocuments) {
+        const parseTlRef = ref => {
+            const m = String(ref || "").toUpperCase().match(/^TL-(\d{4})-(\d{4})-(\d+)$/);
+            return m ? { date: m[1] + m[2], seq: parseInt(m[3], 10) } : null;
+        };
+        const recentDocuments = [...state.documents]
+            .sort((left, right) => {
+                const lk = parseTlRef(left.refNumber);
+                const rk = parseTlRef(right.refNumber);
+                if (lk && rk) {
+                    if (rk.date !== lk.date) return rk.date > lk.date ? 1 : -1;
+                    return rk.seq - lk.seq;
+                }
+                if (lk) return -1;
+                if (rk) return 1;
+                return getDocumentCreatedAt(right) - getDocumentCreatedAt(left);
+            })
+            .slice(0, 5);
+
+        elements.overviewRecentDocuments.innerHTML = recentDocuments.length
+            ? recentDocuments.map(doc => `
+                <button class="overview-document-link overview-document-link-${escapeHtml(doc.type || "quote")}" type="button" data-open-overview-doc="${escapeHtml(String(doc.id))}">
+                    <span class="overview-document-ref">${escapeHtml(doc.refNumber || "Reference pending")}</span>
+                    <span class="overview-document-meta">${escapeHtml(doc.clientName || "Unknown client")} · ${escapeHtml(formatDisplayDate(doc.date || ""))}</span>
+                    <strong class="overview-document-total">${escapeHtml(formatCurrency(doc.total || 0))}</strong>
+                </button>
+            `).join("")
+            : `<div class="empty-state compact-empty-state"><p>${escapeHtml(t("empty_documents"))}</p></div>`;
+    }
+
+    if (elements.overviewSummaryGrid) {
+        elements.overviewSummaryGrid.innerHTML = [
+            getKpiCardMarkup(t("clients"), String(state.clients.length), "Saved billing records"),
+            getKpiCardMarkup(t("statements"), String(state.statementExports.length), "Generated exports"),
+            getKpiCardMarkup(t("invoice_reports"), String(state.documents.filter(doc => doc.type === "invoice").length), "Invoices ready for review")
+        ].join("");
+    }
+}
+
 function renderDocuments() {
     updateOverviewStats();
+    renderOverviewPanels();
     renderCatalog();
     renderInvoiceReport();
 
@@ -9111,108 +9539,7 @@ function renderDocuments() {
         return;
     }
 
-    elements.documentsGrid.innerHTML = visibleDocuments.map(doc => {
-        const date = formatDisplayDate(doc.date);
-        const statusLabel = doc.status === "draft" ? t("status_draft") : t("status_logged");
-        const statusClass = doc.status === "draft" ? "draft" : "logged";
-        const paymentStatus = doc.type === "invoice" ? normalizePaymentStatus(doc.paymentStatus) : null;
-        const cardViewId = ` data-view-id="${doc.id}"`;
-        const legacyBadge = doc.legacyPdfUrl
-            ? `<span class="doc-lock-badge">${escapeHtml(t("legacy_pdf_attached"))}</span>`
-            : "";
-        const paymentBadge = paymentStatus
-            ? `<span class="doc-payment-badge ${paymentStatus}">${escapeHtml(getPaymentStatusLabel(paymentStatus))}</span>`
-            : "";
-        const rowAriaLabel = `${doc.type} ${doc.refNumber || "document"} for ${doc.clientName || "unknown client"}`;
-        const convertedInvoice = doc.type === "quote"
-            ? state.documents.find(entry => entry.type === "invoice" && String(entry.convertedFromQuoteId || "") === String(doc.id))
-            : null;
-        const isLockedSourceQuote = Boolean(convertedInvoice);
-        const docTypeLabel = doc.type === "quote" ? t("quote_singular") : t("invoice_singular");
-        const docTypeIcon = doc.type === "quote"
-            ? `
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M8 7h8m-8 5h8m-8 5h5m5 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v9a2 2 0 0 1-2 2z"></path>
-                </svg>
-            `
-            : `
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M7 3h7l5 5v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9" d="M9 13h6m-6 4h6M14 3v5h5"></path>
-                </svg>
-            `;
-        const workflowIndicator = `
-            <span class="doc-status-indicator ${statusClass}" aria-label="${escapeHtml(statusLabel)}" title="${escapeHtml(statusLabel)}">
-                ${statusClass === "logged"
-                    ? `<span class="doc-status-check" aria-hidden="true">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                    </span>`
-                    : `<span class="doc-status-dot" aria-hidden="true"></span>`
-                }
-            </span>
-        `;
-
-        return `
-            <div class="document-row document-row-${doc.type}${doc.status === "draft" ? " document-row-draft" : ""}"${cardViewId} aria-label="${escapeHtml(rowAriaLabel)}">
-                <div class="doc-row-main">
-                    <div class="doc-row-primary">
-                        <span class="doc-type-icon ${doc.type}" aria-label="${escapeHtml(docTypeLabel)}" title="${escapeHtml(docTypeLabel)}">${docTypeIcon}</span>
-                        ${workflowIndicator}
-                        <div class="doc-ref">${doc.refNumber}</div>
-                    </div>
-                    <div class="doc-row-secondary">
-                        <div class="doc-client">${escapeHtml(doc.clientName)}</div>
-                        <div class="doc-date">${escapeHtml(t("date_label"))} ${date}</div>
-                    </div>
-                    ${isLockedSourceQuote && convertedInvoice ? `<div class="doc-row-tertiary"><button class="doc-view-converted-btn" type="button" onclick="editDocument('${String(convertedInvoice.id)}')" title="View the converted invoice">View converted invoice →</button></div>` : ""}
-                </div>
-                <div class="doc-row-badges">
-                    ${legacyBadge}
-                    ${paymentBadge}
-                </div>
-                <div class="doc-row-total">
-                    <span class="doc-total-label">${escapeHtml(t("total"))}</span>
-                    <div class="doc-total">${formatCurrency(doc.total || 0)}</div>
-                </div>
-                <div class="doc-actions">
-                    <div class="doc-quick-actions">
-                        <button
-                            type="button"
-                            class="statement-action-btn is-open"
-                            data-action="export-pdf"
-                            data-id="${doc.id}"
-                            aria-label="${escapeHtml(t("open_pdf_preview"))}"
-                            title="${escapeHtml(t("open_pdf_preview"))}"
-                        ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.9"/></svg><span class="visually-hidden">${escapeHtml(t("open_pdf_preview"))}</span></button>
-                        <button type="button" class="statement-action-btn is-edit" data-action="edit" data-id="${doc.id}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg><span class="visually-hidden">${escapeHtml(t("edit"))}</span></button>
-                    </div>
-                    <div class="doc-actions-menu-wrap">
-                        <button
-                            type="button"
-                            class="doc-menu-toggle"
-                            data-toggle-document-menu="${doc.id}"
-                            aria-expanded="false"
-                            aria-haspopup="menu"
-                            aria-label="${escapeHtml(t("menu"))}"
-                            title="${escapeHtml(t("menu"))}"
-                        >
-                            <span></span><span></span><span></span>
-                        </button>
-                        <div class="doc-actions-menu" data-document-menu="${doc.id}" hidden style="display: none;">
-                            ${doc.legacyPdfUrl ? `<button type="button" class="doc-actions-menu-btn" data-action="view-pdf" data-id="${doc.id}">${escapeHtml(t("view_pdf"))}</button>` : ""}
-                            ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="unpaid" data-id="${doc.id}">${escapeHtml(t("mark_as_unpaid"))}</button>` : ""}
-                            ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="pending" data-id="${doc.id}">${escapeHtml(t("mark_as_pending"))}</button>` : ""}
-                            ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="paid" data-id="${doc.id}">${escapeHtml(t("mark_as_paid"))}</button>` : ""}
-                            <button type="button" class="doc-actions-menu-btn" data-action="convert" data-id="${doc.id}" data-target-type="${doc.type === "quote" ? "invoice" : "quote"}">${escapeHtml(t(doc.type === "quote" ? "convert_to_invoice" : "convert_to_quote"))}</button>
-                            <button type="button" class="doc-actions-menu-btn doc-actions-menu-btn-danger" data-action="delete" data-id="${doc.id}">${escapeHtml(t("delete"))}</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join("");
+    elements.documentsGrid.innerHTML = visibleDocuments.map(getDocumentCardMarkup).join("");
 
     syncDocumentActionMenus();
 }
@@ -9230,8 +9557,16 @@ function handleSortChange(event) {
 
 function setActiveFilter(filter) {
     state.activeFilter = filter;
-    syncDocumentNavTabs();
+    syncDocumentFilters();
     renderDocuments();
+}
+
+function syncDocumentFilters() {
+    elements.filterButtons.forEach(button => {
+        const isActive = button.dataset.filter === state.activeFilter;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
 }
 
 function renderClientOptions() {
