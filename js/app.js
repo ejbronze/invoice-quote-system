@@ -3927,7 +3927,7 @@ function handleTopbarSettingsClick() {
 }
 
 function handleGlobalClick(event) {
-    if (!event.target.closest(".topbar-menu-wrap") && !event.target.closest(".sidebar-new-wrap")) {
+    if (!event.target.closest(".topbar-menu-wrap") && !event.target.closest(".docs-new-wrap")) {
         closeTopbarMenu();
         closeNewMenu();
     }

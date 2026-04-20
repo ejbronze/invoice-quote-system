@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SantoSync</title>
-    <link rel="stylesheet" href="css/styles.css?v=8">
+    <link rel="stylesheet" href="css/styles.css?v=9">
 </head>
 <body>
     <div class="brand-splash" id="brandSplash" aria-hidden="true" hidden>
@@ -95,14 +95,6 @@
                     <button class="sidebar-nav-link" type="button" data-page-nav="reports">Reports</button>
                     <button class="sidebar-nav-link" id="settingsNavBtn" type="button" data-page-nav="settings">Settings</button>
                 </nav>
-                <div class="sidebar-new-wrap">
-                    <button class="sidebar-new-btn" id="newMenuBtn" type="button" aria-expanded="false" aria-controls="newMenu">+ New</button>
-                    <div class="sidebar-new-menu" id="newMenu" hidden>
-                        <button class="sidebar-new-menu-item" id="newQuoteMenuBtn" type="button">New Quote</button>
-                        <button class="sidebar-new-menu-item" id="newInvoiceMenuBtn" type="button">New Invoice</button>
-                        <button class="sidebar-new-menu-item" id="newStatementMenuBtn" type="button">New Statement</button>
-                    </div>
-                </div>
                 <div class="sidebar-footer">
                     <div class="currency-display" id="currencyDisplay">
                         <span class="currency-display-label">USD / DOP</span>
@@ -264,6 +256,14 @@
                             <span class="page-eyebrow">Documents</span>
                             <h2>Quotes and invoices</h2>
                             <p class="dashboard-subtitle">Search, filter, sort, and manage every commercial document from one focused workspace.</p>
+                        </div>
+                        <div class="docs-new-wrap">
+                            <button class="btn btn-primary docs-new-btn" id="newMenuBtn" type="button" aria-expanded="false" aria-controls="newMenu">+ New</button>
+                            <div class="docs-new-menu" id="newMenu" hidden>
+                                <button class="docs-new-menu-item" id="newQuoteMenuBtn" type="button">New Quote</button>
+                                <button class="docs-new-menu-item" id="newInvoiceMenuBtn" type="button">New Invoice</button>
+                                <button class="docs-new-menu-item" id="newStatementMenuBtn" type="button">New Statement</button>
+                            </div>
                         </div>
                     </div>
                     <div class="filter-bar" id="documentsFilterBar">
@@ -1726,6 +1726,6 @@
 
     <script src="js/brand.js?v=2"></script>
     <script src="js/statement-of-account.js"></script>
-    <script src="js/app.js?v=5"></script>
+    <script src="js/app.js?v=6"></script>
 </body>
 </html>
