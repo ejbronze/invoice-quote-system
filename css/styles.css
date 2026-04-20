@@ -1578,9 +1578,11 @@ body::after {
 
 .workspace-new-wrap {
     position: relative;
+    flex: 1;
 }
 
 .workspace-new-btn {
+    width: 100%;
     padding: 0.56rem 1rem;
     font-size: 0.76rem;
     font-weight: 700;
