@@ -1125,6 +1125,7 @@ const elements = {};
 
 document.addEventListener("DOMContentLoaded", () => {
     cacheElements();
+    renderBrandAssets();
     bindEvents();
     init();
 });
