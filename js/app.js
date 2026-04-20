@@ -49,7 +49,8 @@ const state = {
     mobileOverviewCollapsed: true,
     selectedInvoiceReportIds: [],
     statementExportInProgress: false,
-    statementExportStep: 1
+    statementExportStep: 1,
+    activeQuickPaymentInvoiceId: null
 };
 
 const DOP_PER_USD = 59;
@@ -259,6 +260,7 @@ const TRANSLATIONS = {
         open_statement_export: "Export Statement of Account PDF",
         review_selected_statement: "Step 2: Review Statement",
         export_selected_csv: "Export Selected as CSV",
+        export_selected_excel: "Export Selected as Excel",
         statement_of_account_title: "Statement of Account Export",
         statement_of_account_copy: "Review the selected invoices before opening the print-ready PDF statement.",
         statement_no_selection: "No invoices selected",
@@ -266,7 +268,9 @@ const TRANSLATIONS = {
         statement_selected_value: "Selected value",
         statement_outstanding_balance: "Outstanding balance",
         statement_generate_pdf: "Generate PDF",
+        statement_generate_excel: "Generate Excel",
         statement_export_success: "Statement of Account preview opened. Use Print or Save as PDF to finish the export.",
+        statement_excel_success: "Statement of Account Excel report downloaded.",
         statement_mixed_clients_error: "Select invoices for one client at a time before exporting a statement.",
         statement_popup_error: "Please allow pop-ups to export the statement PDF.",
         statement_select_first_error: "Select at least one invoice before exporting a statement.",
@@ -1332,6 +1336,7 @@ function applyTranslations() {
     setElementText("#openStatementExportBtn", t("review_selected_statement"));
     setElementText("#printInvoiceReportBtn", t("print_selected_reports"));
     setElementText("#exportInvoiceReportCsvBtn", t("export_selected_csv"));
+    setElementText("#exportInvoiceReportExcelBtn", t("export_selected_excel"));
     elements.invoiceReportSort.options[0].textContent = t("sort_client_asc");
     elements.invoiceReportSort.options[1].textContent = t("sort_client_desc");
     elements.invoiceReportFilterButtons[0].textContent = t("filter_all");
@@ -1342,6 +1347,7 @@ function applyTranslations() {
     setElementText("#statementExportCopy", t("statement_of_account_copy"));
     setElementText("#statementSelectionTitle", t("statement_no_selection"));
     setElementText("#statementSelectionMeta", t("statement_selection_help"));
+    setElementText("#generateStatementExcelBtn", t("statement_generate_excel"));
     setElementText("#confirmStatementExportBtn", t("statement_generate_pdf"));
     setElementText("#statementsHeading", t("statements"));
     setElementText("#statementsCopy", t("statements_copy"));
@@ -1541,6 +1547,16 @@ function cacheElements() {
     elements.closeIssueInboxModalBtn = document.getElementById("closeIssueInboxModalBtn");
     elements.issueInboxList = document.getElementById("issueInboxList");
     elements.settingsIssueInboxBtn = document.getElementById("settingsIssueInboxBtn");
+    elements.quickPaymentModal = document.getElementById("quickPaymentModal");
+    elements.closeQuickPaymentModalBtn = document.getElementById("closeQuickPaymentModalBtn");
+    elements.quickPaymentSummary = document.getElementById("quickPaymentSummary");
+    elements.quickPaymentHistory = document.getElementById("quickPaymentHistory");
+    elements.quickPaymentDateInput = document.getElementById("quickPaymentDateInput");
+    elements.quickPaymentAmountInput = document.getElementById("quickPaymentAmountInput");
+    elements.quickPaymentMethodInput = document.getElementById("quickPaymentMethodInput");
+    elements.quickPaymentReferenceInput = document.getElementById("quickPaymentReferenceInput");
+    elements.quickPaymentNotesInput = document.getElementById("quickPaymentNotesInput");
+    elements.saveQuickPaymentBtn = document.getElementById("saveQuickPaymentBtn");
     elements.invoiceReportsModal = document.getElementById("invoiceReportsModal");
     elements.reportsOpenInvoiceReportsBtn = document.getElementById("reportsOpenInvoiceReportsBtn");
     elements.closeInvoiceReportsModalBtn = document.getElementById("closeInvoiceReportsModalBtn");
@@ -1557,6 +1573,7 @@ function cacheElements() {
     elements.invoiceReportExportMoreMenu = document.getElementById("invoiceReportExportMoreMenu");
     elements.printInvoiceReportBtn = document.getElementById("printInvoiceReportBtn");
     elements.exportInvoiceReportCsvBtn = document.getElementById("exportInvoiceReportCsvBtn");
+    elements.exportInvoiceReportExcelBtn = document.getElementById("exportInvoiceReportExcelBtn");
     elements.statementSelectionToolbar = document.getElementById("statementSelectionToolbar");
     elements.statementSelectionTitle = document.getElementById("statementSelectionTitle");
     elements.statementSelectionMeta = document.getElementById("statementSelectionMeta");
@@ -1576,6 +1593,7 @@ function cacheElements() {
     elements.statementExportSnapshot = document.getElementById("statementExportSnapshot");
     elements.statementExportBackBtn = document.getElementById("statementExportBackBtn");
     elements.statementExportNextBtn = document.getElementById("statementExportNextBtn");
+    elements.generateStatementExcelBtn = document.getElementById("generateStatementExcelBtn");
     elements.confirmStatementExportBtn = document.getElementById("confirmStatementExportBtn");
     elements.statementEditModal = document.getElementById("statementEditModal");
     elements.closeStatementEditModalBtn = document.getElementById("closeStatementEditModalBtn");
@@ -1595,6 +1613,10 @@ function cacheElements() {
     elements.catalogPage = document.getElementById("catalogPage");
     elements.statementsPage = document.getElementById("statementsPage");
     elements.statementExportsList = document.getElementById("statementExportsList");
+    elements.paymentHistoryMetrics = document.getElementById("paymentHistoryMetrics");
+    elements.paymentHistoryTableBody = document.getElementById("paymentHistoryTableBody");
+    elements.agingMetrics = document.getElementById("agingMetrics");
+    elements.clientAgingTableBody = document.getElementById("clientAgingTableBody");
     elements.accountAdminPage = document.getElementById("accountAdminPage");
     elements.accountAdminWorkspaceBtn = document.getElementById("accountAdminWorkspaceBtn");
     elements.accountAdminCatalogBtn = document.getElementById("accountAdminCatalogBtn");
@@ -1722,6 +1744,13 @@ function cacheElements() {
     elements.consigneeAddress = document.getElementById("consigneeAddress");
     elements.notes = document.getElementById("notes");
     elements.paymentTerms = document.getElementById("paymentTerms");
+    elements.paymentLedgerPanel = document.getElementById("paymentLedgerPanel");
+    elements.paymentLedgerSummary = document.getElementById("paymentLedgerSummary");
+    elements.paymentLedgerInvoiceTotal = document.getElementById("paymentLedgerInvoiceTotal");
+    elements.paymentLedgerPaidTotal = document.getElementById("paymentLedgerPaidTotal");
+    elements.paymentLedgerBalance = document.getElementById("paymentLedgerBalance");
+    elements.paymentLedgerList = document.getElementById("paymentLedgerList");
+    elements.addPaymentEntryBtn = document.getElementById("addPaymentEntryBtn");
     elements.includeSignature = document.getElementById("includeSignature");
     elements.includeStamp = document.getElementById("includeStamp");
     elements.itemsContainer = document.getElementById("itemsContainer");
@@ -1775,6 +1804,9 @@ function cacheElements() {
     elements.summaryAddress = document.getElementById("summaryAddress");
     elements.summaryItems = document.getElementById("summaryItems");
     elements.summaryTotal = document.getElementById("summaryTotal");
+    elements.sidebarPaymentSummary = document.getElementById("sidebarPaymentSummary");
+    elements.summaryPaid = document.getElementById("summaryPaid");
+    elements.summaryBalance = document.getElementById("summaryBalance");
     elements.summaryTags = document.getElementById("summaryTags");
     elements.tagSuggestions = document.getElementById("tagSuggestions");
     elements.sidebarTip = document.getElementById("sidebarTip");
@@ -1868,6 +1900,8 @@ function bindEvents() {
     elements.issueScreenshotInput.addEventListener("change", handleIssueScreenshotChange);
     elements.submitIssueReportBtn.addEventListener("click", submitIssueReport);
     elements.closeIssueInboxModalBtn.addEventListener("click", closeIssueInboxModal);
+    elements.closeQuickPaymentModalBtn?.addEventListener("click", closeQuickPaymentModal);
+    elements.saveQuickPaymentBtn?.addEventListener("click", saveQuickPaymentEntry);
     elements.closeInvoiceReportsModalBtn.addEventListener("click", closeInvoiceReportsModal);
     elements.reportsOpenInvoiceReportsBtn?.addEventListener("click", openInvoiceReportsModal);
     elements.invoiceReportSort.addEventListener("change", renderInvoiceReport);
@@ -1879,6 +1913,7 @@ function bindEvents() {
     elements.invoiceReportExportMoreBtn?.addEventListener("click", toggleInvoiceReportExportMenu);
     elements.printInvoiceReportBtn.addEventListener("click", printSelectedInvoiceReports);
     elements.exportInvoiceReportCsvBtn.addEventListener("click", exportSelectedInvoiceReportCsv);
+    elements.exportInvoiceReportExcelBtn.addEventListener("click", exportSelectedInvoiceReportExcel);
     elements.invoiceReportFilterButtons.forEach(button => {
         button.addEventListener("click", handleInvoiceReportFilterClick);
     });
@@ -1893,6 +1928,7 @@ function bindEvents() {
     });
     elements.statementExportBackBtn.addEventListener("click", goToPreviousStatementExportStep);
     elements.statementExportNextBtn.addEventListener("click", goToNextStatementExportStep);
+    elements.generateStatementExcelBtn.addEventListener("click", exportStatementOfAccountExcelFromSelection);
     elements.confirmStatementExportBtn.addEventListener("click", exportStatementOfAccountPdf);
     elements.closeStatementEditModalBtn?.addEventListener("click", closeStatementEditModal);
     elements.addStatementRowBtn?.addEventListener("click", addStatementEditRow);
@@ -1972,6 +2008,10 @@ function bindEvents() {
     elements.itemsContainer.addEventListener("change", handleItemsChange);
     elements.itemsContainer.addEventListener("change", handleItemImageInputChange);
     elements.itemsContainer.addEventListener("keydown", handleItemEditorKeydown);
+    elements.addPaymentEntryBtn?.addEventListener("click", addPaymentEntry);
+    elements.paymentLedgerList?.addEventListener("click", handlePaymentLedgerListClick);
+    elements.paymentLedgerList?.addEventListener("input", syncPaymentLedgerUi);
+    elements.paymentLedgerList?.addEventListener("change", syncPaymentLedgerUi);
     elements.documentSearch.addEventListener("input", handleSearchInput);
     elements.documentSort.addEventListener("change", handleSortChange);
     elements.documentsGrid.addEventListener("keydown", handleDocumentCardKeydown);
@@ -2035,6 +2075,11 @@ function bindEvents() {
     elements.issueInboxModal.addEventListener("click", event => {
         if (event.target === elements.issueInboxModal) {
             closeIssueInboxModal();
+        }
+    });
+    elements.quickPaymentModal?.addEventListener("click", event => {
+        if (event.target === elements.quickPaymentModal) {
+            closeQuickPaymentModal();
         }
     });
 
@@ -3501,6 +3546,9 @@ function renderStatementsPage() {
         return;
     }
 
+    renderPaymentHistoryPanel();
+    renderClientAgingPanel();
+
     if (!state.statementExports.length) {
         elements.statementExportsList.innerHTML = `<p class="client-list-empty">${escapeHtml(t("no_statements"))}</p>`;
         return;
@@ -3554,6 +3602,10 @@ function renderStatementsPage() {
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>
                     <span class="visually-hidden">${escapeHtml(t("open_statement"))}</span>
                 </button>
+                <button class="statement-action-btn is-open" type="button" data-statement-action="excel" data-statement-id="${escapeHtml(statement.id)}" aria-label="${escapeHtml(t("statement_generate_excel"))}" title="${escapeHtml(t("statement_generate_excel"))}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M14 3v4h4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="m9 10 4 4M13 10l-4 4M9 18h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span class="visually-hidden">${escapeHtml(t("statement_generate_excel"))}</span>
+                </button>
                 <button class="statement-action-btn is-edit" type="button" data-statement-action="edit" data-statement-id="${escapeHtml(statement.id)}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
                     <span class="visually-hidden">${escapeHtml(t("edit"))}</span>
@@ -3580,6 +3632,19 @@ function handleStatementExportsListClick(event) {
 
     if (button.dataset.statementAction === "open") {
         window.StatementOfAccount.generateStatementOfAccountPdf(statement.payload);
+        return;
+    }
+
+    if (button.dataset.statementAction === "excel") {
+        void downloadStatementExcelReport(statement.payload)
+            .then(() => {
+                setImportStatus(t("statement_excel_success"));
+                recordActivity("downloaded statement excel", `Statement Excel report downloaded for ${statement.clientName || "unknown client"} (${statement.referenceNumber || "statement"}).`);
+            })
+            .catch(error => {
+                setImportStatus(error.message || "Unable to export the Excel statement report.", true);
+                window.alert(error.message || "Unable to export the Excel statement report.");
+            });
         return;
     }
 
@@ -4034,6 +4099,129 @@ function closeIssueInboxModal() {
     setModalState(elements.issueInboxModal, false);
 }
 
+function getActiveQuickPaymentInvoice() {
+    return getDocumentById(state.activeQuickPaymentInvoiceId);
+}
+
+function renderQuickPaymentModal(invoice) {
+    if (!invoice || !elements.quickPaymentSummary || !elements.quickPaymentHistory) {
+        return;
+    }
+
+    const paidTotal = getInvoicePaymentsTotal(invoice);
+    const balance = getInvoiceOutstandingBalance(invoice);
+    const status = getPaymentStatusLabel(getInvoiceDerivedPaymentStatus(invoice));
+    const payments = getInvoicePayments(invoice);
+
+    elements.quickPaymentSummary.innerHTML = `
+        <article class="quick-payment-summary-card">
+            <strong>${escapeHtml(invoice.refNumber || "Invoice")}</strong>
+            <div class="quick-payment-summary-meta">
+                ${escapeHtml(invoice.clientName || "Unknown client")}<br>
+                Status: ${escapeHtml(status)}<br>
+                Total: ${escapeHtml(formatCurrency(invoice.total || 0))} | Paid: ${escapeHtml(formatCurrency(paidTotal))} | Balance: ${escapeHtml(formatCurrency(balance))}
+            </div>
+        </article>
+    `;
+
+    elements.quickPaymentHistory.innerHTML = payments.length
+        ? `<article class="quick-payment-history-card">
+            <div class="quick-payment-history-meta">Recent payments already applied to this invoice.</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Method</th>
+                        <th>Reference</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${payments.map(payment => `
+                        <tr>
+                            <td>${escapeHtml(formatDisplayDate(payment.date) || payment.date || "—")}</td>
+                            <td>${escapeHtml(payment.method || "—")}</td>
+                            <td>${escapeHtml(payment.reference || "—")}</td>
+                            <td>${escapeHtml(formatCurrency(payment.amount || 0))}</td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
+        </article>`
+        : `<article class="quick-payment-history-card"><div class="quick-payment-history-meta">No payments have been recorded on this invoice yet.</div></article>`;
+}
+
+function openQuickPaymentModal(invoiceId) {
+    const invoice = getDocumentById(invoiceId);
+    if (!invoice || invoice.type !== "invoice") {
+        return;
+    }
+
+    state.activeQuickPaymentInvoiceId = String(invoice.id);
+    state.openDocumentMenuId = null;
+    syncDocumentActionMenus();
+    renderQuickPaymentModal(invoice);
+    elements.quickPaymentDateInput.value = getLocalDateInputValue();
+    elements.quickPaymentAmountInput.value = getInvoiceOutstandingBalance(invoice) > 0
+        ? Number(getInvoiceOutstandingBalance(invoice)).toFixed(2)
+        : "";
+    elements.quickPaymentMethodInput.value = "";
+    elements.quickPaymentReferenceInput.value = "";
+    elements.quickPaymentNotesInput.value = "";
+    setModalState(elements.quickPaymentModal, true);
+}
+
+function closeQuickPaymentModal() {
+    state.activeQuickPaymentInvoiceId = null;
+    setModalState(elements.quickPaymentModal, false);
+}
+
+async function saveQuickPaymentEntry() {
+    const invoice = getActiveQuickPaymentInvoice();
+    if (!invoice) {
+        return;
+    }
+
+    const amount = Number.parseFloat(elements.quickPaymentAmountInput.value || "0") || 0;
+    if (amount <= 0) {
+        window.alert("Enter a payment amount greater than zero.");
+        return;
+    }
+
+    const payment = {
+        id: `payment-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        date: elements.quickPaymentDateInput.value || getLocalDateInputValue(),
+        amount,
+        method: elements.quickPaymentMethodInput.value.trim(),
+        reference: elements.quickPaymentReferenceInput.value.trim(),
+        notes: elements.quickPaymentNotesInput.value.trim(),
+        appliedTo: "invoice",
+        createdAt: new Date().toISOString()
+    };
+
+    const nextDocuments = state.documents.map(entry => (
+        isSameDocumentId(entry.id, invoice.id)
+            ? {
+                ...entry,
+                payments: normalizeInvoicePayments([...(Array.isArray(entry.payments) ? entry.payments : []), payment])
+            }
+            : entry
+    ));
+
+    try {
+        await saveDocumentsToServer(nextDocuments);
+        renderDocuments();
+        if (!elements.invoiceReportsModal.hidden) {
+            renderInvoiceReport();
+        }
+        setImportStatus(`Payment saved for ${invoice.refNumber || "invoice"}.`);
+        recordActivity("recorded invoice payment", `Payment of ${formatCurrency(amount)} logged for ${invoice.refNumber || "invoice"}.`);
+        closeQuickPaymentModal();
+    } catch (error) {
+        window.alert(`Unable to save the payment.\n\n${error.message}`);
+    }
+}
+
 function openInvoiceReportsModal() {
     state.selectedInvoiceReportIds = [];
     renderInvoiceReport();
@@ -4123,6 +4311,10 @@ function syncStatementExportWizardUi() {
     if (elements.confirmStatementExportBtn) {
         elements.confirmStatementExportBtn.hidden = step !== 3;
     }
+    if (elements.generateStatementExcelBtn) {
+        elements.generateStatementExcelBtn.hidden = step !== 3;
+        elements.generateStatementExcelBtn.disabled = state.statementExportInProgress;
+    }
 }
 
 function handleStatementExportStepClick(event) {
@@ -4196,11 +4388,7 @@ function getSelectedInvoiceStatementContext() {
         selectedInvoices.map(doc => String(doc.clientName || t("unknown_client")).trim() || t("unknown_client"))
     ));
     const totalSelected = selectedInvoices.reduce((sum, doc) => sum + Number(doc.total || 0), 0);
-    const outstandingTotal = selectedInvoices.reduce((sum, doc) => {
-        return normalizePaymentStatus(doc.paymentStatus) === "paid"
-            ? sum
-            : sum + Number(doc.total || 0);
-    }, 0);
+    const outstandingTotal = selectedInvoices.reduce((sum, doc) => sum + getInvoiceOutstandingBalance(doc), 0);
 
     return {
         selectedInvoices,
@@ -4251,6 +4439,8 @@ function syncInvoiceReportSelectionUi() {
     const canExportStatement = selectedCount > 0 && !mixedClients && !state.statementExportInProgress;
     elements.openStatementExportBtn.disabled = !canExportStatement;
     elements.exportInvoiceReportCsvBtn.disabled = selectedCount === 0;
+    elements.exportInvoiceReportExcelBtn.disabled = !canExportStatement;
+    elements.generateStatementExcelBtn.disabled = !canExportStatement;
     elements.confirmStatementExportBtn.disabled = !canExportStatement;
 }
 
@@ -4303,7 +4493,16 @@ function handleInvoiceReportListChange(event) {
     syncInvoiceReportSelectionUi();
 }
 
-function handleInvoiceReportListClick() {}
+function handleInvoiceReportListClick(event) {
+    const actionButton = event.target.closest("[data-invoice-report-action]");
+    if (!actionButton) {
+        return;
+    }
+
+    if (actionButton.dataset.invoiceReportAction === "quick-payment") {
+        openQuickPaymentModal(actionButton.dataset.id);
+    }
+}
 
 function selectVisibleInvoiceReports() {
     const visibleIds = getVisibleInvoiceReportInvoices().map(doc => String(doc.id));
@@ -4375,7 +4574,7 @@ function getInvoiceReportData() {
     const filter = getInvoiceReportFilter();
     const sortOrder = elements.invoiceReportSort.value || "client_asc";
     const filteredInvoices = rangedInvoices
-        .filter(doc => filter === "all" || normalizePaymentStatus(doc.paymentStatus) === filter);
+        .filter(doc => filter === "all" || getInvoiceDerivedPaymentStatus(doc) === filter);
     const groupedByClient = new Map();
 
     filteredInvoices.forEach(doc => {
@@ -4400,18 +4599,17 @@ function getInvoiceReportData() {
             return sortOrder === "client_desc" ? -comparison : comparison;
         });
 
-    const paidCount = rangedInvoices.filter(doc => normalizePaymentStatus(doc.paymentStatus) === "paid").length;
-    const pendingCount = rangedInvoices.filter(doc => normalizePaymentStatus(doc.paymentStatus) === "pending").length;
-    const unpaidCount = rangedInvoices.filter(doc => normalizePaymentStatus(doc.paymentStatus) === "unpaid").length;
+    const paidCount = rangedInvoices.filter(doc => getInvoiceDerivedPaymentStatus(doc) === "paid").length;
+    const pendingCount = rangedInvoices.filter(doc => getInvoiceDerivedPaymentStatus(doc) === "pending").length;
+    const unpaidCount = rangedInvoices.filter(doc => getInvoiceDerivedPaymentStatus(doc) === "unpaid").length;
     const paidTotal = rangedInvoices
-        .filter(doc => normalizePaymentStatus(doc.paymentStatus) === "paid")
-        .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
+        .reduce((sum, doc) => sum + getInvoicePaymentsTotal(doc), 0);
     const pendingTotal = rangedInvoices
-        .filter(doc => normalizePaymentStatus(doc.paymentStatus) === "pending")
-        .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
+        .filter(doc => getInvoiceDerivedPaymentStatus(doc) === "pending")
+        .reduce((sum, doc) => sum + getInvoiceOutstandingBalance(doc), 0);
     const unpaidTotal = rangedInvoices
-        .filter(doc => normalizePaymentStatus(doc.paymentStatus) === "unpaid")
-        .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
+        .filter(doc => getInvoiceDerivedPaymentStatus(doc) === "unpaid")
+        .reduce((sum, doc) => sum + getInvoiceOutstandingBalance(doc), 0);
 
     return {
         allInvoices: rangedInvoices,
@@ -4499,6 +4697,7 @@ function renderInvoiceReport() {
                         <th>${escapeHtml(t("report_date"))}</th>
                         <th>${escapeHtml(t("report_status"))}</th>
                         <th>${escapeHtml(t("report_total"))}</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -4516,8 +4715,9 @@ function renderInvoiceReport() {
                                 ${statementCount ? `<div class="invoice-report-inline-badge is-statement">In ${escapeHtml(String(statementCount))} saved statement${statementCount === 1 ? "" : "s"}</div>` : ""}
                             </td>
                             <td>${escapeHtml(formatDisplayDate(doc.date) || t("no_date"))}</td>
-                            <td>${escapeHtml(getPaymentStatusLabel(doc.paymentStatus))}</td>
+                            <td>${escapeHtml(getPaymentStatusLabel(getInvoiceDerivedPaymentStatus(doc)))}</td>
                             <td>${escapeHtml(formatCurrency(doc.total || 0))}</td>
+                            <td><button type="button" class="btn btn-secondary" data-invoice-report-action="quick-payment" data-id="${escapeHtml(String(doc.id))}">Add Payment</button></td>
                         </tr>
                         `;
                     }).join("")}
@@ -4531,6 +4731,67 @@ function renderInvoiceReport() {
 function escapeCsvCell(value) {
     const normalized = String(value ?? "").replace(/\r?\n/g, " ").trim();
     return `"${normalized.replace(/"/g, '""')}"`;
+}
+
+function createStatementExcelFileName(payload) {
+    const baseName = String(payload?.title || "statement-of-account.xlsx").trim() || "statement-of-account.xlsx";
+    return /\.xlsx$/i.test(baseName)
+        ? baseName
+        : baseName.replace(/\.pdf$/i, ".xlsx");
+}
+
+function cloneDocumentForStatementExport(doc) {
+    if (!doc || typeof doc !== "object") {
+        return null;
+    }
+
+    return JSON.parse(JSON.stringify(doc));
+}
+
+function resolveStatementSourceInvoices(payload) {
+    const snapshotInvoices = Array.isArray(payload?.sourceInvoices)
+        ? payload.sourceInvoices.map(cloneDocumentForStatementExport).filter(Boolean)
+        : [];
+    if (snapshotInvoices.length) {
+        return snapshotInvoices;
+    }
+
+    const sourceIds = new Set((Array.isArray(payload?.sourceInvoiceIds) ? payload.sourceInvoiceIds : []).map(String));
+    const rowInvoiceNumbers = new Set((Array.isArray(payload?.rows) ? payload.rows : []).map(row => String(row?.invoiceNumber || "")));
+
+    return state.documents
+        .filter(doc => doc.type === "invoice")
+        .filter(doc => sourceIds.has(String(doc.id)) || rowInvoiceNumbers.has(String(doc.refNumber || "")))
+        .map(cloneDocumentForStatementExport)
+        .filter(Boolean);
+}
+
+async function downloadStatementExcelReport(payload) {
+    const response = await fetch("/api/statement-report", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            statement: payload,
+            sourceInvoices: resolveStatementSourceInvoices(payload)
+        })
+    });
+
+    if (!response.ok) {
+        const errorPayload = await response.json().catch(() => ({}));
+        throw new Error(errorPayload.error || "Unable to generate the Excel statement report.");
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = createStatementExcelFileName(payload);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
 }
 
 function exportSelectedInvoiceReportCsv() {
@@ -4552,6 +4813,30 @@ function exportSelectedInvoiceReportCsv() {
         : `statement-of-account-${timestamp}.csv`;
     downloadTextFile(baseName, `${csv}\n`, "text/csv;charset=utf-8");
     setImportStatus(t("statement_csv_success"));
+}
+
+async function exportSelectedInvoiceReportExcel() {
+    closeInvoiceReportExportMenu();
+    const selection = getSelectedInvoiceStatementContext();
+    if (!selection.selectedInvoices.length) {
+        setImportStatus(t("statement_select_first_error"), true);
+        return;
+    }
+
+    if (!selection.isSingleClient) {
+        setImportStatus(t("statement_mixed_clients_error"), true);
+        return;
+    }
+
+    try {
+        const payload = getStatementPayload();
+        await downloadStatementExcelReport(payload);
+        setImportStatus(t("statement_excel_success"));
+        recordActivity("exported statement of account excel", `Statement Excel report generated for ${selection.clientName || "unknown client"} (${selection.selectedInvoices.length} invoices).`);
+    } catch (error) {
+        setImportStatus(error.message || "Unable to export the Excel statement report.", true);
+        window.alert(error.message || "Unable to export the Excel statement report.");
+    }
 }
 
 function printSelectedInvoiceReports() {
@@ -4668,7 +4953,7 @@ function printSelectedInvoiceReports() {
                                         <tr>
                                             <td>${escapeHtml(doc.refNumber || "—")}</td>
                                             <td>${escapeHtml(formatDisplayDate(doc.date) || t("no_date"))}</td>
-                                            <td>${escapeHtml(getPaymentStatusLabel(doc.paymentStatus))}</td>
+                                            <td>${escapeHtml(getPaymentStatusLabel(getInvoiceDerivedPaymentStatus(doc)))}</td>
                                             <td>${escapeHtml(formatCurrency(doc.total || 0))}</td>
                                         </tr>
                                     `).join("")}
@@ -4796,6 +5081,7 @@ function getStatementPayload() {
         title: window.StatementOfAccount.createStatementFileName(referenceNumber, selection.clientName || "client", generatedAt),
         generatedIsoDate: generatedAt.toISOString(),
         sourceInvoiceIds: selection.selectedInvoices.map(doc => String(doc.id)),
+        sourceInvoices: selection.selectedInvoices.map(cloneDocumentForStatementExport).filter(Boolean),
         company: {
             companyName: profile.companyName || BRAND.name,
             address: profile.address || "",
@@ -4835,6 +5121,7 @@ async function exportStatementOfAccountPdf() {
     state.statementExportInProgress = true;
     syncInvoiceReportSelectionUi();
     syncStatementExportWizardUi();
+    elements.generateStatementExcelBtn.disabled = true;
     elements.confirmStatementExportBtn.disabled = true;
     elements.confirmStatementExportBtn.textContent = "Generating...";
 
@@ -4864,6 +5151,59 @@ async function exportStatementOfAccountPdf() {
         window.alert(error.message || t("statement_popup_error"));
     } finally {
         state.statementExportInProgress = false;
+        elements.generateStatementExcelBtn.textContent = t("statement_generate_excel");
+        elements.confirmStatementExportBtn.textContent = t("statement_generate_pdf");
+        syncStatementExportWizardUi();
+        syncInvoiceReportSelectionUi();
+    }
+}
+
+async function exportStatementOfAccountExcelFromSelection() {
+    const selection = getSelectedInvoiceStatementContext();
+    if (!selection.selectedInvoices.length) {
+        setImportStatus(t("statement_select_first_error"), true);
+        return;
+    }
+
+    if (!selection.isSingleClient) {
+        setImportStatus(t("statement_mixed_clients_error"), true);
+        return;
+    }
+
+    state.statementExportInProgress = true;
+    syncInvoiceReportSelectionUi();
+    syncStatementExportWizardUi();
+    elements.generateStatementExcelBtn.disabled = true;
+    elements.generateStatementExcelBtn.textContent = "Generating...";
+    elements.confirmStatementExportBtn.disabled = true;
+
+    try {
+        const payload = getStatementPayload();
+        await downloadStatementExcelReport(payload);
+        await saveStatementExportsState([
+            {
+                id: `statement-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                title: payload.title,
+                referenceNumber: payload.referenceNumber,
+                clientName: payload.clientName,
+                vendorName: payload.vendorName,
+                generatedAt: new Date().toISOString(),
+                rowCount: payload.rows.length,
+                totalSelectedFormatted: payload.totalSelectedFormatted,
+                totalOutstandingFormatted: payload.grandTotalFormatted,
+                payload
+            },
+            ...state.statementExports
+        ]);
+        closeStatementExportModal();
+        setImportStatus(t("statement_excel_success"));
+        recordActivity("exported statement of account excel", `Statement Excel report generated for ${selection.clientName || "unknown client"} (${selection.selectedInvoices.length} invoices).`);
+    } catch (error) {
+        setImportStatus(error.message || "Unable to export the Excel statement report.", true);
+        window.alert(error.message || "Unable to export the Excel statement report.");
+    } finally {
+        state.statementExportInProgress = false;
+        elements.generateStatementExcelBtn.textContent = t("statement_generate_excel");
         elements.confirmStatementExportBtn.textContent = t("statement_generate_pdf");
         syncStatementExportWizardUi();
         syncInvoiceReportSelectionUi();
@@ -6544,6 +6884,392 @@ function normalizePaymentStatus(status) {
     return "unpaid";
 }
 
+function normalizeInvoicePayments(payments) {
+    return Array.isArray(payments)
+        ? payments
+            .filter(payment => payment && typeof payment === "object")
+            .map((payment, index) => ({
+                id: String(payment.id || `payment-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`),
+                date: String(payment.date || payment.createdAt || new Date().toISOString().slice(0, 10)).slice(0, 10),
+                amount: Math.max(0, Number.parseFloat(payment.amount) || 0),
+                method: String(payment.method || "").trim(),
+                reference: String(payment.reference || "").trim(),
+                notes: String(payment.notes || "").trim(),
+                appliedTo: String(payment.appliedTo || "invoice").trim() || "invoice",
+                createdAt: String(payment.createdAt || new Date().toISOString())
+            }))
+            .filter(payment => payment.amount > 0)
+        : [];
+}
+
+function getInvoicePayments(doc) {
+    return normalizeInvoicePayments(doc?.payments);
+}
+
+function getInvoicePaymentsTotal(doc) {
+    return getInvoicePayments(doc).reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+}
+
+function getInvoiceOutstandingBalance(doc) {
+    const total = Number(doc?.total || 0);
+    return Math.max(0, total - getInvoicePaymentsTotal(doc));
+}
+
+function getInvoiceDerivedPaymentStatus(doc) {
+    const payments = getInvoicePayments(doc);
+    if (!payments.length) {
+        return normalizePaymentStatus(doc?.paymentStatus);
+    }
+
+    const total = Number(doc?.total || 0);
+    const paidTotal = getInvoicePaymentsTotal(doc);
+    if (paidTotal <= 0) {
+        return "unpaid";
+    }
+    if (paidTotal >= total && total > 0) {
+        return "paid";
+    }
+    return "pending";
+}
+
+function calculateInvoiceDueDate(invoice) {
+    const invoiceDate = parseLocalDateValue(invoice?.date || new Date());
+    const normalizedTerms = String(invoice?.paymentTerms || DEFAULT_PAYMENT_TERMS).trim().toUpperCase();
+    const netMatch = normalizedTerms.match(/NET\s*[- ]?(\d{1,3})/i);
+    const dayMatch = normalizedTerms.match(/\b(\d{1,3})\s*(DAY|DAYS)\b/i);
+    const looseNumberMatch = normalizedTerms.match(/\b(\d{1,3})\b/);
+    const offsetDays = Number(
+        (netMatch && netMatch[1]) ||
+        (dayMatch && dayMatch[1]) ||
+        (looseNumberMatch && looseNumberMatch[1]) ||
+        0
+    );
+
+    const dueDate = new Date(invoiceDate);
+    dueDate.setDate(dueDate.getDate() + (Number.isFinite(offsetDays) ? offsetDays : 0));
+    return dueDate;
+}
+
+function getInvoiceDaysPastDue(invoice, referenceDate = new Date()) {
+    const balance = getInvoiceOutstandingBalance(invoice);
+    if (balance <= 0) {
+        return 0;
+    }
+
+    const dueDate = calculateInvoiceDueDate(invoice);
+    const today = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
+    const due = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+    const diffMs = today.getTime() - due.getTime();
+    return diffMs > 0 ? Math.floor(diffMs / 86400000) : 0;
+}
+
+function getPaymentHistoryEntries() {
+    return state.documents
+        .filter(doc => doc.type === "invoice")
+        .flatMap(doc => getInvoicePayments(doc).map(payment => ({
+            ...payment,
+            invoiceId: String(doc.id),
+            invoiceNumber: doc.refNumber || "—",
+            clientName: doc.clientName || t("unknown_client"),
+            invoiceTotal: Number(doc.total || 0),
+            outstandingBalance: getInvoiceOutstandingBalance(doc)
+        })))
+        .sort((left, right) => Date.parse(right.date || right.createdAt || 0) - Date.parse(left.date || left.createdAt || 0));
+}
+
+function getClientAgingRows(referenceDate = new Date()) {
+    const grouped = new Map();
+
+    state.documents
+        .filter(doc => doc.type === "invoice")
+        .forEach(doc => {
+            const outstanding = getInvoiceOutstandingBalance(doc);
+            if (outstanding <= 0) {
+                return;
+            }
+
+            const clientName = String(doc.clientName || t("unknown_client")).trim() || t("unknown_client");
+            const group = grouped.get(clientName) || {
+                clientName,
+                invoiceCount: 0,
+                current: 0,
+                bucket1to30: 0,
+                bucket31to60: 0,
+                bucket61to90: 0,
+                bucket90plus: 0,
+                totalOutstanding: 0
+            };
+
+            const daysPastDue = getInvoiceDaysPastDue(doc, referenceDate);
+            group.invoiceCount += 1;
+            group.totalOutstanding += outstanding;
+
+            if (daysPastDue <= 0) {
+                group.current += outstanding;
+            } else if (daysPastDue <= 30) {
+                group.bucket1to30 += outstanding;
+            } else if (daysPastDue <= 60) {
+                group.bucket31to60 += outstanding;
+            } else if (daysPastDue <= 90) {
+                group.bucket61to90 += outstanding;
+            } else {
+                group.bucket90plus += outstanding;
+            }
+
+            grouped.set(clientName, group);
+        });
+
+    return [...grouped.values()].sort((left, right) => right.totalOutstanding - left.totalOutstanding);
+}
+
+function renderReportsMetrics(container, metrics) {
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = metrics.map(metric => `
+        <article class="invoice-report-summary-card">
+            <span>${escapeHtml(metric.label)}</span>
+            <strong>${escapeHtml(metric.value)}</strong>
+        </article>
+    `).join("");
+}
+
+function renderPaymentHistoryPanel() {
+    if (!elements.paymentHistoryMetrics || !elements.paymentHistoryTableBody) {
+        return;
+    }
+
+    const entries = getPaymentHistoryEntries();
+    const totalPaid = entries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
+    const uniqueClients = new Set(entries.map(entry => entry.clientName)).size;
+
+    renderReportsMetrics(elements.paymentHistoryMetrics, [
+        { label: "Payments Logged", value: String(entries.length) },
+        { label: "Clients Touched", value: String(uniqueClients) },
+        { label: "Total Applied", value: formatCurrency(totalPaid) }
+    ]);
+
+    elements.paymentHistoryTableBody.innerHTML = entries.length
+        ? entries.map(entry => `
+            <tr>
+                <td>${escapeHtml(formatDisplayDate(entry.date) || entry.date || "—")}</td>
+                <td>${escapeHtml(entry.clientName)}</td>
+                <td>${escapeHtml(entry.invoiceNumber)}</td>
+                <td>${escapeHtml(entry.method || "—")}</td>
+                <td>${escapeHtml(entry.reference || "—")}</td>
+                <td class="reports-muted-cell">${escapeHtml(entry.notes || "—")}</td>
+                <td>${escapeHtml(formatCurrency(entry.amount || 0))}</td>
+            </tr>
+        `).join("")
+        : `<tr><td colspan="7">No payments recorded yet.</td></tr>`;
+}
+
+function renderClientAgingPanel() {
+    if (!elements.agingMetrics || !elements.clientAgingTableBody) {
+        return;
+    }
+
+    const rows = getClientAgingRows();
+    const totalOutstanding = rows.reduce((sum, row) => sum + row.totalOutstanding, 0);
+    const overdueTotal = rows.reduce((sum, row) => sum + row.bucket1to30 + row.bucket31to60 + row.bucket61to90 + row.bucket90plus, 0);
+
+    renderReportsMetrics(elements.agingMetrics, [
+        { label: "Clients With Balances", value: String(rows.length) },
+        { label: "Total Outstanding", value: formatCurrency(totalOutstanding) },
+        { label: "Past Due", value: formatCurrency(overdueTotal) }
+    ]);
+
+    elements.clientAgingTableBody.innerHTML = rows.length
+        ? rows.map(row => `
+            <tr class="aging-row" data-aging-client="${escapeHtml(row.clientName)}" tabindex="0" role="button" title="View open invoices for ${escapeHtml(row.clientName)}">
+                <td>
+                    <div class="reports-client-cell aging-client-cell">
+                        <strong>${escapeHtml(row.clientName)}</strong>
+                        <span class="aging-row-hint">
+                            ${escapeHtml(`${row.invoiceCount} open invoice${row.invoiceCount === 1 ? "" : "s"}`)}
+                            <svg class="aging-row-arrow" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+                        </span>
+                    </div>
+                </td>
+                <td>${escapeHtml(String(row.invoiceCount))}</td>
+                <td class="${row.current > 0 ? "aging-cell-current" : ""}">${escapeHtml(formatCurrency(row.current))}</td>
+                <td class="${row.bucket1to30 > 0 ? "aging-cell-overdue" : ""}">${escapeHtml(formatCurrency(row.bucket1to30))}</td>
+                <td class="${row.bucket31to60 > 0 ? "aging-cell-overdue" : ""}">${escapeHtml(formatCurrency(row.bucket31to60))}</td>
+                <td class="${row.bucket61to90 > 0 ? "aging-cell-late" : ""}">${escapeHtml(formatCurrency(row.bucket61to90))}</td>
+                <td class="${row.bucket90plus > 0 ? "aging-cell-critical" : ""}">${escapeHtml(formatCurrency(row.bucket90plus))}</td>
+                <td class="aging-cell-total">${escapeHtml(formatCurrency(row.totalOutstanding))}</td>
+            </tr>
+        `).join("")
+        : `<tr><td colspan="8">No outstanding balances right now.</td></tr>`;
+
+    elements.clientAgingTableBody.addEventListener("click", handleAgingRowClick, { once: true });
+    elements.clientAgingTableBody.addEventListener("keydown", handleAgingRowKeydown, { once: true });
+}
+
+function handleAgingRowClick(event) {
+    const row = event.target.closest("[data-aging-client]");
+    if (row) openClientInvoicesFromAging(row.dataset.agingClient);
+    elements.clientAgingTableBody.addEventListener("click", handleAgingRowClick, { once: true });
+}
+
+function handleAgingRowKeydown(event) {
+    if (event.key === "Enter" || event.key === " ") {
+        const row = event.target.closest("[data-aging-client]");
+        if (row) { event.preventDefault(); openClientInvoicesFromAging(row.dataset.agingClient); }
+    }
+    elements.clientAgingTableBody.addEventListener("keydown", handleAgingRowKeydown, { once: true });
+}
+
+function openClientInvoicesFromAging(clientName) {
+    state.searchQuery = clientName.trim().toLowerCase();
+    state.activeFilter = "invoice";
+    elements.documentSearch.value = clientName.trim();
+    syncDocumentFilters();
+    renderDocuments();
+    setActivePage("documents");
+    elements.documentSearch.focus();
+}
+
+function createEmptyPaymentEntry() {
+    return {
+        id: `payment-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        date: new Date().toISOString().slice(0, 10),
+        amount: 0,
+        method: "",
+        reference: "",
+        notes: "",
+        appliedTo: "invoice",
+        createdAt: new Date().toISOString()
+    };
+}
+
+function buildPaymentEntryMarkup(payment, index) {
+    const amount = Number(payment?.amount || 0);
+    return `
+        <article class="payment-entry-card" data-payment-entry-id="${escapeHtml(String(payment.id || ""))}">
+            <div class="payment-entry-head">
+                <strong>Payment ${index + 1}</strong>
+                <button class="payment-entry-remove" type="button" data-remove-payment-entry="${escapeHtml(String(payment.id || ""))}">Remove</button>
+            </div>
+            <div class="payment-entry-grid">
+                <label class="form-group">
+                    <span>Date</span>
+                    <input type="date" data-payment-field="date" value="${escapeHtml(String(payment.date || "").slice(0, 10))}">
+                </label>
+                <label class="form-group">
+                    <span>Amount</span>
+                    <input type="number" min="0" step="0.01" data-payment-field="amount" value="${escapeHtml(amount ? amount.toFixed(2) : "")}" placeholder="0.00">
+                </label>
+                <label class="form-group">
+                    <span>Method</span>
+                    <input type="text" data-payment-field="method" value="${escapeHtml(payment.method || "")}" placeholder="Bank transfer">
+                </label>
+                <label class="form-group">
+                    <span>Reference</span>
+                    <input type="text" data-payment-field="reference" value="${escapeHtml(payment.reference || "")}" placeholder="Receipt or transfer ID">
+                </label>
+                <label class="form-group report-field-wide">
+                    <span>Notes</span>
+                    <textarea rows="2" data-payment-field="notes" placeholder="Advance payment, wire confirmation, check details...">${escapeHtml(payment.notes || "")}</textarea>
+                </label>
+            </div>
+        </article>
+    `;
+}
+
+function readPaymentEntriesFromEditor() {
+    if (!elements.paymentLedgerList) {
+        return [];
+    }
+
+    return Array.from(elements.paymentLedgerList.querySelectorAll("[data-payment-entry-id]"))
+        .map(card => {
+            const id = String(card.dataset.paymentEntryId || "");
+            const getField = name => card.querySelector(`[data-payment-field="${name}"]`)?.value || "";
+            return {
+                id,
+                date: String(getField("date") || new Date().toISOString().slice(0, 10)).slice(0, 10),
+                amount: Number.parseFloat(getField("amount")) || 0,
+                method: getField("method").trim(),
+                reference: getField("reference").trim(),
+                notes: getField("notes").trim(),
+                appliedTo: "invoice"
+            };
+        })
+        .filter(entry => entry.amount > 0 || entry.method || entry.reference || entry.notes);
+}
+
+function renderPaymentLedger(payments = []) {
+    if (!elements.paymentLedgerList) {
+        return;
+    }
+
+    const normalizedPayments = normalizeInvoicePayments(payments);
+    elements.paymentLedgerList.innerHTML = normalizedPayments.length
+        ? normalizedPayments.map((payment, index) => buildPaymentEntryMarkup(payment, index)).join("")
+        : `<p class="payment-ledger-empty">No payments recorded yet.</p>`;
+}
+
+function syncPaymentLedgerVisibility() {
+    const isInvoice = elements.docType?.value === "invoice";
+    if (elements.paymentLedgerPanel) {
+        elements.paymentLedgerPanel.hidden = !isInvoice;
+    }
+    if (elements.sidebarPaymentSummary) {
+        elements.sidebarPaymentSummary.hidden = !isInvoice;
+    }
+}
+
+function syncPaymentLedgerUi() {
+    syncPaymentLedgerVisibility();
+    const currentTotal = calculateTotals();
+    const payments = readPaymentEntriesFromEditor();
+    const paidTotal = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+    const balance = Math.max(0, currentTotal - paidTotal);
+
+    if (elements.paymentLedgerInvoiceTotal) {
+        elements.paymentLedgerInvoiceTotal.textContent = formatCurrency(currentTotal);
+    }
+    if (elements.paymentLedgerPaidTotal) {
+        elements.paymentLedgerPaidTotal.textContent = formatCurrency(paidTotal);
+    }
+    if (elements.paymentLedgerBalance) {
+        elements.paymentLedgerBalance.textContent = formatCurrency(balance);
+    }
+    if (elements.summaryPaid) {
+        elements.summaryPaid.textContent = formatCurrency(paidTotal);
+    }
+    if (elements.summaryBalance) {
+        elements.summaryBalance.textContent = formatCurrency(balance);
+    }
+}
+
+function addPaymentEntry() {
+    if (!elements.paymentLedgerList) {
+        return;
+    }
+
+    const payments = normalizeInvoicePayments(readPaymentEntriesFromEditor());
+    payments.push(createEmptyPaymentEntry());
+    renderPaymentLedger(payments);
+    syncPaymentLedgerUi();
+    elements.paymentLedgerList.querySelector("[data-payment-entry-id]:last-child input, [data-payment-entry-id]:last-child textarea")?.focus();
+}
+
+function handlePaymentLedgerListClick(event) {
+    const removeButton = event.target.closest("[data-remove-payment-entry]");
+    if (!removeButton || !elements.paymentLedgerList) {
+        return;
+    }
+
+    removeButton.closest("[data-payment-entry-id]")?.remove();
+    if (!elements.paymentLedgerList.querySelector("[data-payment-entry-id]")) {
+        elements.paymentLedgerList.innerHTML = `<p class="payment-ledger-empty">No payments recorded yet.</p>`;
+    }
+    syncPaymentLedgerUi();
+}
+
 function getPaymentStatusLabel(status) {
     const normalizedStatus = normalizePaymentStatus(status);
     if (normalizedStatus === "paid") {
@@ -6567,8 +7293,11 @@ function normalizeDocuments(documents) {
         }
 
         doc.status = doc.status === "draft" ? "draft" : "logged";
+        doc.payments = String(doc.type || "").toLowerCase() === "invoice"
+            ? normalizeInvoicePayments(doc.payments)
+            : [];
         doc.paymentStatus = String(doc.type || "").toLowerCase() === "invoice"
-            ? normalizePaymentStatus(doc.paymentStatus)
+            ? getInvoiceDerivedPaymentStatus(doc)
             : null;
 
         const refNumber = String(doc.refNumber || "").trim().toUpperCase();
@@ -6603,6 +7332,7 @@ function normalizeDocuments(documents) {
             consigneeAddress: doc.consigneeAddress || existingDoc.consigneeAddress,
             poNumber: doc.poNumber || existingDoc.poNumber,
             paymentTerms: doc.paymentTerms || existingDoc.paymentTerms,
+            payments: Array.isArray(doc.payments) && doc.payments.length ? doc.payments : existingDoc.payments,
             total: Number(doc.total || existingDoc.total || 0),
             subtotal: Number(doc.subtotal || existingDoc.subtotal || 0)
         };
@@ -7447,6 +8177,7 @@ function updateEditorSummary() {
         ? tags.map(tag => `<span class="sidebar-tag">${escapeHtml(tag)}</span>`).join("")
         : `<span class="sidebar-tag muted">${escapeHtml(t("no_keywords"))}</span>`;
 
+    syncPaymentLedgerUi();
     renderKeywordSuggestions(tags);
 
     if (state.currentStep >= 5) {
@@ -7731,6 +8462,7 @@ function updateModalTitle() {
     );
     elements.exportPdfBtn.removeAttribute("title");
     elements.exportPdfBtn.removeAttribute("aria-label");
+    syncPaymentLedgerVisibility();
     generateRefNumber();
 }
 
@@ -7749,6 +8481,7 @@ function resetForm() {
     elements.paymentTerms.value = DEFAULT_PAYMENT_TERMS;
     elements.includeSignature.checked = true;
     elements.includeStamp.checked = false;
+    renderPaymentLedger([]);
     elements.itemsContainer.innerHTML = "";
     state.itemCounter = 0;
     addItem();
@@ -7775,6 +8508,7 @@ function prepareNewDocument(type = "quote") {
     elements.paymentTerms.value = DEFAULT_PAYMENT_TERMS;
     elements.includeSignature.checked = true;
     elements.includeStamp.checked = false;
+    renderPaymentLedger([]);
     elements.docType.value = type;
     setToday();
     updateModalTitle();
@@ -8604,11 +9338,64 @@ function buildDocumentData() {
         paymentTerms: elements.paymentTerms.value,
         includeSignature: elements.includeSignature.checked,
         includeStamp: elements.includeStamp.checked,
+        payments: elements.docType.value === "invoice"
+            ? normalizeInvoicePayments(readPaymentEntriesFromEditor())
+            : [],
         printedAt: elements.docDate.value ? `${elements.docDate.value}T12:00:00.000Z` : new Date().toISOString(),
         subtotal,
         total: subtotal,
         items
     };
+}
+
+function buildInvoicePaymentSummaryMarkup(doc) {
+    if (doc.type !== "invoice") {
+        return "";
+    }
+
+    const payments = getInvoicePayments(doc);
+    const paidTotal = getInvoicePaymentsTotal(doc);
+    const balance = getInvoiceOutstandingBalance(doc);
+    const statusLabel = getPaymentStatusLabel(getInvoiceDerivedPaymentStatus(doc));
+
+    return `
+        <div class="document-payment-summary">
+            <div class="document-payment-head">
+                <div>
+                    <span class="document-payment-label">Payments Applied</span>
+                    <strong class="document-payment-status">${escapeHtml(statusLabel)}</strong>
+                </div>
+                <div class="document-payment-metrics">
+                    <span><strong>Paid:</strong> USD $ ${escapeHtml(formatAmount(paidTotal))}</span>
+                    <span><strong>Balance:</strong> USD $ ${escapeHtml(formatAmount(balance))}</span>
+                </div>
+            </div>
+            ${payments.length
+                ? `<table class="document-payment-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Method</th>
+                            <th>Reference</th>
+                            <th>Notes</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${payments.map(payment => `
+                            <tr>
+                                <td>${escapeHtml(formatDisplayDate(payment.date) || payment.date || "—")}</td>
+                                <td>${escapeHtml(payment.method || "—")}</td>
+                                <td>${escapeHtml(payment.reference || "—")}</td>
+                                <td>${escapeHtml(payment.notes || "—")}</td>
+                                <td>USD $ ${escapeHtml(formatAmount(payment.amount || 0))}</td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                </table>`
+                : `<div class="document-payment-empty">No payments or advances have been applied to this invoice yet.</div>`}
+        </div>
+    `;
 }
 
 function buildDocumentMarkup(doc, stampStyle, options = {}) {
@@ -8667,6 +9454,8 @@ function buildDocumentMarkup(doc, stampStyle, options = {}) {
                 <div class="notes-label"><strong>Notes:</strong></div>
                 <div class="document-notes-content">${safeNotes}</div>
             </div>
+
+            ${buildInvoicePaymentSummaryMarkup(doc)}
 
             <div class="document-bottom">
                 <div class="document-terms">
@@ -8749,6 +9538,8 @@ function buildLineItemsPreviewMarkup(doc) {
                 <div class="notes-label"><strong>Notes:</strong></div>
                 <div class="document-notes-content">${safeNotes}</div>
             </div>
+
+            ${buildInvoicePaymentSummaryMarkup(doc)}
 
             <div class="document-bottom line-items-review-bottom">
                 <div class="document-terms">
@@ -8989,6 +9780,9 @@ async function persistDocument(options = {}) {
         paymentStatus: elements.docType.value === "invoice"
             ? normalizePaymentStatus(existingDocument?.paymentStatus)
             : null,
+        payments: elements.docType.value === "invoice"
+            ? normalizeInvoicePayments(readPaymentEntriesFromEditor())
+            : [],
         refNumber: elements.refNumber.value,
         date: elements.docDate.value,
         clientName: elements.clientName.value,
@@ -9035,6 +9829,10 @@ async function persistDocument(options = {}) {
 
     doc.subtotal = calculateTotals();
     doc.total = doc.subtotal;
+    doc.payments = doc.type === "invoice" ? normalizeInvoicePayments(readPaymentEntriesFromEditor()) : [];
+    doc.paymentStatus = doc.type === "invoice"
+        ? getInvoiceDerivedPaymentStatus(doc)
+        : null;
 
     let nextDocuments;
 
@@ -9200,8 +9998,8 @@ function updateOverviewStats() {
         .filter(doc => doc.type === "invoice")
         .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
     const incomeValue = state.documents
-        .filter(doc => doc.type === "invoice" && doc.paymentStatus === "paid")
-        .reduce((sum, doc) => sum + Number(doc.total || 0), 0);
+        .filter(doc => doc.type === "invoice")
+        .reduce((sum, doc) => sum + getInvoicePaymentsTotal(doc), 0);
     const totalValue = state.valueView === "invoiced"
         ? invoicedValue
         : state.valueView === "income"
@@ -9414,7 +10212,7 @@ function getKpiCardMarkup(label, value, meta = "") {
 
 function getDocumentCardMarkup(doc) {
     const statusLabel = doc.status === "draft" ? t("status_draft") : t("status_logged");
-    const paymentStatus = doc.type === "invoice" ? normalizePaymentStatus(doc.paymentStatus) : "";
+    const paymentStatus = doc.type === "invoice" ? getInvoiceDerivedPaymentStatus(doc) : "";
     const statusMarkup = doc.type === "invoice"
         ? [
             getStatusBadgeMarkup(statusLabel, doc.status === "draft" ? "is-draft" : "is-logged"),
@@ -9455,6 +10253,7 @@ function getDocumentCardMarkup(doc) {
                         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg>
                     </button>
                     <div class="doc-actions-menu" data-document-menu="${escapeHtml(String(doc.id))}" hidden style="display:none;">
+                        ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="quick-payment" data-id="${escapeHtml(String(doc.id))}">Add Payment</button>` : ""}
                         ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="unpaid" data-id="${escapeHtml(String(doc.id))}">${escapeHtml(t("mark_as_unpaid"))}</button>` : ""}
                         ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="pending" data-id="${escapeHtml(String(doc.id))}">${escapeHtml(t("mark_as_pending"))}</button>` : ""}
                         ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="paid" data-id="${escapeHtml(String(doc.id))}">${escapeHtml(t("mark_as_paid"))}</button>` : ""}
@@ -9682,6 +10481,8 @@ async function handleDocumentCardClick(event) {
             if (doc) {
                 openPrintWindow(doc);
             }
+        } else if (action === "quick-payment") {
+            openQuickPaymentModal(docId);
         } else if (action === "set-payment-status") {
             await updateDocumentPaymentStatus(docId, actionButton.dataset.paymentStatus);
         } else if (action === "delete") {
@@ -9713,8 +10514,15 @@ async function updateDocumentPaymentStatus(id, status) {
         return;
     }
 
+    if (getInvoicePayments(doc).length) {
+        state.openDocumentMenuId = null;
+        renderDocuments();
+        window.alert("This invoice already has tracked payments. Update the payment ledger instead of forcing the status.");
+        return;
+    }
+
     const nextStatus = normalizePaymentStatus(status);
-    if (normalizePaymentStatus(doc.paymentStatus) === nextStatus) {
+    if (getInvoiceDerivedPaymentStatus(doc) === nextStatus) {
         state.openDocumentMenuId = null;
         renderDocuments();
         return;
@@ -9749,6 +10557,7 @@ function populateFormFromDocument(doc) {
     elements.paymentTerms.value = doc.paymentTerms || DEFAULT_PAYMENT_TERMS;
     elements.includeSignature.checked = doc.includeSignature !== false;
     elements.includeStamp.checked = Boolean(doc.includeStamp);
+    renderPaymentLedger(doc.type === "invoice" ? doc.payments : []);
 
     elements.itemsContainer.innerHTML = "";
     state.itemCounter = 0;
@@ -9804,7 +10613,10 @@ function convertDocumentType(id, nextType) {
         type: nextType,
         paymentStatus: nextType === "invoice"
             ? normalizePaymentStatus(doc.paymentStatus)
-            : null
+            : null,
+        payments: nextType === "invoice"
+            ? normalizeInvoicePayments(doc.payments)
+            : []
     });
     updateModalTitle();
     goToStep(getTotalSteps());

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SantoSync</title>
-    <link rel="stylesheet" href="css/styles.css?v=14">
+    <link rel="stylesheet" href="css/styles.css?v=15">
 </head>
 <body>
     <div class="brand-splash" id="brandSplash" aria-hidden="true" hidden>
@@ -358,6 +358,61 @@
                                 <div class="client-management-list" id="statementExportsList">
                                     <p class="client-list-empty">No statements generated yet.</p>
                                 </div>
+                            </div>
+                        </section>
+                        <section class="settings-panel report-summary-panel">
+                            <div class="settings-panel-header">
+                                <h4>Payment History</h4>
+                                <p>See every payment recorded across invoices, ordered from newest to oldest.</p>
+                            </div>
+                            <div class="reports-metrics-grid" id="paymentHistoryMetrics"></div>
+                            <div class="reports-table-wrap">
+                                <table class="reports-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Client</th>
+                                            <th>Invoice</th>
+                                            <th>Method</th>
+                                            <th>Reference</th>
+                                            <th>Notes</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="paymentHistoryTableBody">
+                                        <tr>
+                                            <td colspan="7">No payments recorded yet.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                        <section class="settings-panel report-summary-panel">
+                            <div class="settings-panel-header">
+                                <h4>Client Aging</h4>
+                                <p>Track outstanding balances by client using current, 1-30, 31-60, 61-90, and 90+ day buckets.</p>
+                            </div>
+                            <div class="reports-metrics-grid" id="agingMetrics"></div>
+                            <div class="reports-table-wrap">
+                                <table class="reports-table reports-aging-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Client</th>
+                                            <th>Invoices</th>
+                                            <th>Current</th>
+                                            <th>1-30</th>
+                                            <th>31-60</th>
+                                            <th>61-90</th>
+                                            <th>90+</th>
+                                            <th>Total Outstanding</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="clientAgingTableBody">
+                                        <tr>
+                                            <td colspan="8">No outstanding balances right now.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </section>
                     </div>
@@ -956,6 +1011,45 @@
         </div>
     </div>
 
+    <div class="modal settings-modal" id="quickPaymentModal" aria-hidden="true" hidden>
+        <div class="modal-content settings-modal-content quick-payment-modal-content">
+            <div class="modal-header">
+                <h3 id="quickPaymentTitle">Add Invoice Payment</h3>
+                <button class="close-btn" id="closeQuickPaymentModalBtn" type="button" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body settings-modal-body">
+                <p class="settings-copy" id="quickPaymentCopy">Record a payment, advance, or deposit against this invoice without reopening the full editor.</p>
+                <div class="quick-payment-summary" id="quickPaymentSummary"></div>
+                <div class="settings-grid report-grid quick-payment-grid">
+                    <label class="form-group">
+                        <span>Date</span>
+                        <input type="date" id="quickPaymentDateInput">
+                    </label>
+                    <label class="form-group">
+                        <span>Amount</span>
+                        <input type="number" id="quickPaymentAmountInput" min="0" step="0.01" placeholder="0.00">
+                    </label>
+                    <label class="form-group">
+                        <span>Method</span>
+                        <input type="text" id="quickPaymentMethodInput" placeholder="Bank transfer">
+                    </label>
+                    <label class="form-group">
+                        <span>Reference</span>
+                        <input type="text" id="quickPaymentReferenceInput" placeholder="Receipt, ACH, check number">
+                    </label>
+                    <label class="form-group report-field-wide">
+                        <span>Notes</span>
+                        <textarea id="quickPaymentNotesInput" rows="3" placeholder="Optional payment notes"></textarea>
+                    </label>
+                </div>
+                <div class="quick-payment-history" id="quickPaymentHistory"></div>
+                <div class="settings-actions">
+                    <button class="btn btn-primary" id="saveQuickPaymentBtn" type="button">Save Payment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal settings-modal" id="invoiceReportsModal" aria-hidden="true" hidden>
         <div class="modal-content settings-modal-content inbox-modal-content invoice-reports-modal-content">
             <div class="modal-header">
@@ -1009,6 +1103,7 @@
                             <div class="invoice-report-export-more-menu" id="invoiceReportExportMoreMenu" hidden>
                                 <button class="invoice-report-export-more-item" id="printInvoiceReportBtn" type="button">Print Selected</button>
                                 <button class="invoice-report-export-more-item" id="exportInvoiceReportCsvBtn" type="button" disabled>Export Selected as CSV</button>
+                                <button class="invoice-report-export-more-item" id="exportInvoiceReportExcelBtn" type="button" disabled>Export Selected as Excel</button>
                             </div>
                         </div>
                     </div>
@@ -1121,6 +1216,7 @@
                 <div class="settings-actions statement-export-actions">
                     <button class="btn btn-secondary" id="statementExportBackBtn" type="button">Back</button>
                     <button class="btn btn-secondary" id="statementExportNextBtn" type="button">Next</button>
+                    <button class="btn btn-secondary" id="generateStatementExcelBtn" type="button">Generate Excel</button>
                     <button class="btn btn-primary" id="confirmStatementExportBtn" type="button">Generate PDF</button>
                 </div>
             </div>
@@ -1368,6 +1464,32 @@
                                     <input type="text" id="paymentTerms" value="NET15 : Full payment for goods or services is due within 15 calendar days of the invoice date, aligned with shipping or completion.">
                                 </div>
                             </div>
+                            <div class="document-settings-panel payment-ledger-panel" id="paymentLedgerPanel" hidden>
+                                <div class="document-settings-header">
+                                    <h6>Payments & Advances</h6>
+                                    <p>Record deposits, partial payments, and references tied to this invoice. The balance updates as you go.</p>
+                                </div>
+                                <div class="payment-ledger-summary" id="paymentLedgerSummary">
+                                    <article class="payment-ledger-metric">
+                                        <span>Invoice Total</span>
+                                        <strong id="paymentLedgerInvoiceTotal">$0.00</strong>
+                                    </article>
+                                    <article class="payment-ledger-metric">
+                                        <span>Paid / Applied</span>
+                                        <strong id="paymentLedgerPaidTotal">$0.00</strong>
+                                    </article>
+                                    <article class="payment-ledger-metric">
+                                        <span>Balance Outstanding</span>
+                                        <strong id="paymentLedgerBalance">$0.00</strong>
+                                    </article>
+                                </div>
+                                <div class="payment-ledger-list" id="paymentLedgerList">
+                                    <p class="payment-ledger-empty">No payments recorded yet.</p>
+                                </div>
+                                <div class="line-items-footer-actions payment-ledger-actions">
+                                    <button type="button" class="btn btn-secondary" id="addPaymentEntryBtn">Add Payment</button>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-step" data-step="4">
@@ -1437,6 +1559,16 @@
                                 <div>
                                     <span class="sidebar-metric-label">Subtotal</span>
                                     <strong id="summaryTotal">$0.00</strong>
+                                </div>
+                            </div>
+                            <div class="sidebar-payment-summary" id="sidebarPaymentSummary" hidden>
+                                <div class="sidebar-payment-row">
+                                    <span class="sidebar-metric-label">Paid</span>
+                                    <strong id="summaryPaid">$0.00</strong>
+                                </div>
+                                <div class="sidebar-payment-row">
+                                    <span class="sidebar-metric-label">Balance</span>
+                                    <strong id="summaryBalance">$0.00</strong>
                                 </div>
                             </div>
                             <div class="sidebar-tags" id="summaryTags">
@@ -1773,6 +1905,6 @@
 
     <script src="js/brand.js?v=2"></script>
     <script src="js/statement-of-account.js"></script>
-    <script src="js/app.js?v=9"></script>
+    <script src="js/app.js?v=10"></script>
 </body>
 </html>
