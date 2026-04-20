@@ -1468,6 +1468,9 @@ body::after {
     box-shadow: var(--shadow-md);
     backdrop-filter: blur(16px);
     position: relative;
+}
+
+.overview-panel {
     overflow: hidden;
 }
 
@@ -9376,6 +9379,11 @@ body {
 .document-card:hover {
     box-shadow: 0 10px 24px rgba(24, 47, 86, 0.09);
     transform: translateY(-1px);
+}
+
+.document-card.has-open-menu {
+    position: relative;
+    z-index: 20;
 }
 
 .document-card-quote {
