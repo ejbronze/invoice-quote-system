@@ -2,17 +2,29 @@
 
 SantoSync is a premium quote-and-invoice workspace for modern trade teams. It combines document creation, client history, per-user preferences, admin tools, and branded export output in one polished operational dashboard.
 
-Version: `1.2.0` — Last updated: April 19, 2026
+Version: `1.3.0` — Last updated: April 20, 2026
+
+## Version 1.3.0 Summary
+
+This release expands the client directory, adds full payment lifecycle management, and redesigns the Excel statement export.
+
+**Client Directory overhaul:** Client profiles now support multiple contacts per record — each with a name, email, phone number, and a WhatsApp flag. Clients are managed through a dedicated Add/Edit modal that replaces the old prompt-based flow. The client directory renders as accordion cards: clicking a card expands it inline to reveal the full address, consignee, and all saved contacts without leaving the page.
+
+**Statement payment tracking:** Statement deductions can now be flagged as payments. When the "Mark as payment" checkbox is enabled on a deduction inside the statement editor, saving the statement writes that deduction back as a real payment entry on the matched invoice documents. The payment propagates to Payment History, reduces the outstanding balance in the aging table, and updates the invoice payment status automatically. The statement summary panel separates "Payments applied" (green) from "Other deductions" so the financial breakdown is immediately clear.
+
+**Log Payment entry point:** The Payment History panel on the Statements page now has a "+ Log Payment" button. It opens the existing quick-payment modal with an invoice picker pre-filtered to all open invoices, so payments can be recorded without reopening the full document editor.
+
+**Aging table click-throughs:** Clicking any client row in the Client Aging table navigates directly to the Documents page with that client's open invoices pre-filtered — collections work becomes one hop.
+
+**Excel statement export redesign:** The Excel export for Statements of Account has been fully redesigned. The output is now a single branded sheet: a dark-navy title banner, a header block with labeled vendor/consignee/bill-to/currency/outstanding balance cells, a light-yellow date band, navy column headers, and one data row per invoice (Inv Date, Invoice Number, PO Number, Debits, Credits, Bal Outstanding) with a totals row at the bottom. The old letterhead-image area and per-invoice sub-sheets have been removed in favor of this focused layout.
 
 ## Version 1.2.0 Summary
 
 This release is a layout and navigation redesign. The full-width app topbar has been removed and replaced with a compact mobile-only header (`<header class="mobile-topbar">`). On desktop, navigation lives entirely in the left sidebar. Sign out, language selection, session and environment status badges, and the `+ New` quick-action menu have all moved into the sidebar footer, eliminating the topbar entirely on wide screens.
 
-The dashboard `+ New` area in the workspace actions row has been consolidated from two separate buttons (New Quote, New Invoice) into a single `+ New` button that opens an inline dropdown with three options: Quote, Invoice, and Statement. The same options are also reachable from the sidebar `+ New` menu.
+The dashboard `+ New` area in the workspace actions row has been consolidated from two separate buttons (New Quote, New Invoice) into a single `+ New` button that opens an inline dropdown with three options: Quote, Invoice, and Statement. The same options are also reachable from the Documents page header.
 
 The overview snapshot KPI grid has been trimmed: the Invoices stat card has been removed, leaving Documents, Quotes, and the three-state Pipeline Value toggle card. The snapshot area and hero section have been tightened with reduced padding and smaller display type to take up less vertical space on the dashboard.
-
-The Updated date has moved back into the footer `app-footer-copy` area where it was before.
 
 Settings have been cleaned up: the User Management panel (Create local accounts, assign roles, reset passwords, remove users) has been removed from the Settings modal. Remaining settings panels are Service Reports, Editor Preferences, Data Export & Import, and Local Testing.
 
@@ -31,8 +43,6 @@ Document cards now use the same icon-button system introduced for statement rows
 The Statements tab has been restructured to render inline within the main dashboard section. The filter tabs (All / Quotes / Invoices / Statements) remain visible at all times, so switching between document types feels like a true tab panel rather than a page transition. The separate "Back to Documents" button has been removed — any other tab takes you back naturally.
 
 The Help & FAQ modal has been fully upgraded: it now opens with a live search bar that filters topics as you type, a quick-jump index of pill-style section links, and inline visual demonstrations of the actual action buttons (rendered using the app's own CSS, so they look exactly as they do in the workspace). New help topics cover the Document Cards section, the PDF preview workflow, the Statements tab, and data backup/restore.
-
-The footer "Updated" date now reflects April 17, 2026.
 
 ## Version 1.0.0 Summary
 
@@ -59,7 +69,8 @@ This version brought SantoSync into a more complete shared-workspace release. Th
 ├── index.html
 ├── js/
 │   ├── app.js
-│   └── brand.js
+│   ├── brand.js
+│   └── statement-of-account.js
 ├── api/
 │   ├── _storage.js
 │   ├── clients.js
@@ -67,6 +78,7 @@ This version brought SantoSync into a more complete shared-workspace release. Th
 │   ├── debug-blob.js
 │   ├── documents.js
 │   ├── legacy-pdf.js
+│   ├── statement-report.js
 │   ├── workspace.js
 │   └── upload-legacy-pdf.js
 ├── package.json
@@ -78,10 +90,12 @@ This version brought SantoSync into a more complete shared-workspace release. Th
 - `index.html`: App shell, auth screens, dashboard, editor flow, admin tools, issue reporting, and company profile surface.
 - `css/styles.css`: SantoSync UI system, dashboard layout, catalog and cart layouts, document styling, modal patterns, and print/export presentation.
 - `js/brand.js`: Centralized brand config, SantoSync logo SVG system, and theme token application.
-- `js/app.js`: Session handling, local roles, translations, document workflow, catalog/cart behavior, exports, client persistence, and admin utilities.
+- `js/app.js`: Session handling, local roles, translations, document workflow, catalog/cart behavior, exports, client persistence, payment tracking, and admin utilities.
+- `js/statement-of-account.js`: Statement of Account PDF generation, normalization, and totals calculation.
 - `api/documents.js`: Vercel API route for saving and loading quotes and invoices.
 - `api/clients.js`: Vercel API route for saving and loading shared client records.
 - `api/workspace.js`: Vercel API route for saving and loading shared workspace state.
+- `api/statement-report.js`: Vercel API route that generates the Excel Statement of Account workbook.
 - `api/_storage.js`: Shared Vercel Blob helpers and dataset normalizers for server persistence.
 
 ## Brand System
@@ -106,7 +120,7 @@ Logo system:
 
 ## Company Profile
 
-Admins can manage a Company Profile inside the app. This profile is used in quote and invoice outputs.
+Admins can manage a Company Profile inside the app via Settings in the sidebar. This profile is used in quote and invoice outputs.
 
 Saved fields:
 
@@ -128,7 +142,7 @@ The Company Profile is stored in the shared workspace dataset when the API is av
 
 SantoSync uses a simple username/password role model inside the app:
 
-- `Admin`: Can access settings, company profile, user management, client management, imports/exports, local test tools, issue inbox, and admin-only visibility such as creator attribution.
+- `Admin`: Can access settings, company profile, client management, imports/exports, local test tools, issue inbox, and admin-only visibility such as creator attribution.
 - `User`: Can sign in, create quotes/invoices, edit documents, save clients, and use the normal workspace without admin-only controls.
 
 Default seeded admin account:
@@ -141,14 +155,21 @@ When the app is online with the API available, user accounts are stored in the s
 ## Main Features
 
 - Create, edit, delete, and convert quotes and invoices
-- Daily reference numbering using the app’s document naming convention
+- Daily reference numbering using the app's document naming convention
 - Reference numbering resolves against the selected local document date and checks existing same-day refs before choosing the next sequence
 - Admin-only client record management
 - Admin-only company profile management
 - Per-user language preferences for English, Spanish, and French
 - Client profiles that preserve bill-to and consignee details, including saved client switching in the editor
+- Client directory with expandable accordion cards — click any client to see their full address, consignee, and all saved contacts inline
+- Multiple contacts per client (name, email, phone, WhatsApp flag) managed via a dedicated Add/Edit modal
+- Aging table rows click through to the Documents page pre-filtered to that client's open invoices — collections work is one hop
+- Statement deductions can be flagged as payments; on save, they write payment entries back to the matched invoice documents, reflecting immediately in Payment History and balance calculations
+- "+ Log Payment" button in the Payment History panel lets you record payments against any open invoice without opening the document editor
+- Statement summary panel shows "Payments applied" and "Other deductions" as separate line items
+- Statement of Account Excel export with a branded single-sheet layout: title banner, header block (vendor, consignee, bill-to, currency, outstanding balance, project name), date band, column headers, and one row per invoice
 - Pending items cart with a dedicated create-item popup
-- Pending items cart with visual item cards, a header action pill, document-insert controls, direct image upload from the cart list, compact cart item editing, and cart item image editing
+- Pending items cart with visual item cards, a header action pill, document-insert controls, compact cart item editing, and cart item image editing
 - Catalog page that aggregates items captured from quotes, invoices, and cart records, with support for manually added catalog entries
 - Line item image support inside the document editor with a visual add-image tile
 - Compact overflow menus for line-item editor actions instead of persistent inline action buttons
@@ -159,20 +180,18 @@ When the app is online with the API available, user accounts are stored in the s
 - CSV template export and CSV import
 - Calculator inside the document editor
 - Compact dashboard with a tightened hero section and trimmed snapshot KPI grid (Documents, Quotes, Pipeline Value)
-- Single `+ New` button on the dashboard that opens a quick-action dropdown with Quote, Invoice, and Statement options
+- Single `+ New` button on the dashboard and Documents page header — opens a quick-action dropdown with Quote, Invoice, and Statement options
 - Document cards use stronger quote/invoice color separation plus text badges for `Draft` / `Logged`
 - Invoice cards support `Paid` / `Unpaid` / `Pending` status badges and a menu action for payment tracking
 - The top commercial snapshot value card cycles through `Pipeline Value`, `Amount Invoiced`, and `Income Received`
-- Document cards use icon-based action buttons (eye for PDF preview, pencil for edit) with animated tooltip labels on hover, visually consistent with the statement rows
-- Document card icon buttons use the same `statement-action-btn` style class system introduced for statement rows, keeping the visual language unified across the dashboard
-- The PDF preview popup window’s Edit button now correctly navigates back to the editor with the document loaded
-- Quote and invoice menus intentionally differ so payment actions appear only on invoices
-- The Statements tab renders inline within the main dashboard — the filter tab bar stays visible while browsing statements, behaving like a true tab panel
-- Statement rows show the same open/edit/delete icon buttons as document cards for a unified control language across the app
+- Document cards use icon-based action buttons (eye for PDF preview, pencil for edit) with animated tooltip labels on hover
+- The PDF preview popup window's Edit button correctly navigates back to the editor with the document loaded
+- The Statements tab renders inline within the main dashboard — the filter tab bar stays visible while browsing statements
+- Statement rows show the same open/edit/delete icon buttons as document cards for a unified control language
 - Mobile-tuned modal sizing for cart, issue reporting, and document preview/export flows
 - Branded splash, auth, session-loading, about, and dashboard identity
 - Branded print/PDF preview output with SantoSync company identity
-- Help & FAQ modal with live keyword search, a quick-jump section index, and inline visual button demos rendered using the app’s own CSS
+- Help & FAQ modal with live keyword search, a quick-jump section index, and inline visual button demos rendered using the app's own CSS
 - The main search bar indexes both documents and statements — searching by client name, vendor, reference number, or date filters whichever tab is active with a single query
 
 ## Document Output Rules
@@ -194,7 +213,8 @@ Server-backed:
 
 - Quotes and invoices through `/api/documents`
 - Shared saved clients through `/api/clients`
-  - saved client records persist `name`, `address`, `consigneeName`, and `consigneeAddress`
+  - saved client records persist `name`, `address`, `consigneeName`, `consigneeAddress`, and `contacts[]`
+  - contacts include name, email, phone, and WhatsApp flag per entry
   - switching between saved clients restores the saved consignee fields instead of resetting them
 - Shared workspace state through `/api/workspace`
   - user accounts and roles
