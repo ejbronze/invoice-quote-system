@@ -1931,6 +1931,13 @@ function bindEvents() {
     elements.clearStampAssetBtn?.addEventListener("click", () => clearBrandAsset("stamp"));
     elements.saveBrandAssetsBtn?.addEventListener("click", saveBrandAssets);
     elements.clientManagementList.addEventListener("click", handleClientManagementClick);
+    elements.clientManagementList.addEventListener("click", handleClientRowToggle);
+    elements.clientManagementList.addEventListener("keydown", e => {
+        if ((e.key === "Enter" || e.key === " ") && e.target.closest("[data-toggle-client]") && !e.target.closest("[data-client-action]")) {
+            e.preventDefault();
+            handleClientRowToggle(e);
+        }
+    });
     elements.addClientBtn?.addEventListener("click", () => openClientModal(null));
     elements.addClientContactBtn?.addEventListener("click", addClientContactRow);
     elements.saveClientModalBtn?.addEventListener("click", saveClientFromModal);
@@ -5820,51 +5827,81 @@ function renderClientManagementList() {
     }
 
     const admin = isAdminSession();
+
     elements.clientManagementList.innerHTML = state.clients.map(client => {
         const contacts = Array.isArray(client.contacts) ? client.contacts : [];
-        const contactsMarkup = contacts.length
-            ? `<div class="client-row-contacts">
-                ${contacts.map(c => `
-                    <div class="client-contact-chip">
-                        <span class="client-contact-chip-name">${escapeHtml(c.name || c.email || c.phone)}</span>
-                        ${c.email ? `<span class="client-contact-chip-detail">${escapeHtml(c.email)}</span>` : ""}
-                        ${c.phone ? `<span class="client-contact-chip-detail">${escapeHtml(c.phone)}${c.isWhatsapp ? `<span class="client-contact-wa-badge">WA</span>` : ""}</span>` : ""}
-                    </div>`).join("")}
-               </div>`
-            : "";
+
+        const badges = [
+            client.address ? `<span class="client-row-badge"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a4.5 4.5 0 0 1 4.5 4.5c0 3-4.5 8.5-4.5 8.5S3.5 9 3.5 6A4.5 4.5 0 0 1 8 1.5Z"/><circle cx="8" cy="6" r="1.5"/></svg>${escapeHtml(client.address.split(/\n|,/)[0].trim())}</span>` : "",
+            client.consigneeName ? `<span class="client-row-badge client-row-badge-consignee"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none"><path d="M8 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm-5 10c0-2.2 2.24-4 5-4s5 1.8 5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>${escapeHtml(client.consigneeName)}</span>` : "",
+            contacts.length ? `<span class="client-row-badge client-row-badge-contacts"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="5" cy="5" r="2.5"/><path d="M1 13c0-2.2 1.8-4 4-4s4 1.8 4 4"/><path d="M11 8a2 2 0 0 0 0-4"/><path d="M13 13c0-1.86-1.27-3.41-3-3.87"/></svg>${contacts.length} contact${contacts.length > 1 ? "s" : ""}</span>` : ""
+        ].filter(Boolean).join("");
+
+        const contactsDetail = contacts.length ? `
+            <div class="client-detail-section">
+                <span class="client-detail-label">Contacts</span>
+                <div class="client-detail-contacts">
+                    ${contacts.map(c => `
+                        <div class="client-detail-contact">
+                            <span class="client-detail-contact-name">${escapeHtml(c.name || "—")}</span>
+                            ${c.email ? `<a class="client-detail-contact-link" href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>` : ""}
+                            ${c.phone ? `<span class="client-detail-contact-phone">${escapeHtml(c.phone)}${c.isWhatsapp ? `<span class="client-contact-wa-badge">WA</span>` : ""}</span>` : ""}
+                        </div>`).join("")}
+                </div>
+            </div>` : "";
 
         return `
-        <article class="client-row">
-            <div class="client-row-copy">
-                <strong class="client-row-name">${escapeHtml(client.name)}</strong>
-                <div class="client-row-meta">
-                    ${client.address
-                        ? `<span class="client-row-meta-item">
-                            <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a4.5 4.5 0 0 1 4.5 4.5c0 3-4.5 8.5-4.5 8.5S3.5 9 3.5 6A4.5 4.5 0 0 1 8 1.5Z"/><circle cx="8" cy="6" r="1.5"/></svg>
-                            <span>${escapeHtml(client.address)}</span>
-                           </span>`
-                        : ""}
-                    ${client.consigneeName
-                        ? `<span class="client-row-meta-item client-row-meta-consignee">
-                            <svg viewBox="0 0 16 16" aria-hidden="true" fill="none"><path d="M8 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm-5 10c0-2.2 2.24-4 5-4s5 1.8 5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-                            <span>${escapeHtml(client.consigneeName)}</span>
-                           </span>`
-                        : ""}
+        <article class="client-row" data-client-id="${escapeHtml(client.id)}">
+            <div class="client-row-header" data-toggle-client="${escapeHtml(client.id)}" role="button" tabindex="0" aria-expanded="false">
+                <svg class="client-row-chevron" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 8 10 12 14 8"/></svg>
+                <div class="client-row-headline">
+                    <strong class="client-row-name">${escapeHtml(client.name)}</strong>
+                    <div class="client-row-badges">${badges}</div>
                 </div>
-                ${contactsMarkup}
-            </div>
-            ${admin
-                ? `<div class="client-row-actions">
+                ${admin ? `<div class="client-row-actions" role="group">
                     <button class="statement-action-btn is-edit" type="button" data-client-action="edit-client" data-client-id="${escapeHtml(client.id)}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
                     </button>
                     <button class="statement-action-btn is-delete" type="button" data-client-action="delete-client" data-client-id="${escapeHtml(client.id)}" aria-label="${escapeHtml(t("delete"))}" title="${escapeHtml(t("delete"))}">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M9 4h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M7 7l1 12h8l1-12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v5M14 11v5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
                     </button>
-                </div>`
-                : ""}
+                </div>` : ""}
+            </div>
+            <div class="client-row-body" hidden>
+                ${client.address ? `
+                <div class="client-detail-section">
+                    <span class="client-detail-label">
+                        <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a4.5 4.5 0 0 1 4.5 4.5c0 3-4.5 8.5-4.5 8.5S3.5 9 3.5 6A4.5 4.5 0 0 1 8 1.5Z"/><circle cx="8" cy="6" r="1.5"/></svg>
+                        Location
+                    </span>
+                    <p class="client-detail-value">${escapeHtml(client.address)}</p>
+                </div>` : ""}
+                ${client.consigneeName ? `
+                <div class="client-detail-section">
+                    <span class="client-detail-label">
+                        <svg viewBox="0 0 16 16" aria-hidden="true" fill="none"><path d="M8 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm-5 10c0-2.2 2.24-4 5-4s5 1.8 5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        Consignee
+                    </span>
+                    <p class="client-detail-value">${escapeHtml(client.consigneeName)}${client.consigneeAddress ? `<span class="client-detail-sub">${escapeHtml(client.consigneeAddress)}</span>` : ""}</p>
+                </div>` : ""}
+                ${contactsDetail}
+            </div>
         </article>`;
     }).join("");
+}
+
+function handleClientRowToggle(event) {
+    const header = event.target.closest("[data-toggle-client]");
+    if (!header) return;
+    if (event.target.closest("[data-client-action]")) return;
+
+    const card = header.closest(".client-row");
+    const body = card.querySelector(".client-row-body");
+    const expanded = !card.classList.contains("is-expanded");
+
+    card.classList.toggle("is-expanded", expanded);
+    header.setAttribute("aria-expanded", String(expanded));
+    body.hidden = !expanded;
 }
 
 async function handleAddUser() {
