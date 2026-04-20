@@ -163,7 +163,9 @@
                     id: String(entry?.id || `deduction-${index + 1}`),
                     label: label || "Deduction",
                     amount,
-                    amountFormatted: formatStatementCurrency(amount, { locale, currency })
+                    amountFormatted: formatStatementCurrency(amount, { locale, currency }),
+                    isPayment: Boolean(entry?.isPayment),
+                    paymentDate: String(entry?.paymentDate || new Date().toISOString().slice(0, 10)).slice(0, 10)
                 };
             })
             .filter(entry => entry.label || entry.amount);
