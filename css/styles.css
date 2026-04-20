@@ -5175,6 +5175,9 @@ body::after {
 .settings-panel-header-actions .btn {
     flex-shrink: 0;
     white-space: nowrap;
+    width: auto;
+    justify-content: center;
+    align-self: flex-start;
 }
 
 .quick-payment-invoice-picker {
