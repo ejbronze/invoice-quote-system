@@ -9292,8 +9292,22 @@ function getDocumentCardMarkup(doc) {
 
 function renderOverviewPanels() {
     if (elements.overviewRecentDocuments) {
+        const parseTlRef = ref => {
+            const m = String(ref || "").toUpperCase().match(/^TL-(\d{4})-(\d{4})-(\d+)$/);
+            return m ? { date: m[1] + m[2], seq: parseInt(m[3], 10) } : null;
+        };
         const recentDocuments = [...state.documents]
-            .sort((left, right) => getDocumentCreatedAt(right) - getDocumentCreatedAt(left))
+            .sort((left, right) => {
+                const lk = parseTlRef(left.refNumber);
+                const rk = parseTlRef(right.refNumber);
+                if (lk && rk) {
+                    if (rk.date !== lk.date) return rk.date > lk.date ? 1 : -1;
+                    return rk.seq - lk.seq;
+                }
+                if (lk) return -1;
+                if (rk) return 1;
+                return getDocumentCreatedAt(right) - getDocumentCreatedAt(left);
+            })
             .slice(0, 5);
 
         elements.overviewRecentDocuments.innerHTML = recentDocuments.length
