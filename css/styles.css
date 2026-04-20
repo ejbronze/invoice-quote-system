@@ -1587,14 +1587,11 @@ body::after {
     font-size: 0.76rem;
     font-weight: 700;
     letter-spacing: 0.02em;
-    background: #0d9166;
-    border-color: #0d9166;
 }
 
 .workspace-new-btn:hover,
 .workspace-new-btn:focus {
-    background: #0b7d58;
-    border-color: #0b7d58;
+    transform: translateY(-1px);
 }
 
 .workspace-new-menu {
@@ -9705,15 +9702,20 @@ body {
     flex-shrink: 0;
 }
 
-.docs-new-btn {
-    background: #0d9166;
-    border-color: #0d9166;
+.docs-new-btn,
+.workspace-new-btn {
+    background: linear-gradient(155deg, #16a87a 0%, #0d9166 50%, #0a7a57 100%) !important;
+    border-color: #0d9166 !important;
+    box-shadow: 0 8px 20px rgba(13, 145, 102, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
 }
 
 .docs-new-btn:hover,
-.docs-new-btn:focus {
-    background: #0b7d58;
-    border-color: #0b7d58;
+.docs-new-btn:focus,
+.workspace-new-btn:hover,
+.workspace-new-btn:focus {
+    background: linear-gradient(155deg, #1abf8a 0%, #0fa874 50%, #0d9166 100%) !important;
+    border-color: #0a7a57 !important;
+    box-shadow: 0 12px 28px rgba(13, 145, 102, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
 }
 
 .docs-new-menu {
