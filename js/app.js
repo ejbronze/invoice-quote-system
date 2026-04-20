@@ -1557,6 +1557,9 @@ function cacheElements() {
     elements.quickPaymentReferenceInput = document.getElementById("quickPaymentReferenceInput");
     elements.quickPaymentNotesInput = document.getElementById("quickPaymentNotesInput");
     elements.saveQuickPaymentBtn = document.getElementById("saveQuickPaymentBtn");
+    elements.logPaymentBtn = document.getElementById("logPaymentBtn");
+    elements.quickPaymentInvoicePicker = document.getElementById("quickPaymentInvoicePicker");
+    elements.quickPaymentInvoiceSelect = document.getElementById("quickPaymentInvoiceSelect");
     elements.invoiceReportsModal = document.getElementById("invoiceReportsModal");
     elements.reportsOpenInvoiceReportsBtn = document.getElementById("reportsOpenInvoiceReportsBtn");
     elements.closeInvoiceReportsModalBtn = document.getElementById("closeInvoiceReportsModalBtn");
@@ -1902,6 +1905,8 @@ function bindEvents() {
     elements.closeIssueInboxModalBtn.addEventListener("click", closeIssueInboxModal);
     elements.closeQuickPaymentModalBtn?.addEventListener("click", closeQuickPaymentModal);
     elements.saveQuickPaymentBtn?.addEventListener("click", saveQuickPaymentEntry);
+    elements.logPaymentBtn?.addEventListener("click", openLogPaymentModal);
+    elements.quickPaymentInvoiceSelect?.addEventListener("change", handleLogPaymentInvoiceChange);
     elements.closeInvoiceReportsModalBtn.addEventListener("click", closeInvoiceReportsModal);
     elements.reportsOpenInvoiceReportsBtn?.addEventListener("click", openInvoiceReportsModal);
     elements.invoiceReportSort.addEventListener("change", renderInvoiceReport);
@@ -1937,6 +1942,13 @@ function bindEvents() {
     elements.statementEditRows?.addEventListener("input", syncStatementEditTotalsUi);
     elements.statementEditDeductions?.addEventListener("click", handleStatementEditDeductionsClick);
     elements.statementEditDeductions?.addEventListener("input", syncStatementEditTotalsUi);
+    elements.statementEditDeductions?.addEventListener("change", event => {
+        const checkbox = event.target.closest('[data-statement-deduction-field="isPayment"]');
+        if (!checkbox) return;
+        const card = checkbox.closest("[data-statement-deduction-id]");
+        const dateField = card?.querySelector(".statement-deduction-date-field");
+        if (dateField) dateField.hidden = !checkbox.checked;
+    });
     elements.statementEditNoteInput?.addEventListener("input", syncStatementEditTotalsUi);
     elements.previewStatementEditBtn?.addEventListener("click", () => saveStatementEdit({ openPreview: true }));
     elements.saveStatementEditBtn?.addEventListener("click", () => saveStatementEdit({ openPreview: false }));
@@ -3676,7 +3688,9 @@ function createEmptyStatementDeduction() {
     return {
         id: `statement-deduction-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         label: "",
-        amount: 0
+        amount: 0,
+        isPayment: false,
+        paymentDate: new Date().toISOString().slice(0, 10)
     };
 }
 
@@ -3722,6 +3736,8 @@ function buildStatementEditRowMarkup(row) {
 }
 
 function buildStatementEditDeductionMarkup(deduction) {
+    const isPayment = Boolean(deduction.isPayment);
+    const paymentDate = String(deduction.paymentDate || new Date().toISOString().slice(0, 10)).slice(0, 10);
     return `
         <article class="statement-edit-deduction" data-statement-deduction-id="${escapeHtml(String(deduction.id))}">
             <div class="statement-edit-row-head">
@@ -3736,6 +3752,16 @@ function buildStatementEditDeductionMarkup(deduction) {
                 <label class="form-group statement-edit-field statement-edit-amount-field">
                     <span>Amount</span>
                     <input type="number" step="0.01" data-statement-deduction-field="amount" value="${escapeHtml(String(Number(deduction.amount || 0).toFixed(2)))}">
+                </label>
+            </div>
+            <div class="statement-deduction-payment-row">
+                <label class="statement-deduction-payment-toggle">
+                    <input type="checkbox" data-statement-deduction-field="isPayment" ${isPayment ? "checked" : ""}>
+                    <span>Mark as payment — apply to invoice balance</span>
+                </label>
+                <label class="form-group statement-deduction-date-field" ${isPayment ? "" : "hidden"}>
+                    <span>Payment Date</span>
+                    <input type="date" data-statement-deduction-field="paymentDate" value="${escapeHtml(paymentDate)}">
                 </label>
             </div>
         </article>
@@ -3775,7 +3801,9 @@ function collectStatementEditPayload() {
         const id = String(card.dataset.statementDeductionId || "");
         const label = card.querySelector('[data-statement-deduction-field="label"]')?.value || "";
         const amount = Number.parseFloat(card.querySelector('[data-statement-deduction-field="amount"]')?.value || "0") || 0;
-        return { id, label: label.trim(), amount };
+        const isPayment = card.querySelector('[data-statement-deduction-field="isPayment"]')?.checked ?? false;
+        const paymentDate = card.querySelector('[data-statement-deduction-field="paymentDate"]')?.value || new Date().toISOString().slice(0, 10);
+        return { id, label: label.trim(), amount, isPayment, paymentDate };
     }).filter(entry => entry.label || entry.amount);
 
     return window.StatementOfAccount.normalizeStatementPayload({
@@ -3795,9 +3823,18 @@ function syncStatementEditTotalsUi() {
         return;
     }
     const totals = window.StatementOfAccount.calculateStatementTotals(payload);
+    const paymentDeductions = (payload.deductions || []).filter(d => d.isPayment);
+    const paymentsAppliedTotal = paymentDeductions.reduce((sum, d) => sum + Number(d.amount || 0), 0);
+    const pureDeductionsTotal = totals.deductionTotal - paymentsAppliedTotal;
+    const paymentsRow = paymentsAppliedTotal > 0
+        ? `<div class="statement-edit-total-row statement-edit-payment-row"><span>Payments applied</span><strong>${escapeHtml(formatCurrency(paymentsAppliedTotal))}</strong></div>`
+        : "";
+    const deductionsRow = pureDeductionsTotal > 0
+        ? `<div class="statement-edit-total-row"><span>Other deductions</span><strong>${escapeHtml(formatCurrency(pureDeductionsTotal))}</strong></div>`
+        : "";
     elements.statementEditTotals.innerHTML = `
         <div class="statement-edit-total-row"><span>Outstanding subtotal</span><strong>${escapeHtml(totals.selectedTotalFormatted)}</strong></div>
-        <div class="statement-edit-total-row"><span>Total deductions</span><strong>${escapeHtml(totals.deductionTotalFormatted)}</strong></div>
+        ${paymentsRow}${deductionsRow}
         <div class="statement-edit-total-row is-grand"><span>Grand total</span><strong>${escapeHtml(totals.grandTotalFormatted)}</strong></div>
     `;
 }
@@ -3881,6 +3918,55 @@ function handleStatementEditDeductionsClick(event) {
     syncStatementEditTotalsUi();
 }
 
+async function propagateStatementDeductionPayments(payload, statementRef) {
+    const paymentDeductions = (payload.deductions || []).filter(d => d.isPayment && d.amount > 0);
+    if (!paymentDeductions.length) return;
+
+    const statementInvoiceNumbers = new Set(
+        (payload.rows || []).map(r => String(r.invoiceNumber || "").trim().toLowerCase()).filter(Boolean)
+    );
+    const matchedInvoices = state.documents.filter(
+        doc => doc.type === "invoice" && statementInvoiceNumbers.has(String(doc.refNumber || "").trim().toLowerCase())
+    );
+    if (!matchedInvoices.length) return;
+
+    const totalInvoiceValue = matchedInvoices.reduce((sum, doc) => sum + Number(doc.total || 0), 0);
+
+    let nextDocuments = [...state.documents];
+    for (const deduction of paymentDeductions) {
+        const dedId = `stmt-pmt-${deduction.id}`;
+        for (const invoice of matchedInvoices) {
+            const alreadyApplied = (invoice.payments || []).some(p => p.id === dedId);
+            if (alreadyApplied) continue;
+
+            const portion = totalInvoiceValue > 0
+                ? (Number(invoice.total || 0) / totalInvoiceValue) * deduction.amount
+                : deduction.amount / matchedInvoices.length;
+
+            const newPayment = {
+                id: dedId,
+                date: deduction.paymentDate || new Date().toISOString().slice(0, 10),
+                amount: Math.round(portion * 100) / 100,
+                method: "Statement Deduction",
+                reference: statementRef || "",
+                notes: deduction.label || "Applied from statement deduction",
+                appliedTo: "invoice",
+                createdAt: new Date().toISOString()
+            };
+
+            nextDocuments = nextDocuments.map(doc =>
+                doc.id === invoice.id
+                    ? { ...doc, payments: normalizeInvoicePayments([...(doc.payments || []), newPayment]) }
+                    : doc
+            );
+        }
+    }
+
+    await saveDocumentsToServer(nextDocuments);
+    renderDocuments();
+    renderPaymentHistoryPanel();
+}
+
 async function saveStatementEdit(options = {}) {
     const statement = getEditingStatementExport();
     const payload = collectStatementEditPayload();
@@ -3900,6 +3986,7 @@ async function saveStatementEdit(options = {}) {
     await saveStatementExportsState(state.statementExports.map(entry => (
         entry.id === statement.id ? updatedStatement : entry
     )));
+    await propagateStatementDeductionPayments(payload, updatedStatement.referenceNumber || statement.referenceNumber);
     if (options.openPreview) {
         window.StatementOfAccount.generateStatementOfAccountPdf(payload);
         setImportStatus("Statement changes saved and preview opened.");
@@ -4173,7 +4260,46 @@ function openQuickPaymentModal(invoiceId) {
 
 function closeQuickPaymentModal() {
     state.activeQuickPaymentInvoiceId = null;
+    if (elements.quickPaymentInvoicePicker) elements.quickPaymentInvoicePicker.hidden = true;
     setModalState(elements.quickPaymentModal, false);
+}
+
+function openLogPaymentModal() {
+    if (!elements.quickPaymentInvoicePicker || !elements.quickPaymentInvoiceSelect) return;
+
+    const invoices = state.documents
+        .filter(doc => doc.type === "invoice" && getInvoiceOutstandingBalance(doc) > 0)
+        .sort((a, b) => String(a.clientName || "").localeCompare(String(b.clientName || "")));
+
+    elements.quickPaymentInvoiceSelect.innerHTML =
+        `<option value="">— Select an invoice —</option>` +
+        invoices.map(inv => {
+            const label = `${escapeHtml(inv.clientName || "Unknown")} — ${escapeHtml(inv.refNumber || inv.id)} (${escapeHtml(formatCurrency(getInvoiceOutstandingBalance(inv)))} due)`;
+            return `<option value="${escapeHtml(String(inv.id))}">${label}</option>`;
+        }).join("");
+
+    elements.quickPaymentInvoicePicker.hidden = false;
+    if (elements.quickPaymentSummary) elements.quickPaymentSummary.innerHTML = "";
+    if (elements.quickPaymentHistory) elements.quickPaymentHistory.innerHTML = "";
+    elements.quickPaymentDateInput.value = getLocalDateInputValue();
+    elements.quickPaymentAmountInput.value = "";
+    elements.quickPaymentMethodInput.value = "";
+    elements.quickPaymentReferenceInput.value = "";
+    elements.quickPaymentNotesInput.value = "";
+    state.activeQuickPaymentInvoiceId = null;
+    setModalState(elements.quickPaymentModal, true);
+}
+
+function handleLogPaymentInvoiceChange() {
+    const invoiceId = elements.quickPaymentInvoiceSelect?.value;
+    if (!invoiceId) return;
+    const invoice = getDocumentById(invoiceId);
+    if (!invoice) return;
+    state.activeQuickPaymentInvoiceId = String(invoice.id);
+    renderQuickPaymentModal(invoice);
+    elements.quickPaymentAmountInput.value = getInvoiceOutstandingBalance(invoice) > 0
+        ? Number(getInvoiceOutstandingBalance(invoice)).toFixed(2)
+        : "";
 }
 
 async function saveQuickPaymentEntry() {

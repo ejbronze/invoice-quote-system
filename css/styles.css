@@ -5107,6 +5107,71 @@ body::after {
     font-size: 1rem;
 }
 
+.statement-edit-total-row.statement-edit-payment-row strong {
+    color: #0d9166;
+}
+
+.statement-deduction-payment-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.55rem;
+    padding-top: 0.45rem;
+    border-top: 1px solid rgba(214, 223, 234, 0.7);
+    flex-wrap: wrap;
+}
+
+.statement-deduction-payment-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.79rem;
+    color: #4d6278;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.statement-deduction-payment-toggle input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: #0d9166;
+    cursor: pointer;
+}
+
+.statement-deduction-date-field {
+    margin: 0;
+    flex: 1;
+    min-width: 150px;
+}
+
+.statement-deduction-date-field span {
+    font-size: 0.72rem;
+    color: #6d8097;
+    display: block;
+    margin-bottom: 0.2rem;
+}
+
+.settings-panel-header-actions {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.settings-panel-header-actions > div {
+    flex: 1;
+}
+
+.quick-payment-invoice-picker {
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid rgba(214, 223, 234, 0.7);
+}
+
+.quick-payment-invoice-picker .form-group {
+    margin: 0;
+}
+
 .statement-edit-actions {
     margin-top: 0.9rem;
     justify-content: space-between;

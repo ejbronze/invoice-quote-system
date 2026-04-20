@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SantoSync</title>
-    <link rel="stylesheet" href="css/styles.css?v=15">
+    <link rel="stylesheet" href="css/styles.css?v=16">
 </head>
 <body>
     <div class="brand-splash" id="brandSplash" aria-hidden="true" hidden>
@@ -361,9 +361,12 @@
                             </div>
                         </section>
                         <section class="settings-panel report-summary-panel">
-                            <div class="settings-panel-header">
-                                <h4>Payment History</h4>
-                                <p>See every payment recorded across invoices, ordered from newest to oldest.</p>
+                            <div class="settings-panel-header settings-panel-header-actions">
+                                <div>
+                                    <h4>Payment History</h4>
+                                    <p>See every payment recorded across invoices, ordered from newest to oldest.</p>
+                                </div>
+                                <button class="btn btn-primary" id="logPaymentBtn" type="button">+ Log Payment</button>
                             </div>
                             <div class="reports-metrics-grid" id="paymentHistoryMetrics"></div>
                             <div class="reports-table-wrap">
@@ -1019,6 +1022,14 @@
             </div>
             <div class="modal-body settings-modal-body">
                 <p class="settings-copy" id="quickPaymentCopy">Record a payment, advance, or deposit against this invoice without reopening the full editor.</p>
+                <div class="quick-payment-invoice-picker" id="quickPaymentInvoicePicker" hidden>
+                    <label class="form-group">
+                        <span>Invoice</span>
+                        <select id="quickPaymentInvoiceSelect">
+                            <option value="">— Select an invoice —</option>
+                        </select>
+                    </label>
+                </div>
                 <div class="quick-payment-summary" id="quickPaymentSummary"></div>
                 <div class="settings-grid report-grid quick-payment-grid">
                     <label class="form-group">
@@ -1905,6 +1916,6 @@
 
     <script src="js/brand.js?v=2"></script>
     <script src="js/statement-of-account.js"></script>
-    <script src="js/app.js?v=10"></script>
+    <script src="js/app.js?v=11"></script>
 </body>
 </html>
