@@ -2,7 +2,21 @@
 
 SantoSync is a premium quote-and-invoice workspace for modern trade teams. It combines document creation, client history, per-user preferences, admin tools, and branded export output in one polished operational dashboard.
 
-Version: `1.1.1` — Last updated: April 17, 2026
+Version: `1.2.0` — Last updated: April 19, 2026
+
+## Version 1.2.0 Summary
+
+This release is a layout and navigation redesign. The full-width app topbar has been removed and replaced with a compact mobile-only header (`<header class="mobile-topbar">`). On desktop, navigation lives entirely in the left sidebar. Sign out, language selection, session and environment status badges, and the `+ New` quick-action menu have all moved into the sidebar footer, eliminating the topbar entirely on wide screens.
+
+The dashboard `+ New` area in the workspace actions row has been consolidated from two separate buttons (New Quote, New Invoice) into a single `+ New` button that opens an inline dropdown with three options: Quote, Invoice, and Statement. The same options are also reachable from the sidebar `+ New` menu.
+
+The overview snapshot KPI grid has been trimmed: the Invoices stat card has been removed, leaving Documents, Quotes, and the three-state Pipeline Value toggle card. The snapshot area and hero section have been tightened with reduced padding and smaller display type to take up less vertical space on the dashboard.
+
+The Updated date has moved back into the footer `app-footer-copy` area where it was before.
+
+Settings have been cleaned up: the User Management panel (Create local accounts, assign roles, reset passwords, remove users) has been removed from the Settings modal. Remaining settings panels are Service Reports, Editor Preferences, Data Export & Import, and Local Testing.
+
+Modals have been visually reworked to match the dashboard aesthetic — light header backgrounds instead of the dark blue gradient, a brand accent top border, and a softer close button style.
 
 ## Version 1.1.1 Summary
 
@@ -129,7 +143,6 @@ When the app is online with the API available, user accounts are stored in the s
 - Create, edit, delete, and convert quotes and invoices
 - Daily reference numbering using the app’s document naming convention
 - Reference numbering resolves against the selected local document date and checks existing same-day refs before choosing the next sequence
-- Admin-only user management
 - Admin-only client record management
 - Admin-only company profile management
 - Per-user language preferences for English, Spanish, and French
@@ -145,7 +158,8 @@ When the app is online with the API available, user accounts are stored in the s
 - JSON backup, restore, and selective export tools
 - CSV template export and CSV import
 - Calculator inside the document editor
-- Compact dashboard actions and snapshot strip
+- Compact dashboard with a tightened hero section and trimmed snapshot KPI grid (Documents, Quotes, Pipeline Value)
+- Single `+ New` button on the dashboard that opens a quick-action dropdown with Quote, Invoice, and Statement options
 - Document cards use stronger quote/invoice color separation plus text badges for `Draft` / `Logged`
 - Invoice cards support `Paid` / `Unpaid` / `Pending` status badges and a menu action for payment tracking
 - The top commercial snapshot value card cycles through `Pipeline Value`, `Amount Invoiced`, and `Income Received`
