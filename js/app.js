@@ -1200,7 +1200,7 @@ function setElementHtml(selector, value) {
 
 function updateHeroOperationalSummary() {
     setElementText(".hero-copy h1", formatPrintedDate(new Date()));
-    setElementText(".hero-copy p", `USD 1.00 = DOP ${formatAmount(getUsdToDopRate())}`);
+    setElementText(".hero-copy p", "");
     if (elements.currencyDisplayValue) {
         elements.currencyDisplayValue.textContent = formatAmount(getUsdToDopRate());
     }
@@ -4024,6 +4024,7 @@ async function saveStatementEdit(options = {}) {
         setImportStatus("Statement changes saved.");
     }
     closeStatementEditModal();
+    renderStatementsPage();
 }
 
 async function deleteStatementExport(statementId) {
@@ -4290,6 +4291,7 @@ function openQuickPaymentModal(invoiceId) {
 
 function closeQuickPaymentModal() {
     state.activeQuickPaymentInvoiceId = null;
+    state.activeQuickPaymentStatementId = null;
     if (elements.quickPaymentInvoicePicker) elements.quickPaymentInvoicePicker.hidden = true;
     setModalState(elements.quickPaymentModal, false);
 }
@@ -4301,12 +4303,26 @@ function openLogPaymentModal() {
         .filter(doc => doc.type === "invoice" && getInvoiceOutstandingBalance(doc) > 0)
         .sort((a, b) => String(a.clientName || "").localeCompare(String(b.clientName || "")));
 
+    const statements = state.statementExports.filter(stmt => {
+        const totals = window.StatementOfAccount.calculateStatementTotals(stmt.payload);
+        return totals.grandTotal > 0;
+    }).sort((a, b) => String(a.clientName || "").localeCompare(String(b.clientName || "")));
+
+    const invoiceOptions = invoices.map(inv => {
+        const label = `${escapeHtml(inv.clientName || "Unknown")} — ${escapeHtml(inv.refNumber || inv.id)} (${escapeHtml(formatCurrency(getInvoiceOutstandingBalance(inv)))} due)`;
+        return `<option value="inv:${escapeHtml(String(inv.id))}">${label}</option>`;
+    }).join("");
+
+    const statementOptions = statements.map(stmt => {
+        const totals = window.StatementOfAccount.calculateStatementTotals(stmt.payload);
+        const label = `${escapeHtml(stmt.clientName || "Unknown")} — ${escapeHtml(stmt.referenceNumber || stmt.id)} (${escapeHtml(formatCurrency(totals.grandTotal))} outstanding)`;
+        return `<option value="stmt:${escapeHtml(String(stmt.id))}">${label}</option>`;
+    }).join("");
+
     elements.quickPaymentInvoiceSelect.innerHTML =
-        `<option value="">— Select an invoice —</option>` +
-        invoices.map(inv => {
-            const label = `${escapeHtml(inv.clientName || "Unknown")} — ${escapeHtml(inv.refNumber || inv.id)} (${escapeHtml(formatCurrency(getInvoiceOutstandingBalance(inv)))} due)`;
-            return `<option value="${escapeHtml(String(inv.id))}">${label}</option>`;
-        }).join("");
+        `<option value="">— Select invoice or statement —</option>` +
+        (invoiceOptions ? `<optgroup label="Invoices">${invoiceOptions}</optgroup>` : "") +
+        (statementOptions ? `<optgroup label="Statements">${statementOptions}</optgroup>` : "");
 
     elements.quickPaymentInvoicePicker.hidden = false;
     if (elements.quickPaymentSummary) elements.quickPaymentSummary.innerHTML = "";
@@ -4317,34 +4333,53 @@ function openLogPaymentModal() {
     elements.quickPaymentReferenceInput.value = "";
     elements.quickPaymentNotesInput.value = "";
     state.activeQuickPaymentInvoiceId = null;
+    state.activeQuickPaymentStatementId = null;
     setModalState(elements.quickPaymentModal, true);
 }
 
 function handleLogPaymentInvoiceChange() {
-    const invoiceId = elements.quickPaymentInvoiceSelect?.value;
-    if (!invoiceId) return;
-    const invoice = getDocumentById(invoiceId);
-    if (!invoice) return;
-    state.activeQuickPaymentInvoiceId = String(invoice.id);
-    renderQuickPaymentModal(invoice);
-    elements.quickPaymentAmountInput.value = getInvoiceOutstandingBalance(invoice) > 0
-        ? Number(getInvoiceOutstandingBalance(invoice)).toFixed(2)
-        : "";
+    const val = elements.quickPaymentInvoiceSelect?.value;
+    if (!val) return;
+
+    if (val.startsWith("inv:")) {
+        const invoiceId = val.slice(4);
+        const invoice = getDocumentById(invoiceId);
+        if (!invoice) return;
+        state.activeQuickPaymentInvoiceId = String(invoice.id);
+        state.activeQuickPaymentStatementId = null;
+        renderQuickPaymentModal(invoice);
+        elements.quickPaymentAmountInput.value = getInvoiceOutstandingBalance(invoice) > 0
+            ? Number(getInvoiceOutstandingBalance(invoice)).toFixed(2)
+            : "";
+    } else if (val.startsWith("stmt:")) {
+        const statementId = val.slice(5);
+        const stmt = state.statementExports.find(s => String(s.id) === statementId);
+        if (!stmt) return;
+        state.activeQuickPaymentStatementId = String(stmt.id);
+        state.activeQuickPaymentInvoiceId = null;
+        const totals = window.StatementOfAccount.calculateStatementTotals(stmt.payload);
+        if (elements.quickPaymentSummary) {
+            elements.quickPaymentSummary.innerHTML = `
+                <div class="quick-payment-stat"><span>Statement</span><strong>${escapeHtml(stmt.referenceNumber || "—")}</strong></div>
+                <div class="quick-payment-stat"><span>Client</span><strong>${escapeHtml(stmt.clientName || "—")}</strong></div>
+                <div class="quick-payment-stat"><span>Outstanding</span><strong>${escapeHtml(formatCurrency(totals.grandTotal))}</strong></div>
+            `;
+        }
+        if (elements.quickPaymentHistory) elements.quickPaymentHistory.innerHTML = "";
+        elements.quickPaymentAmountInput.value = totals.grandTotal > 0
+            ? Number(totals.grandTotal).toFixed(2)
+            : "";
+    }
 }
 
 async function saveQuickPaymentEntry() {
-    const invoice = getActiveQuickPaymentInvoice();
-    if (!invoice) {
-        return;
-    }
-
     const amount = Number.parseFloat(elements.quickPaymentAmountInput.value || "0") || 0;
     if (amount <= 0) {
         window.alert("Enter a payment amount greater than zero.");
         return;
     }
 
-    const payment = {
+    const paymentBase = {
         id: `payment-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         date: elements.quickPaymentDateInput.value || getLocalDateInputValue(),
         amount,
@@ -4355,12 +4390,51 @@ async function saveQuickPaymentEntry() {
         createdAt: new Date().toISOString()
     };
 
+    // Statement payment: distribute across matched invoices proportionally
+    if (state.activeQuickPaymentStatementId) {
+        const stmt = state.statementExports.find(s => String(s.id) === state.activeQuickPaymentStatementId);
+        if (!stmt) { window.alert("Statement not found."); return; }
+        const stmtInvoiceNumbers = new Set(
+            (stmt.payload?.rows || []).map(r => String(r.invoiceNumber || "").trim().toLowerCase()).filter(Boolean)
+        );
+        const matchedInvoices = state.documents.filter(
+            doc => doc.type === "invoice" && stmtInvoiceNumbers.has(String(doc.refNumber || "").trim().toLowerCase())
+        );
+        if (!matchedInvoices.length) { window.alert("No matching invoices found for this statement."); return; }
+        const totalValue = matchedInvoices.reduce((sum, doc) => sum + Number(doc.total || 0), 0);
+        let nextDocuments = [...state.documents];
+        for (const inv of matchedInvoices) {
+            const portion = totalValue > 0
+                ? (Number(inv.total || 0) / totalValue) * amount
+                : amount / matchedInvoices.length;
+            const pmt = { ...paymentBase, id: `${paymentBase.id}-${inv.id}`, amount: Math.round(portion * 100) / 100, reference: paymentBase.reference || stmt.referenceNumber || "" };
+            nextDocuments = nextDocuments.map(doc =>
+                doc.id === inv.id
+                    ? { ...doc, payments: normalizeInvoicePayments([...(doc.payments || []), pmt]) }
+                    : doc
+            );
+        }
+        try {
+            await saveDocumentsToServer(nextDocuments);
+            renderDocuments();
+            renderStatementsPage();
+            setImportStatus(`Payment of ${formatCurrency(amount)} applied to statement ${stmt.referenceNumber || ""}.`);
+            closeQuickPaymentModal();
+        } catch (error) {
+            window.alert(`Unable to save the payment.\n\n${error.message}`);
+        }
+        return;
+    }
+
+    const invoice = getActiveQuickPaymentInvoice();
+    if (!invoice) {
+        window.alert("Select an invoice or statement first.");
+        return;
+    }
+
     const nextDocuments = state.documents.map(entry => (
         isSameDocumentId(entry.id, invoice.id)
-            ? {
-                ...entry,
-                payments: normalizeInvoicePayments([...(Array.isArray(entry.payments) ? entry.payments : []), payment])
-            }
+            ? { ...entry, payments: normalizeInvoicePayments([...(Array.isArray(entry.payments) ? entry.payments : []), paymentBase]) }
             : entry
     ));
 
@@ -4370,6 +4444,7 @@ async function saveQuickPaymentEntry() {
         if (!elements.invoiceReportsModal.hidden) {
             renderInvoiceReport();
         }
+        renderStatementsPage();
         setImportStatus(`Payment saved for ${invoice.refNumber || "invoice"}.`);
         recordActivity("recorded invoice payment", `Payment of ${formatCurrency(amount)} logged for ${invoice.refNumber || "invoice"}.`);
         closeQuickPaymentModal();
