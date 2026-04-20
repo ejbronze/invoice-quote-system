@@ -5796,15 +5796,19 @@ function renderClientManagementList() {
         <article class="client-row">
             <div class="client-row-copy">
                 <strong>${escapeHtml(client.name)}</strong>
-                <span>${escapeHtml(client.address || "No address saved").replace(/\n/g, "<br>")}</span>
+                <span>${escapeHtml(client.address || "No address saved")}</span>
                 ${client.consigneeName || client.consigneeAddress
-                    ? `<span><strong>Consignee:</strong> ${escapeHtml(client.consigneeName || "No consignee name saved")}${client.consigneeAddress ? `<br>${escapeHtml(client.consigneeAddress).replace(/\n/g, "<br>")}` : ""}</span>`
+                    ? `<span class="client-row-consignee"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none"><path d="M8 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm-5 10c0-2.2 2.24-4 5-4s5 1.8 5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>${escapeHtml(client.consigneeName || "Consignee")}</span>`
                     : ""}
             </div>
             ${isAdminSession()
                 ? `<div class="client-row-actions">
-                    <button class="btn btn-secondary" type="button" data-client-action="edit-client" data-client-id="${escapeHtml(client.id)}">${escapeHtml(t("edit"))}</button>
-                    <button class="btn btn-secondary" type="button" data-client-action="delete-client" data-client-id="${escapeHtml(client.id)}">${escapeHtml(t("delete"))}</button>
+                    <button class="statement-action-btn is-edit" type="button" data-client-action="edit-client" data-client-id="${escapeHtml(client.id)}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                    </button>
+                    <button class="statement-action-btn is-delete" type="button" data-client-action="delete-client" data-client-id="${escapeHtml(client.id)}" aria-label="${escapeHtml(t("delete"))}" title="${escapeHtml(t("delete"))}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M9 4h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M7 7l1 12h8l1-12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v5M14 11v5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                    </button>
                 </div>`
                 : ""}
         </article>
@@ -9315,9 +9319,9 @@ function renderOverviewPanels() {
 
         elements.overviewRecentDocuments.innerHTML = recentDocuments.length
             ? recentDocuments.map(doc => `
-                <button class="overview-document-link" type="button" data-open-overview-doc="${escapeHtml(String(doc.id))}">
+                <button class="overview-document-link overview-document-link-${escapeHtml(doc.type || "quote")}" type="button" data-open-overview-doc="${escapeHtml(String(doc.id))}">
                     <span class="overview-document-ref">${escapeHtml(doc.refNumber || "Reference pending")}</span>
-                    <span class="overview-document-meta">${escapeHtml(doc.clientName || "Unknown client")} • ${escapeHtml(formatDisplayDate(doc.date || ""))}</span>
+                    <span class="overview-document-meta">${escapeHtml(doc.clientName || "Unknown client")} · ${escapeHtml(formatDisplayDate(doc.date || ""))}</span>
                     <strong class="overview-document-total">${escapeHtml(formatCurrency(doc.total || 0))}</strong>
                 </button>
             `).join("")
