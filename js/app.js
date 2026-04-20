@@ -5837,13 +5837,20 @@ function renderClientManagementList() {
         <article class="client-row">
             <div class="client-row-copy">
                 <strong class="client-row-name">${escapeHtml(client.name)}</strong>
-                <span class="client-row-address">${escapeHtml(client.address || "")}</span>
-                ${client.consigneeName
-                    ? `<span class="client-row-consignee">
-                        <svg viewBox="0 0 16 16" aria-hidden="true" fill="none"><path d="M8 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm-5 10c0-2.2 2.24-4 5-4s5 1.8 5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-                        ${escapeHtml(client.consigneeName)}
-                       </span>`
-                    : ""}
+                <div class="client-row-meta">
+                    ${client.address
+                        ? `<span class="client-row-meta-item">
+                            <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a4.5 4.5 0 0 1 4.5 4.5c0 3-4.5 8.5-4.5 8.5S3.5 9 3.5 6A4.5 4.5 0 0 1 8 1.5Z"/><circle cx="8" cy="6" r="1.5"/></svg>
+                            <span>${escapeHtml(client.address)}</span>
+                           </span>`
+                        : ""}
+                    ${client.consigneeName
+                        ? `<span class="client-row-meta-item client-row-meta-consignee">
+                            <svg viewBox="0 0 16 16" aria-hidden="true" fill="none"><path d="M8 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm-5 10c0-2.2 2.24-4 5-4s5 1.8 5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                            <span>${escapeHtml(client.consigneeName)}</span>
+                           </span>`
+                        : ""}
+                </div>
                 ${contactsMarkup}
             </div>
             ${admin
@@ -6003,14 +6010,12 @@ function openClientModal(clientId) {
     elements.clientModalContactsList.innerHTML = "";
     contacts.forEach(c => appendClientContactRow(c));
 
-    elements.clientModal.hidden = false;
-    elements.clientModal.removeAttribute("aria-hidden");
+    setModalState(elements.clientModal, true);
     elements.clientModalName.focus();
 }
 
 function closeClientModal() {
-    elements.clientModal.hidden = true;
-    elements.clientModal.setAttribute("aria-hidden", "true");
+    setModalState(elements.clientModal, false);
     state.editingClientId = null;
 }
 
