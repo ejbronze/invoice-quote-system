@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SantoSync</title>
-    <link rel="stylesheet" href="css/styles.css?v=11">
+    <link rel="stylesheet" href="css/styles.css?v=12">
 </head>
 <body>
     <div class="brand-splash" id="brandSplash" aria-hidden="true" hidden>
@@ -304,18 +304,15 @@
                     <div class="page-header">
                         <div>
                             <span class="page-eyebrow">Clients</span>
-                            <h2>Saved client records</h2>
-                            <p class="dashboard-subtitle">Review bill-to and consignee details without leaving the workspace.</p>
+                            <h2>Client directory</h2>
+                            <p class="dashboard-subtitle">Saved bill-to details, consignee info, and contact records for every client.</p>
+                        </div>
+                        <div class="page-header-actions" id="clientsPageHeaderActions" hidden>
+                            <button class="btn btn-primary" id="addClientBtn" type="button">+ Add Client</button>
                         </div>
                     </div>
                     <div class="clients-page-shell">
-                        <div class="settings-panel">
-                            <div class="settings-panel-header">
-                                <h4>Client Directory</h4>
-                                <p>Saved client names, addresses, and consignee details appear here for reuse in quotes and invoices.</p>
-                            </div>
-                            <div class="client-management-list" id="clientManagementList"></div>
-                        </div>
+                        <div class="client-management-list" id="clientManagementList"></div>
                     </div>
                 </section>
 
@@ -1724,8 +1721,58 @@
         </div>
     </section>
 
+    <!-- Client add / edit modal -->
+    <div class="modal settings-modal" id="clientModal" aria-hidden="true" hidden>
+        <div class="modal-content settings-modal-content client-modal-content">
+            <div class="modal-header">
+                <h3 id="clientModalTitle">Add Client</h3>
+                <button class="close-btn" id="closeClientModalBtn" type="button" aria-label="Close">&#x2715;</button>
+            </div>
+            <div class="modal-body settings-modal-body">
+                <form id="clientModalForm" autocomplete="off" onsubmit="return false;">
+                    <section class="client-modal-section">
+                        <h4 class="client-modal-section-label">Bill To</h4>
+                        <div class="form-group">
+                            <label for="clientModalName">Company / Client Name <span class="field-required">*</span></label>
+                            <input type="text" id="clientModalName" placeholder="e.g. Acme Corp" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="clientModalAddress">Address <span class="field-required">*</span></label>
+                            <textarea id="clientModalAddress" rows="3" placeholder="Street, City, Country"></textarea>
+                        </div>
+                    </section>
+                    <section class="client-modal-section">
+                        <h4 class="client-modal-section-label">Consignee <span class="client-modal-section-optional">(optional)</span></h4>
+                        <div class="form-group">
+                            <label for="clientModalConsigneeName">Consignee Name</label>
+                            <input type="text" id="clientModalConsigneeName" placeholder="Receiving party name">
+                        </div>
+                        <div class="form-group">
+                            <label for="clientModalConsigneeAddress">Consignee Address</label>
+                            <textarea id="clientModalConsigneeAddress" rows="2" placeholder="Delivery address"></textarea>
+                        </div>
+                    </section>
+                    <section class="client-modal-section">
+                        <div class="client-modal-section-head">
+                            <h4 class="client-modal-section-label">Contacts</h4>
+                            <button type="button" id="addClientContactBtn" class="client-contact-add-btn">
+                                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                Add Contact
+                            </button>
+                        </div>
+                        <div id="clientModalContactsList" class="client-contact-list"></div>
+                    </section>
+                </form>
+            </div>
+            <div class="modal-footer client-modal-footer">
+                <button class="btn btn-secondary" id="cancelClientModalBtn" type="button">Cancel</button>
+                <button class="btn btn-primary" id="saveClientModalBtn" type="button">Save Client</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/brand.js?v=2"></script>
     <script src="js/statement-of-account.js"></script>
-    <script src="js/app.js?v=6"></script>
+    <script src="js/app.js?v=7"></script>
 </body>
 </html>

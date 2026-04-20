@@ -3604,6 +3604,256 @@ body::after {
     min-width: 0;
 }
 
+.client-row-contacts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.3rem;
+}
+
+.client-contact-chip {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.45rem;
+    padding: 0.22rem 0.6rem;
+    border-radius: 999px;
+    background: rgba(109, 40, 217, 0.07);
+    border: 1px solid rgba(109, 40, 217, 0.15);
+    font-size: 0.72rem;
+    line-height: 1.3;
+}
+
+.client-contact-chip-name {
+    font-weight: 700;
+    color: var(--text);
+}
+
+.client-contact-chip-detail {
+    color: var(--text-soft);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.client-contact-wa-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1rem 0.32rem;
+    border-radius: 4px;
+    background: #25d366;
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    margin-left: 0.2rem;
+}
+
+/* ── Client modal ─────────────────────────────────────────────────── */
+.client-modal-content {
+    max-width: 540px;
+}
+
+.client-modal-section {
+    margin-bottom: 1.4rem;
+}
+
+.client-modal-section:last-child {
+    margin-bottom: 0;
+}
+
+.client-modal-section-label {
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-faint);
+    margin-bottom: 0.75rem;
+}
+
+.client-modal-section-optional {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 0.78rem;
+    color: var(--text-faint);
+}
+
+.client-modal-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.client-modal-section-head .client-modal-section-label {
+    margin-bottom: 0;
+}
+
+.client-contact-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.85rem;
+    border: 1px solid rgba(20, 89, 217, 0.22);
+    border-radius: 8px;
+    background: rgba(20, 89, 217, 0.07);
+    color: var(--brand-primary);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.14s;
+    flex-shrink: 0;
+}
+
+.client-contact-add-btn svg {
+    width: 0.85rem;
+    height: 0.85rem;
+}
+
+.client-contact-add-btn:hover {
+    background: rgba(20, 89, 217, 0.13);
+}
+
+.client-contact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.client-contact-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(246, 248, 255, 0.7);
+}
+
+.client-contact-fields {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.client-contact-input {
+    width: 100%;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.95);
+    font: inherit;
+    font-size: 0.86rem;
+    color: var(--text);
+    transition: border-color 0.15s;
+}
+
+.client-contact-input:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px rgba(20, 89, 217, 0.1);
+}
+
+.client-contact-phone-group {
+    display: flex;
+    gap: 0.45rem;
+    align-items: center;
+}
+
+.client-contact-phone-group .client-contact-input {
+    flex: 1 1 0;
+}
+
+.client-contact-wa-label {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.client-contact-wa-check {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+.client-contact-wa-badge-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 8px;
+    border: 1px solid rgba(37, 211, 102, 0.3);
+    background: rgba(37, 211, 102, 0.07);
+    color: #1a9e4f;
+    font-size: 0.78rem;
+    font-weight: 700;
+    transition: background 0.13s, border-color 0.13s;
+    user-select: none;
+}
+
+.client-contact-wa-badge-toggle svg {
+    width: 0.9rem;
+    height: 0.9rem;
+}
+
+.client-contact-wa-check:checked + .client-contact-wa-badge-toggle {
+    background: rgba(37, 211, 102, 0.2);
+    border-color: #25d366;
+    color: #167a3d;
+}
+
+.client-contact-remove-btn {
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid rgba(209, 51, 64, 0.18);
+    border-radius: 8px;
+    background: rgba(209, 51, 64, 0.05);
+    color: #c63a4a;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+    transition: background 0.13s;
+}
+
+.client-contact-remove-btn svg {
+    width: 0.9rem;
+    height: 0.9rem;
+}
+
+.client-contact-remove-btn:hover {
+    background: rgba(209, 51, 64, 0.12);
+}
+
+.client-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    padding: 0.9rem 1.1rem;
+    border-top: 1px solid var(--line);
+}
+
+.field-required {
+    color: #c63a4a;
+    font-weight: 700;
+}
+
+.client-management-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
 .statement-export-row {
     align-items: center;
     gap: 0.65rem;

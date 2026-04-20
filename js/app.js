@@ -40,6 +40,7 @@ const state = {
     pendingSavedItemImageUploadId: null,
     openItemMenuId: null,
     openDocumentMenuId: null,
+    editingClientId: null,
     draftAutosaveTimerId: null,
     editingManagedUserId: null,
     highlightedSavedItemId: null,
@@ -1684,6 +1685,19 @@ function cacheElements() {
     elements.closeAboutModalBtn = document.getElementById("closeAboutModalBtn");
     elements.showInternalPricingToggle = document.getElementById("showInternalPricingToggle");
     elements.clientManagementList = document.getElementById("clientManagementList");
+    elements.clientsPageHeaderActions = document.getElementById("clientsPageHeaderActions");
+    elements.addClientBtn = document.getElementById("addClientBtn");
+    elements.clientModal = document.getElementById("clientModal");
+    elements.clientModalTitle = document.getElementById("clientModalTitle");
+    elements.clientModalName = document.getElementById("clientModalName");
+    elements.clientModalAddress = document.getElementById("clientModalAddress");
+    elements.clientModalConsigneeName = document.getElementById("clientModalConsigneeName");
+    elements.clientModalConsigneeAddress = document.getElementById("clientModalConsigneeAddress");
+    elements.clientModalContactsList = document.getElementById("clientModalContactsList");
+    elements.addClientContactBtn = document.getElementById("addClientContactBtn");
+    elements.saveClientModalBtn = document.getElementById("saveClientModalBtn");
+    elements.cancelClientModalBtn = document.getElementById("cancelClientModalBtn");
+    elements.closeClientModalBtn = document.getElementById("closeClientModalBtn");
     elements.documentModal = document.getElementById("documentModal");
     elements.editorProgressStep = document.getElementById("editorProgressStep");
     elements.editorProgressTitle = document.getElementById("editorProgressTitle");
@@ -1917,6 +1931,11 @@ function bindEvents() {
     elements.clearStampAssetBtn?.addEventListener("click", () => clearBrandAsset("stamp"));
     elements.saveBrandAssetsBtn?.addEventListener("click", saveBrandAssets);
     elements.clientManagementList.addEventListener("click", handleClientManagementClick);
+    elements.addClientBtn?.addEventListener("click", () => openClientModal(null));
+    elements.addClientContactBtn?.addEventListener("click", addClientContactRow);
+    elements.saveClientModalBtn?.addEventListener("click", saveClientFromModal);
+    elements.cancelClientModalBtn?.addEventListener("click", closeClientModal);
+    elements.closeClientModalBtn?.addEventListener("click", closeClientModal);
     elements.issueInboxList.addEventListener("click", handleIssueInboxClick);
     elements.valueToggleCard.addEventListener("click", toggleValueView);
     elements.overviewMobileToggle?.addEventListener("click", toggleMobileOverview);
@@ -5783,25 +5802,51 @@ function renderUserManagementList() {
 }
 
 function renderClientManagementList() {
-    if (!elements.clientManagementList) {
-        return;
+    if (!elements.clientManagementList) return;
+
+    if (elements.clientsPageHeaderActions) {
+        elements.clientsPageHeaderActions.hidden = !isAdminSession();
     }
 
     if (!state.clients.length) {
-        elements.clientManagementList.innerHTML = `<p class="client-list-empty">${escapeHtml(t("no_clients"))}</p>`;
+        elements.clientManagementList.innerHTML = `
+            <div class="empty-state">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <p>${escapeHtml(t("no_clients"))}</p>
+            </div>`;
         return;
     }
 
-    elements.clientManagementList.innerHTML = state.clients.map(client => `
+    const admin = isAdminSession();
+    elements.clientManagementList.innerHTML = state.clients.map(client => {
+        const contacts = Array.isArray(client.contacts) ? client.contacts : [];
+        const contactsMarkup = contacts.length
+            ? `<div class="client-row-contacts">
+                ${contacts.map(c => `
+                    <div class="client-contact-chip">
+                        <span class="client-contact-chip-name">${escapeHtml(c.name || c.email || c.phone)}</span>
+                        ${c.email ? `<span class="client-contact-chip-detail">${escapeHtml(c.email)}</span>` : ""}
+                        ${c.phone ? `<span class="client-contact-chip-detail">${escapeHtml(c.phone)}${c.isWhatsapp ? `<span class="client-contact-wa-badge">WA</span>` : ""}</span>` : ""}
+                    </div>`).join("")}
+               </div>`
+            : "";
+
+        return `
         <article class="client-row">
             <div class="client-row-copy">
-                <strong>${escapeHtml(client.name)}</strong>
-                <span>${escapeHtml(client.address || "No address saved")}</span>
-                ${client.consigneeName || client.consigneeAddress
-                    ? `<span class="client-row-consignee"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none"><path d="M8 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm-5 10c0-2.2 2.24-4 5-4s5 1.8 5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>${escapeHtml(client.consigneeName || "Consignee")}</span>`
+                <strong class="client-row-name">${escapeHtml(client.name)}</strong>
+                <span class="client-row-address">${escapeHtml(client.address || "")}</span>
+                ${client.consigneeName
+                    ? `<span class="client-row-consignee">
+                        <svg viewBox="0 0 16 16" aria-hidden="true" fill="none"><path d="M8 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm-5 10c0-2.2 2.24-4 5-4s5 1.8 5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                        ${escapeHtml(client.consigneeName)}
+                       </span>`
                     : ""}
+                ${contactsMarkup}
             </div>
-            ${isAdminSession()
+            ${admin
                 ? `<div class="client-row-actions">
                     <button class="statement-action-btn is-edit" type="button" data-client-action="edit-client" data-client-id="${escapeHtml(client.id)}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
@@ -5811,8 +5856,8 @@ function renderClientManagementList() {
                     </button>
                 </div>`
                 : ""}
-        </article>
-    `).join("");
+        </article>`;
+    }).join("");
 }
 
 async function handleAddUser() {
@@ -5911,85 +5956,20 @@ async function handleUserManagementClick(event) {
 
 async function handleClientManagementClick(event) {
     const button = event.target.closest("[data-client-action]");
-    if (!button || !isAdminSession()) {
-        return;
-    }
+    if (!button || !isAdminSession()) return;
 
     const clientId = button.dataset.clientId;
     const action = button.dataset.clientAction;
     const client = state.clients.find(entry => isSameDocumentId(entry.id, clientId));
-    if (!client) {
-        return;
-    }
+    if (!client) return;
 
     if (action === "edit-client") {
-        const nextName = window.prompt("Update client name:", client.name);
-        if (nextName === null) {
-            return;
-        }
-
-        const trimmedName = nextName.trim();
-        if (!trimmedName) {
-            alert("Client name cannot be empty.");
-            return;
-        }
-
-        const nextAddress = window.prompt("Update client address:", client.address || "");
-        if (nextAddress === null) {
-            return;
-        }
-
-        const trimmedAddress = nextAddress.trim();
-        if (!trimmedAddress) {
-            alert("Client address cannot be empty.");
-            return;
-        }
-
-        const nextConsigneeName = window.prompt("Update consignee name:", client.consigneeName || "");
-        if (nextConsigneeName === null) {
-            return;
-        }
-
-        const nextConsigneeAddress = window.prompt("Update consignee address:", client.consigneeAddress || "");
-        if (nextConsigneeAddress === null) {
-            return;
-        }
-
-        const duplicateClient = state.clients.find(entry =>
-            !isSameDocumentId(entry.id, client.id) && entry.name.toLowerCase() === trimmedName.toLowerCase()
-        );
-        if (duplicateClient) {
-            alert("Another saved client already uses that name.");
-            return;
-        }
-
-        try {
-            await saveClientsToServer(state.clients.map(entry =>
-                isSameDocumentId(entry.id, client.id)
-                    ? {
-                        ...entry,
-                        name: trimmedName,
-                        address: trimmedAddress,
-                        consigneeName: nextConsigneeName.trim(),
-                        consigneeAddress: nextConsigneeAddress.trim()
-                    }
-                    : entry
-            ));
-        } catch (error) {
-            alert(`Unable to update this client.\n\n${error.message}`);
-            return;
-        }
-
-        renderClientOptions();
-        renderClientManagementList();
-        setImportStatus(`Updated saved client ${trimmedName}.`);
+        openClientModal(clientId);
         return;
     }
 
     if (action === "delete-client") {
-        if (!window.confirm(`Delete saved client "${client.name}"?`)) {
-            return;
-        }
+        if (!window.confirm(`Delete saved client "${client.name}"?`)) return;
 
         try {
             await saveClientsToServer(state.clients.filter(entry => !isSameDocumentId(entry.id, client.id)));
@@ -6005,6 +5985,142 @@ async function handleClientManagementClick(event) {
         }
         setImportStatus(`Deleted saved client ${client.name}.`);
     }
+}
+
+// ── Client modal ──────────────────────────────────────────────────
+
+function openClientModal(clientId) {
+    state.editingClientId = clientId || null;
+    const client = clientId ? state.clients.find(c => isSameDocumentId(c.id, clientId)) : null;
+
+    elements.clientModalTitle.textContent = client ? "Edit Client" : "Add Client";
+    elements.clientModalName.value = client?.name || "";
+    elements.clientModalAddress.value = client?.address || "";
+    elements.clientModalConsigneeName.value = client?.consigneeName || "";
+    elements.clientModalConsigneeAddress.value = client?.consigneeAddress || "";
+
+    const contacts = Array.isArray(client?.contacts) ? client.contacts : [];
+    elements.clientModalContactsList.innerHTML = "";
+    contacts.forEach(c => appendClientContactRow(c));
+
+    elements.clientModal.hidden = false;
+    elements.clientModal.removeAttribute("aria-hidden");
+    elements.clientModalName.focus();
+}
+
+function closeClientModal() {
+    elements.clientModal.hidden = true;
+    elements.clientModal.setAttribute("aria-hidden", "true");
+    state.editingClientId = null;
+}
+
+function buildContactRowHTML(contact, index) {
+    const id = contact?.id || `contact-new-${index}`;
+    const name = escapeHtml(contact?.name || "");
+    const email = escapeHtml(contact?.email || "");
+    const phone = escapeHtml(contact?.phone || "");
+    const wa = contact?.isWhatsapp ? "checked" : "";
+    return `
+        <div class="client-contact-row" data-contact-row="${index}">
+            <div class="client-contact-fields">
+                <input type="text" class="client-contact-input client-contact-name" placeholder="Full Name" value="${name}" aria-label="Contact name">
+                <input type="email" class="client-contact-input client-contact-email" placeholder="Email address" value="${email}" aria-label="Contact email">
+                <div class="client-contact-phone-group">
+                    <input type="tel" class="client-contact-input client-contact-phone" placeholder="Phone number" value="${phone}" aria-label="Contact phone">
+                    <label class="client-contact-wa-label" title="This number is on WhatsApp">
+                        <input type="checkbox" class="client-contact-wa-check" ${wa}>
+                        <span class="client-contact-wa-badge-toggle">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.944-1.42A9.956 9.956 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/></svg>
+                            WA
+                        </span>
+                    </label>
+                </div>
+            </div>
+            <button type="button" class="client-contact-remove-btn" data-remove-contact="${index}" aria-label="Remove contact">
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>`;
+}
+
+function appendClientContactRow(contact) {
+    const index = elements.clientModalContactsList.children.length;
+    const div = document.createElement("div");
+    div.innerHTML = buildContactRowHTML(contact, index);
+    elements.clientModalContactsList.appendChild(div.firstElementChild);
+    rebindContactRemoveButtons();
+}
+
+function addClientContactRow() {
+    appendClientContactRow(null);
+}
+
+function rebindContactRemoveButtons() {
+    elements.clientModalContactsList.querySelectorAll("[data-remove-contact]").forEach(btn => {
+        btn.onclick = () => {
+            btn.closest(".client-contact-row").remove();
+        };
+    });
+}
+
+function collectContactsFromModal() {
+    return Array.from(elements.clientModalContactsList.querySelectorAll(".client-contact-row")).map(row => ({
+        id: `contact-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        name: row.querySelector(".client-contact-name")?.value.trim() || "",
+        email: row.querySelector(".client-contact-email")?.value.trim() || "",
+        phone: row.querySelector(".client-contact-phone")?.value.trim() || "",
+        isWhatsapp: row.querySelector(".client-contact-wa-check")?.checked || false
+    })).filter(c => c.name || c.email || c.phone);
+}
+
+async function saveClientFromModal() {
+    const name = elements.clientModalName.value.trim();
+    const address = elements.clientModalAddress.value.trim();
+
+    if (!name) {
+        elements.clientModalName.focus();
+        return;
+    }
+    if (!address) {
+        elements.clientModalAddress.focus();
+        return;
+    }
+
+    const duplicate = state.clients.find(c =>
+        !isSameDocumentId(c.id, state.editingClientId) &&
+        c.name.toLowerCase() === name.toLowerCase()
+    );
+    if (duplicate) {
+        alert("Another saved client already uses that name.");
+        return;
+    }
+
+    const updatedClient = {
+        id: state.editingClientId || `client-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        name,
+        address,
+        consigneeName: elements.clientModalConsigneeName.value.trim(),
+        consigneeAddress: elements.clientModalConsigneeAddress.value.trim(),
+        contacts: collectContactsFromModal()
+    };
+
+    let updatedList;
+    if (state.editingClientId) {
+        updatedList = state.clients.map(c => isSameDocumentId(c.id, state.editingClientId) ? updatedClient : c);
+    } else {
+        updatedList = [...state.clients, updatedClient];
+    }
+
+    try {
+        await saveClientsToServer(updatedList);
+    } catch (error) {
+        alert(`Unable to save client.\n\n${error.message}`);
+        return;
+    }
+
+    renderClientOptions();
+    renderClientManagementList();
+    setImportStatus(state.editingClientId ? `Updated client ${name}.` : `Added client ${name}.`);
+    closeClientModal();
 }
 
 function openExportModal() {
@@ -6453,6 +6569,17 @@ function normalizeDocuments(documents) {
     return consolidated;
 }
 
+function normalizeClientContacts(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw.map(c => ({
+        id: c?.id || `contact-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        name: c?.name || "",
+        email: c?.email || "",
+        phone: c?.phone || "",
+        isWhatsapp: Boolean(c?.isWhatsapp)
+    })).filter(c => c.name || c.email || c.phone);
+}
+
 function normalizeClients(clients) {
     const validClients = (Array.isArray(clients) ? clients : [])
         .map(client => ({
@@ -6460,7 +6587,8 @@ function normalizeClients(clients) {
             name: client?.name || "",
             address: client?.address || "",
             consigneeName: client?.consigneeName || "",
-            consigneeAddress: client?.consigneeAddress || ""
+            consigneeAddress: client?.consigneeAddress || "",
+            contacts: normalizeClientContacts(client?.contacts)
         }))
         .filter(client => client.name && client.address);
 
