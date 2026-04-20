@@ -9250,34 +9250,36 @@ function getDocumentCardMarkup(doc) {
 
     return `
         <article class="document-card document-card-${doc.type}" data-view-id="${escapeHtml(String(doc.id))}">
-            <div class="document-card-main">
+            <div class="document-card-copy">
                 <div class="document-card-head">
-                    <div class="document-card-primary">
-                        <span class="document-card-type">${escapeHtml(doc.type === "quote" ? t("quote_singular") : t("invoice_singular"))}</span>
-                        <strong class="document-card-ref">${escapeHtml(doc.refNumber || "Reference pending")}</strong>
-                    </div>
-                    <div class="document-card-total">
-                        <span class="document-card-total-label">${escapeHtml(t("total"))}</span>
-                        <strong>${escapeHtml(formatCurrency(doc.total || 0))}</strong>
-                    </div>
+                    <strong class="document-card-ref">${escapeHtml(doc.refNumber || "Reference pending")}</strong>
+                    <div class="document-card-statuses">${statusMarkup}</div>
                 </div>
                 <div class="document-card-meta">
-                    <span>${escapeHtml(doc.clientName || "Unknown client")}</span>
-                    <span>${escapeHtml(formatDisplayDate(doc.date || ""))}</span>
+                    <span class="document-card-client">${escapeHtml(doc.clientName || "Unknown client")}</span>
+                    <span class="document-card-date">${escapeHtml(formatDisplayDate(doc.date || ""))}</span>
+                    <strong class="document-card-total">${escapeHtml(formatCurrency(doc.total || 0))}</strong>
                 </div>
-                <div class="document-card-statuses">${statusMarkup}</div>
             </div>
             <div class="document-card-actions">
-                <button type="button" class="document-action-btn" data-action="export-pdf" data-id="${escapeHtml(String(doc.id))}">View</button>
-                <button type="button" class="document-action-btn" data-action="edit" data-id="${escapeHtml(String(doc.id))}">Edit</button>
+                <button type="button" class="statement-action-btn is-open" data-action="export-pdf" data-id="${escapeHtml(String(doc.id))}" aria-label="${escapeHtml(t("view_pdf"))}" title="${escapeHtml(t("view_pdf"))}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>
+                </button>
+                <button type="button" class="statement-action-btn is-edit" data-action="edit" data-id="${escapeHtml(String(doc.id))}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                </button>
                 <div class="doc-actions-menu-wrap">
                     <button
                         type="button"
-                        class="document-action-btn document-action-btn-secondary"
+                        class="statement-action-btn is-more"
                         data-toggle-document-menu="${escapeHtml(String(doc.id))}"
                         aria-expanded="false"
                         aria-haspopup="menu"
-                    >More</button>
+                        aria-label="More options"
+                        title="More options"
+                    >
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg>
+                    </button>
                     <div class="doc-actions-menu" data-document-menu="${escapeHtml(String(doc.id))}" hidden style="display:none;">
                         ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="unpaid" data-id="${escapeHtml(String(doc.id))}">${escapeHtml(t("mark_as_unpaid"))}</button>` : ""}
                         ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="pending" data-id="${escapeHtml(String(doc.id))}">${escapeHtml(t("mark_as_pending"))}</button>` : ""}
