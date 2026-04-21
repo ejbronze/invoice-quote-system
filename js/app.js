@@ -10,6 +10,7 @@ const state = {
     searchQuery: "",
     sortOrder: "ref_date_desc",
     valueView: "pipeline",
+    valueViewInterval: null,
     calculatorExpression: "0",
     isCalculatorOpen: false,
     isDraggingCalculator: false,
@@ -2022,7 +2023,7 @@ function bindEvents() {
     elements.cancelClientModalBtn?.addEventListener("click", closeClientModal);
     elements.closeClientModalBtn?.addEventListener("click", closeClientModal);
     elements.issueInboxList.addEventListener("click", handleIssueInboxClick);
-    elements.valueToggleCard.addEventListener("click", toggleValueView);
+    elements.valueToggleCard.addEventListener("click", () => toggleValueView(true));
     elements.overviewMobileToggle?.addEventListener("click", toggleMobileOverview);
     elements.viewAllDocumentsBtn?.addEventListener("click", () => setActivePage("documents"));
     elements.showInternalPricingToggle.addEventListener("change", handleInternalPricingToggleChange);
@@ -3330,6 +3331,11 @@ function setActivePage(page) {
     closeTopbarMenu();
     closeNewMenu();
     closeOverviewNewMenu();
+    if (state.activePage === "overview") {
+        startValueViewCycle();
+    } else {
+        stopValueViewCycle();
+    }
 }
 
 function applyPageState() {
@@ -10265,7 +10271,7 @@ function updateOverviewStats() {
     syncMobileOverviewState();
 }
 
-function toggleValueView() {
+function toggleValueView(isManual = false) {
     state.valueView = state.valueView === "pipeline"
         ? "invoiced"
         : state.valueView === "invoiced"
@@ -10275,6 +10281,22 @@ function toggleValueView() {
     elements.valueToggleCard.classList.remove("is-pulsing");
     void elements.valueToggleCard.offsetWidth;
     elements.valueToggleCard.classList.add("is-pulsing");
+    if (isManual) {
+        stopValueViewCycle();
+        startValueViewCycle();
+    }
+}
+
+function startValueViewCycle() {
+    stopValueViewCycle();
+    state.valueViewInterval = setInterval(() => toggleValueView(false), 3000);
+}
+
+function stopValueViewCycle() {
+    if (state.valueViewInterval) {
+        clearInterval(state.valueViewInterval);
+        state.valueViewInterval = null;
+    }
 }
 
 function getFilteredDocuments() {

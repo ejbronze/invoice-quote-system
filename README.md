@@ -183,7 +183,7 @@ When the app is online with the API available, user accounts are stored in the s
 - Single `+ New` button on the dashboard and Documents page header — opens a quick-action dropdown with Quote, Invoice, and Statement options
 - Document cards use stronger quote/invoice color separation plus text badges for `Draft` / `Logged`
 - Invoice cards support `Paid` / `Unpaid` / `Pending` status badges and a menu action for payment tracking
-- The top commercial snapshot value card cycles through `Pipeline Value`, `Amount Invoiced`, and `Income Received`
+- The top commercial snapshot value card auto-cycles through `Pipeline Value`, `Amount Invoiced`, and `Income Received` every 3 seconds; each state has a distinct background color (blue, green, amber). Clicking the card manually advances the cycle and resets the timer.
 - Document cards use icon-based action buttons (eye for PDF preview, pencil for edit) with animated tooltip labels on hover
 - The PDF preview popup window's Edit button correctly navigates back to the editor with the document loaded
 - The Statements tab renders inline within the main dashboard — the filter tab bar stays visible while browsing statements

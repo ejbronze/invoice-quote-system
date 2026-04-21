@@ -1922,9 +1922,10 @@ body::after {
     padding-left: 0.65rem;
     padding-right: 0.65rem;
     background:
-        linear-gradient(135deg, rgba(66, 99, 235, 0.12), rgba(29, 191, 140, 0.08)),
+        linear-gradient(135deg, rgba(66, 99, 235, 0.18), rgba(66, 99, 235, 0.06)),
         rgba(255, 255, 255, 0.94);
-    transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    border-color: rgba(66, 99, 235, 0.22);
+    transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.4s ease;
 }
 
 .stat-card-toggle .stat-label {
@@ -1955,14 +1956,26 @@ body::after {
 
 .stat-card-toggle.is-invoiced {
     background:
-        linear-gradient(135deg, rgba(29, 191, 140, 0.14), rgba(255, 131, 120, 0.08)),
+        linear-gradient(135deg, rgba(29, 191, 140, 0.22), rgba(29, 191, 140, 0.08)),
         rgba(255, 255, 255, 0.94);
+    border-color: rgba(29, 191, 140, 0.32);
+}
+
+.stat-card-toggle.is-invoiced:hover {
+    border-color: rgba(29, 191, 140, 0.42);
+    box-shadow: 0 14px 24px rgba(29, 191, 140, 0.14);
 }
 
 .stat-card-toggle.is-income {
     background:
-        linear-gradient(135deg, rgba(255, 157, 66, 0.16), rgba(29, 191, 140, 0.1)),
+        linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(245, 158, 11, 0.08)),
         rgba(255, 255, 255, 0.94);
+    border-color: rgba(245, 158, 11, 0.32);
+}
+
+.stat-card-toggle.is-income:hover {
+    border-color: rgba(245, 158, 11, 0.42);
+    box-shadow: 0 14px 24px rgba(245, 158, 11, 0.14);
 }
 
 .stat-card-toggle.is-pulsing {
