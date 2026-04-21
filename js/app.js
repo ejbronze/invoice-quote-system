@@ -1278,14 +1278,12 @@ function applyTranslations() {
     setElementText(elements.quoteCountStat.previousElementSibling, t("quotes"));
     if (state.valueView === "invoiced") {
         elements.totalValueLabel.textContent = t("amount_invoiced");
-        elements.totalValueHint.textContent = t("tap_view_income");
     } else if (state.valueView === "income") {
         elements.totalValueLabel.textContent = t("income_received");
-        elements.totalValueHint.textContent = t("tap_view_pipeline");
     } else {
         elements.totalValueLabel.textContent = t("pipeline_value");
-        elements.totalValueHint.textContent = t("tap_view_invoiced");
     }
+    elements.totalValueHint.textContent = "";
     setElementText("#catalogHeading", t("catalog_heading"));
     setElementText("#catalogCopy", t("catalog_copy"));
     setElementText("#openCatalogItemModalBtn", t("add_catalog_item"));
@@ -10247,17 +10245,11 @@ function updateOverviewStats() {
         : state.valueView === "income"
             ? "income_received"
             : "pipeline_value";
-    const nextHintKey = state.valueView === "pipeline"
-        ? "tap_view_invoiced"
-        : state.valueView === "invoiced"
-            ? "tap_view_income"
-            : "tap_view_pipeline";
-
     elements.totalDocumentsStat.textContent = String(state.documents.length);
     elements.quoteCountStat.textContent = String(quoteCount);
     elements.totalValueStat.textContent = formatCurrency(totalValue);
     elements.totalValueLabel.textContent = t(currentLabelKey);
-    elements.totalValueHint.textContent = t(nextHintKey);
+    elements.totalValueHint.textContent = "";
     elements.valueToggleCard.setAttribute("aria-pressed", String(state.valueView !== "pipeline"));
     elements.valueToggleCard.classList.toggle("is-invoiced", state.valueView === "invoiced");
     elements.valueToggleCard.classList.toggle("is-income", state.valueView === "income");
