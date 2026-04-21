@@ -1932,6 +1932,10 @@ body::after {
     font-size: clamp(0.56rem, 0.8vw, 0.64rem);
     white-space: normal;
     text-wrap: balance;
+    min-height: 2.2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .stat-card-toggle .stat-value {
@@ -1993,6 +1997,7 @@ body::after {
     font-weight: 700;
     text-align: center;
     flex-wrap: wrap;
+    min-height: 2.4em;
 }
 
 .stat-meta::before {
