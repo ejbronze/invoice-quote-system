@@ -11324,7 +11324,12 @@ async function persistDocument(options = {}) {
         if (!forceDraft) {
             saveLocalSnapshot();
         }
-        renderDocuments();
+        // Skip the full re-render during a silent background autosave — it rebuilds the
+        // document list DOM while the user is actively typing, causing the modal to scroll
+        // back to the top via goToStep → resetDocumentModalViewport below.
+        if (!silent || !keepOpen) {
+            renderDocuments();
+        }
         recordActivity(
             isEditing ? "updated document" : "created document",
             `${doc.type === "quote" ? "Quote" : "Invoice"} ${doc.refNumber} for ${doc.clientName || "unknown client"}.`
@@ -11338,7 +11343,12 @@ async function persistDocument(options = {}) {
 
     if (keepOpen) {
         updateModalTitle();
-        goToStep(state.currentStep);
+        // Don't call goToStep during a silent autosave — goToStep calls
+        // resetDocumentModalViewport which forces modalBody.scrollTop = 0,
+        // jumping the editor to the top while the user is mid-edit.
+        if (!silent) {
+            goToStep(state.currentStep);
+        }
         updateEditorSummary();
         if (!silent) {
             const docLabel = doc.type === "quote" ? "Quote" : "Invoice";

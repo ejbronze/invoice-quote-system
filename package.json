@@ -3,7 +3,8 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "dev:sandbox": "node scripts/dev-local-sandbox.mjs"
+    "dev:sandbox": "node scripts/dev-local-sandbox.mjs",
+    "demo": "node scripts/dev-demo.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^0.27.0",
