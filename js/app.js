@@ -6519,13 +6519,17 @@ function renderClientManagementList() {
     elements.clientManagementList.innerHTML = state.clients.map(client => {
         const contacts = Array.isArray(client.contacts) ? client.contacts : [];
 
+        const normalizedClientName = String(client.name || "").trim().toLowerCase();
         const clientDocs = state.documents.filter(doc =>
-            String(doc.clientName || "").trim().toLowerCase() === String(client.name || "").trim().toLowerCase()
+            String(doc.clientName || "").trim().toLowerCase() === normalizedClientName
         );
         const clientQuotes = clientDocs.filter(doc => doc.type === "quote");
         const clientInvoices = clientDocs.filter(doc => doc.type === "invoice");
         const totalInvoiced = clientInvoices.reduce((sum, doc) => sum + Number(doc.total || 0), 0);
         const totalOutstanding = clientInvoices.reduce((sum, doc) => sum + getInvoiceOutstandingBalance(doc), 0);
+        const clientStatements = (state.statementExports || []).filter(stmt =>
+            String(stmt.clientName || "").trim().toLowerCase() === normalizedClientName
+        );
 
         const badges = [
             client.address ? `<span class="client-row-badge"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a4.5 4.5 0 0 1 4.5 4.5c0 3-4.5 8.5-4.5 8.5S3.5 9 3.5 6A4.5 4.5 0 0 1 8 1.5Z"/><circle cx="8" cy="6" r="1.5"/></svg>${escapeHtml(client.address.split(/\n|,/)[0].trim())}</span>` : "",
@@ -6546,16 +6550,17 @@ function renderClientManagementList() {
                 </div>
             </div>` : "";
 
-        const clientStatsSummary = clientDocs.length
+        const clientStatsSummary = (clientDocs.length || clientStatements.length)
             ? `<div class="client-row-stats">
                 ${clientQuotes.length ? `<span class="client-row-stat">${clientQuotes.length} quote${clientQuotes.length > 1 ? "s" : ""}</span>` : ""}
                 ${clientInvoices.length ? `<span class="client-row-stat client-row-stat-invoice">${clientInvoices.length} invoice${clientInvoices.length > 1 ? "s" : ""}</span>` : ""}
+                ${clientStatements.length ? `<span class="client-row-stat client-row-stat-statement">${clientStatements.length} statement${clientStatements.length > 1 ? "s" : ""}</span>` : ""}
                 ${totalInvoiced > 0 ? `<span class="client-row-stat client-row-stat-value">${escapeHtml(formatCurrency(totalInvoiced))} invoiced</span>` : ""}
                 ${totalOutstanding > 0 ? `<span class="client-row-stat client-row-stat-outstanding">${escapeHtml(formatCurrency(totalOutstanding))} outstanding</span>` : ""}
               </div>`
             : "";
 
-        const clientStatsDetail = clientDocs.length ? `
+        const clientStatsDetail = (clientDocs.length || clientStatements.length) ? `
             <div class="client-detail-section client-detail-stats-grid">
                 <span class="client-detail-label">Activity</span>
                 <div class="client-stats-grid">
@@ -6566,6 +6571,10 @@ function renderClientManagementList() {
                     <div class="client-stat-cell">
                         <span class="client-stat-value">${clientInvoices.length}</span>
                         <span class="client-stat-label">Invoices</span>
+                    </div>
+                    <div class="client-stat-cell client-stat-cell-statement">
+                        <span class="client-stat-value">${clientStatements.length}</span>
+                        <span class="client-stat-label">Statements</span>
                     </div>
                     <div class="client-stat-cell">
                         <span class="client-stat-value">${escapeHtml(formatCurrency(totalInvoiced))}</span>

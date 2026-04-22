@@ -49,6 +49,7 @@ body {
     color: var(--text);
     min-height: 100vh;
     position: relative;
+    scrollbar-gutter: stable;
 }
 
 body.modal-open {
@@ -3675,9 +3676,13 @@ body::after {
     color: var(--warning);
 }
 
+.client-row-stat-statement {
+    color: var(--brand-accent, #1dbf8c);
+}
+
 .client-stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 0.5rem;
 }
 
@@ -3694,6 +3699,15 @@ body::after {
 .client-stat-cell.is-outstanding {
     background: rgba(212, 87, 87, 0.06);
     border-color: rgba(212, 87, 87, 0.18);
+}
+
+.client-stat-cell-statement {
+    background: rgba(29, 191, 140, 0.05);
+    border-color: rgba(29, 191, 140, 0.18);
+}
+
+.client-stat-cell-statement .client-stat-value {
+    color: var(--brand-accent, #1dbf8c);
 }
 
 .client-stat-value {
