@@ -1,8 +1,20 @@
 # SantoSync
 
-SantoSync is a premium quote-and-invoice workspace for modern trade teams. It combines document creation, client history, per-user preferences, admin tools, and branded export output in one polished operational dashboard.
+SantoSync is a focused document and operations workspace built for trade teams, freelancers, and logistics operators who need to generate, track, and deliver professional quotes and invoices without the overhead of enterprise billing software.
 
-Version: `1.7.0` — Last updated: April 22, 2026
+Version: `1.8.0` — Last updated: April 22, 2026
+
+## Version 1.8.0 Summary
+
+This release redesigns the payment terms experience, expands the About SantoSync modal with a full product narrative, and aligns the Help & FAQ to reflect the current UI across all three supported languages.
+
+**Structured payment terms selector:** The freeform Terms of Payment text input has been replaced with a purpose-built selector in Step 3. Users now choose from four modes: **Due Immediately** — checks a box that greys out all other options and renders "Payment is due immediately upon receipt" on the document; **Net 15** — automatically aligns the invoice due date to 15 days from the invoice date; **Net 30** — automatically aligns to 30 days; or **Other** — unlocks a day-count field and an optional custom terms text box that auto-generates a terms sentence when left blank. The mode and day count are stored with the document so selections survive reloads and syncs. Legacy documents with freeform terms text are automatically inferred to the nearest mode on load.
+
+**Due-date card display update:** Invoice cards now show "Due Upon Receipt" instead of a calculated date for invoices in Due Immediately mode. Overdue detection still applies — invoices set to immediate payment that remain unpaid past the invoice date show the overdue day count in red.
+
+**About SantoSync narrative:** The About modal now includes a structured product narrative covering what the app does, the problems it solves, and why it exists — giving new users and team members a clear picture of the product's purpose and scope without navigating to external documentation.
+
+**Help & FAQ alignment:** The payment terms FAQ topic has been rewritten across English, Spanish, and French to describe the new selector UI. The outdated "why does the app look more modern?" tip has been replaced with a practical guide to setting due dates automatically using the payment terms modes.
 
 ## Version 1.7.0 Summary
 

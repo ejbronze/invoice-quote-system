@@ -120,7 +120,7 @@ const BRAND = window.SANTO_BRAND || {
     sessionTitle: "Opening SantoSync",
     sessionMessage: "Signing in and syncing your operational workspace...",
     aboutMeaning: "SantoSync is a coined product name designed to feel premium, steady, and coordinated.",
-    aboutProduct: "SantoSync is a modern document and operations workspace with cleaner save-versus-draft handling, more clickable records, stronger payment controls, a sharper modern typography system, responsive reporting layouts, and fuller backup recovery across the shared workspace.",
+    aboutProduct: "SantoSync is a focused document and operations workspace built for trade teams, freelancers, and logistics operators who need to generate, track, and deliver professional quotes and invoices without the overhead of enterprise billing software.",
     aboutDeveloper: "Created by Edwin Jaquez through Palmchat Innovations Lab under Palmchat Innovations LLC NYC."
 };
 const DEFAULT_COMPANY_PROFILE = Object.freeze({
@@ -566,8 +566,8 @@ const TRANSLATIONS = {
         help_vc_preview_pdf: "Preview PDF",
         help_q_reuse_items: "Can I save line items to reuse later?",
         help_a_reuse_items: "Yes. Reusable items now live in the <strong>Catalog</strong> and <strong>Pending Items Cart</strong> tools outside the Step 3 editor header. Keep the quote or invoice line-item table focused on direct entry, then manage reusable items from the Catalog or cart library when needed. The Catalog page still aggregates all captured items across documents.",
-        help_q_payment_terms: "How do I add or update payment terms?",
-        help_a_payment_terms: "Scroll to the <strong>Document Notes &amp; Terms</strong> panel at the bottom of Step 3. The <strong>Terms of Payment</strong> field is pre-filled with a NET 30 minimum and a $10,000 monthly client limit note \u2014 update it to match your agreement.",
+        help_q_payment_terms: "How do I set payment terms on an invoice?",
+        help_a_payment_terms: "Scroll to the <strong>Document Notes &amp; Terms</strong> panel at the bottom of Step 3. The <strong>Terms of Payment</strong> selector offers four options: <strong>Due Immediately</strong> (disables other options and prints \u201cPayment is due immediately upon receipt\u201d), <strong>Net 15</strong> (due date auto-set to 15 days from invoice date), <strong>Net 30</strong> (due date auto-set to 30 days), or <strong>Other</strong> \u2014 enter a custom day count and optional terms text. Invoice cards show the calculated due date and an overdue indicator when applicable.",
         help_q_backup: "How do I back up or restore my data?",
         help_a_backup: "Open <strong>Settings</strong> from the sidebar and use the <strong>JSON Backup</strong> option to export a full workspace snapshot, including documents, clients, and admin data. Use <strong>JSON Restore</strong> to import a previously saved backup. The server now also keeps timestamped dataset snapshots for recovery.",
         help_q_action_icons: "What do the action icons on document cards do?",
@@ -683,7 +683,7 @@ const TRANSLATIONS = {
         footer_report_cta: "Enviar / Reportar Problemas",
         about_veloris: `Sobre ${BRAND.name}`,
         about_brand_meaning: "SantoSync es un nombre creado para sugerir coordinación, elegancia y fiabilidad para flujos comerciales modernos.",
-        about_product_copy: "SantoSync es un espacio moderno de documentos y operaciones con mejor manejo entre borradores y guardados, registros más clicables, controles de pago más sólidos, una tipografía más moderna y nítida, reportes responsivos y recuperación más amplia del espacio compartido.",
+        about_product_copy: "SantoSync es un espacio de trabajo enfocado en documentos y operaciones, creado para equipos comerciales, freelancers y operadores log\u00edsticos que necesitan generar, rastrear y entregar cotizaciones y facturas profesionales sin la complejidad del software empresarial.",
         about_developer_copy: `Diseñado y desarrollado por ${BRAND.developerName} a través de ${BRAND.studioName}, bajo ${BRAND.legalName}.`,
         company_profile: "Perfil de Empresa",
         company_profile_copy: "Los datos empresariales guardados aquí aparecen en cotizaciones, facturas y vistas de exportación.",
@@ -1015,8 +1015,8 @@ const TRANSLATIONS = {
         help_vc_preview_pdf: "Vista PDF",
         help_q_reuse_items: "\u00bfPuedo guardar l\u00edneas de art\u00edculos para reutilizarlas?",
         help_a_reuse_items: "S\u00ed. Los art\u00edculos reutilizables ahora viven en las herramientas de <strong>Cat\u00e1logo</strong> y <strong>Carrito de Art\u00edculos Pendientes</strong>, fuera del encabezado del Paso 3. Mant\u00e9n la tabla de l\u00edneas enfocada en entrada directa y gestiona los art\u00edculos reutilizables desde el Cat\u00e1logo o la biblioteca del carrito cuando lo necesites. La p\u00e1gina de Cat\u00e1logo sigue agrupando todos los art\u00edculos capturados.",
-        help_q_payment_terms: "\u00bfC\u00f3mo agrego o actualizo los t\u00e9rminos de pago?",
-        help_a_payment_terms: "Baja hasta el panel de <strong>Notas y T\u00e9rminos del Documento</strong> al final del Paso 3. El campo <strong>Condiciones de Pago</strong> viene prellenado con un m\u00ednimo NET 30 y una nota de l\u00edmite mensual de $10,000 \u2014 actual\u00edzalo seg\u00fan tu acuerdo.",
+        help_q_payment_terms: "\u00bfC\u00f3mo configuro los t\u00e9rminos de pago en una factura?",
+        help_a_payment_terms: "Baja hasta el panel de <strong>Notas y T\u00e9rminos del Documento</strong> al final del Paso 3. El selector de <strong>Condiciones de Pago</strong> ofrece cuatro opciones: <strong>Vencimiento Inmediato</strong> (desactiva las dem\u00e1s opciones e imprime \u201cEl pago vence inmediatamente al recibir\u201d), <strong>Net 15</strong> (fecha de vencimiento autom\u00e1tica a 15 d\u00edas desde la fecha de factura), <strong>Net 30</strong> (30 d\u00edas), u <strong>Otro</strong> \u2014 ingresa un n\u00famero de d\u00edas personalizado y texto opcional. Las tarjetas de factura muestran la fecha de vencimiento calculada e indicador de vencido cuando aplica.",
         help_q_backup: "\u00bfC\u00f3mo respaldo o restauro mis datos?",
         help_a_backup: "Abre <strong>Configuraci\u00f3n</strong> desde la barra lateral y usa la opci\u00f3n <strong>Respaldo JSON</strong> para exportar un resumen completo del espacio de trabajo, incluidos documentos, clientes y datos administrativos. Usa <strong>Restaurar JSON</strong> para importar un respaldo guardado. El servidor ahora tambi\u00e9n conserva instant\u00e1neas con fecha para recuperaci\u00f3n.",
         help_q_action_icons: "\u00bfQu\u00e9 hacen los \u00edconos de acci\u00f3n en las tarjetas de documentos?",
@@ -1132,7 +1132,7 @@ const TRANSLATIONS = {
         footer_report_cta: "Soumettre / Signaler un Problème",
         about_veloris: `À propos de ${BRAND.name}`,
         about_brand_meaning: "SantoSync est un nom imaginé pour évoquer la coordination, l’élégance et la fiabilité dans les flux commerciaux.",
-        about_product_copy: "SantoSync est un espace moderne de documents et d’opérations avec une meilleure distinction entre brouillons et enregistrements, des fiches plus cliquables, des contrôles de paiement renforcés, une typographie plus nette et contemporaine, des rapports plus adaptatifs et une récupération plus complète de l’espace partagé.",
+        about_product_copy: "SantoSync est un espace de travail document et op\u00e9rations con\u00e7u pour les \u00e9quipes commerciales, les freelances et les op\u00e9rateurs logistiques qui ont besoin de g\u00e9n\u00e9rer, suivre et livrer des devis et factures professionnels sans la lourdeur d\u2019un logiciel de facturation entreprise.",
         about_developer_copy: `Conçu et développé par ${BRAND.developerName} via ${BRAND.studioName}, sous ${BRAND.legalName}.`,
         company_profile: "Profil Société",
         company_profile_copy: "Les informations d’identité enregistrées ici apparaissent dans les devis, factures et vues d’export.",
@@ -1462,8 +1462,8 @@ const TRANSLATIONS = {
         help_vc_preview_pdf: "Aper\u00e7u PDF",
         help_q_reuse_items: "Puis-je enregistrer des lignes d\u2019articles pour les r\u00e9utiliser\u00a0?",
         help_a_reuse_items: "Oui. Les articles r\u00e9utilisables se g\u00e8rent maintenant depuis le <strong>Catalogue</strong> et le <strong>Panier d\u2019articles en attente</strong>, en dehors de l\u2019en-t\u00eate de l\u2019\u00e9tape\u00a03. Gardez le tableau des lignes concentr\u00e9 sur la saisie directe, puis g\u00e9rez les articles r\u00e9utilisables depuis le Catalogue ou la biblioth\u00e8que du panier quand n\u00e9cessaire. Le Catalogue continue de regrouper tous les articles captur\u00e9s.",
-        help_q_payment_terms: "Comment ajouter ou mettre \u00e0 jour les conditions de paiement\u00a0?",
-        help_a_payment_terms: "Faites d\u00e9filer jusqu\u2019au panneau <strong>Notes et conditions du document</strong> en bas de l\u2019\u00e9tape\u00a03. Le champ <strong>Conditions de paiement</strong> est pr\u00e9rempli avec un minimum NET\u00a030 et une note de limite mensuelle de 10\u00a0000\u00a0$ \u2014 mettez-le \u00e0 jour selon votre accord.",
+        help_q_payment_terms: "Comment configurer les conditions de paiement sur une facture\u00a0?",
+        help_a_payment_terms: "Faites d\u00e9filer jusqu\u2019au panneau <strong>Notes et conditions du document</strong> en bas de l\u2019\u00e9tape\u00a03. Le s\u00e9lecteur <strong>Conditions de paiement</strong> propose quatre options\u00a0: <strong>D\u00fb imm\u00e9diatement</strong> (d\u00e9sactive les autres options et imprime \u201cLe paiement est d\u00fb imm\u00e9diatement \u00e0 la r\u00e9ception\u201d), <strong>Net\u00a015</strong> (\u00e9ch\u00e9ance fix\u00e9e automatiquement \u00e0 15\u00a0jours), <strong>Net\u00a030</strong> (30\u00a0jours), ou <strong>Autre</strong> \u2014 saisissez un nombre de jours personnalis\u00e9 et un texte optionnel. Les cartes de facture affichent la date d\u2019\u00e9ch\u00e9ance calcul\u00e9e et un indicateur de retard le cas \u00e9ch\u00e9ant.",
         help_q_backup: "Comment sauvegarder ou restaurer mes donn\u00e9es\u00a0?",
         help_a_backup: "Ouvrez <strong>Paramètres</strong> dans la barre lat\u00e9rale et utilisez l\u2019option <strong>Sauvegarde JSON</strong> pour exporter un instantané complet de l’espace de travail, y compris les documents, clients et données d’administration. Utilisez <strong>Restaurer JSON</strong> pour importer une sauvegarde. Le serveur conserve désormais aussi des instantanés horodatés pour la récupération.",
         help_q_action_icons: "Que font les ic\u00f4nes d\u2019action sur les cartes de documents\u00a0?",
@@ -2214,6 +2214,11 @@ function cacheElements() {
     elements.notes = document.getElementById("notes");
     elements.internalNotes = document.getElementById("internalNotes");
     elements.paymentTerms = document.getElementById("paymentTerms");
+    elements.paymentTermsImmediate = document.getElementById("paymentTermsImmediate");
+    elements.paymentTermsOptions = document.getElementById("paymentTermsOptions");
+    elements.paymentTermsOtherFields = document.getElementById("paymentTermsOtherFields");
+    elements.paymentTermsDays = document.getElementById("paymentTermsDays");
+    elements.paymentTermsCustomText = document.getElementById("paymentTermsCustomText");
     elements.paymentLedgerPanel = document.getElementById("paymentLedgerPanel");
     elements.paymentLedgerSummary = document.getElementById("paymentLedgerSummary");
     elements.paymentLedgerInvoiceTotal = document.getElementById("paymentLedgerInvoiceTotal");
@@ -2490,6 +2495,10 @@ function bindEvents() {
     elements.itemsContainer.addEventListener("drop", handleItemDrop);
     elements.itemsContainer.addEventListener("dragend", handleItemDragEnd);
     document.addEventListener("keydown", handleGlobalShortcuts);
+    elements.paymentTermsImmediate?.addEventListener("change", () => syncPaymentTermsUI());
+    elements.paymentTermsOptions?.addEventListener("change", () => syncPaymentTermsUI());
+    elements.paymentTermsDays?.addEventListener("input", () => syncPaymentTermsUI());
+    elements.paymentTermsCustomText?.addEventListener("input", () => syncPaymentTermsUI());
     elements.addPaymentEntryBtn?.addEventListener("click", addPaymentEntry);
     elements.paymentLedgerList?.addEventListener("click", handlePaymentLedgerListClick);
     elements.paymentLedgerList?.addEventListener("input", syncPaymentLedgerUi);
@@ -2532,7 +2541,6 @@ function bindEvents() {
         elements.poNumber,
         elements.docTags,
         elements.notes,
-        elements.paymentTerms,
         elements.includeSignature,
         elements.includeStamp
     ].forEach(field => {
@@ -7975,8 +7983,78 @@ function getInvoiceDerivedPaymentStatus(doc) {
     return "pending";
 }
 
+function inferPaymentTermsMode(paymentTermsText) {
+    const upper = String(paymentTermsText || "").toUpperCase().trim();
+    if (upper.includes("IMMEDIATE") || upper.includes("UPON RECEIPT")) return "immediate";
+    if (/\bNET\s*15\b/.test(upper) || /\b15\s*DAYS?\b/.test(upper)) return "net15";
+    if (/\bNET\s*30\b/.test(upper) || /\b30\s*DAYS?\b/.test(upper)) return "net30";
+    return "other";
+}
+
+function computePaymentTermsText(mode, days, customText) {
+    if (mode === "immediate") return "Payment is due immediately upon receipt.";
+    if (mode === "net15") return "NET15 : Payment is due within 15 days of the invoice date.";
+    if (mode === "net30") return "NET30 : Payment is due within 30 days of the invoice date.";
+    const d = Math.max(1, parseInt(days, 10) || 45);
+    const text = (customText || "").trim();
+    return text || `Payment is due within ${d} days of the invoice date.`;
+}
+
+function syncPaymentTermsUI(triggerAutosave = true) {
+    const isImmediate = elements.paymentTermsImmediate?.checked;
+    if (isImmediate) {
+        elements.paymentTermsOptions?.classList.add("is-disabled");
+    } else {
+        elements.paymentTermsOptions?.classList.remove("is-disabled");
+    }
+    const preset = document.querySelector("input[name=\"paymentTermsPreset\"]:checked")?.value || "net30";
+    const isOther = preset === "other";
+    if (elements.paymentTermsOtherFields) elements.paymentTermsOtherFields.hidden = !isOther;
+    const mode = isImmediate ? "immediate" : preset;
+    const days = parseInt(elements.paymentTermsDays?.value, 10) || 45;
+    const customText = elements.paymentTermsCustomText?.value || "";
+    if (elements.paymentTerms) elements.paymentTerms.value = computePaymentTermsText(mode, days, customText);
+    if (triggerAutosave) queueDraftAutosave();
+}
+
+function loadPaymentTermsIntoEditor(doc) {
+    const mode = doc.paymentTermsMode || inferPaymentTermsMode(doc.paymentTerms);
+    elements.paymentTermsImmediate.checked = mode === "immediate";
+    const presetId = mode === "net15" ? "paymentTermsNet15"
+        : mode === "net30" ? "paymentTermsNet30"
+        : mode === "other" ? "paymentTermsOther"
+        : "paymentTermsNet30";
+    const presetInput = document.getElementById(presetId);
+    if (presetInput) presetInput.checked = true;
+    elements.paymentTermsDays.value = doc.paymentTermsDays || 45;
+    elements.paymentTermsCustomText.value = mode === "other" ? (doc.paymentTerms || "") : "";
+    syncPaymentTermsUI(false);
+}
+
+function resetPaymentTermsUI() {
+    elements.paymentTermsImmediate.checked = false;
+    const net30 = document.getElementById("paymentTermsNet30");
+    if (net30) net30.checked = true;
+    elements.paymentTermsOtherFields.hidden = true;
+    elements.paymentTermsDays.value = 45;
+    elements.paymentTermsCustomText.value = "";
+    syncPaymentTermsUI(false);
+}
+
+function getPaymentTermsModeFromUI() {
+    if (elements.paymentTermsImmediate?.checked) return "immediate";
+    return document.querySelector("input[name=\"paymentTermsPreset\"]:checked")?.value || "net30";
+}
+
 function getInvoicePaymentTermDays(invoice) {
+    const mode = invoice?.paymentTermsMode;
+    if (mode === "immediate") return 0;
+    if (mode === "net15") return 15;
+    if (mode === "net30") return 30;
+    if (mode === "other") return Math.max(1, invoice?.paymentTermsDays || 45);
+    // backward compat: parse from text
     const normalizedTerms = String(invoice?.paymentTerms || DEFAULT_PAYMENT_TERMS).trim().toUpperCase();
+    if (normalizedTerms.includes("IMMEDIATE") || normalizedTerms.includes("UPON RECEIPT")) return 0;
     const netMatch = normalizedTerms.match(/NET\s*[- ]?(\d{1,3})/i);
     const dayMatch = normalizedTerms.match(/\b(\d{1,3})\s*(DAY|DAYS)\b/i);
     const looseNumberMatch = normalizedTerms.match(/\b(\d{1,3})\b/);
@@ -7986,7 +8064,7 @@ function getInvoicePaymentTermDays(invoice) {
         (looseNumberMatch && looseNumberMatch[1]) ||
         30
     );
-    return Math.max(30, Number.isFinite(parsedDays) ? parsedDays : 30);
+    return Math.max(1, Number.isFinite(parsedDays) ? parsedDays : 30);
 }
 
 function calculateInvoiceDueDate(invoice) {
@@ -9868,7 +9946,7 @@ function resetForm() {
     elements.docTags.value = "";
     elements.notes.value = "";
     elements.internalNotes.value = "";
-    elements.paymentTerms.value = DEFAULT_PAYMENT_TERMS;
+    resetPaymentTermsUI();
     elements.includeSignature.checked = true;
     elements.includeStamp.checked = false;
     renderPaymentLedger([]);
@@ -9896,7 +9974,7 @@ function prepareNewDocument(type = "quote") {
     elements.docTags.value = "";
     elements.notes.value = "";
     elements.internalNotes.value = "";
-    elements.paymentTerms.value = DEFAULT_PAYMENT_TERMS;
+    resetPaymentTermsUI();
     elements.includeSignature.checked = true;
     elements.includeStamp.checked = false;
     renderPaymentLedger([]);
@@ -10735,6 +10813,8 @@ function buildDocumentData() {
         notes: elements.notes.value,
         internalNotes: elements.internalNotes.value,
         paymentTerms: elements.paymentTerms.value,
+        paymentTermsMode: getPaymentTermsModeFromUI(),
+        paymentTermsDays: parseInt(elements.paymentTermsDays?.value, 10) || 45,
         includeSignature: elements.includeSignature.checked,
         includeStamp: elements.includeStamp.checked,
         payments: elements.docType.value === "invoice"
@@ -11173,6 +11253,8 @@ async function persistDocument(options = {}) {
         notes: elements.notes.value,
         internalNotes: elements.internalNotes.value,
         paymentTerms: elements.paymentTerms.value,
+        paymentTermsMode: getPaymentTermsModeFromUI(),
+        paymentTermsDays: parseInt(elements.paymentTermsDays?.value, 10) || 45,
         includeSignature: elements.includeSignature.checked,
         includeStamp: elements.includeStamp.checked,
         createdBy: existingDocument?.createdBy || (state.currentUser ? {
@@ -11619,13 +11701,18 @@ function getDocumentCardMarkup(doc) {
 
     let dueDateMarkup = "";
     if (doc.type === "invoice" && paymentStatus !== "paid") {
-        const termDays = getInvoicePaymentTermDays(doc);
-        const dueDate = calculateInvoiceDueDate(doc);
+        const mode = doc.paymentTermsMode || inferPaymentTermsMode(doc.paymentTerms);
         const daysPastDue = getInvoiceDaysPastDue(doc);
-        const dueDateStr = formatDisplayDate(dueDate.toISOString().slice(0, 10));
         const overdueText = daysPastDue > 0 ? ` · ${daysPastDue}d overdue` : "";
         const dueCls = daysPastDue > 0 ? " is-overdue" : "";
-        dueDateMarkup = `<div class="document-card-due${dueCls}">Due ${escapeHtml(dueDateStr)} · NET${termDays}${escapeHtml(overdueText)}</div>`;
+        if (mode === "immediate") {
+            dueDateMarkup = `<div class="document-card-due${dueCls}">Due Upon Receipt${escapeHtml(overdueText)}</div>`;
+        } else {
+            const termDays = getInvoicePaymentTermDays(doc);
+            const dueDate = calculateInvoiceDueDate(doc);
+            const dueDateStr = formatDisplayDate(dueDate.toISOString().slice(0, 10));
+            dueDateMarkup = `<div class="document-card-due${dueCls}">Due ${escapeHtml(dueDateStr)} · NET${termDays}${escapeHtml(overdueText)}</div>`;
+        }
     }
 
     const internalNotesMarkup = doc.internalNotes
@@ -12081,7 +12168,7 @@ function populateFormFromDocument(doc) {
     elements.docTags.value = Array.isArray(doc.tags) ? doc.tags.join(", ") : "";
     elements.notes.value = doc.notes || "";
     elements.internalNotes.value = doc.internalNotes || "";
-    elements.paymentTerms.value = doc.paymentTerms || DEFAULT_PAYMENT_TERMS;
+    loadPaymentTermsIntoEditor(doc);
     elements.includeSignature.checked = doc.includeSignature !== false;
     elements.includeStamp.checked = Boolean(doc.includeStamp);
     renderPaymentLedger(doc.type === "invoice" ? doc.payments : []);

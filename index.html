@@ -709,7 +709,37 @@
                     </div>
                 </div>
                 <div class="about-copy">
-                    <p id="aboutProductCopy">SantoSync is a premium document and operations workspace with cleaner save-versus-draft handling, more clickable records, stronger payment controls, a sharper modern typography system, responsive reporting layouts, and broader backup recovery across the shared workspace.</p>
+                    <p id="aboutProductCopy">SantoSync is a focused document and operations workspace built for trade teams, freelancers, and logistics operators who need to generate, track, and deliver professional quotes and invoices without the overhead of enterprise billing software.</p>
+
+                    <div class="about-section">
+                        <strong class="about-section-heading">What it does</strong>
+                        <ul class="about-section-list">
+                            <li>Creates, saves, and exports branded quotes and invoices as print-ready PDFs</li>
+                            <li>Tracks payments per invoice using a built-in ledger with balance and history</li>
+                            <li>Organizes clients with multi-contact profiles and per-client financial stats</li>
+                            <li>Generates Statements of Account for client reconciliation and payment follow-up</li>
+                            <li>Provides reporting dashboards for pipeline value, outstanding balances, and client aging</li>
+                            <li>Supports structured payment terms — Net 15, Net 30, custom days, or Due Immediately</li>
+                            <li>Runs fully in the browser with server-backed shared workspace data — no install needed</li>
+                        </ul>
+                    </div>
+
+                    <div class="about-section">
+                        <strong class="about-section-heading">Problems it solves</strong>
+                        <ul class="about-section-list">
+                            <li>Getting professional quotes and invoices out quickly without bloated software</li>
+                            <li>Knowing exactly what has been billed versus collected, per client, at a glance</li>
+                            <li>Producing print-ready PDFs with your own branding — no design tool required</li>
+                            <li>Catching overdue invoices and client balance exposure before they become collection issues</li>
+                            <li>Sharing a live workspace across a small team without complex setup or per-seat licensing</li>
+                        </ul>
+                    </div>
+
+                    <div class="about-section">
+                        <strong class="about-section-heading">Why it exists</strong>
+                        <p class="about-section-body">Most invoicing tools are either too lightweight to handle real trade workflows or too heavy for teams that just need clean documents, accurate records, and fast exports. SantoSync was built to sit in that gap — a workspace that feels like a real operational tool, not a stripped-down accounting sidebar. It prioritizes speed, document fidelity, and a UI that gets out of the way.</p>
+                    </div>
+
                     <p id="aboutDeveloperCopy">Designed and developed by Edwin Jaquez through Palmchat Innovations Lab under Palmchat Innovations LLC NYC, with a focus on premium operational tools for modern trade and logistics teams.</p>
                 </div>
             </div>
@@ -799,8 +829,8 @@
                         <p>The <strong>Notes</strong> field in Step 3 appears on the printed document and is visible to your client. <strong>Internal Notes</strong> (marked with a "Private" badge) are saved with the document but never appear in PDF exports or printed output — they are for your team only. Use Internal Notes to log submission dates, follow-up reminders, payment context, or any operational detail. A brief preview of internal notes appears on the document card in the list view so your team can see them at a glance without opening the editor.</p>
                     </details>
                     <details class="help-item">
-                        <summary data-i18n="help_q_payment_terms">How do I add or update payment terms?</summary>
-                        <p data-i18n-html="help_a_payment_terms">Scroll to the <strong>Document Notes &amp; Terms</strong> panel at the bottom of Step 3. The <strong>Terms of Payment</strong> field is pre-filled with a NET 30 minimum and a $10,000 monthly client limit note — update it to match your agreement. Invoice cards in the document list show the calculated due date and whether the invoice is overdue, derived directly from this field.</p>
+                        <summary data-i18n="help_q_payment_terms">How do I set payment terms on an invoice?</summary>
+                        <p data-i18n-html="help_a_payment_terms">Scroll to the <strong>Document Notes &amp; Terms</strong> panel at the bottom of Step 3. The <strong>Terms of Payment</strong> selector gives you four options: <strong>Due Immediately</strong> (greys out all other options and prints "Payment is due immediately upon receipt"), <strong>Net 15</strong> (due date auto-set to 15 days from invoice date), <strong>Net 30</strong> (due date auto-set to 30 days), or <strong>Other</strong> — where you enter a custom day count and optional terms text. Invoice cards in the document list show the calculated due date, the payment term label, and an overdue indicator when applicable.</p>
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_backup">How do I back up or restore my data?</summary>
@@ -907,8 +937,8 @@
                         <p data-i18n-html="help_a_snapshot">The snapshot card in the top-right of the dashboard automatically rotates every 3 seconds between three metrics: <strong>Pipeline Value</strong> (blue), <strong>Amount Invoiced</strong> (green), and <strong>Income Received</strong> (amber). Click the card at any time to advance manually; the 3-second timer resets from that point.</p>
                     </details>
                     <details class="help-item">
-                        <summary>Why does the app look more modern now?</summary>
-                        <p>SantoSync now uses a cleaner, more contemporary typography system so the workspace feels newer and easier to scan. Headings use a sharper display face and interface text uses a modern sans-serif, replacing the older serif-heavy look. This update is visual only — your documents, saved data, and workflows stay the same.</p>
+                        <summary>Can I set a payment due date automatically?</summary>
+                        <p>Yes. In Step 3 under <strong>Document Notes &amp; Terms</strong>, select <strong>Net 15</strong> or <strong>Net 30</strong> and the due date on the invoice card is calculated automatically from the invoice date — no manual entry needed. Choosing <strong>Other</strong> lets you enter any number of days and an optional custom terms line. Check <strong>Due Immediately</strong> to mark the invoice payable on receipt, which overrides the date selector entirely.</p>
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_bug_report">How do I report a bug or request a feature?</summary>
@@ -1510,8 +1540,38 @@
                                     <textarea id="internalNotes" rows="3" placeholder="Internal use only — not printed on the document. Track submission dates, follow-up reminders, or payment context here."></textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label for="paymentTerms">Terms of Payment</label>
-                                    <input type="text" id="paymentTerms" value="NET30 : Full payment is due within a minimum of 30 calendar days from the invoice date. Monthly client balances due may not exceed $10,000 without approval.">
+                                    <label>Terms of Payment</label>
+                                    <div class="payment-terms-ui">
+                                        <label class="payment-terms-immediate-label checkbox-row">
+                                            <input type="checkbox" id="paymentTermsImmediate">
+                                            <span>Due Immediately</span>
+                                        </label>
+                                        <div class="payment-terms-options" id="paymentTermsOptions">
+                                            <label class="payment-terms-preset-label checkbox-row">
+                                                <input type="radio" name="paymentTermsPreset" id="paymentTermsNet15" value="net15">
+                                                <span>Net 15 <em>— Due within 15 days of invoice date</em></span>
+                                            </label>
+                                            <label class="payment-terms-preset-label checkbox-row">
+                                                <input type="radio" name="paymentTermsPreset" id="paymentTermsNet30" value="net30" checked>
+                                                <span>Net 30 <em>— Due within 30 days of invoice date</em></span>
+                                            </label>
+                                            <label class="payment-terms-preset-label checkbox-row">
+                                                <input type="radio" name="paymentTermsPreset" id="paymentTermsOther" value="other">
+                                                <span>Other <em>(Enter Below)</em></span>
+                                            </label>
+                                            <div class="payment-terms-other-fields" id="paymentTermsOtherFields" hidden>
+                                                <div class="payment-terms-days-row">
+                                                    <label for="paymentTermsDays">Days until due</label>
+                                                    <input type="number" id="paymentTermsDays" min="1" max="365" value="45" placeholder="45">
+                                                </div>
+                                                <div class="payment-terms-custom-row">
+                                                    <label for="paymentTermsCustomText">Custom terms text <em class="field-help" style="display:inline">(optional — leave blank to auto-generate)</em></label>
+                                                    <input type="text" id="paymentTermsCustomText" placeholder="e.g. Payment due within 45 days of invoice date.">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="paymentTerms">
                                 </div>
                             </div>
                             <div class="document-settings-panel payment-ledger-panel" id="paymentLedgerPanel" hidden>
