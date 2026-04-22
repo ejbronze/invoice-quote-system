@@ -6156,22 +6156,6 @@ body::after {
     min-width: 0;
 }
 
-.editor-sidebar {
-    display: none;
-    flex-direction: column;
-    gap: 0.95rem;
-    position: sticky;
-    top: 0;
-}
-
-.modal.review-mode .modal-layout {
-    grid-template-columns: minmax(0, 1.4fr) 280px;
-}
-
-.modal.review-mode .editor-sidebar {
-    display: flex;
-}
-
 .sidebar-card {
     background: linear-gradient(180deg, rgba(249, 251, 255, 0.95) 0%, rgba(244, 248, 255, 0.92) 100%);
     border: 1px solid var(--line);
@@ -6292,8 +6276,7 @@ body::after {
     margin-bottom: 0.35rem;
 }
 
-.step-intro p,
-#sidebarTip {
+.step-intro p {
     color: #5e748a;
     font-family: "Segoe UI", Roboto, Arial, sans-serif;
     font-size: 0.9rem;
@@ -8317,23 +8300,8 @@ body.print-window .print-preview-sheet {
         gap: 0.85rem;
     }
 
-    .editor-sidebar {
-        position: static;
-        order: -1;
-    }
-
-    .modal.review-mode .editor-sidebar {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.65rem;
-    }
-
     .modal.review-mode .step-intro {
         display: none;
-    }
-
-    .modal.review-mode .editor-sidebar .sidebar-card:last-child {
-        grid-column: 1 / -1;
     }
 
     .modal.review-mode .form-step.active {
@@ -8576,7 +8544,6 @@ body.print-window .print-preview-sheet {
         border-radius: 0;
     }
 
-    .modal.final-preview-mode .editor-sidebar,
     .modal.final-preview-mode .review-section-header {
         display: none !important;
     }
@@ -8933,8 +8900,7 @@ body.print-window .print-preview-sheet {
         font-size: 1rem;
     }
 
-    .step-intro p,
-    #sidebarTip {
+    .step-intro p {
         font-size: 0.85rem;
     }
 
@@ -9609,10 +9575,6 @@ body.print-window .print-preview-sheet {
         min-width: 0;
         width: 100%;
         padding: 0.42in 0 28mm;
-    }
-
-    .modal.review-mode .editor-sidebar {
-        grid-template-columns: 1fr;
     }
 
     .item-row {

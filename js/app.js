@@ -1899,10 +1899,6 @@ function updateStaticEditorTranslations() {
     elements.stepIndicator.querySelectorAll(".step .step-label")[4].textContent = t("items_preview");
     elements.stepIndicator.querySelectorAll(".step .step-label")[5].textContent = t("review");
     setElementText(".step-intro-label", t("current_step"));
-    setElementText(document.querySelector('.sidebar-card .sidebar-label'), t("document_summary"));
-    setElementText(document.querySelectorAll('.sidebar-card .sidebar-label')[1], t("client"));
-    setElementText(document.querySelectorAll('.sidebar-card .sidebar-label')[2], t("commercial_snapshot"));
-    setElementText(document.querySelectorAll('.sidebar-card .sidebar-label')[3], t("workflow_tip"));
     setElementText("#finalPreviewOptionsLabel", t("pdf_options"));
     setElementText("#includeSignatureLabel", t("include_signature"));
     setElementText("#includeSignatureHelp", t("include_signature_help"));
@@ -2271,19 +2267,7 @@ function cacheElements() {
     elements.filterButtons = Array.from(document.querySelectorAll("[data-filter]"));
     elements.stepIntroTitle = document.getElementById("stepIntroTitle");
     elements.stepIntroText = document.getElementById("stepIntroText");
-    elements.summaryDocType = document.getElementById("summaryDocType");
-    elements.summaryRef = document.getElementById("summaryRef");
-    elements.summaryDate = document.getElementById("summaryDate");
-    elements.summaryClient = document.getElementById("summaryClient");
-    elements.summaryAddress = document.getElementById("summaryAddress");
-    elements.summaryItems = document.getElementById("summaryItems");
-    elements.summaryTotal = document.getElementById("summaryTotal");
-    elements.sidebarPaymentSummary = document.getElementById("sidebarPaymentSummary");
-    elements.summaryPaid = document.getElementById("summaryPaid");
-    elements.summaryBalance = document.getElementById("summaryBalance");
-    elements.summaryTags = document.getElementById("summaryTags");
     elements.tagSuggestions = document.getElementById("tagSuggestions");
-    elements.sidebarTip = document.getElementById("sidebarTip");
     elements.calculatorWidget = document.getElementById("calculatorWidget");
     elements.calculatorDragHandle = document.getElementById("calculatorDragHandle");
     elements.calculatorMinimizeBtn = document.getElementById("calculatorMinimizeBtn");
@@ -8507,12 +8491,6 @@ function syncPaymentLedgerUi() {
     if (elements.paymentLedgerBalance) {
         elements.paymentLedgerBalance.textContent = formatCurrency(balance);
     }
-    if (elements.summaryPaid) {
-        elements.summaryPaid.textContent = formatCurrency(paidTotal);
-    }
-    if (elements.summaryBalance) {
-        elements.summaryBalance.textContent = formatCurrency(balance);
-    }
 }
 
 function addPaymentEntry() {
@@ -9560,35 +9538,21 @@ function getStepContent(step) {
 function updateEditorSummary() {
     const docType = elements.docType.value === "invoice" ? t("invoice_singular") : t("quote_singular");
     const clientName = elements.clientName.value.trim();
-    const clientAddress = elements.clientAddress.value.trim();
     const tags = parseTags(elements.docTags.value);
-    const itemCount = elements.itemsContainer.querySelectorAll(".item-row").length;
     const stepContent = getStepContent(state.currentStep);
     const totalSteps = getTotalSteps();
     const currentTotal = formatCurrency(calculateTotals());
 
     elements.stepIntroTitle.textContent = stepContent.title;
     elements.stepIntroText.textContent = stepContent.text;
-    elements.sidebarTip.textContent = stepContent.tip;
     elements.editorProgressStep.textContent = `Step ${state.currentStep} of ${totalSteps}`;
     elements.editorProgressTitle.textContent = stepContent.title;
     elements.editorProgressFill.style.width = `${(state.currentStep / totalSteps) * 100}%`;
 
-    elements.summaryDocType.textContent = docType;
-    elements.summaryRef.textContent = elements.refNumber.value ? `Ref ${elements.refNumber.value}` : t("ref_pending");
-    elements.summaryDate.textContent = elements.docDate.value ? formatDisplayDate(elements.docDate.value) : t("date_pending");
-    elements.summaryClient.textContent = clientName || t("no_client_selected");
-    elements.summaryAddress.textContent = clientAddress || t("choose_or_enter_client");
-    elements.summaryItems.textContent = String(itemCount);
-    elements.summaryTotal.textContent = currentTotal;
     elements.editorMobileSummaryType.textContent = docType;
     elements.editorMobileSummaryRef.textContent = elements.refNumber.value ? `Ref ${elements.refNumber.value}` : t("ref_pending");
     elements.editorMobileSummaryClient.textContent = clientName || t("no_client_selected");
     elements.editorMobileSummaryTotal.textContent = currentTotal;
-
-    elements.summaryTags.innerHTML = tags.length
-        ? tags.map(tag => `<span class="sidebar-tag">${escapeHtml(tag)}</span>`).join("")
-        : `<span class="sidebar-tag muted">${escapeHtml(t("no_keywords"))}</span>`;
 
     syncPaymentLedgerUi();
     renderKeywordSuggestions(tags);
