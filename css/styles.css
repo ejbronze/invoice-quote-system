@@ -3783,6 +3783,21 @@ body::after {
     border: 1px solid var(--line);
 }
 
+.client-stat-action {
+    appearance: none;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+    transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
+}
+
+.client-stat-action:hover,
+.client-stat-action:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(24, 47, 86, 0.08);
+    border-color: rgba(20, 89, 217, 0.24);
+}
+
 .client-stat-cell.is-outstanding {
     background: rgba(212, 87, 87, 0.06);
     border-color: rgba(212, 87, 87, 0.18);
@@ -3814,6 +3829,19 @@ body::after {
     color: var(--text-faint);
     text-transform: uppercase;
     letter-spacing: 0.04em;
+}
+
+.statement-exports-toolbar {
+    margin-bottom: 0.8rem;
+}
+
+.client-activity-modal-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.client-activity-link {
+    width: 100%;
 }
 
 @media (max-width: 600px) {
@@ -8594,6 +8622,11 @@ body.print-window .print-preview-sheet {
         width: 100%;
     }
 
+    .modal.final-preview-mode .final-preview-toolbar {
+        padding: 0.35rem 0.82rem 0.7rem;
+        background: linear-gradient(180deg, rgba(223, 232, 247, 0.98), rgba(238, 243, 251, 0.94));
+    }
+
     .modal.final-preview-mode .preview-container {
         padding: 0;
         border: 0;
@@ -8603,6 +8636,8 @@ body.print-window .print-preview-sheet {
         min-height: 0;
         overflow: auto;
         width: 100%;
+        display: flex;
+        justify-content: center;
     }
 
     .modal.final-preview-mode .print-preview-sheet {
@@ -9246,10 +9281,15 @@ body.print-window .print-preview-sheet {
         scroll-snap-type: x proximity;
     }
 
-    .form-step[data-step="6"] .preview-container {
-        overflow: hidden;
-        scroll-snap-type: none;
-    }
+.form-step[data-step="6"] .preview-container {
+    overflow: hidden;
+    scroll-snap-type: none;
+}
+
+.form-step[data-step="6"] .preview-container {
+    display: flex;
+    justify-content: center;
+}
 
     .document-sheet {
         min-width: 420px;
@@ -9532,6 +9572,15 @@ body.print-window .print-preview-sheet {
 
     .preview-container {
         padding: 0.45rem;
+    }
+
+    .final-preview-toolbar {
+        margin-bottom: 0.55rem;
+    }
+
+    .final-preview-options-grid {
+        grid-template-columns: 1fr;
+        gap: 0.35rem;
     }
 
     .documents-toolbar .document-folder-tabs {
@@ -10665,6 +10714,31 @@ body {
 .summary-card-meta {
     font-size: 0.85rem;
     color: var(--text-soft);
+}
+
+.final-preview-toolbar {
+    margin-bottom: 0.75rem;
+}
+
+.final-preview-options-card {
+    display: grid;
+    gap: 0.6rem;
+    padding: 0.95rem 1rem;
+    border: 1px solid rgba(112, 135, 176, 0.14);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 10px 24px rgba(56, 77, 114, 0.06);
+}
+
+.final-preview-options-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem 1rem;
+    align-items: start;
+}
+
+.final-preview-option {
+    margin-bottom: 0;
 }
 
 .filter-bar {

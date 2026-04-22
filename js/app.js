@@ -41,6 +41,7 @@ const state = {
     pendingSavedItemImageUploadId: null,
     openItemMenuId: null,
     openDocumentMenuId: null,
+    statementStatusFilter: "pending",
     editingClientId: null,
     draftAutosaveTimerId: null,
     editingManagedUserId: null,
@@ -244,9 +245,12 @@ const TRANSLATIONS = {
         remove_item_image: "Remove image",
         menu: "Menu",
         language: "Language",
+        dashboard: "Dashboard",
+        document_workspace: "Document workspace",
         hero_kicker: "Document Workspace",
         hero_title: BRAND.heroTitle,
         hero_copy: BRAND.heroCopy,
+        new_action: "New",
         new_quote: "New Quote",
         new_invoice: "New Invoice",
         invoice_reports: "Invoice Reports",
@@ -423,6 +427,116 @@ const TRANSLATIONS = {
         report_total_pending: "Pending",
         report_no_invoices: "No invoices yet.",
         report_no_matches: "No invoices match this report filter.",
+        statement_exports_heading: "Statement Exports",
+        statement_exports_copy: "Generated statements stay here for later review, edits, and PDF access.",
+        statement_filter_pending: "Pending",
+        statement_filter_paid: "Paid",
+        statement_filter_all: "All",
+        no_paid_statements: "No paid statements yet.",
+        no_pending_statements: "No pending statements right now.",
+        no_statement_matches: "No statements match your search.",
+        statement_metric_invoices: "Invoices",
+        statement_metric_total: "Total",
+        statement_metric_outstanding: "Outstanding",
+        statement_mark_paid_all: "Mark all invoices as paid",
+        payment_history_heading: "Payment History",
+        payment_history_copy: "See every payment recorded across invoices, ordered from newest to oldest.",
+        log_payment: "Log Payment",
+        no_payments_recorded: "No payments recorded yet.",
+        aging_heading: "Client Aging",
+        aging_copy: "Track outstanding balances by client using current, 1-30, 31-60, 61-90, and 90+ day buckets.",
+        aging_current: "Current",
+        aging_1_30: "1-30",
+        aging_31_60: "31-60",
+        aging_61_90: "61-90",
+        aging_90_plus: "90+",
+        total_outstanding: "Total Outstanding",
+        no_outstanding_balances: "No outstanding balances right now.",
+        data_transfer_title: "Data Export & Import",
+        data_transfer_copy: "Open a smaller data tools menu when you need templates, backups, imports, or selective export.",
+        open_data_tools: "Open Data Tools",
+        data_tools_title: "Data Tools",
+        data_tools_copy: "Choose the export or import action you want, without crowding the main tools page.",
+        snapshots_title: "Local Snapshots",
+        snapshots_copy: "The app saves a local backup after every manual save. Use these to recover if server data is lost.",
+        exchange_rate_help: "Converts pesos back to USD using RD${rate} = US$1.",
+        company_address_placeholder: "123 Trade Avenue\nSanto Domingo, DR",
+        company_email_placeholder: "hello@santosync.com",
+        company_phone_placeholder: "+1 (809) 555-0110",
+        company_website_placeholder: "www.santosync.com",
+        company_tax_id_placeholder: "RNC / EIN / Registration",
+        client_location: "Location",
+        client_consignee: "Consignee",
+        client_contacts: "Contacts",
+        client_activity: "Activity",
+        client_total_invoiced: "Total Invoiced",
+        client_outstanding: "Outstanding",
+        clients_with_balances: "Clients With Balances",
+        past_due: "Past Due",
+        consignee_pending: "Consignee pending",
+        not_provided: "Not provided",
+        client_activity_modal_title: "Client Activity",
+        client_activity_modal_copy: "Open the linked quotes, invoices, or statements for this client.",
+        client_activity_quotes_title: "{client} Quotes",
+        client_activity_quotes_copy: "Open any quote linked to this client.",
+        client_activity_invoices_title: "{client} Invoices",
+        client_activity_invoices_copy: "Open any invoice linked to this client.",
+        client_activity_statements_title: "{client} Statements",
+        client_activity_statements_copy: "Reopen any saved statement for this client.",
+        client_activity_total_invoiced_title: "{client} Total Invoiced",
+        client_activity_total_invoiced_copy: "These invoices make up the total invoiced amount for this client.",
+        client_activity_outstanding_title: "{client} Outstanding",
+        client_activity_outstanding_copy: "These invoices still have a balance outstanding.",
+        client_activity_statement_meta: "{amount} outstanding",
+        client_activity_no_records: "No records found for this section yet.",
+        clients_heading: "Client directory",
+        clients_subtitle: "Saved bill-to details, consignee info, and contact records for every client.",
+        add_client: "Add Client",
+        reports_heading: "Statements and invoice reporting",
+        reports_subtitle: "Prepare invoice selections for statements, then reopen exported statements whenever you need them.",
+        settings_heading: "Workspace settings",
+        settings_subtitle: "Company profile, user access, editor preferences, and data tools live here.",
+        account_admin_title: "Account Admin",
+        account_admin_subtitle: "Manage SantoSync accounts, sub-accounts, session reporting, activity history, and document branding from one owner dashboard.",
+        direct_account_label: "Direct account",
+        subaccount_of_label: "Sub-account of {parent}",
+        no_registered_accounts: "No registered accounts yet.",
+        active_session: "Active session",
+        closed_session: "Closed session",
+        started_label: "Started",
+        ended_label: "Ended",
+        no_login_sessions: "No login sessions recorded yet.",
+        no_workspace_activity: "No workspace activity recorded yet.",
+        last_login_label: "Last login",
+        owner_access: "Owner Access",
+        signed_in_as_owner: "Signed in as owner",
+        owner_role: "Owner",
+        registered_users: "Registered Users",
+        sub_accounts: "Sub-Accounts",
+        recent_sessions: "Recent Sessions",
+        activity_events: "Activity Events",
+        registered_accounts: "Registered Accounts",
+        registered_accounts_copy: "Review everyone attached to SantoSync, edit their names and access, and assign sub-accounts to a parent account.",
+        add_workspace_account: "Add Workspace Account",
+        add_workspace_account_copy: "Create a direct account or assign it under an existing user as a sub-account.",
+        access_level: "Access Level",
+        access_workspace: "Workspace",
+        access_operations: "Operations",
+        access_review: "Review Only",
+        parent_account: "Parent Account",
+        direct_account_for_workspace: "Direct account for SantoSync",
+        cancel_edit: "Cancel Edit",
+        document_branding: "Document Branding",
+        document_branding_copy: "Update the signature and stamp used when SantoSync generates final document output.",
+        upload_signature: "Upload Signature",
+        clear_signature: "Clear Signature",
+        upload_stamp: "Upload Stamp",
+        clear_stamp: "Clear Stamp",
+        save_brand_assets: "Save Branding Assets",
+        login_session_reports: "Login Session Reports",
+        login_session_reports_copy: "Track recent sign-ins, sign-outs, and who has been active in the workspace.",
+        workspace_activity: "Workspace Activity",
+        workspace_activity_copy: "Review recent account edits, exports, branding changes, and other logged actions.",
         help_title: "Help & FAQ",
         help_search_placeholder: "Search help topics\u2026",
         help_no_results: "No results found. Try a different keyword.",
@@ -607,9 +721,12 @@ const TRANSLATIONS = {
         remove_item_image: "Quitar imagen",
         menu: "Menú",
         language: "Idioma",
+        dashboard: "Panel",
+        document_workspace: "Espacio documental",
         hero_kicker: "Espacio de Documentos",
         hero_title: "Documentos comerciales, sincronizados con tu ritmo.",
         hero_copy: "Prepara cotizaciones refinadas, facturas seguras y un flujo diario más coordinado desde un solo espacio elegante.",
+        new_action: "Nuevo",
         new_quote: "Nueva Cotización",
         new_invoice: "Nueva Factura",
         invoice_reports: "Reportes de Facturas",
@@ -759,6 +876,116 @@ const TRANSLATIONS = {
         report_total_pending: "Pendientes",
         report_no_invoices: "Todavía no hay facturas.",
         report_no_matches: "No hay facturas que coincidan con este filtro.",
+        statement_exports_heading: "Estados de Cuenta Exportados",
+        statement_exports_copy: "Los estados generados quedan aquí para revisión, edición y acceso posterior.",
+        statement_filter_pending: "Pendientes",
+        statement_filter_paid: "Pagados",
+        statement_filter_all: "Todos",
+        no_paid_statements: "Todavía no hay estados pagados.",
+        no_pending_statements: "No hay estados pendientes en este momento.",
+        no_statement_matches: "Ningún estado coincide con tu búsqueda.",
+        statement_metric_invoices: "Facturas",
+        statement_metric_total: "Total",
+        statement_metric_outstanding: "Pendiente",
+        statement_mark_paid_all: "Marcar todas las facturas como pagadas",
+        payment_history_heading: "Historial de Pagos",
+        payment_history_copy: "Mira cada pago registrado en facturas, ordenado del más reciente al más antiguo.",
+        log_payment: "Registrar Pago",
+        no_payments_recorded: "Todavía no hay pagos registrados.",
+        aging_heading: "Antigüedad por Cliente",
+        aging_copy: "Sigue los balances pendientes por cliente usando actual, 1-30, 31-60, 61-90 y 90+ días.",
+        aging_current: "Actual",
+        aging_1_30: "1-30",
+        aging_31_60: "31-60",
+        aging_61_90: "61-90",
+        aging_90_plus: "90+",
+        total_outstanding: "Total Pendiente",
+        no_outstanding_balances: "No hay balances pendientes en este momento.",
+        data_transfer_title: "Exportación e Importación de Datos",
+        data_transfer_copy: "Abre un menú más pequeño cuando necesites plantillas, respaldos, importaciones o exportación selectiva.",
+        open_data_tools: "Abrir Herramientas de Datos",
+        data_tools_title: "Herramientas de Datos",
+        data_tools_copy: "Elige la acción de exportar o importar que quieres sin recargar la página principal de herramientas.",
+        snapshots_title: "Instantáneas Locales",
+        snapshots_copy: "La app guarda un respaldo local después de cada guardado manual. Úsalos para recuperar datos si el servidor falla.",
+        exchange_rate_help: "Convierte pesos a USD usando RD${rate} = US$1.",
+        company_address_placeholder: "123 Avenida Trade\nSanto Domingo, RD",
+        company_email_placeholder: "hola@santosync.com",
+        company_phone_placeholder: "+1 (809) 555-0110",
+        company_website_placeholder: "www.santosync.com",
+        company_tax_id_placeholder: "RNC / EIN / Registro",
+        client_location: "Ubicación",
+        client_consignee: "Consignatario",
+        client_contacts: "Contactos",
+        client_activity: "Actividad",
+        client_total_invoiced: "Total Facturado",
+        client_outstanding: "Pendiente",
+        clients_with_balances: "Clientes con Balance",
+        past_due: "Vencido",
+        consignee_pending: "Consignatario pendiente",
+        not_provided: "No proporcionado",
+        client_activity_modal_title: "Actividad del Cliente",
+        client_activity_modal_copy: "Abre las cotizaciones, facturas o estados enlazados a este cliente.",
+        client_activity_quotes_title: "Cotizaciones de {client}",
+        client_activity_quotes_copy: "Abre cualquier cotización vinculada a este cliente.",
+        client_activity_invoices_title: "Facturas de {client}",
+        client_activity_invoices_copy: "Abre cualquier factura vinculada a este cliente.",
+        client_activity_statements_title: "Estados de {client}",
+        client_activity_statements_copy: "Reabre cualquier estado guardado de este cliente.",
+        client_activity_total_invoiced_title: "Total Facturado de {client}",
+        client_activity_total_invoiced_copy: "Estas facturas componen el total facturado de este cliente.",
+        client_activity_outstanding_title: "Pendiente de {client}",
+        client_activity_outstanding_copy: "Estas facturas todavía tienen balance pendiente.",
+        client_activity_statement_meta: "{amount} pendiente",
+        client_activity_no_records: "Todavía no hay registros para esta sección.",
+        clients_heading: "Directorio de Clientes",
+        clients_subtitle: "Datos de facturación, consignatario y contactos guardados para cada cliente.",
+        add_client: "Agregar Cliente",
+        reports_heading: "Estados y reporte de facturas",
+        reports_subtitle: "Prepara selecciones de facturas para estados y vuelve a abrir estados exportados cuando lo necesites.",
+        settings_heading: "Configuración del espacio",
+        settings_subtitle: "Perfil de empresa, acceso de usuarios, preferencias del editor y herramientas de datos viven aquí.",
+        account_admin_title: "Administración de Cuentas",
+        account_admin_subtitle: "Gestiona cuentas de SantoSync, subcuentas, reportes de sesión, historial de actividad y branding documental desde un panel del propietario.",
+        direct_account_label: "Cuenta directa",
+        subaccount_of_label: "Subcuenta de {parent}",
+        no_registered_accounts: "Todavía no hay cuentas registradas.",
+        active_session: "Sesión activa",
+        closed_session: "Sesión cerrada",
+        started_label: "Inició",
+        ended_label: "Terminó",
+        no_login_sessions: "Todavía no hay sesiones registradas.",
+        no_workspace_activity: "Todavía no hay actividad registrada en el espacio.",
+        last_login_label: "Último acceso",
+        owner_access: "Acceso del Propietario",
+        signed_in_as_owner: "Sesión iniciada como propietario",
+        owner_role: "Propietario",
+        registered_users: "Usuarios Registrados",
+        sub_accounts: "Subcuentas",
+        recent_sessions: "Sesiones Recientes",
+        activity_events: "Eventos de Actividad",
+        registered_accounts: "Cuentas Registradas",
+        registered_accounts_copy: "Revisa a todos los vinculados a SantoSync, edita sus nombres y accesos, y asigna subcuentas a una cuenta padre.",
+        add_workspace_account: "Agregar Cuenta del Espacio",
+        add_workspace_account_copy: "Crea una cuenta directa o asígnala bajo un usuario existente como subcuenta.",
+        access_level: "Nivel de Acceso",
+        access_workspace: "Espacio",
+        access_operations: "Operaciones",
+        access_review: "Solo Revisión",
+        parent_account: "Cuenta Padre",
+        direct_account_for_workspace: "Cuenta directa para SantoSync",
+        cancel_edit: "Cancelar Edición",
+        document_branding: "Branding del Documento",
+        document_branding_copy: "Actualiza la firma y el sello usados cuando SantoSync genera la salida final del documento.",
+        upload_signature: "Subir Firma",
+        clear_signature: "Borrar Firma",
+        upload_stamp: "Subir Sello",
+        clear_stamp: "Borrar Sello",
+        save_brand_assets: "Guardar Branding",
+        login_session_reports: "Reportes de Sesión",
+        login_session_reports_copy: "Sigue inicios y cierres de sesión recientes y quién ha estado activo en el espacio.",
+        workspace_activity: "Actividad del Espacio",
+        workspace_activity_copy: "Revisa cambios de cuentas, exportaciones, branding y otras acciones registradas.",
         help_title: "Ayuda y Preguntas",
         help_search_placeholder: "Buscar temas de ayuda\u2026",
         help_no_results: "No se encontraron resultados. Prueba con otra palabra clave.",
@@ -943,9 +1170,12 @@ const TRANSLATIONS = {
         remove_item_image: "Retirer l’image",
         menu: "Menu",
         language: "Langue",
+        dashboard: "Tableau",
+        document_workspace: "Espace documentaire",
         hero_kicker: "Espace Documents",
         hero_title: "Des documents commerciaux au rythme de votre équipe.",
         hero_copy: "Préparez des devis raffinés, des factures sûres et un flux quotidien mieux synchronisé depuis un seul espace élégant.",
+        new_action: "Nouveau",
         new_quote: "Nouveau Devis",
         new_invoice: "Nouvelle Facture",
         invoice_reports: "Rapports de Factures",
@@ -1093,6 +1323,116 @@ const TRANSLATIONS = {
         report_total_pending: "En attente",
         report_no_invoices: "Aucune facture pour le moment.",
         report_no_matches: "Aucune facture ne correspond a ce filtre.",
+        statement_exports_heading: "Exports de Relevés",
+        statement_exports_copy: "Les relevés générés restent ici pour une révision, une modification et un accès ultérieurs.",
+        statement_filter_pending: "En attente",
+        statement_filter_paid: "Payés",
+        statement_filter_all: "Tous",
+        no_paid_statements: "Aucun relevé payé pour le moment.",
+        no_pending_statements: "Aucun relevé en attente pour le moment.",
+        no_statement_matches: "Aucun relevé ne correspond à votre recherche.",
+        statement_metric_invoices: "Factures",
+        statement_metric_total: "Total",
+        statement_metric_outstanding: "En souffrance",
+        statement_mark_paid_all: "Marquer toutes les factures comme payées",
+        payment_history_heading: "Historique des Paiements",
+        payment_history_copy: "Consultez tous les paiements enregistrés sur les factures, du plus récent au plus ancien.",
+        log_payment: "Enregistrer un Paiement",
+        no_payments_recorded: "Aucun paiement enregistré pour le moment.",
+        aging_heading: "Ancienneté Clients",
+        aging_copy: "Suivez les soldes impayés par client avec les tranches actuel, 1-30, 31-60, 61-90 et 90+ jours.",
+        aging_current: "Actuel",
+        aging_1_30: "1-30",
+        aging_31_60: "31-60",
+        aging_61_90: "61-90",
+        aging_90_plus: "90+",
+        total_outstanding: "Total en Souffrance",
+        no_outstanding_balances: "Aucun solde impayé pour le moment.",
+        data_transfer_title: "Export et Import de Données",
+        data_transfer_copy: "Ouvrez un menu plus compact lorsque vous avez besoin de modèles, sauvegardes, imports ou exports sélectifs.",
+        open_data_tools: "Ouvrir les Outils de Données",
+        data_tools_title: "Outils de Données",
+        data_tools_copy: "Choisissez l’action d’export ou d’import voulue sans encombrer la page principale des outils.",
+        snapshots_title: "Instantanés Locaux",
+        snapshots_copy: "L’application enregistre une sauvegarde locale après chaque enregistrement manuel. Utilisez-les pour récupérer les données si le serveur échoue.",
+        exchange_rate_help: "Convertit les pesos en USD avec RD${rate} = US$1.",
+        company_address_placeholder: "123 Avenue Trade\nSaint-Domingue, RD",
+        company_email_placeholder: "bonjour@santosync.com",
+        company_phone_placeholder: "+1 (809) 555-0110",
+        company_website_placeholder: "www.santosync.com",
+        company_tax_id_placeholder: "RNC / EIN / Immatriculation",
+        client_location: "Emplacement",
+        client_consignee: "Destinataire",
+        client_contacts: "Contacts",
+        client_activity: "Activité",
+        client_total_invoiced: "Total Facturé",
+        client_outstanding: "En souffrance",
+        clients_with_balances: "Clients avec Solde",
+        past_due: "En retard",
+        consignee_pending: "Destinataire en attente",
+        not_provided: "Non fourni",
+        client_activity_modal_title: "Activité du Client",
+        client_activity_modal_copy: "Ouvrez les devis, factures ou relevés liés à ce client.",
+        client_activity_quotes_title: "Devis de {client}",
+        client_activity_quotes_copy: "Ouvrez tout devis lié à ce client.",
+        client_activity_invoices_title: "Factures de {client}",
+        client_activity_invoices_copy: "Ouvrez toute facture liée à ce client.",
+        client_activity_statements_title: "Relevés de {client}",
+        client_activity_statements_copy: "Rouvrez tout relevé enregistré pour ce client.",
+        client_activity_total_invoiced_title: "Total Facturé de {client}",
+        client_activity_total_invoiced_copy: "Ces factures composent le total facturé pour ce client.",
+        client_activity_outstanding_title: "En souffrance pour {client}",
+        client_activity_outstanding_copy: "Ces factures ont encore un solde impayé.",
+        client_activity_statement_meta: "{amount} en souffrance",
+        client_activity_no_records: "Aucun enregistrement pour cette section pour le moment.",
+        clients_heading: "Répertoire Clients",
+        clients_subtitle: "Coordonnées de facturation, destinataire et contacts enregistrés pour chaque client.",
+        add_client: "Ajouter un Client",
+        reports_heading: "Relevés et reporting factures",
+        reports_subtitle: "Préparez des sélections de factures pour les relevés puis rouvrez les relevés exportés quand nécessaire.",
+        settings_heading: "Paramètres de l’espace",
+        settings_subtitle: "Profil d’entreprise, accès utilisateurs, préférences éditeur et outils de données se trouvent ici.",
+        account_admin_title: "Admin des Comptes",
+        account_admin_subtitle: "Gérez les comptes SantoSync, sous-comptes, rapports de session, historique d’activité et branding documentaire depuis un tableau propriétaire.",
+        direct_account_label: "Compte direct",
+        subaccount_of_label: "Sous-compte de {parent}",
+        no_registered_accounts: "Aucun compte enregistré pour le moment.",
+        active_session: "Session active",
+        closed_session: "Session fermée",
+        started_label: "Début",
+        ended_label: "Fin",
+        no_login_sessions: "Aucune session enregistrée pour le moment.",
+        no_workspace_activity: "Aucune activité enregistrée dans l’espace pour le moment.",
+        last_login_label: "Dernière connexion",
+        owner_access: "Accès Propriétaire",
+        signed_in_as_owner: "Connecté en tant que propriétaire",
+        owner_role: "Propriétaire",
+        registered_users: "Utilisateurs Enregistrés",
+        sub_accounts: "Sous-comptes",
+        recent_sessions: "Sessions Récentes",
+        activity_events: "Événements d’Activité",
+        registered_accounts: "Comptes Enregistrés",
+        registered_accounts_copy: "Passez en revue tous les comptes liés à SantoSync, modifiez leurs noms et accès, et attribuez des sous-comptes à un compte parent.",
+        add_workspace_account: "Ajouter un Compte d’Espace",
+        add_workspace_account_copy: "Créez un compte direct ou assignez-le sous un utilisateur existant comme sous-compte.",
+        access_level: "Niveau d’Accès",
+        access_workspace: "Espace",
+        access_operations: "Opérations",
+        access_review: "Lecture seule",
+        parent_account: "Compte Parent",
+        direct_account_for_workspace: "Compte direct pour SantoSync",
+        cancel_edit: "Annuler la modification",
+        document_branding: "Branding Document",
+        document_branding_copy: "Mettez à jour la signature et le cachet utilisés lorsque SantoSync génère le document final.",
+        upload_signature: "Téléverser la Signature",
+        clear_signature: "Effacer la Signature",
+        upload_stamp: "Téléverser le Cachet",
+        clear_stamp: "Effacer le Cachet",
+        save_brand_assets: "Enregistrer le Branding",
+        login_session_reports: "Rapports de Session",
+        login_session_reports_copy: "Suivez les connexions, déconnexions et l’activité récente dans l’espace.",
+        workspace_activity: "Activité de l’Espace",
+        workspace_activity_copy: "Consultez les modifications de comptes, exports, branding et autres actions enregistrées.",
         help_title: "Aide et FAQ",
         help_search_placeholder: "Rechercher des sujets d\u2019aide\u2026",
         help_no_results: "Aucun r\u00e9sultat trouv\u00e9. Essayez un autre mot-cl\u00e9.",
@@ -1222,7 +1562,7 @@ function updateHeroOperationalSummary() {
 function updateExchangeRateCopy() {
     updateHeroOperationalSummary();
     elements.itemsContainer.querySelectorAll(".item-currency-mode .field-help").forEach(helpText => {
-        helpText.textContent = `Converts pesos back to USD using RD$${formatAmount(getUsdToDopRate())} = US$1.`;
+        helpText.textContent = t("exchange_rate_help", { rate: formatAmount(getUsdToDopRate()) });
     });
 }
 
@@ -1268,7 +1608,7 @@ function applyTranslations() {
     elements.navMenuBtn.setAttribute("aria-label", t("menu"));
     elements.topbarSignOutBtn.textContent = t("sign_out");
     if (elements.mobileDrawerSignOutBtn) elements.mobileDrawerSignOutBtn.textContent = t("sign_out");
-    elements.newMenuBtn.textContent = `+ ${t("new_quote").split(" ")[0]}`;
+    elements.newMenuBtn.textContent = `+ ${t("new_action")}`;
     elements.newQuoteMenuBtn.textContent = t("new_quote");
     elements.newInvoiceMenuBtn.textContent = t("new_invoice");
     elements.newStatementMenuBtn.textContent = t("open_statement_export");
@@ -1278,6 +1618,13 @@ function applyTranslations() {
     elements.languageSelect.options[2].textContent = "🇫🇷 Français";
 
     setElementText(".workspace-hero .eyebrow", t("hero_kicker"));
+    document.querySelectorAll('[data-page-nav="overview"]').forEach(button => { button.textContent = t("dashboard"); });
+    document.querySelectorAll('[data-page-nav="documents"]').forEach(button => { button.textContent = t("documents"); });
+    document.querySelectorAll('[data-page-nav="clients"]').forEach(button => { button.textContent = t("clients_heading"); });
+    document.querySelectorAll('[data-page-nav="catalog"]').forEach(button => { button.textContent = t("catalog"); });
+    document.querySelectorAll('[data-page-nav="reports"]').forEach(button => { button.textContent = t("statements"); });
+    document.querySelectorAll('[data-page-nav="settings"]').forEach(button => { button.textContent = t("settings"); });
+    document.querySelectorAll(".brand-lockup-copy span").forEach(span => { span.textContent = t("document_workspace"); });
     updateHeroOperationalSummary();
     setElementText("#viewAllDocumentsBtn", t("documents"));
     setElementText("#reportsOpenInvoiceReportsBtn", t("invoice_reports"));
@@ -1322,8 +1669,31 @@ function applyTranslations() {
     elements.filterButtons[1].textContent = t("quotes");
     elements.filterButtons[2].textContent = t("invoices");
     setElementText("#filterStatementsBtn", t("statements"));
+    elements.statementFilterButtons?.[0] && (elements.statementFilterButtons[0].textContent = t("statement_filter_pending"));
+    elements.statementFilterButtons?.[1] && (elements.statementFilterButtons[1].textContent = t("statement_filter_paid"));
+    elements.statementFilterButtons?.[2] && (elements.statementFilterButtons[2].textContent = t("statement_filter_all"));
 
-    setElementText("#settingsModal h2", t("settings"));
+    setElementText("#documentsPage .page-eyebrow", t("documents"));
+    setElementText("#documentsPage .page-header h2", t("documents_heading"));
+    setElementText("#documentsPage .dashboard-subtitle", t("documents_subtitle"));
+    setElementText("#clientsPage .page-eyebrow", t("client"));
+    setElementText("#clientsPage .page-header h2", t("clients_heading"));
+    setElementText("#clientsPage .dashboard-subtitle", t("clients_subtitle"));
+    setElementText("#addClientBtn", `+ ${t("add_client")}`);
+    setElementText("#reportsPage .page-eyebrow", t("statements"));
+    setElementText("#reportsPage .page-header h2", t("reports_heading"));
+    setElementText("#reportsPage .dashboard-subtitle", t("reports_subtitle"));
+    setElementText("#reportsPage .settings-panel:nth-of-type(1) .settings-panel-header h4", t("statement_exports_heading"));
+    setElementText("#reportsPage .settings-panel:nth-of-type(1) .settings-panel-header p", t("statement_exports_copy"));
+    setElementText("#reportsPage .settings-panel:nth-of-type(2) .settings-panel-header h4", t("payment_history_heading"));
+    setElementText("#reportsPage .settings-panel:nth-of-type(2) .settings-panel-header p", t("payment_history_copy"));
+    setElementText("#logPaymentBtn", `+ ${t("log_payment")}`);
+    setElementText("#reportsPage .settings-panel:nth-of-type(3) .settings-panel-header h4", t("aging_heading"));
+    setElementText("#reportsPage .settings-panel:nth-of-type(3) .settings-panel-header p", t("aging_copy"));
+
+    setElementText("#settingsModal .page-eyebrow", t("settings"));
+    setElementText("#settingsModal h2", t("settings_heading"));
+    setElementText("#settingsModal .dashboard-subtitle", t("settings_subtitle"));
 
     const settingsPanels = elements.settingsModal.querySelectorAll(".settings-panel");
     settingsPanels[0].querySelector("h4").textContent = t("issue_inbox");
@@ -1332,11 +1702,11 @@ function applyTranslations() {
     settingsPanels[1].querySelector("h4").textContent = t("editor_preferences");
     settingsPanels[1].querySelector(".settings-panel-header p").textContent = t("editor_preferences_copy");
     settingsPanels[1].querySelector("span").textContent = t("show_internal_pricing");
-    settingsPanels[2].querySelector("h4").textContent = "Data Export & Import";
-    settingsPanels[2].querySelector(".settings-panel-header p").textContent = "Open a smaller data tools menu when you need templates, backups, imports, or selective export.";
-    setElementText("#openDataToolsBtn", "Open Data Tools");
-    setElementText("#dataToolsTitle", "Data Tools");
-    setElementText("#dataToolsCopy", "Choose the export or import action you want, without crowding the main Tools page.");
+    settingsPanels[2].querySelector("h4").textContent = t("data_transfer_title");
+    settingsPanels[2].querySelector(".settings-panel-header p").textContent = t("data_transfer_copy");
+    setElementText("#openDataToolsBtn", t("open_data_tools"));
+    setElementText("#dataToolsTitle", t("data_tools_title"));
+    setElementText("#dataToolsCopy", t("data_tools_copy"));
     setElementText("#csvToolsTitle", t("csv_tools"));
     setElementText("#csvToolsCopy", t("csv_tools_copy"));
     elements.exportCsvTemplateBtn.textContent = t("export_csv_template");
@@ -1348,8 +1718,10 @@ function applyTranslations() {
     setElementText("#selectiveExportTitle", t("selective_export"));
     setElementText("#selectiveExportCopy", t("selective_export_copy"));
     elements.openExportSelectionBtn.textContent = t("export_selected_json");
-    settingsPanels[3].querySelector("h4").textContent = t("local_testing");
-    settingsPanels[3].querySelector(".settings-panel-header p").textContent = t("local_testing_copy");
+    settingsPanels[3].querySelector("h4").textContent = t("snapshots_title");
+    settingsPanels[3].querySelector(".settings-panel-header p").textContent = t("snapshots_copy");
+    settingsPanels[4].querySelector("h4").textContent = t("local_testing");
+    settingsPanels[4].querySelector(".settings-panel-header p").textContent = t("local_testing_copy");
     elements.clearLocalTestDataBtn.textContent = t("clear_local_test_data");
 
     setElementText("#exportModal h3", t("export_json_title"));
@@ -1406,11 +1778,11 @@ function applyTranslations() {
     }
     elements.companyNameInput.placeholder = t("company_name");
     elements.companyTaglineInput.placeholder = BRAND.tagline;
-    elements.companyAddressInput.placeholder = "123 Trade Avenue\nSanto Domingo, DR";
-    elements.companyEmailInput.placeholder = "hello@santosync.com";
-    elements.companyPhoneInput.placeholder = "+1 (809) 555-0110";
-    elements.companyWebsiteInput.placeholder = "www.santosync.com";
-    elements.companyTaxIdInput.placeholder = "RNC / EIN / Registration";
+    elements.companyAddressInput.placeholder = t("company_address_placeholder");
+    elements.companyEmailInput.placeholder = t("company_email_placeholder");
+    elements.companyPhoneInput.placeholder = t("company_phone_placeholder");
+    elements.companyWebsiteInput.placeholder = t("company_website_placeholder");
+    elements.companyTaxIdInput.placeholder = t("company_tax_id_placeholder");
     elements.saveCompanyProfileBtn.textContent = t("save_company_profile");
     setElementText("#savedItemsTitle", t("saved_items"));
     setElementText("#savedItemsCopy", t("saved_items_copy"));
@@ -1447,6 +1819,49 @@ function applyTranslations() {
         const updatedDate = new Date(APP_LAST_UPDATED);
         elements.footerUpdated.textContent = `Updated ${updatedDate.toLocaleDateString(getCurrentLocale(), { year: "numeric", month: "short", day: "numeric" })}`;
     }
+    setElementText("#clientActivityModalTitle", t("client_activity_modal_title"));
+    setElementText("#clientActivityModalCopy", t("client_activity_modal_copy"));
+    setElementText("#accountAdminPage .dashboard-topbar h2", t("account_admin_title"));
+    setElementText("#accountAdminPage .dashboard-subtitle", t("account_admin_subtitle"));
+    setElementText("#accountAdminWorkspaceBtn", t("workspace"));
+    setElementText("#accountAdminCatalogBtn", t("catalog"));
+    setElementText(".account-admin-owner-card .overview-kicker", t("owner_access"));
+    setElementText("#accountAdminOwnerMeta", t("signed_in_as_owner"));
+    setElementText("#accountAdminOwnerBadge", t("owner_role"));
+    setElementText(elements.accountUserCountStat?.previousElementSibling, t("registered_users"));
+    setElementText(elements.accountSubaccountCountStat.previousElementSibling, t("sub_accounts"));
+    setElementText(elements.accountSessionCountStat.previousElementSibling, t("recent_sessions"));
+    setElementText(elements.accountActivityCountStat.previousElementSibling, t("activity_events"));
+    const accountListPanel = elements.accountAdminUserList?.closest(".settings-panel");
+    setElementText(accountListPanel?.querySelector("h4"), t("registered_accounts"));
+    setElementText(accountListPanel?.querySelector(".settings-panel-header p"), t("registered_accounts_copy"));
+    setElementText("#accountAdminFormTitle", t("add_workspace_account"));
+    const accountFormPanel = elements.accountAdminFormTitle?.closest(".settings-panel");
+    setElementText(accountFormPanel?.querySelector(".settings-panel-header p"), t("add_workspace_account_copy"));
+    setElementText(elements.accountAdminRoleSelect?.closest(".form-group")?.querySelector("span"), t("role"));
+    elements.accountAdminRoleSelect.options[0].textContent = t("role_user");
+    elements.accountAdminRoleSelect.options[1].textContent = t("role_admin");
+    setElementText(elements.accountAdminAccessLevelSelect?.closest(".form-group")?.querySelector("span"), t("access_level"));
+    elements.accountAdminAccessLevelSelect.options[0].textContent = t("access_workspace");
+    elements.accountAdminAccessLevelSelect.options[1].textContent = t("access_operations");
+    elements.accountAdminAccessLevelSelect.options[2].textContent = t("access_review");
+    setElementText(elements.accountAdminParentSelect?.closest(".form-group")?.querySelector("span"), t("parent_account"));
+    elements.accountAdminParentSelect.options[0].textContent = t("direct_account_for_workspace");
+    setElementText("#accountAdminCancelEditBtn", t("cancel_edit"));
+    setElementText("#saveBrandAssetsBtn", t("save_brand_assets"));
+    setElementText("#clearSignatureAssetBtn", t("clear_signature"));
+    setElementText("#clearStampAssetBtn", t("clear_stamp"));
+    document.querySelector('label[for="accountSignatureInput"]')?.replaceChildren(document.createTextNode(t("upload_signature")));
+    document.querySelector('label[for="accountStampInput"]')?.replaceChildren(document.createTextNode(t("upload_stamp")));
+    const brandingPanel = elements.saveBrandAssetsBtn?.closest(".settings-panel");
+    setElementText(brandingPanel?.querySelector("h4"), t("document_branding"));
+    setElementText(brandingPanel?.querySelector(".settings-panel-header p"), t("document_branding_copy"));
+    const sessionPanel = elements.accountSessionLogList?.closest(".settings-panel");
+    setElementText(sessionPanel?.querySelector("h4"), t("login_session_reports"));
+    setElementText(sessionPanel?.querySelector(".settings-panel-header p"), t("login_session_reports_copy"));
+    const activityPanel = elements.accountActivityLogList?.closest(".settings-panel");
+    setElementText(activityPanel?.querySelector("h4"), t("workspace_activity"));
+    setElementText(activityPanel?.querySelector(".settings-panel-header p"), t("workspace_activity_copy"));
 
     renderBrandAssets();
     updateStaticEditorTranslations();
@@ -1487,12 +1902,12 @@ function updateStaticEditorTranslations() {
     setElementText(document.querySelector('.sidebar-card .sidebar-label'), t("document_summary"));
     setElementText(document.querySelectorAll('.sidebar-card .sidebar-label')[1], t("client"));
     setElementText(document.querySelectorAll('.sidebar-card .sidebar-label')[2], t("commercial_snapshot"));
-    setElementText(document.querySelectorAll('.sidebar-card .sidebar-label')[3], t("pdf_options"));
-    setElementText(document.querySelectorAll('.sidebar-card .sidebar-label')[4], t("workflow_tip"));
-    setElementText(document.querySelector('#includeSignature + span'), t("include_signature"));
-    setElementText(document.querySelector('#includeSignature').closest('.sidebar-card').querySelector('.field-help'), t("include_signature_help"));
-    setElementText(document.querySelector('#includeStamp + span'), t("include_stamp"));
-    setElementText(document.querySelector('#includeStamp').closest('.sidebar-card').querySelectorAll('.field-help')[1], t("include_stamp_help"));
+    setElementText(document.querySelectorAll('.sidebar-card .sidebar-label')[3], t("workflow_tip"));
+    setElementText("#finalPreviewOptionsLabel", t("pdf_options"));
+    setElementText("#includeSignatureLabel", t("include_signature"));
+    setElementText("#includeSignatureHelp", t("include_signature_help"));
+    setElementText("#includeStampLabel", t("include_stamp"));
+    setElementText("#includeStampHelp", t("include_stamp_help"));
     elements.prevBtn.textContent = t("previous");
     elements.nextBtn.textContent = t("next");
 }
@@ -1664,6 +2079,7 @@ function cacheElements() {
     elements.catalogPage = document.getElementById("catalogPage");
     elements.statementsPage = document.getElementById("statementsPage");
     elements.statementExportsList = document.getElementById("statementExportsList");
+    elements.statementFilterButtons = Array.from(document.querySelectorAll("[data-statement-filter]"));
     elements.paymentExposureAlerts = document.getElementById("paymentExposureAlerts");
     elements.paymentHistoryMetrics = document.getElementById("paymentHistoryMetrics");
     elements.paymentHistoryTableBody = document.getElementById("paymentHistoryTableBody");
@@ -1772,6 +2188,11 @@ function cacheElements() {
     elements.saveClientModalBtn = document.getElementById("saveClientModalBtn");
     elements.cancelClientModalBtn = document.getElementById("cancelClientModalBtn");
     elements.closeClientModalBtn = document.getElementById("closeClientModalBtn");
+    elements.clientActivityModal = document.getElementById("clientActivityModal");
+    elements.clientActivityModalTitle = document.getElementById("clientActivityModalTitle");
+    elements.clientActivityModalCopy = document.getElementById("clientActivityModalCopy");
+    elements.clientActivityModalList = document.getElementById("clientActivityModalList");
+    elements.closeClientActivityModalBtn = document.getElementById("closeClientActivityModalBtn");
     elements.documentModal = document.getElementById("documentModal");
     elements.editorProgressStep = document.getElementById("editorProgressStep");
     elements.editorProgressTitle = document.getElementById("editorProgressTitle");
@@ -2034,6 +2455,7 @@ function bindEvents() {
     elements.clearStampAssetBtn?.addEventListener("click", () => clearBrandAsset("stamp"));
     elements.saveBrandAssetsBtn?.addEventListener("click", saveBrandAssets);
     elements.clientManagementList.addEventListener("click", handleClientManagementClick);
+    elements.clientManagementList.addEventListener("click", handleClientStatClick);
     elements.clientManagementList.addEventListener("click", handleClientRowToggle);
     elements.clientManagementList.addEventListener("keydown", e => {
         if ((e.key === "Enter" || e.key === " ") && e.target.closest("[data-toggle-client]") && !e.target.closest("[data-client-action]")) {
@@ -2046,6 +2468,8 @@ function bindEvents() {
     elements.saveClientModalBtn?.addEventListener("click", saveClientFromModal);
     elements.cancelClientModalBtn?.addEventListener("click", closeClientModal);
     elements.closeClientModalBtn?.addEventListener("click", closeClientModal);
+    elements.closeClientActivityModalBtn?.addEventListener("click", closeClientActivityModal);
+    elements.clientActivityModalList?.addEventListener("click", handleClientActivityModalClick);
     elements.issueInboxList.addEventListener("click", handleIssueInboxClick);
     elements.valueToggleCard.addEventListener("click", () => toggleValueView(true));
     elements.overviewMobileToggle?.addEventListener("click", toggleMobileOverview);
@@ -2088,6 +2512,13 @@ function bindEvents() {
     elements.paymentLedgerList?.addEventListener("change", syncPaymentLedgerUi);
     elements.documentSearch.addEventListener("input", handleSearchInput);
     elements.documentSort.addEventListener("change", handleSortChange);
+    elements.statementFilterButtons.forEach(button => {
+        button.addEventListener("click", () => {
+            state.statementStatusFilter = button.dataset.statementFilter || "pending";
+            syncStatementFilterButtons();
+            renderStatementsPage();
+        });
+    });
     elements.documentsGrid.addEventListener("keydown", handleDocumentCardKeydown);
     elements.tagSuggestions.addEventListener("click", handleKeywordSuggestionClick);
     elements.calculatorLauncherModal.addEventListener("click", toggleCalculator);
@@ -2131,6 +2562,12 @@ function bindEvents() {
     elements.documentModal.addEventListener("click", event => {
         if (event.target === elements.documentModal) {
             closeModal();
+        }
+    });
+
+    elements.clientActivityModal?.addEventListener("click", event => {
+        if (event.target === elements.clientActivityModal) {
+            closeClientActivityModal();
         }
     });
 
@@ -3719,13 +4156,14 @@ function renderStatementsPage() {
 
     renderPaymentHistoryPanel();
     renderClientAgingPanel();
+    syncStatementFilterButtons();
 
     if (!state.statementExports.length) {
         elements.statementExportsList.innerHTML = `<p class="client-list-empty">${escapeHtml(t("no_statements"))}</p>`;
         return;
     }
 
-    const filtered = state.searchQuery
+    const searched = state.searchQuery
         ? state.statementExports.filter(statement => {
             const haystack = [
                 statement.clientName,
@@ -3737,29 +4175,31 @@ function renderStatementsPage() {
         })
         : state.statementExports;
 
+    const filtered = searched.filter(statement => {
+        const liveOutstanding = getStatementLiveOutstanding(statement);
+        if (state.statementStatusFilter === "paid") {
+            return liveOutstanding <= 0;
+        }
+        if (state.statementStatusFilter === "pending") {
+            return liveOutstanding > 0;
+        }
+        return true;
+    });
+
     if (!filtered.length) {
-        elements.statementExportsList.innerHTML = `<p class="client-list-empty">${escapeHtml(t("no_results") || "No statements match your search.")}</p>`;
+        const emptyCopy = state.statementStatusFilter === "paid"
+            ? t("no_paid_statements")
+            : state.statementStatusFilter === "pending"
+                ? t("no_pending_statements")
+                : t("no_statement_matches");
+        elements.statementExportsList.innerHTML = `<p class="client-list-empty">${escapeHtml(emptyCopy)}</p>`;
         return;
     }
 
     elements.statementExportsList.innerHTML = filtered.map(statement => {
         const accentClass = `merchant-${merchantColorIndex(statement.clientName || statement.payload?.clientName || "")}`;
 
-        const sourceIds = new Set(
-            (Array.isArray(statement.payload?.sourceInvoiceIds) ? statement.payload.sourceInvoiceIds : []).map(String)
-        );
-        const statementInvoiceRefs = new Set(
-            ((statement.payload?.rows) || [])
-                .map(r => String(r.invoiceNumber || "").trim().toLowerCase())
-                .filter(Boolean)
-        );
-        const linkedInvoices = state.documents.filter(doc =>
-            doc.type === "invoice" && (
-                sourceIds.has(String(doc.id)) ||
-                (sourceIds.size === 0 && statementInvoiceRefs.has(String(doc.refNumber || "").trim().toLowerCase()))
-            )
-        );
-        const liveOutstanding = linkedInvoices.reduce((sum, doc) => sum + getInvoiceOutstandingBalance(doc), 0);
+        const liveOutstanding = getStatementLiveOutstanding(statement);
         const liveOutstandingFormatted = formatCurrency(liveOutstanding);
         const isPaid = liveOutstanding <= 0;
 
@@ -3774,23 +4214,23 @@ function renderStatementsPage() {
                 <strong>${escapeHtml(statement.clientName)}</strong>
                 <div class="statement-export-metrics">
                     <div class="statement-export-metric">
-                        <span>Invoices</span>
+                        <span>${escapeHtml(t("statement_metric_invoices"))}</span>
                         <strong>${escapeHtml(String(statement.rowCount))}</strong>
                     </div>
                     <div class="statement-export-metric">
-                        <span>Total</span>
+                        <span>${escapeHtml(t("statement_metric_total"))}</span>
                         <strong>${escapeHtml(statement.totalSelectedFormatted)}</strong>
                     </div>
                     <div class="statement-export-metric is-grand${isPaid ? " is-paid" : ""}">
-                        <span>Outstanding</span>
+                        <span>${escapeHtml(t("statement_metric_outstanding"))}</span>
                         <strong>${escapeHtml(liveOutstandingFormatted)}</strong>
                     </div>
                 </div>
             </div>
             <div class="client-row-actions statement-export-actions-bar">
-                ${!isPaid ? `<button class="statement-action-btn is-markpaid" type="button" data-statement-action="mark-paid" data-statement-id="${escapeHtml(statement.id)}" aria-label="Mark all invoices as paid" title="Mark all linked invoices as paid">
+                ${!isPaid ? `<button class="statement-action-btn is-markpaid" type="button" data-statement-action="mark-paid" data-statement-id="${escapeHtml(statement.id)}" aria-label="${escapeHtml(t("statement_mark_paid_all"))}" title="${escapeHtml(t("statement_mark_paid_all"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span class="visually-hidden">Mark as Paid</span>
+                    <span class="visually-hidden">${escapeHtml(t("statement_mark_paid_all"))}</span>
                 </button>` : ""}
                 <button class="statement-action-btn is-open" type="button" data-statement-action="open" data-statement-id="${escapeHtml(statement.id)}" aria-label="${escapeHtml(t("open_statement"))}" title="${escapeHtml(t("open_statement"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>
@@ -3811,6 +4251,19 @@ function renderStatementsPage() {
             </div>
         </article>
     `; }).join("");
+}
+
+function syncStatementFilterButtons() {
+    elements.statementFilterButtons?.forEach(button => {
+        const isActive = button.dataset.statementFilter === state.statementStatusFilter;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
+}
+
+function getStatementLiveOutstanding(statement) {
+    return getStatementLinkedInvoices(statement)
+        .reduce((sum, doc) => sum + getInvoiceOutstandingBalance(doc), 0);
 }
 
 function handleStatementExportsListClick(event) {
@@ -6251,10 +6704,10 @@ function handleHelpMenuItemClick(event) {
 
 function getManagedUserLabel(userId) {
     if (!userId) {
-        return "Direct account";
+        return t("direct_account_label");
     }
     const parent = state.userAccounts.find(entry => entry.id === userId);
-    return parent ? `Sub-account of ${parent.displayName}` : "Direct account";
+    return parent ? t("subaccount_of_label", { parent: parent.displayName }) : t("direct_account_label");
 }
 
 function syncAccountAdminParentOptions() {
@@ -6263,7 +6716,7 @@ function syncAccountAdminParentOptions() {
     }
 
     const currentEditingId = state.editingManagedUserId;
-    const options = ['<option value="">Direct account for SantoSync</option>']
+    const options = [`<option value="">${escapeHtml(t("direct_account_for_workspace"))}</option>`]
         .concat(state.userAccounts
             .filter(user => user.id !== currentEditingId && user.role !== "owner")
             .map(user => `<option value="${escapeHtml(user.id)}">${escapeHtml(user.displayName)}${user.email ? ` • ${escapeHtml(user.email)}` : ""}</option>`));
@@ -6350,31 +6803,31 @@ function renderAccountAdminPage() {
                     <strong>${escapeHtml(user.displayName)}</strong>
                     <span class="account-admin-user-meta">@${escapeHtml(user.username)}${user.email ? ` • ${escapeHtml(user.email)}` : ""}</span>
                     <div class="account-admin-user-tags">
-                        <span class="account-admin-user-tag">${escapeHtml(user.role === "admin" ? "Admin" : "User")}</span>
-                        <span class="account-admin-user-tag">${escapeHtml(user.accessLevel || "workspace")}</span>
+                        <span class="account-admin-user-tag">${escapeHtml(user.role === "admin" ? t("role_admin") : t("role_user"))}</span>
+                        <span class="account-admin-user-tag">${escapeHtml(t(`access_${user.accessLevel || "workspace"}`))}</span>
                         <span class="account-admin-user-tag">${escapeHtml(getManagedUserLabel(user.parentUserId))}</span>
-                        ${user.lastLoginAt ? `<span class="account-admin-user-tag">Last login ${escapeHtml(formatDateTime(user.lastLoginAt))}</span>` : ""}
+                        ${user.lastLoginAt ? `<span class="account-admin-user-tag">${escapeHtml(t("last_login_label"))} ${escapeHtml(formatDateTime(user.lastLoginAt))}</span>` : ""}
                     </div>
                 </div>
                 <div class="account-admin-user-actions">
-                    <button class="btn btn-secondary" type="button" data-account-action="edit" data-user-id="${escapeHtml(user.id)}">Edit</button>
-                    <button class="btn btn-secondary" type="button" data-account-action="reset-password" data-user-id="${escapeHtml(user.id)}">Reset Password</button>
-                    <button class="btn btn-secondary" type="button" data-account-action="delete" data-user-id="${escapeHtml(user.id)}"${user.username === "admin" ? " disabled" : ""}>Delete</button>
+                    <button class="btn btn-secondary" type="button" data-account-action="edit" data-user-id="${escapeHtml(user.id)}">${escapeHtml(t("edit"))}</button>
+                    <button class="btn btn-secondary" type="button" data-account-action="reset-password" data-user-id="${escapeHtml(user.id)}">${escapeHtml(t("reset_password"))}</button>
+                    <button class="btn btn-secondary" type="button" data-account-action="delete" data-user-id="${escapeHtml(user.id)}"${user.username === "admin" ? " disabled" : ""}>${escapeHtml(t("delete"))}</button>
                 </div>
             </article>
         `).join("")
-        : `<p class="user-list-empty">No registered accounts yet.</p>`;
+        : `<p class="user-list-empty">${escapeHtml(t("no_registered_accounts"))}</p>`;
 
     elements.accountSessionLogList.innerHTML = recentSessions.length
         ? recentSessions.map(log => `
             <article class="account-admin-feed-card">
                 <strong>${escapeHtml(log.displayName)}</strong>
-                <span class="account-admin-feed-meta">${escapeHtml(log.username)} • ${escapeHtml(log.status === "open" ? "Active session" : "Closed session")}</span>
-                <span class="account-admin-feed-meta">Started ${escapeHtml(formatDateTime(log.startedAt))}${log.endedAt ? ` • Ended ${escapeHtml(formatDateTime(log.endedAt))}` : ""}</span>
+                <span class="account-admin-feed-meta">${escapeHtml(log.username)} • ${escapeHtml(log.status === "open" ? t("active_session") : t("closed_session"))}</span>
+                <span class="account-admin-feed-meta">${escapeHtml(t("started_label"))} ${escapeHtml(formatDateTime(log.startedAt))}${log.endedAt ? ` • ${escapeHtml(t("ended_label"))} ${escapeHtml(formatDateTime(log.endedAt))}` : ""}</span>
                 ${log.reason ? `<span class="account-admin-feed-meta">${escapeHtml(log.reason)}</span>` : ""}
             </article>
         `).join("")
-        : `<p class="user-list-empty">No login sessions recorded yet.</p>`;
+        : `<p class="user-list-empty">${escapeHtml(t("no_login_sessions"))}</p>`;
 
     elements.accountActivityLogList.innerHTML = recentActivities.length
         ? recentActivities.map(log => `
@@ -6384,7 +6837,7 @@ function renderAccountAdminPage() {
                 <span class="account-admin-feed-meta">${escapeHtml(log.details || "")}</span>
             </article>
         `).join("")
-        : `<p class="user-list-empty">No workspace activity recorded yet.</p>`;
+        : `<p class="user-list-empty">${escapeHtml(t("no_workspace_activity"))}</p>`;
 
     syncAccountAdminParentOptions();
     syncBrandAssetPreviews();
@@ -6626,7 +7079,7 @@ function renderClientManagementList() {
 
         const contactsDetail = contacts.length ? `
             <div class="client-detail-section">
-                <span class="client-detail-label">Contacts</span>
+                <span class="client-detail-label">${escapeHtml(t("client_contacts"))}</span>
                 <div class="client-detail-contacts">
                     ${contacts.map(c => `
                         <div class="client-detail-contact">
@@ -6639,38 +7092,38 @@ function renderClientManagementList() {
 
         const clientStatsSummary = (clientDocs.length || clientStatements.length)
             ? `<div class="client-row-stats">
-                ${clientQuotes.length ? `<span class="client-row-stat">${clientQuotes.length} quote${clientQuotes.length > 1 ? "s" : ""}</span>` : ""}
-                ${clientInvoices.length ? `<span class="client-row-stat client-row-stat-invoice">${clientInvoices.length} invoice${clientInvoices.length > 1 ? "s" : ""}</span>` : ""}
-                ${clientStatements.length ? `<span class="client-row-stat client-row-stat-statement">${clientStatements.length} statement${clientStatements.length > 1 ? "s" : ""}</span>` : ""}
-                ${totalInvoiced > 0 ? `<span class="client-row-stat client-row-stat-value">${escapeHtml(formatCurrency(totalInvoiced))} invoiced</span>` : ""}
-                ${totalOutstanding > 0 ? `<span class="client-row-stat client-row-stat-outstanding">${escapeHtml(formatCurrency(totalOutstanding))} outstanding</span>` : ""}
+                ${clientQuotes.length ? `<span class="client-row-stat">${clientQuotes.length} ${escapeHtml(t("quotes").toLowerCase())}</span>` : ""}
+                ${clientInvoices.length ? `<span class="client-row-stat client-row-stat-invoice">${clientInvoices.length} ${escapeHtml(t("invoices").toLowerCase())}</span>` : ""}
+                ${clientStatements.length ? `<span class="client-row-stat client-row-stat-statement">${clientStatements.length} ${escapeHtml(t("statements").toLowerCase())}</span>` : ""}
+                ${totalInvoiced > 0 ? `<span class="client-row-stat client-row-stat-value">${escapeHtml(formatCurrency(totalInvoiced))} ${escapeHtml(t("client_total_invoiced").toLowerCase())}</span>` : ""}
+                ${totalOutstanding > 0 ? `<span class="client-row-stat client-row-stat-outstanding">${escapeHtml(formatCurrency(totalOutstanding))} ${escapeHtml(t("client_outstanding").toLowerCase())}</span>` : ""}
               </div>`
             : "";
 
         const clientStatsDetail = (clientDocs.length || clientStatements.length) ? `
             <div class="client-detail-section client-detail-stats-grid">
-                <span class="client-detail-label">Activity</span>
+                <span class="client-detail-label">${escapeHtml(t("client_activity"))}</span>
                 <div class="client-stats-grid">
-                    <div class="client-stat-cell">
+                    <button class="client-stat-cell client-stat-action" type="button" data-client-stat-action="quotes" data-client-id="${escapeHtml(client.id)}">
                         <span class="client-stat-value">${clientQuotes.length}</span>
-                        <span class="client-stat-label">Quotes</span>
-                    </div>
-                    <div class="client-stat-cell">
+                        <span class="client-stat-label">${escapeHtml(t("quotes"))}</span>
+                    </button>
+                    <button class="client-stat-cell client-stat-action" type="button" data-client-stat-action="invoices" data-client-id="${escapeHtml(client.id)}">
                         <span class="client-stat-value">${clientInvoices.length}</span>
-                        <span class="client-stat-label">Invoices</span>
-                    </div>
-                    <div class="client-stat-cell client-stat-cell-statement">
+                        <span class="client-stat-label">${escapeHtml(t("invoices"))}</span>
+                    </button>
+                    <button class="client-stat-cell client-stat-cell-statement client-stat-action" type="button" data-client-stat-action="statements" data-client-id="${escapeHtml(client.id)}">
                         <span class="client-stat-value">${clientStatements.length}</span>
-                        <span class="client-stat-label">Statements</span>
-                    </div>
-                    <div class="client-stat-cell">
+                        <span class="client-stat-label">${escapeHtml(t("statements"))}</span>
+                    </button>
+                    <button class="client-stat-cell client-stat-action" type="button" data-client-stat-action="total-invoiced" data-client-id="${escapeHtml(client.id)}">
                         <span class="client-stat-value">${escapeHtml(formatCurrency(totalInvoiced))}</span>
-                        <span class="client-stat-label">Total Invoiced</span>
-                    </div>
-                    <div class="client-stat-cell${totalOutstanding > 0 ? " is-outstanding" : ""}">
+                        <span class="client-stat-label">${escapeHtml(t("client_total_invoiced"))}</span>
+                    </button>
+                    <button class="client-stat-cell client-stat-action${totalOutstanding > 0 ? " is-outstanding" : ""}" type="button" data-client-stat-action="outstanding" data-client-id="${escapeHtml(client.id)}">
                         <span class="client-stat-value">${escapeHtml(formatCurrency(totalOutstanding))}</span>
-                        <span class="client-stat-label">Outstanding</span>
-                    </div>
+                        <span class="client-stat-label">${escapeHtml(t("client_outstanding"))}</span>
+                    </button>
                 </div>
             </div>` : "";
 
@@ -6698,7 +7151,7 @@ function renderClientManagementList() {
                 <div class="client-detail-section">
                     <span class="client-detail-label">
                         <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a4.5 4.5 0 0 1 4.5 4.5c0 3-4.5 8.5-4.5 8.5S3.5 9 3.5 6A4.5 4.5 0 0 1 8 1.5Z"/><circle cx="8" cy="6" r="1.5"/></svg>
-                        Location
+                        ${escapeHtml(t("client_location"))}
                     </span>
                     <p class="client-detail-value">${escapeHtml(client.address)}</p>
                 </div>` : ""}
@@ -6706,7 +7159,7 @@ function renderClientManagementList() {
                 <div class="client-detail-section">
                     <span class="client-detail-label">
                         <svg viewBox="0 0 16 16" aria-hidden="true" fill="none"><path d="M8 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm-5 10c0-2.2 2.24-4 5-4s5 1.8 5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-                        Consignee
+                        ${escapeHtml(t("client_consignee"))}
                     </span>
                     <p class="client-detail-value">${escapeHtml(client.consigneeName)}${client.consigneeAddress ? `<span class="client-detail-sub">${escapeHtml(client.consigneeAddress)}</span>` : ""}</p>
                 </div>` : ""}
@@ -6720,6 +7173,7 @@ function handleClientRowToggle(event) {
     const header = event.target.closest("[data-toggle-client]");
     if (!header) return;
     if (event.target.closest("[data-client-action]")) return;
+    if (event.target.closest("[data-client-stat-action]")) return;
 
     const card = header.closest(".client-row");
     const body = card.querySelector(".client-row-body");
@@ -6728,6 +7182,120 @@ function handleClientRowToggle(event) {
     card.classList.toggle("is-expanded", expanded);
     header.setAttribute("aria-expanded", String(expanded));
     body.hidden = !expanded;
+}
+
+function handleClientStatClick(event) {
+    const button = event.target.closest("[data-client-stat-action]");
+    if (!button) {
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const clientId = button.dataset.clientId;
+    const action = button.dataset.clientStatAction;
+    const client = state.clients.find(entry => isSameDocumentId(entry.id, clientId));
+    if (!client) {
+        return;
+    }
+
+    openClientActivityModal(client, action);
+}
+
+function openClientActivityModal(client, action) {
+    const normalizedClientName = String(client.name || "").trim().toLowerCase();
+    const clientQuotes = state.documents.filter(doc =>
+        doc.type === "quote" && String(doc.clientName || "").trim().toLowerCase() === normalizedClientName
+    );
+    const clientInvoices = state.documents.filter(doc =>
+        doc.type === "invoice" && String(doc.clientName || "").trim().toLowerCase() === normalizedClientName
+    );
+    const clientStatements = (state.statementExports || []).filter(statement =>
+        String(statement.clientName || "").trim().toLowerCase() === normalizedClientName
+    );
+
+    let title = "";
+    let subtitle = "";
+    let entries = [];
+
+    if (action === "quotes") {
+        title = t("client_activity_quotes_title", { client: client.name });
+        subtitle = t("client_activity_quotes_copy");
+        entries = clientQuotes.map(doc => ({ kind: "document", doc, meta: formatCurrency(doc.total || 0) }));
+    } else if (action === "invoices") {
+        title = t("client_activity_invoices_title", { client: client.name });
+        subtitle = t("client_activity_invoices_copy");
+        entries = clientInvoices.map(doc => ({ kind: "document", doc, meta: formatCurrency(doc.total || 0) }));
+    } else if (action === "statements") {
+        title = t("client_activity_statements_title", { client: client.name });
+        subtitle = t("client_activity_statements_copy");
+        entries = clientStatements.map(statement => ({
+            kind: "statement",
+            statement,
+            meta: t("client_activity_statement_meta", { amount: formatCurrency(getStatementLiveOutstanding(statement)) })
+        }));
+    } else if (action === "total-invoiced") {
+        title = t("client_activity_total_invoiced_title", { client: client.name });
+        subtitle = t("client_activity_total_invoiced_copy");
+        entries = clientInvoices.map(doc => ({ kind: "document", doc, meta: formatCurrency(doc.total || 0) }));
+    } else if (action === "outstanding") {
+        title = t("client_activity_outstanding_title", { client: client.name });
+        subtitle = t("client_activity_outstanding_copy");
+        entries = clientInvoices
+            .filter(doc => getInvoiceOutstandingBalance(doc) > 0)
+            .map(doc => ({
+                kind: "document",
+                doc,
+                meta: t("client_activity_statement_meta", { amount: formatCurrency(getInvoiceOutstandingBalance(doc)) })
+            }));
+    }
+
+    elements.clientActivityModalTitle.textContent = title || t("client_activity_modal_title");
+    elements.clientActivityModalCopy.textContent = subtitle || t("client_activity_modal_copy");
+    elements.clientActivityModalList.innerHTML = entries.length
+        ? entries.map(entry => entry.kind === "statement"
+            ? `
+                <button class="overview-document-link overview-document-link-invoice client-activity-link" type="button" data-client-activity-open-statement="${escapeHtml(entry.statement.id)}">
+                    <span class="overview-document-ref">${escapeHtml(entry.statement.referenceNumber || "Statement")}</span>
+                    <span class="overview-document-meta">${escapeHtml(formatPrintedDate(entry.statement.generatedAt || ""))}</span>
+                    <strong class="overview-document-total">${escapeHtml(entry.meta)}</strong>
+                </button>
+            `
+            : `
+                <button class="overview-document-link overview-document-link-${escapeHtml(entry.doc.type || "quote")} client-activity-link" type="button" data-client-activity-open-doc="${escapeHtml(String(entry.doc.id))}">
+                    <span class="overview-document-ref">${escapeHtml(entry.doc.refNumber || "Reference pending")}</span>
+                    <span class="overview-document-meta">${escapeHtml(formatDisplayDate(entry.doc.date || ""))}</span>
+                    <strong class="overview-document-total">${escapeHtml(entry.meta)}</strong>
+                </button>
+            `).join("")
+        : `<div class="empty-state compact-empty-state"><p>${escapeHtml(t("client_activity_no_records"))}</p></div>`;
+
+    setModalState(elements.clientActivityModal, true);
+}
+
+function closeClientActivityModal() {
+    setModalState(elements.clientActivityModal, false);
+}
+
+function handleClientActivityModalClick(event) {
+    const openDocButton = event.target.closest("[data-client-activity-open-doc]");
+    if (openDocButton) {
+        closeClientActivityModal();
+        setActivePage("documents");
+        editDocument(openDocButton.dataset.clientActivityOpenDoc);
+        return;
+    }
+
+    const openStatementButton = event.target.closest("[data-client-activity-open-statement]");
+    if (openStatementButton) {
+        const statement = state.statementExports.find(entry => entry.id === openStatementButton.dataset.clientActivityOpenStatement);
+        if (!statement) {
+            return;
+        }
+        closeClientActivityModal();
+        window.StatementOfAccount.generateStatementOfAccountPdf(statement.payload);
+    }
 }
 
 async function handleAddUser() {
@@ -7777,9 +8345,9 @@ function renderClientAgingPanel() {
     const overdueTotal = rows.reduce((sum, row) => sum + row.bucket1to30 + row.bucket31to60 + row.bucket61to90 + row.bucket90plus, 0);
 
     renderReportsMetrics(elements.agingMetrics, [
-        { label: "Clients With Balances", value: String(rows.length) },
-        { label: "Total Outstanding", value: formatCurrency(totalOutstanding) },
-        { label: "Past Due", value: formatCurrency(overdueTotal) }
+        { label: t("clients_with_balances"), value: String(rows.length) },
+        { label: t("total_outstanding"), value: formatCurrency(totalOutstanding) },
+        { label: t("past_due"), value: formatCurrency(overdueTotal) }
     ]);
 
     elements.clientAgingTableBody.innerHTML = rows.length
@@ -10303,11 +10871,11 @@ function buildDocumentMarkup(doc, stampStyle, options = {}) {
                     </div>
                 </div>
                 ${showConsignee ? `<div class="party-card">
-                    <div class="issued-to-label"><strong>Consignee:</strong></div>
+                    <div class="issued-to-label"><strong>${escapeHtml(t("client_consignee"))}:</strong></div>
                     <div class="issued-to-value compact-party-value">
                         ${doc.consigneeName || doc.consigneeAddress
-                            ? `${escapeHtml(doc.consigneeName || "Consignee pending")}${doc.consigneeAddress ? `<br>${escapeHtml(doc.consigneeAddress).replace(/\n/g, "<br>")}` : ""}`
-                            : "<em>Not provided</em>"}
+                            ? `${escapeHtml(doc.consigneeName || t("consignee_pending"))}${doc.consigneeAddress ? `<br>${escapeHtml(doc.consigneeAddress).replace(/\n/g, "<br>")}` : ""}`
+                            : `<em>${escapeHtml(t("not_provided"))}</em>`}
                     </div>
                 </div>` : ""}
                 ${showPoNumber ? `<div class="party-card po-card"><span class="po-label">Purchase Order Number:</span> ${escapeHtml(doc.poNumber)}</div>` : ""}
@@ -10443,35 +11011,7 @@ function generatePreviews() {
     if (elements.lineItemsPreviewContainer) {
         elements.lineItemsPreviewContainer.innerHTML = buildLineItemsPreviewMarkup(doc);
     }
-    elements.previewContainer.innerHTML = shouldUseMobilePreviewLauncher()
-        ? buildMobilePreviewLauncherMarkup(doc)
-        : buildDocumentMarkup(doc, stampStyle, { printPreview: true });
-}
-
-function shouldUseMobilePreviewLauncher() {
-    return isMobileViewport() && state.currentStep === getTotalSteps();
-}
-
-function buildMobilePreviewLauncherMarkup(doc) {
-    const documentLabel = doc.type === "quote" ? "quote" : "invoice";
-    const canViewPrint = canCurrentEditorViewPrint();
-
-    return `
-        <div class="mobile-preview-launcher-card">
-            <span class="mobile-preview-launcher-kicker">Print-ready preview</span>
-            <h6>Open the ${escapeHtml(documentLabel)} in a separate preview.</h6>
-            <p>${escapeHtml(canViewPrint
-                ? "The preview uses the same layout and content that will be printed or saved as PDF."
-                : "Save this document first to unlock the print-ready preview on Step 6.")}</p>
-            <div class="mobile-preview-launcher-meta">
-                <span>${escapeHtml(doc.refNumber || "Reference pending")}</span>
-                <span>${escapeHtml(formatDisplayDate(doc.date) || "Date pending")}</span>
-            </div>
-            ${canViewPrint
-                ? `<button class="btn btn-secondary" type="button" data-open-preview-window="true">${escapeHtml(t("save_preview_pdf"))}</button>`
-                : `<button class="btn btn-secondary" type="button" disabled>Save First</button>`}
-        </div>
-    `;
+    elements.previewContainer.innerHTML = buildDocumentMarkup(doc, stampStyle, { printPreview: true });
 }
 
 function getPrintStylesMarkup() {

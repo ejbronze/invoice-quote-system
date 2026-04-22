@@ -2,7 +2,19 @@
 
 SantoSync is a premium quote-and-invoice workspace for modern trade teams. It combines document creation, client history, per-user preferences, admin tools, and branded export output in one polished operational dashboard.
 
-Version: `1.6.1` — Last updated: April 22, 2026
+Version: `1.7.0` — Last updated: April 22, 2026
+
+## Version 1.7.0 Summary
+
+This release focuses on language coverage, client drill-down workflows, statement organization, and a cleaner final preview experience.
+
+**Translation coverage audit:** The app now translates a much broader set of runtime UI surfaces across the dashboard, clients page, statements page, settings, account admin, and the final preview flow. This includes section headers, statement filter tabs, client-activity modal copy, account-admin labels, and several render-time empty states that previously stayed in English even after switching to Spanish or French.
+
+**Client directory drill-downs:** The client directory activity tiles are now actionable. Clicking `Quotes`, `Invoices`, `Statements`, `Total Invoiced`, or `Outstanding` opens a focused modal with the relevant records for that client, making it faster to inspect related work without manually filtering the full document list.
+
+**Statement status tabs:** The Statements page now separates saved statements into `Pending`, `Paid`, and `All`. Status is determined from the live outstanding balance of linked invoices, so statements automatically move into the paid tab when their balance reaches zero.
+
+**Step 6 preview expansion:** The quote/invoice final preview now uses the full width of the modal instead of leaving space to a separate right-hand column. Signature and stamp controls remain available in a compact preview toolbar, and mobile now renders the actual preview in place rather than replacing it with a separate launcher card.
 
 ## Version 1.6.1 Summary
 

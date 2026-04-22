@@ -354,6 +354,13 @@
                                 <h4>Statement Exports</h4>
                                 <p>Generated statements stay here for later review, edits, and PDF access.</p>
                             </div>
+                            <div class="documents-toolbar statement-exports-toolbar">
+                                <div class="filter-row document-folder-tabs" aria-label="Statement filters">
+                                    <button class="filter-chip active" id="statementFilterPendingBtn" type="button" data-statement-filter="pending">Pending</button>
+                                    <button class="filter-chip" id="statementFilterPaidBtn" type="button" data-statement-filter="paid">Paid</button>
+                                    <button class="filter-chip" id="statementFilterAllBtn" type="button" data-statement-filter="all">All</button>
+                                </div>
+                            </div>
                             <div id="statementsPage">
                                 <div class="client-management-list" id="statementExportsList">
                                     <p class="client-list-empty">No statements generated yet.</p>
@@ -1575,6 +1582,23 @@
                                 <h5>Final Preview</h5>
                                 <p>Review the final output and export when everything looks right.</p>
                             </div>
+                            <div class="final-preview-toolbar" id="finalPreviewToolbar">
+                                <section class="final-preview-options-card">
+                                    <span class="sidebar-label" id="finalPreviewOptionsLabel">PDF Options</span>
+                                    <div class="final-preview-options-grid">
+                                        <label class="checkbox-row checkbox-row-block final-preview-option">
+                                            <input type="checkbox" id="includeSignature" checked>
+                                            <span id="includeSignatureLabel">Include signature on export</span>
+                                        </label>
+                                        <small class="field-help" id="includeSignatureHelp">Turn this off for unsigned quotes or invoices before opening the PDF preview.</small>
+                                        <label class="checkbox-row checkbox-row-block final-preview-option">
+                                            <input type="checkbox" id="includeStamp">
+                                            <span id="includeStampLabel">Include stamp on export</span>
+                                        </label>
+                                        <small class="field-help" id="includeStampHelp">Adds a small company stamp overlay near the signature without changing the document layout.</small>
+                                    </div>
+                                </section>
+                            </div>
                             <div class="preview-container" id="previewContainer"></div>
                         </div>
                     </div>
@@ -1619,20 +1643,6 @@
                             </div>
                         </section>
 
-                        <section class="sidebar-card">
-                            <span class="sidebar-label">PDF Options</span>
-                            <label class="checkbox-row checkbox-row-block">
-                                <input type="checkbox" id="includeSignature" checked>
-                                <span>Include signature on export</span>
-                            </label>
-                            <label class="checkbox-row checkbox-row-block">
-                                <input type="checkbox" id="includeStamp">
-                                <span>Include stamp on export</span>
-                            </label>
-                            <small class="field-help">Turn this off for unsigned quotes or invoices before opening the PDF preview.</small>
-                            <small class="field-help">Adds a small company stamp overlay near the signature without changing the document layout.</small>
-                        </section>
-
                         <section class="sidebar-card sidebar-card-muted">
                             <span class="sidebar-label">Workflow Tip</span>
                             <p id="sidebarTip">Keep line items concise and use keywords like destination, service type, or priority to make search much easier later.</p>
@@ -1675,6 +1685,19 @@
                     </div>
                     <div class="client-management-list saved-items-grid" id="savedItemsList"></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal settings-modal" id="clientActivityModal" aria-hidden="true" hidden>
+        <div class="modal-content settings-modal-content">
+            <div class="modal-header">
+                <h3 id="clientActivityModalTitle">Client Activity</h3>
+                <button class="close-btn" id="closeClientActivityModalBtn" type="button" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body settings-modal-body">
+                <p class="settings-copy" id="clientActivityModalCopy">Open the linked quotes, invoices, or statements for this client.</p>
+                <div class="client-activity-modal-list" id="clientActivityModalList"></div>
             </div>
         </div>
     </div>
