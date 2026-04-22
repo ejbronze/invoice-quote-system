@@ -54,7 +54,8 @@ const state = {
     statementExportStep: 1,
     activeQuickPaymentInvoiceId: null,
     activeQuickPaymentStatementId: null,
-    pendingPaymentDeleteContext: null
+    pendingPaymentDeleteContext: null,
+    activeNotesDocId: null
 };
 
 const DOP_PER_USD = 59;
@@ -2003,6 +2004,13 @@ function cacheElements() {
     elements.settingsIssueInboxBtn = document.getElementById("settingsIssueInboxBtn");
     elements.quickPaymentModal = document.getElementById("quickPaymentModal");
     elements.closeQuickPaymentModalBtn = document.getElementById("closeQuickPaymentModalBtn");
+    elements.notesDrawer = document.getElementById("notesDrawer");
+    elements.notesDrawerOverlay = document.getElementById("notesDrawerOverlay");
+    elements.notesDrawerFeed = document.getElementById("notesDrawerFeed");
+    elements.notesDrawerInput = document.getElementById("notesDrawerInput");
+    elements.notesDrawerSubmitBtn = document.getElementById("notesDrawerSubmitBtn");
+    elements.notesDrawerRef = document.getElementById("notesDrawerRef");
+    elements.closeNotesDrawerBtn = document.getElementById("closeNotesDrawerBtn");
     elements.quickPaymentSummary = document.getElementById("quickPaymentSummary");
     elements.quickPaymentHistory = document.getElementById("quickPaymentHistory");
     elements.quickPaymentDateInput = document.getElementById("quickPaymentDateInput");
@@ -2370,6 +2378,16 @@ function bindEvents() {
     elements.closeIssueInboxModalBtn.addEventListener("click", closeIssueInboxModal);
     elements.closeQuickPaymentModalBtn?.addEventListener("click", closeQuickPaymentModal);
     elements.saveQuickPaymentBtn?.addEventListener("click", saveQuickPaymentEntry);
+    elements.closeNotesDrawerBtn?.addEventListener("click", closeNotesDrawer);
+    elements.notesDrawerOverlay?.addEventListener("click", closeNotesDrawer);
+    elements.notesDrawerSubmitBtn?.addEventListener("click", submitNote);
+    elements.notesDrawerInput?.addEventListener("keydown", event => {
+        if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+            event.preventDefault();
+            submitNote();
+        }
+    });
+    elements.notesDrawerFeed?.addEventListener("click", handleNotesFeedClick);
     elements.logPaymentBtn?.addEventListener("click", openLogPaymentModal);
     elements.quickPaymentInvoiceSelect?.addEventListener("change", handleLogPaymentInvoiceChange);
     elements.closeInvoiceReportsModalBtn.addEventListener("click", closeInvoiceReportsModal);
@@ -4943,6 +4961,190 @@ function closeQuickPaymentModal() {
     state.activeQuickPaymentStatementId = null;
     if (elements.quickPaymentInvoicePicker) elements.quickPaymentInvoicePicker.hidden = true;
     setModalState(elements.quickPaymentModal, false);
+}
+
+// ─── Notes Drawer ────────────────────────────────────────────
+
+function openNotesDrawer(docId) {
+    const doc = getDocumentById(docId);
+    if (!doc) return;
+    state.activeNotesDocId = String(docId);
+    state.openDocumentMenuId = null;
+    syncDocumentActionMenus();
+    if (elements.notesDrawerRef) elements.notesDrawerRef.textContent = doc.refNumber || "";
+    if (elements.notesDrawerInput) elements.notesDrawerInput.value = "";
+    renderNotesFeed(doc);
+    elements.notesDrawer.removeAttribute("hidden");
+    elements.notesDrawerOverlay.removeAttribute("hidden");
+    elements.notesDrawer.setAttribute("aria-hidden", "false");
+    elements.notesDrawerOverlay.setAttribute("aria-hidden", "false");
+    requestAnimationFrame(() => {
+        elements.notesDrawer.classList.add("active");
+        elements.notesDrawerOverlay.classList.add("active");
+        elements.notesDrawerInput?.focus();
+    });
+}
+
+function closeNotesDrawer() {
+    state.activeNotesDocId = null;
+    elements.notesDrawer?.classList.remove("active");
+    elements.notesDrawerOverlay?.classList.remove("active");
+    elements.notesDrawer?.setAttribute("aria-hidden", "true");
+    elements.notesDrawerOverlay?.setAttribute("aria-hidden", "true");
+    setTimeout(() => {
+        if (!elements.notesDrawer?.classList.contains("active")) {
+            elements.notesDrawer?.setAttribute("hidden", "");
+            elements.notesDrawerOverlay?.setAttribute("hidden", "");
+        }
+    }, 240);
+}
+
+function renderNotesFeed(doc) {
+    if (!elements.notesDrawerFeed) return;
+    const notes = Array.isArray(doc.noteLog) ? doc.noteLog : [];
+    if (notes.length === 0) {
+        elements.notesDrawerFeed.innerHTML = `<p class="notes-empty">No notes yet. Add one below.</p>`;
+        return;
+    }
+    const currentUserId = state.currentUser?.userId;
+    elements.notesDrawerFeed.innerHTML = notes.map(note => {
+        const canEdit = note.userId === currentUserId;
+        const timeLabel = note.editedAt
+            ? `${formatNoteTimestamp(note.createdAt)} (edited)`
+            : formatNoteTimestamp(note.createdAt);
+        return `
+            <div class="note-item" data-note-id="${escapeHtml(String(note.id))}">
+                <div class="note-item-header">
+                    <span class="note-item-author">${escapeHtml(note.author || "Unknown")}</span>
+                    <span class="note-item-time">${escapeHtml(timeLabel)}</span>
+                </div>
+                <div class="note-item-text">${escapeHtml(note.text)}</div>
+                ${canEdit ? `
+                <div class="note-item-actions">
+                    <button type="button" class="note-action-btn" data-note-action="edit" data-note-id="${escapeHtml(String(note.id))}" title="Edit note" aria-label="Edit note">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                    </button>
+                    <button type="button" class="note-action-btn is-danger" data-note-action="delete" data-note-id="${escapeHtml(String(note.id))}" title="Delete note" aria-label="Delete note">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                </div>` : ""}
+            </div>
+        `;
+    }).join("");
+    elements.notesDrawerFeed.scrollTop = elements.notesDrawerFeed.scrollHeight;
+}
+
+function formatNoteTimestamp(isoString) {
+    if (!isoString) return "";
+    try {
+        return new Date(isoString).toLocaleString(undefined, {
+            month: "short", day: "numeric", year: "numeric",
+            hour: "numeric", minute: "2-digit"
+        });
+    } catch {
+        return isoString;
+    }
+}
+
+function handleNotesFeedClick(event) {
+    const btn = event.target.closest("[data-note-action]");
+    if (!btn) return;
+    event.stopPropagation();
+    const noteId = btn.dataset.noteId;
+    const noteAction = btn.dataset.noteAction;
+    if (noteAction === "edit") startEditNote(noteId);
+    else if (noteAction === "delete") deleteNote(noteId);
+    else if (noteAction === "save-edit") saveEditNote(noteId);
+    else if (noteAction === "cancel-edit") cancelEditNote(noteId);
+}
+
+async function submitNote() {
+    const docId = state.activeNotesDocId;
+    const text = elements.notesDrawerInput?.value.trim();
+    if (!docId || !text) return;
+    const doc = getDocumentById(docId);
+    if (!doc) return;
+    const note = {
+        id: String(Date.now()),
+        text,
+        author: state.currentUser?.displayName || state.currentUser?.username || "Unknown",
+        userId: state.currentUser?.userId || "",
+        createdAt: new Date().toISOString(),
+        editedAt: null
+    };
+    const updatedDoc = { ...doc, noteLog: [...(Array.isArray(doc.noteLog) ? doc.noteLog : []), note] };
+    await saveNoteLogUpdate(updatedDoc);
+    if (elements.notesDrawerInput) elements.notesDrawerInput.value = "";
+    renderNotesFeed(getDocumentById(docId) || updatedDoc);
+    renderDocuments();
+}
+
+async function deleteNote(noteId) {
+    const docId = state.activeNotesDocId;
+    if (!docId) return;
+    const doc = getDocumentById(docId);
+    if (!doc) return;
+    if (!window.confirm("Delete this note?")) return;
+    const updatedDoc = { ...doc, noteLog: (doc.noteLog || []).filter(n => String(n.id) !== String(noteId)) };
+    await saveNoteLogUpdate(updatedDoc);
+    renderNotesFeed(getDocumentById(docId) || updatedDoc);
+    renderDocuments();
+}
+
+function startEditNote(noteId) {
+    const docId = state.activeNotesDocId;
+    if (!docId) return;
+    const doc = getDocumentById(docId);
+    if (!doc) return;
+    const note = (doc.noteLog || []).find(n => String(n.id) === String(noteId));
+    if (!note) return;
+    const noteEl = elements.notesDrawerFeed?.querySelector(`[data-note-id="${CSS.escape(String(noteId))}"]`);
+    if (!noteEl) return;
+    const textEl = noteEl.querySelector(".note-item-text");
+    if (!textEl) return;
+    textEl.innerHTML = `
+        <textarea class="note-edit-textarea" rows="3">${escapeHtml(note.text)}</textarea>
+        <div class="note-edit-actions">
+            <button type="button" class="btn btn-sm" data-note-action="cancel-edit" data-note-id="${escapeHtml(String(noteId))}">Cancel</button>
+            <button type="button" class="btn btn-primary btn-sm" data-note-action="save-edit" data-note-id="${escapeHtml(String(noteId))}">Save</button>
+        </div>
+    `;
+    const actionsEl = noteEl.querySelector(".note-item-actions");
+    if (actionsEl) actionsEl.hidden = true;
+    textEl.querySelector("textarea")?.focus();
+}
+
+async function saveEditNote(noteId) {
+    const docId = state.activeNotesDocId;
+    if (!docId) return;
+    const doc = getDocumentById(docId);
+    if (!doc) return;
+    const noteEl = elements.notesDrawerFeed?.querySelector(`[data-note-id="${CSS.escape(String(noteId))}"]`);
+    const newText = noteEl?.querySelector(".note-edit-textarea")?.value.trim();
+    if (!newText) return;
+    const updatedDoc = {
+        ...doc,
+        noteLog: (doc.noteLog || []).map(n =>
+            String(n.id) === String(noteId) ? { ...n, text: newText, editedAt: new Date().toISOString() } : n
+        )
+    };
+    await saveNoteLogUpdate(updatedDoc);
+    renderNotesFeed(getDocumentById(docId) || updatedDoc);
+    renderDocuments();
+}
+
+function cancelEditNote(noteId) {
+    const docId = state.activeNotesDocId;
+    if (!docId) return;
+    const doc = getDocumentById(docId);
+    if (doc) renderNotesFeed(doc);
+}
+
+async function saveNoteLogUpdate(updatedDoc) {
+    const idx = state.documents.findIndex(d => String(d.id) === String(updatedDoc.id));
+    if (idx === -1) return;
+    const nextDocuments = state.documents.map((d, i) => i === idx ? updatedDoc : d);
+    await saveDocumentsToServer(nextDocuments);
 }
 
 function openLogPaymentModal() {
@@ -11729,6 +11931,9 @@ function getDocumentCardMarkup(doc) {
         ? `<div class="document-card-internal-note">${escapeHtml(doc.internalNotes.length > 90 ? doc.internalNotes.slice(0, 90) + "…" : doc.internalNotes)}</div>`
         : "";
 
+    const noteCount = Array.isArray(doc.noteLog) ? doc.noteLog.length : 0;
+    const noteBadge = noteCount > 0 ? `<span class="notes-count-badge">${noteCount}</span>` : "";
+
     return `
         <article class="document-card document-card-${doc.type}" data-view-id="${escapeHtml(String(doc.id))}" tabindex="0" role="button" aria-label="${escapeHtml(`Open ${doc.type} ${doc.refNumber || ""}`.trim())}">
             <div class="document-card-copy">
@@ -11751,6 +11956,10 @@ function getDocumentCardMarkup(doc) {
                 </button>` : ""}
                 <button type="button" class="statement-action-btn is-edit" data-action="edit" data-id="${escapeHtml(String(doc.id))}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                </button>
+                <button type="button" class="statement-action-btn is-notes" data-action="notes" data-id="${escapeHtml(String(doc.id))}" aria-label="Notes" title="Notes">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    ${noteBadge}
                 </button>
                 <div class="doc-actions-menu-wrap">
                     <button
@@ -11986,7 +12195,9 @@ async function handleDocumentCardClick(event) {
         const docId = actionButton.dataset.id;
         const action = actionButton.dataset.action;
 
-        if (action === "edit") {
+        if (action === "notes") {
+            openNotesDrawer(docId);
+        } else if (action === "edit") {
             editDocument(docId);
         } else if (action === "export-pdf") {
             const doc = getDocumentById(docId);

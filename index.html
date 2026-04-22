@@ -1109,6 +1109,24 @@
         </div>
     </div>
 
+    <div class="notes-drawer-overlay" id="notesDrawerOverlay" aria-hidden="true" hidden></div>
+    <aside class="notes-drawer" id="notesDrawer" aria-hidden="true" hidden role="dialog" aria-labelledby="notesDrawerTitle">
+        <div class="notes-drawer-header">
+            <div class="notes-drawer-header-info">
+                <h3 id="notesDrawerTitle">Notes</h3>
+                <span class="notes-drawer-ref" id="notesDrawerRef"></span>
+            </div>
+            <button class="close-btn" id="closeNotesDrawerBtn" type="button" aria-label="Close notes">×</button>
+        </div>
+        <div class="notes-drawer-feed" id="notesDrawerFeed"></div>
+        <div class="notes-drawer-compose">
+            <textarea id="notesDrawerInput" rows="3" placeholder="Add an internal note… (Ctrl+Enter to post)"></textarea>
+            <div class="notes-drawer-compose-actions">
+                <button class="btn btn-primary" id="notesDrawerSubmitBtn" type="button">Post Note</button>
+            </div>
+        </div>
+    </aside>
+
     <div class="modal settings-modal" id="invoiceReportsModal" aria-hidden="true" hidden>
         <div class="modal-content settings-modal-content inbox-modal-content invoice-reports-modal-content">
             <div class="modal-header">
