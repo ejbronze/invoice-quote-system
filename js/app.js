@@ -4253,6 +4253,12 @@ function handleGlobalShortcuts(event) {
 }
 
 function handleGlobalClick(event) {
+    const snapshotBtn = event.target.closest("[data-snapshot-action]");
+    if (snapshotBtn) {
+        void handleSnapshotAction(snapshotBtn);
+        return;
+    }
+
     if (!event.target.closest(".topbar-menu-wrap") && !event.target.closest(".docs-new-wrap")) {
         closeTopbarMenu();
         closeNewMenu();
@@ -4285,6 +4291,7 @@ function openSettingsModal() {
     syncEditorPreferenceControls();
     renderUserManagementList();
     renderClientManagementList();
+    renderSnapshotsList();
     setActivePage("settings");
 }
 
@@ -8064,6 +8071,112 @@ function exportSystemBackup() {
     setImportStatus("Full workspace backup exported. Keep the JSON file somewhere safe.");
 }
 
+const LOCAL_SNAPSHOT_KEY = "app_autosnapshots";
+const MAX_LOCAL_SNAPSHOTS = 3;
+
+function saveLocalSnapshot() {
+    if (!state.documents.length && !state.clients.length) {
+        return;
+    }
+    try {
+        const snap = {
+            savedAt: new Date().toISOString(),
+            documents: state.documents,
+            clients: state.clients,
+            statementExports: state.statementExports || []
+        };
+        const existing = loadLocalSnapshots();
+        existing.unshift(snap);
+        localStorage.setItem(LOCAL_SNAPSHOT_KEY, JSON.stringify(existing.slice(0, MAX_LOCAL_SNAPSHOTS)));
+    } catch (e) {
+        // localStorage full — skip silently
+    }
+}
+
+function loadLocalSnapshots() {
+    try {
+        return JSON.parse(localStorage.getItem(LOCAL_SNAPSHOT_KEY) || "[]");
+    } catch (e) {
+        return [];
+    }
+}
+
+function renderSnapshotsList() {
+    const container = document.getElementById("snapshotsList");
+    if (!container) {
+        return;
+    }
+    const snapshots = loadLocalSnapshots();
+    const panel = document.getElementById("snapshotsPanel");
+    if (panel) {
+        panel.hidden = !isAdminSession();
+    }
+    if (!snapshots.length) {
+        container.innerHTML = `<p class="snapshot-empty">No local snapshots yet. They are created automatically after each save.</p>`;
+        return;
+    }
+    container.innerHTML = snapshots.map((snap, index) => {
+        const date = new Date(snap.savedAt);
+        const label = date.toLocaleString();
+        const docCount = (snap.documents || []).length;
+        const clientCount = (snap.clients || []).length;
+        return `
+        <div class="snapshot-row">
+            <div class="snapshot-row-info">
+                <strong class="snapshot-row-date">${escapeHtml(label)}</strong>
+                <span class="snapshot-row-meta">${docCount} doc${docCount !== 1 ? "s" : ""} · ${clientCount} client${clientCount !== 1 ? "s" : ""}</span>
+            </div>
+            <div class="snapshot-row-actions">
+                <button class="btn btn-secondary" type="button" data-snapshot-action="download" data-snapshot-index="${index}">Download</button>
+                <button class="btn btn-secondary" type="button" data-snapshot-action="restore" data-snapshot-index="${index}">Restore</button>
+            </div>
+        </div>`;
+    }).join("");
+}
+
+async function handleSnapshotAction(button) {
+    const index = Number(button.dataset.snapshotIndex);
+    const snapshots = loadLocalSnapshots();
+    const snap = snapshots[index];
+    if (!snap) {
+        return;
+    }
+    const action = button.dataset.snapshotAction;
+    if (action === "download") {
+        const stamp = new Date(snap.savedAt).toISOString().slice(0, 19).replace(/[:T]/g, "-");
+        downloadJSONFile(`santosync-snapshot-${stamp}.json`, {
+            exportedAt: snap.savedAt,
+            version: 2,
+            documents: snap.documents,
+            clients: snap.clients,
+            workspace: { statementExports: snap.statementExports }
+        });
+        return;
+    }
+    if (action === "restore") {
+        const dateLabel = new Date(snap.savedAt).toLocaleString();
+        if (!window.confirm(`Restore data from snapshot saved on ${dateLabel}?\n\nThis will overwrite the current documents and clients on the server.`)) {
+            return;
+        }
+        try {
+            const nextDocuments = normalizeDocuments(snap.documents || []);
+            const nextClients = normalizeClients(snap.clients || []);
+            await Promise.all([
+                saveDocumentsToServer(nextDocuments),
+                saveClientsToServer(nextClients)
+            ]);
+            state.documents = nextDocuments;
+            state.clients = nextClients;
+            renderDocuments();
+            renderClientOptions();
+            renderClientManagementList();
+            setImportStatus(`Snapshot from ${dateLabel} restored successfully.`);
+        } catch (error) {
+            setImportStatus(`Restore failed: ${error.message}`, true);
+        }
+    }
+}
+
 function exportCsvTemplate() {
     if (!isAdminSession()) {
         setImportStatus("Only admin accounts can export CSV templates.", true);
@@ -8958,11 +9071,11 @@ function updateModalTitle() {
     const saveButtonLabel = state.editingDocumentId !== null ? t("save_changes") : t("save_document");
     elements.saveBtn.innerHTML = getActionButtonMarkup(
         '<svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 4v6h8V4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 17h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-        ""
+        saveButtonLabel
     );
-    elements.saveBtn.setAttribute("aria-label", saveButtonLabel);
-    elements.saveBtn.setAttribute("title", saveButtonLabel);
-    elements.saveBtn.classList.add("btn-icon-only");
+    elements.saveBtn.removeAttribute("aria-label");
+    elements.saveBtn.removeAttribute("title");
+    elements.saveBtn.classList.remove("btn-icon-only");
     elements.exportPdfBtn.innerHTML = getActionButtonMarkup(
         '<svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3v6h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 15h8M8 11h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
         t("save_preview_pdf")
@@ -10288,11 +10401,9 @@ function handlePreviewContainerClick(event) {
 
 async function persistDocument(options = {}) {
     const {
-        exportAfterSave = false,
         silent = false,
         keepOpen = false,
-        forceDraft = false,
-        previewWindow = null
+        forceDraft = false
     } = options;
     const isEditing = state.editingDocumentId !== null;
     const existingDocument = isEditing ? getDocumentById(state.editingDocumentId) : null;
@@ -10387,15 +10498,15 @@ async function persistDocument(options = {}) {
     try {
         await saveDocumentsToServer(nextDocuments);
         state.editingDocumentId = doc.id;
+        if (!forceDraft) {
+            saveLocalSnapshot();
+        }
         renderDocuments();
         recordActivity(
-            exportAfterSave ? "exported document" : (isEditing ? "updated document" : "created document"),
+            isEditing ? "updated document" : "created document",
             `${doc.type === "quote" ? "Quote" : "Invoice"} ${doc.refNumber} for ${doc.clientName || "unknown client"}.`
         );
     } catch (error) {
-        if (previewWindow && !previewWindow.closed) {
-            previewWindow.close();
-        }
         if (!silent) {
             alert(`Unable to save this ${doc.type} to the server.\n\n${error.message}`);
         }
@@ -10407,32 +10518,23 @@ async function persistDocument(options = {}) {
         goToStep(state.currentStep);
         updateEditorSummary();
         if (!silent) {
-            setImportStatus(exportAfterSave
-                ? `${doc.type === "quote" ? "Quote" : "Invoice"} saved. View / Print opened in a new window.`
-                : `${doc.type === "quote" ? "Quote" : "Invoice"} saved. View / Print is now available on Step 6.`);
-        }
-        if (exportAfterSave) {
-            openPrintWindow(doc, previewWindow);
+            const docLabel = doc.type === "quote" ? "Quote" : "Invoice";
+            const hint = canCurrentEditorViewPrint() ? "" : " View / Print unlocks on Step 6.";
+            setImportStatus(`${docLabel} saved.${hint}`);
         }
         return;
     }
 
     closeModal();
-    const actionLabel = isEditing ? "updated" : "saved";
-    if (exportAfterSave) {
-        openPrintWindow(doc, previewWindow);
-        if (!silent) {
-            alert(`${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.\n\nA PDF preview has opened in a new window. Print only if you want to from there.`);
-        }
-        return;
-    }
-
     if (!silent) {
-        alert(`${doc.type === "quote" ? "Quote" : "Invoice"} ${actionLabel} successfully.`);
+        const docLabel = doc.type === "quote" ? "Quote" : "Invoice";
+        const actionLabel = isEditing ? "updated" : "saved";
+        alert(`${docLabel} ${actionLabel} successfully.`);
     }
 }
 
 async function saveDocumentOnly() {
+    clearDraftAutosaveTimer();
     if (!validateDocumentForSave()) {
         return;
     }
@@ -10442,20 +10544,13 @@ async function saveDocumentOnly() {
     });
 }
 
-async function saveAndExportDocument() {
-    if (!validateDocumentForSave()) {
-        return;
-    }
+function saveAndExportDocument() {
     if (!canCurrentEditorViewPrint()) {
-        window.alert("Save this document first. View / Print unlocks after the document has been saved by a user.");
+        window.alert("Save this document first — View / Print is available on Step 6 after saving.");
         return;
     }
-    const previewWindow = createPrintWindow(buildDocumentData());
-    await persistDocument({
-        exportAfterSave: true,
-        keepOpen: true,
-        previewWindow
-    });
+    openPrintWindow(buildDocumentData());
+    setImportStatus("Preview opened in a new window.");
 }
 
 function validateDocumentForSave() {
