@@ -353,7 +353,7 @@ body::after {
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 1500px;
     margin: 0 auto;
     padding: 1rem;
     position: relative;
@@ -10940,12 +10940,15 @@ body {
 
 @media (max-width: 1360px) {
     .statement-export-row {
-        flex-wrap: wrap;
-        align-items: flex-start;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
     }
 
     .statement-export-copy {
-        flex-basis: min(100%, 560px);
+        width: 100%;
+        flex-basis: 100%;
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .statement-export-metrics {
@@ -10959,6 +10962,7 @@ body {
         width: 100%;
         justify-content: flex-end;
         flex-wrap: wrap;
+        min-width: 0;
     }
 }
 
