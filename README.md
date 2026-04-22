@@ -191,7 +191,7 @@ When the app is online with the API available, user accounts are stored in the s
 - Mobile-tuned modal sizing for cart, issue reporting, and document preview/export flows
 - Branded splash, auth, session-loading, about, and dashboard identity
 - Branded print/PDF preview output with SantoSync company identity
-- Help & FAQ modal with live keyword search, a quick-jump section index, and inline visual button demos rendered using the app's own CSS
+- Help & FAQ modal with live keyword search, a quick-jump section index, and inline visual button demos rendered using the app's own CSS; all topics reflect the current sidebar-based navigation (no references to the old top toolbar)
 - The main search bar indexes both documents and statements — searching by client name, vendor, reference number, or date filters whichever tab is active with a single query
 
 ## Document Output Rules

@@ -748,7 +748,7 @@
                     <h4 class="help-section-title" data-i18n="help_sec_getting_started">Getting Started</h4>
                     <details class="help-item">
                         <summary data-i18n="help_q_create_doc">How do I create a new quote or invoice?</summary>
-                        <p data-i18n-html="help_a_create_doc">From the home screen, click <strong>New Quote</strong> or <strong>New Invoice</strong> in the top toolbar. The editor opens in a step-by-step flow — fill in document details, client info, line items, keywords, then review before exporting.</p>
+                        <p data-i18n-html="help_a_create_doc">Click the <strong>+ New</strong> button at the top of the Documents page, or use the <strong>+ New</strong> dropdown on the dashboard. Choose Quote, Invoice, or Statement. The editor opens in a step-by-step flow — fill in document details, client info, line items, keywords, then review before exporting.</p>
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_edit_doc">How do I edit an existing document?</summary>
@@ -765,7 +765,7 @@
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_company_profile">How do I set up my company profile?</summary>
-                        <p data-i18n-html="help_a_company_profile">Open <strong>Tools</strong> from the top toolbar, then click <strong>Open Company Profile</strong>. Your name, address, logo, letterhead, and payment info will appear on every document you generate.</p>
+                        <p data-i18n-html="help_a_company_profile">Open <strong>Settings</strong> from the sidebar, then click <strong>Company Profile</strong>. Your name, address, logo, letterhead, and payment info will appear on every document you generate.</p>
                     </details>
                 </section>
 
@@ -798,7 +798,7 @@
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_backup">How do I back up or restore my data?</summary>
-                        <p data-i18n-html="help_a_backup">Open <strong>Tools</strong> and use the <strong>JSON Backup</strong> option to export a full snapshot of your documents and clients. Use <strong>JSON Restore</strong> to import a previously saved backup. CSV import is also available for bulk document creation.</p>
+                        <p data-i18n-html="help_a_backup">Open <strong>Settings</strong> from the sidebar and use the <strong>JSON Backup</strong> option to export a full snapshot of your documents and clients. Use <strong>JSON Restore</strong> to import a previously saved backup. CSV import is also available for bulk document creation.</p>
                     </details>
                 </section>
 
@@ -878,23 +878,27 @@
                     <h4 class="help-section-title" data-i18n="help_sec_tips">Tips &amp; Shortcuts</h4>
                     <details class="help-item">
                         <summary data-i18n="help_q_language">How do I switch the display language?</summary>
-                        <p data-i18n-html="help_a_language">Use the language selector in the top toolbar (<strong>EN / ES / FR</strong>). The interface and generated document labels will update to match your selected language immediately.</p>
+                        <p data-i18n-html="help_a_language">Use the language selector in the sidebar footer (<strong>EN / ES / FR</strong>). The interface and generated document labels will update to match your selected language immediately.</p>
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_logo_sig">Can I add my company logo and signature to documents?</summary>
-                        <p data-i18n-html="help_a_logo_sig">Yes. Open <strong>Company Profile</strong> from the Tools menu. You can upload a letterhead image, signature, stamp, and footer wave — all of which appear in exported PDFs automatically.</p>
+                        <p data-i18n-html="help_a_logo_sig">Yes. Open <strong>Settings</strong> from the sidebar, then click <strong>Company Profile</strong>. You can upload a letterhead image, signature, stamp, and footer wave — all of which appear in exported PDFs automatically.</p>
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_search">How do I search for a document?</summary>
-                        <p data-i18n-html="help_a_search">Use the search bar at the top of the home screen. You can search by client name, reference number, date, or any keyword added in Step 4 of the editor. The search works across all document types.</p>
+                        <p data-i18n-html="help_a_search">Use the search bar at the top of the Documents page. You can search by client name, reference number, date, or any keyword. The same query simultaneously filters whichever tab is active — including the Statements tab, which is indexed by client name, vendor, reference number, and date.</p>
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_catalog">How do I use the Catalog?</summary>
-                        <p data-i18n-html="help_a_catalog">Click <strong>Catalog</strong> in the top navigation. It shows every line item captured from quotes, invoices, and the cart. You can also add manual catalog entries. Items in the catalog can be inserted into new documents quickly from the cart.</p>
+                        <p data-i18n-html="help_a_catalog">Click <strong>Catalog</strong> in the sidebar navigation. It shows every line item captured from quotes, invoices, and the cart. You can also add manual catalog entries. Items in the catalog can be inserted into new documents quickly from the cart.</p>
+                    </details>
+                    <details class="help-item">
+                        <summary data-i18n="help_q_snapshot">What is the auto-cycling card on the dashboard?</summary>
+                        <p data-i18n-html="help_a_snapshot">The snapshot card in the top-right of the dashboard automatically rotates every 3 seconds between three metrics: <strong>Pipeline Value</strong> (blue), <strong>Amount Invoiced</strong> (green), and <strong>Income Received</strong> (amber). Click the card at any time to advance manually; the 3-second timer resets from that point.</p>
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_bug_report">How do I report a bug or request a feature?</summary>
-                        <p data-i18n-html="help_a_bug_report">Click <strong>Submit / Report Issues</strong> in the footer. Fill in a summary, add any relevant screenshots, and submit. Your report is logged and visible to the admin in the Service Reports panel under <strong>Tools</strong>.</p>
+                        <p data-i18n-html="help_a_bug_report">Click <strong>Submit / Report Issues</strong> in the footer. Fill in a summary, add any relevant screenshots, and submit. Your report is logged and visible to the admin in the Service Reports panel under <strong>Settings</strong>.</p>
                     </details>
                 </section>
             </div>
@@ -1916,6 +1920,6 @@
 
     <script src="js/brand.js?v=2"></script>
     <script src="js/statement-of-account.js?v=2"></script>
-    <script src="js/app.js?v=15"></script>
+    <script src="js/app.js?v=16"></script>
 </body>
 </html>
