@@ -51,7 +51,9 @@ const state = {
     selectedInvoiceReportIds: [],
     statementExportInProgress: false,
     statementExportStep: 1,
-    activeQuickPaymentInvoiceId: null
+    activeQuickPaymentInvoiceId: null,
+    activeQuickPaymentStatementId: null,
+    pendingPaymentDeleteContext: null
 };
 
 const DOP_PER_USD = 59;
@@ -103,7 +105,7 @@ const LANGUAGE_LOCALES = {
     es: "es-DO",
     fr: "fr-FR"
 };
-const APP_LAST_UPDATED = "2026-04-21T18:00:00";
+const APP_LAST_UPDATED = "2026-04-22T18:00:00";
 const BRAND = window.SANTO_BRAND || {
     name: "SantoSync",
     studioName: "Palmchat Innovations Lab",
@@ -117,7 +119,7 @@ const BRAND = window.SANTO_BRAND || {
     sessionTitle: "Opening SantoSync",
     sessionMessage: "Signing in and syncing your operational workspace...",
     aboutMeaning: "SantoSync is a coined product name designed to feel premium, steady, and coordinated.",
-    aboutProduct: "SantoSync is a modern document and operations workspace with cleaner draft-versus-saved document flow, click-to-open records, stronger payment tracking, monthly exposure alerts, and fuller backup recovery across the workspace.",
+    aboutProduct: "SantoSync is a modern document and operations workspace with cleaner save-versus-draft handling, more clickable records, stronger payment controls, responsive reporting layouts, and fuller backup recovery across the shared workspace.",
     aboutDeveloper: "Created by Edwin Jaquez through Palmchat Innovations Lab under Palmchat Innovations LLC NYC."
 };
 const DEFAULT_COMPANY_PROFILE = Object.freeze({
@@ -449,7 +451,7 @@ const TRANSLATIONS = {
         help_vl_pdf_preview: "Open PDF preview",
         help_vc_preview_pdf: "Preview PDF",
         help_q_reuse_items: "Can I save line items to reuse later?",
-        help_a_reuse_items: "Yes. In Step 3, use the cart icon next to <strong>Add Item</strong> to open your saved items. Any item saved from a previous document appears there and can be added with one click. The Catalog page aggregates all captured items across documents.",
+        help_a_reuse_items: "Yes. Reusable items now live in the <strong>Catalog</strong> and <strong>Pending Items Cart</strong> tools outside the Step 3 editor header. Keep the quote or invoice line-item table focused on direct entry, then manage reusable items from the Catalog or cart library when needed. The Catalog page still aggregates all captured items across documents.",
         help_q_payment_terms: "How do I add or update payment terms?",
         help_a_payment_terms: "Scroll to the <strong>Document Notes &amp; Terms</strong> panel at the bottom of Step 3. The <strong>Terms of Payment</strong> field is pre-filled with a NET 30 minimum and a $10,000 monthly client limit note \u2014 update it to match your agreement.",
         help_q_backup: "How do I back up or restore my data?",
@@ -462,7 +464,7 @@ const TRANSLATIONS = {
         help_q_filter_docs: "How do I filter documents by type?",
         help_a_filter_docs: "Use the <strong>All / Quotes / Invoices / Statements</strong> tabs directly below the search bar. Clicking a tab shows only documents of that type in the same view \u2014 no page reload. The Statements tab shows previously generated Statement of Account exports.",
         help_q_mark_paid: "How do I mark an invoice as paid?",
-        help_a_mark_paid: "On the home screen, open the invoice card\u2019s three-dot menu and select the appropriate payment status \u2014 <strong>Unpaid</strong>, <strong>Pending</strong>, or <strong>Paid</strong>. Paid invoices are visually flagged and excluded from outstanding balance calculations in Invoice Reports.",
+        help_a_mark_paid: "On the Documents page, open the invoice card\u2019s three-dot menu and select the appropriate payment status \u2014 <strong>Unpaid</strong>, <strong>Pending</strong>, or <strong>Paid</strong>. For real payment tracking, open the invoice and use the payment ledger, or log a payment from the Statements page. Paid invoices are visually flagged and excluded from outstanding balance calculations in Invoice Reports.",
         help_q_save_client: "How do I save a client for reuse?",
         help_a_save_client: "In Step 2 of the editor, enter the client name and address, then click <strong>Save Client</strong>. Saved clients appear in the dropdown on future documents so you don\u2019t need to retype their details. Switching clients also restores their saved consignee fields.",
         help_q_statement: "What is a Statement of Account?",
@@ -485,7 +487,7 @@ const TRANSLATIONS = {
         help_q_client_contacts: "How do I add contact information to a client?",
         help_a_client_contacts: "Go to the <strong>Clients</strong> page in the sidebar. Click <strong>Add Client</strong> to create a new client, or click the <strong>edit icon</strong> on an existing client card to open the client modal. Inside, you can add multiple contacts — each with a name, email, phone number, and a WhatsApp flag. Click a client card to expand it and see their address, consignee, and all saved contacts at a glance.",
         help_q_record_payment: "How do I record a payment against an invoice?",
-        help_a_record_payment: "You have two ways. From the <strong>Statements</strong> page, click <strong>+ Log Payment</strong> at the top of the Payment History panel — select the invoice from the dropdown, enter the amount, date, method, and reference, then save. Alternatively, open the invoice card's three-dot menu on the Documents page and choose <strong>Add Payment</strong> to record directly against that invoice.",
+        help_a_record_payment: "You have two ways. From the <strong>Statements</strong> page, click <strong>+ Log Payment</strong> at the top of the Payment History panel — select the invoice from the dropdown, enter the amount, date, method, and reference, then save. Alternatively, open the invoice itself and add or adjust entries in the payment ledger. Logged payments can now also be removed from Payment History with a confirmation modal.",
         help_q_statement_payment: "Can I mark a statement deduction as a payment?",
         help_a_statement_payment: "Yes. Open the statement's edit modal (pencil icon on the statement row), find the deduction you want to apply, and check <strong>Mark as payment</strong>. A payment date field will appear. When you save, that deduction is written as a real payment entry on the matching invoices — it will immediately appear in Payment History and reduce the outstanding balance.",
         help_q_aging_clickthrough: "How do I see the open invoices behind a client in the aging table?",
@@ -567,7 +569,7 @@ const TRANSLATIONS = {
         footer_report_cta: "Enviar / Reportar Problemas",
         about_veloris: `Sobre ${BRAND.name}`,
         about_brand_meaning: "SantoSync es un nombre creado para sugerir coordinación, elegancia y fiabilidad para flujos comerciales modernos.",
-        about_product_copy: "SantoSync es un espacio de cotizaciones y facturas pensado para documentos pulidos y operaciones mejor alineadas.",
+        about_product_copy: "SantoSync es un espacio moderno de documentos y operaciones con mejor manejo entre borradores y guardados, registros más clicables, controles de pago más sólidos, reportes responsivos y recuperación más amplia del espacio compartido.",
         about_developer_copy: `Diseñado y desarrollado por ${BRAND.developerName} a través de ${BRAND.studioName}, bajo ${BRAND.legalName}.`,
         company_profile: "Perfil de Empresa",
         company_profile_copy: "Los datos empresariales guardados aquí aparecen en cotizaciones, facturas y vistas de exportación.",
@@ -785,7 +787,7 @@ const TRANSLATIONS = {
         help_vl_pdf_preview: "Abrir vista previa PDF",
         help_vc_preview_pdf: "Vista PDF",
         help_q_reuse_items: "\u00bfPuedo guardar l\u00edneas de art\u00edculos para reutilizarlas?",
-        help_a_reuse_items: "S\u00ed. En el Paso 3, usa el \u00edcono del carrito junto a <strong>Agregar Art\u00edculo</strong> para abrir tus art\u00edculos guardados. Cualquier art\u00edculo guardado de un documento anterior aparece ah\u00ed y puede agregarse con un clic. La p\u00e1gina de Cat\u00e1logo agrupa todos los art\u00edculos capturados.",
+        help_a_reuse_items: "S\u00ed. Los art\u00edculos reutilizables ahora viven en las herramientas de <strong>Cat\u00e1logo</strong> y <strong>Carrito de Art\u00edculos Pendientes</strong>, fuera del encabezado del Paso 3. Mant\u00e9n la tabla de l\u00edneas enfocada en entrada directa y gestiona los art\u00edculos reutilizables desde el Cat\u00e1logo o la biblioteca del carrito cuando lo necesites. La p\u00e1gina de Cat\u00e1logo sigue agrupando todos los art\u00edculos capturados.",
         help_q_payment_terms: "\u00bfC\u00f3mo agrego o actualizo los t\u00e9rminos de pago?",
         help_a_payment_terms: "Baja hasta el panel de <strong>Notas y T\u00e9rminos del Documento</strong> al final del Paso 3. El campo <strong>Condiciones de Pago</strong> viene prellenado con un m\u00ednimo NET 30 y una nota de l\u00edmite mensual de $10,000 \u2014 actual\u00edzalo seg\u00fan tu acuerdo.",
         help_q_backup: "\u00bfC\u00f3mo respaldo o restauro mis datos?",
@@ -798,7 +800,7 @@ const TRANSLATIONS = {
         help_q_filter_docs: "\u00bfC\u00f3mo filtro documentos por tipo?",
         help_a_filter_docs: "Usa las pesta\u00f1as <strong>Todos / Cotizaciones / Facturas / Estados de Cuenta</strong> debajo de la barra de b\u00fasqueda. Al hacer clic en una pesta\u00f1a se muestran solo los documentos de ese tipo \u2014 sin recargar la p\u00e1gina. La pesta\u00f1a de Estados muestra exportaciones de Estado de Cuenta generadas anteriormente.",
         help_q_mark_paid: "\u00bfC\u00f3mo marco una factura como pagada?",
-        help_a_mark_paid: "En la pantalla principal, abre el men\u00fa de tres puntos de la tarjeta de factura y selecciona el estado de pago correspondiente \u2014 <strong>No Pagada</strong>, <strong>Pendiente</strong> o <strong>Pagada</strong>. Las facturas pagadas se marcan visualmente y quedan excluidas del c\u00e1lculo de saldo pendiente.",
+        help_a_mark_paid: "En la p\u00e1gina de Documentos, abre el men\u00fa de tres puntos de la tarjeta de factura y selecciona el estado de pago correspondiente \u2014 <strong>No Pagada</strong>, <strong>Pendiente</strong> o <strong>Pagada</strong>. Para el seguimiento real de pagos, abre la factura y usa el libro de pagos, o registra el pago desde la p\u00e1gina de Estados. Las facturas pagadas se marcan visualmente y quedan excluidas del c\u00e1lculo de saldo pendiente.",
         help_q_save_client: "\u00bfC\u00f3mo guardo un cliente para reutilizarlo?",
         help_a_save_client: "En el Paso 2 del editor, ingresa el nombre y direcci\u00f3n del cliente y haz clic en <strong>Guardar Cliente</strong>. Los clientes guardados aparecen en el men\u00fa desplegable en documentos futuros. Cambiar de cliente tambi\u00e9n restaura sus campos de consignatario guardados.",
         help_q_statement: "\u00bfQu\u00e9 es un Estado de Cuenta?",
@@ -821,7 +823,7 @@ const TRANSLATIONS = {
         help_q_client_contacts: "\u00bfC\u00f3mo agrego informaci\u00f3n de contacto a un cliente?",
         help_a_client_contacts: "Ve a la p\u00e1gina de <strong>Clientes</strong> en la barra lateral. Haz clic en <strong>Agregar Cliente</strong> o en el \u00edcono de edici\u00f3n de una tarjeta existente. Puedes agregar m\u00faltiples contactos con nombre, correo, tel\u00e9fono y opci\u00f3n de WhatsApp. Haz clic en una tarjeta para expandirla y ver direcci\u00f3n, consignatario y contactos.",
         help_q_record_payment: "\u00bfC\u00f3mo registro un pago en una factura?",
-        help_a_record_payment: "Desde la p\u00e1gina de <strong>Estados</strong>, haz clic en <strong>+ Registrar Pago</strong> en el historial de pagos \u2014 selecciona la factura, ingresa el monto, fecha, m\u00e9todo y referencia. Tambi\u00e9n puedes usar el men\u00fa de tres puntos en la tarjeta de factura y elegir <strong>Agregar Pago</strong>.",
+        help_a_record_payment: "Desde la p\u00e1gina de <strong>Estados</strong>, haz clic en <strong>+ Registrar Pago</strong> en el historial de pagos \u2014 selecciona la factura, ingresa el monto, fecha, m\u00e9todo y referencia. Tambi\u00e9n puedes abrir la factura y agregar o ajustar entradas en el libro de pagos. Los pagos registrados ahora tambi\u00e9n se pueden eliminar desde el historial con un modal de confirmaci\u00f3n.",
         help_q_statement_payment: "\u00bfPuedo marcar una deducci\u00f3n como pago?",
         help_a_statement_payment: "S\u00ed. Abre el editor del estado (l\u00e1piz), busca la deducci\u00f3n y activa <strong>Marcar como pago</strong>. Al guardar, se crea una entrada de pago real en las facturas del estado, aparece en el historial y reduce el saldo pendiente.",
         help_q_aging_clickthrough: "\u00bfC\u00f3mo veo las facturas de un cliente en la tabla de antig\u00fcedad?",
@@ -903,7 +905,7 @@ const TRANSLATIONS = {
         footer_report_cta: "Soumettre / Signaler un Problème",
         about_veloris: `À propos de ${BRAND.name}`,
         about_brand_meaning: "SantoSync est un nom imaginé pour évoquer la coordination, l’élégance et la fiabilité dans les flux commerciaux.",
-        about_product_copy: "SantoSync est un espace devis-factures conçu pour des documents plus soignés et des opérations mieux synchronisées.",
+        about_product_copy: "SantoSync est un espace moderne de documents et d’opérations avec une meilleure distinction entre brouillons et enregistrements, des fiches plus cliquables, des contrôles de paiement renforcés, des rapports plus adaptatifs et une récupération plus complète de l’espace partagé.",
         about_developer_copy: `Conçu et développé par ${BRAND.developerName} via ${BRAND.studioName}, sous ${BRAND.legalName}.`,
         company_profile: "Profil Société",
         company_profile_copy: "Les informations d’identité enregistrées ici apparaissent dans les devis, factures et vues d’export.",
@@ -1119,7 +1121,7 @@ const TRANSLATIONS = {
         help_vl_pdf_preview: "Ouvrir l\u2019aper\u00e7u PDF",
         help_vc_preview_pdf: "Aper\u00e7u PDF",
         help_q_reuse_items: "Puis-je enregistrer des lignes d\u2019articles pour les r\u00e9utiliser\u00a0?",
-        help_a_reuse_items: "Oui. \u00c0 l\u2019\u00e9tape\u00a03, utilisez l\u2019ic\u00f4ne de panier \u00e0 c\u00f4t\u00e9 d\u2019<strong>Ajouter un article</strong> pour ouvrir vos articles enregistr\u00e9s. Tout article sauvegard\u00e9 depuis un document pr\u00e9c\u00e9dent y appara\u00eet et peut \u00eatre ajout\u00e9 en un clic. La page Catalogue regroupe tous les articles captur\u00e9s.",
+        help_a_reuse_items: "Oui. Les articles r\u00e9utilisables se g\u00e8rent maintenant depuis le <strong>Catalogue</strong> et le <strong>Panier d\u2019articles en attente</strong>, en dehors de l\u2019en-t\u00eate de l\u2019\u00e9tape\u00a03. Gardez le tableau des lignes concentr\u00e9 sur la saisie directe, puis g\u00e9rez les articles r\u00e9utilisables depuis le Catalogue ou la biblioth\u00e8que du panier quand n\u00e9cessaire. Le Catalogue continue de regrouper tous les articles captur\u00e9s.",
         help_q_payment_terms: "Comment ajouter ou mettre \u00e0 jour les conditions de paiement\u00a0?",
         help_a_payment_terms: "Faites d\u00e9filer jusqu\u2019au panneau <strong>Notes et conditions du document</strong> en bas de l\u2019\u00e9tape\u00a03. Le champ <strong>Conditions de paiement</strong> est pr\u00e9rempli avec un minimum NET\u00a030 et une note de limite mensuelle de 10\u00a0000\u00a0$ \u2014 mettez-le \u00e0 jour selon votre accord.",
         help_q_backup: "Comment sauvegarder ou restaurer mes donn\u00e9es\u00a0?",
@@ -1132,7 +1134,7 @@ const TRANSLATIONS = {
         help_q_filter_docs: "Comment filtrer les documents par type\u00a0?",
         help_a_filter_docs: "Utilisez les onglets <strong>Tous / Devis / Factures / Relev\u00e9s</strong> sous la barre de recherche. Cliquer sur un onglet n\u2019affiche que les documents de ce type dans la m\u00eame vue, sans rechargement. L\u2019onglet Relev\u00e9s affiche les exportations de relev\u00e9 de compte g\u00e9n\u00e9r\u00e9es pr\u00e9c\u00e9demment.",
         help_q_mark_paid: "Comment marquer une facture comme pay\u00e9e\u00a0?",
-        help_a_mark_paid: "Sur l\u2019\u00e9cran d\u2019accueil, ouvrez le menu \u00e0 trois points de la carte de facture et s\u00e9lectionnez le statut de paiement appropri\u00e9 \u2014 <strong>Impay\u00e9e</strong>, <strong>En attente</strong> ou <strong>Pay\u00e9e</strong>. Les factures pay\u00e9es sont signal\u00e9es visuellement et exclues des calculs de solde impay\u00e9.",
+        help_a_mark_paid: "Sur la page Documents, ouvrez le menu \u00e0 trois points de la carte de facture et s\u00e9lectionnez le statut de paiement appropri\u00e9 \u2014 <strong>Impay\u00e9e</strong>, <strong>En attente</strong> ou <strong>Pay\u00e9e</strong>. Pour un vrai suivi des paiements, ouvrez la facture et utilisez le registre des paiements, ou enregistrez un paiement depuis la page Relev\u00e9s. Les factures pay\u00e9es sont signal\u00e9es visuellement et exclues des calculs de solde impay\u00e9.",
         help_q_save_client: "Comment enregistrer un client pour le r\u00e9utiliser\u00a0?",
         help_a_save_client: "À l\u2019\u00e9tape\u00a02 de l\u2019\u00e9diteur, entrez le nom et l\u2019adresse du client, puis cliquez sur <strong>Enregistrer le client</strong>. Les clients enregistr\u00e9s apparaissent dans le menu d\u00e9roulant pour les futurs documents. Changer de client restaure \u00e9galement ses champs de destinataire enregistr\u00e9s.",
         help_q_statement: "Qu\u2019est-ce qu\u2019un relev\u00e9 de compte\u00a0?",
@@ -1155,7 +1157,7 @@ const TRANSLATIONS = {
         help_q_client_contacts: "Comment ajouter des contacts à un client\u00a0?",
         help_a_client_contacts: "Allez sur la page <strong>Clients</strong> dans la barre lat\u00e9rale. Cliquez sur <strong>Ajouter un client</strong> ou sur l\u2019ic\u00f4ne de modification d\u2019une fiche existante. Ajoutez autant de contacts que n\u00e9cessaire avec nom, e-mail, t\u00e9l\u00e9phone et option WhatsApp. Cliquez sur une fiche pour d\u00e9velopper les d\u00e9tails.",
         help_q_record_payment: "Comment enregistrer un paiement sur une facture\u00a0?",
-        help_a_record_payment: "Depuis la page <strong>Relevés</strong>, cliquez sur <strong>+ Enregistrer paiement</strong> dans l\u2019historique — s\u00e9lectionnez la facture, saisissez le montant, la date, le mode et la r\u00e9f\u00e9rence. Vous pouvez aussi utiliser le menu à trois points sur la carte de facture.",
+        help_a_record_payment: "Depuis la page <strong>Relevés</strong>, cliquez sur <strong>+ Enregistrer paiement</strong> dans l\u2019historique — s\u00e9lectionnez la facture, saisissez le montant, la date, le mode et la r\u00e9f\u00e9rence. Vous pouvez aussi ouvrir la facture et ajouter ou ajuster les entr\u00e9es dans le registre des paiements. Les paiements enregistr\u00e9s peuvent d\u00e9sormais aussi \u00eatre supprim\u00e9s depuis l\u2019historique avec une modale de confirmation.",
         help_q_statement_payment: "Puis-je marquer une d\u00e9duction comme paiement\u00a0?",
         help_a_statement_payment: "Oui. Ouvrez l\u2019\u00e9diteur du relevé (crayon), trouvez la d\u00e9duction et cochez <strong>Marquer comme paiement</strong>. En enregistrant, une entr\u00e9e de paiement r\u00e9elle est cr\u00e9\u00e9e sur les factures correspondantes.",
         help_q_aging_clickthrough: "Comment voir les factures d\u2019un client dans le tableau de v\u00e9tust\u00e9\u00a0?",
@@ -1430,8 +1432,10 @@ function applyTranslations() {
     }
     elements.toggleSavedItemsFormBtn.setAttribute("aria-label", t("add_cart_item"));
     elements.toggleSavedItemsFormBtn.setAttribute("title", t("add_cart_item"));
-    elements.openSavedItemsBtn.setAttribute("aria-label", t("open_pending_cart"));
-    elements.openSavedItemsBtn.setAttribute("title", t("open_pending_cart"));
+    if (elements.openSavedItemsBtn) {
+        elements.openSavedItemsBtn.setAttribute("aria-label", t("open_pending_cart"));
+        elements.openSavedItemsBtn.setAttribute("title", t("open_pending_cart"));
+    }
     setElementText("#aboutModalTitle", t("about_veloris"));
     setElementText("#aboutBrandName", BRAND.name);
     setElementText("#aboutBrandMeaning", t("about_brand_meaning"));
@@ -1650,6 +1654,11 @@ function cacheElements() {
     elements.saveStatementEditBtn = document.getElementById("saveStatementEditBtn");
     elements.companyProfileModal = document.getElementById("companyProfileModal");
     elements.savedItemsModal = document.getElementById("savedItemsModal");
+    elements.paymentDeleteConfirmModal = document.getElementById("paymentDeleteConfirmModal");
+    elements.closePaymentDeleteConfirmModalBtn = document.getElementById("closePaymentDeleteConfirmModalBtn");
+    elements.cancelPaymentDeleteConfirmBtn = document.getElementById("cancelPaymentDeleteConfirmBtn");
+    elements.confirmPaymentDeleteConfirmBtn = document.getElementById("confirmPaymentDeleteConfirmBtn");
+    elements.paymentDeleteConfirmSummary = document.getElementById("paymentDeleteConfirmSummary");
     elements.savedItemCreateModal = document.getElementById("savedItemCreateModal");
     elements.savedItemImageModal = document.getElementById("savedItemImageModal");
     elements.catalogPage = document.getElementById("catalogPage");
@@ -1918,7 +1927,12 @@ function bindEvents() {
     elements.selectAllExportsToggle.addEventListener("change", handleSelectAllExportsToggle);
     elements.exportSelectedJsonBtn.addEventListener("click", exportSelectedDocuments);
     elements.openIssueReportBtn.addEventListener("click", openIssueReportModal);
-    elements.openSavedItemsBtn.addEventListener("click", openSavedItemsModal);
+    elements.openSavedItemsBtn?.addEventListener("click", openSavedItemsModal);
+    elements.closePaymentDeleteConfirmModalBtn?.addEventListener("click", closePaymentDeleteConfirmModal);
+    elements.cancelPaymentDeleteConfirmBtn?.addEventListener("click", closePaymentDeleteConfirmModal);
+    elements.confirmPaymentDeleteConfirmBtn?.addEventListener("click", () => {
+        void confirmPendingPaymentDelete();
+    });
     elements.openAboutBtn.addEventListener("click", openAboutModal);
     elements.closeIssueReportModalBtn.addEventListener("click", closeIssueReportModal);
     elements.closeCompanyProfileModalBtn.addEventListener("click", closeCompanyProfileModal);
@@ -4314,6 +4328,12 @@ function handleGlobalClick(event) {
             if (statementId) {
                 setActivePage("reports");
                 openStatementEditModal(statementId);
+            }
+        } else if (action === "delete-payment") {
+            const invoiceId = phistAction.dataset.invoiceId;
+            const paymentId = phistAction.dataset.paymentId;
+            if (invoiceId && paymentId) {
+                requestLoggedPaymentDelete(invoiceId, paymentId);
             }
         }
         return;
@@ -7437,6 +7457,153 @@ function getInvoiceDaysPastDue(invoice, referenceDate = new Date()) {
     return diffMs > 0 ? Math.floor(diffMs / 86400000) : 0;
 }
 
+function buildPaymentDeleteSummaryMarkup(context) {
+    if (!context) {
+        return "";
+    }
+
+    const amountText = formatCurrency(Number(context.amount || 0));
+    const invoiceLabel = context.invoiceNumber ? `Invoice ${context.invoiceNumber}` : "Invoice payment";
+    const dateLabel = formatDisplayDate(context.date) || context.date || "Date unavailable";
+    const methodLabel = context.method || "Payment record";
+
+    return `
+        <strong>${escapeHtml(amountText)} • ${escapeHtml(methodLabel)}</strong>
+        <span>${escapeHtml(`${invoiceLabel}${context.clientName ? ` • ${context.clientName}` : ""}`)}</span>
+        <span>${escapeHtml(`${dateLabel}${context.reference ? ` • Ref ${context.reference}` : ""}`)}</span>
+    `;
+}
+
+function openPaymentDeleteConfirmModal(context) {
+    if (!elements.paymentDeleteConfirmModal || !elements.paymentDeleteConfirmSummary) {
+        return;
+    }
+
+    state.pendingPaymentDeleteContext = context;
+    elements.paymentDeleteConfirmSummary.innerHTML = buildPaymentDeleteSummaryMarkup(context);
+    if (elements.confirmPaymentDeleteConfirmBtn) {
+        elements.confirmPaymentDeleteConfirmBtn.disabled = false;
+    }
+    setModalState(elements.paymentDeleteConfirmModal, true);
+}
+
+function closePaymentDeleteConfirmModal() {
+    state.pendingPaymentDeleteContext = null;
+    if (elements.paymentDeleteConfirmSummary) {
+        elements.paymentDeleteConfirmSummary.innerHTML = "";
+    }
+    if (elements.confirmPaymentDeleteConfirmBtn) {
+        elements.confirmPaymentDeleteConfirmBtn.disabled = false;
+    }
+    setModalState(elements.paymentDeleteConfirmModal, false);
+}
+
+function requestEditorPaymentDelete(paymentEntryId) {
+    const payment = normalizeInvoicePayments(readPaymentEntriesFromEditor())
+        .find(entry => String(entry.id) === String(paymentEntryId));
+    if (!payment) {
+        return;
+    }
+
+    openPaymentDeleteConfirmModal({
+        mode: "editor",
+        paymentEntryId: String(paymentEntryId),
+        invoiceNumber: elements.refNumber?.value?.trim() || "",
+        clientName: elements.clientName?.value?.trim() || "",
+        amount: payment.amount,
+        date: payment.date,
+        method: payment.method,
+        reference: payment.reference
+    });
+}
+
+function requestLoggedPaymentDelete(invoiceId, paymentId) {
+    const invoice = getDocumentById(invoiceId);
+    if (!invoice || invoice.type !== "invoice") {
+        window.alert("This payment could not be found.");
+        return;
+    }
+
+    const payment = getInvoicePayments(invoice).find(entry => String(entry.id) === String(paymentId));
+    if (!payment) {
+        window.alert("This payment could not be found.");
+        return;
+    }
+
+    openPaymentDeleteConfirmModal({
+        mode: "logged",
+        invoiceId: String(invoice.id),
+        paymentId: String(payment.id),
+        invoiceNumber: invoice.refNumber || "",
+        clientName: invoice.clientName || "",
+        amount: payment.amount,
+        date: payment.date,
+        method: payment.method,
+        reference: payment.reference
+    });
+}
+
+async function confirmPendingPaymentDelete() {
+    const context = state.pendingPaymentDeleteContext;
+    if (!context) {
+        return;
+    }
+
+    if (elements.confirmPaymentDeleteConfirmBtn) {
+        elements.confirmPaymentDeleteConfirmBtn.disabled = true;
+    }
+
+    if (context.mode === "editor") {
+        const card = elements.paymentLedgerList?.querySelector(`[data-payment-entry-id="${CSS.escape(String(context.paymentEntryId))}"]`);
+        card?.remove();
+        if (elements.paymentLedgerList && !elements.paymentLedgerList.querySelector("[data-payment-entry-id]")) {
+            elements.paymentLedgerList.innerHTML = `<p class="payment-ledger-empty">No payments recorded yet.</p>`;
+        }
+        syncPaymentLedgerUi();
+        closePaymentDeleteConfirmModal();
+        return;
+    }
+
+    if (context.mode === "logged") {
+        const invoice = getDocumentById(context.invoiceId);
+        if (!invoice || invoice.type !== "invoice") {
+            closePaymentDeleteConfirmModal();
+            window.alert("This payment could not be found.");
+            return;
+        }
+
+        const nextPayments = getInvoicePayments(invoice).filter(payment => String(payment.id) !== String(context.paymentId));
+        const nextDocuments = state.documents.map(doc => (
+            isSameDocumentId(doc.id, invoice.id)
+                ? {
+                    ...doc,
+                    payments: nextPayments,
+                    paymentStatus: getInvoiceDerivedPaymentStatus({ ...doc, payments: nextPayments })
+                }
+                : doc
+        ));
+
+        try {
+            await saveDocumentsToServer(nextDocuments);
+            renderDocuments();
+            renderStatementsPage();
+
+            if (state.editingDocumentId && isSameDocumentId(state.editingDocumentId, invoice.id)) {
+                renderPaymentLedger(nextPayments);
+                syncPaymentLedgerUi();
+            }
+
+            setImportStatus(`Deleted payment ${formatCurrency(context.amount || 0)} from ${invoice.refNumber || "invoice"}.`);
+            closePaymentDeleteConfirmModal();
+        } catch (error) {
+            if (elements.confirmPaymentDeleteConfirmBtn) {
+                elements.confirmPaymentDeleteConfirmBtn.disabled = false;
+            }
+            window.alert(`Unable to delete this payment.\n\n${error.message}`);
+        }
+    }
+}
+
 function getPaymentHistoryEntries() {
     return state.documents
         .filter(doc => doc.type === "invoice")
@@ -7592,6 +7759,7 @@ function renderPaymentHistoryPanel() {
                     <div class="phist-nav-row">
                         <button class="btn btn-secondary phist-nav-btn" type="button" data-phist-action="open-invoice" data-invoice-id="${escapeHtml(String(entry.invoiceId))}">Open Invoice ${escapeHtml(entry.invoiceNumber)}</button>
                         ${linkedStatement ? `<button class="btn btn-secondary phist-nav-btn" type="button" data-phist-action="open-statement" data-statement-id="${escapeHtml(linkedStatement.id)}">View Statement ${escapeHtml(linkedStatement.referenceNumber || "")}</button>` : ""}
+                        <button class="btn phist-nav-btn is-danger" type="button" data-phist-action="delete-payment" data-invoice-id="${escapeHtml(String(entry.invoiceId))}" data-payment-id="${escapeHtml(String(entry.id || ""))}">Delete Payment</button>
                     </div>
                 </div>
             </div>`;
@@ -7797,11 +7965,7 @@ function handlePaymentLedgerListClick(event) {
         return;
     }
 
-    removeButton.closest("[data-payment-entry-id]")?.remove();
-    if (!elements.paymentLedgerList.querySelector("[data-payment-entry-id]")) {
-        elements.paymentLedgerList.innerHTML = `<p class="payment-ledger-empty">No payments recorded yet.</p>`;
-    }
-    syncPaymentLedgerUi();
+    requestEditorPaymentDelete(removeButton.dataset.removePaymentEntry);
 }
 
 function getPaymentStatusLabel(status) {

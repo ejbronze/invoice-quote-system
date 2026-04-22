@@ -2,7 +2,19 @@
 
 SantoSync is a premium quote-and-invoice workspace for modern trade teams. It combines document creation, client history, per-user preferences, admin tools, and branded export output in one polished operational dashboard.
 
-Version: `1.5.0` — Last updated: April 21, 2026
+Version: `1.6.0` — Last updated: April 22, 2026
+
+## Version 1.6.0 Summary
+
+This release focuses on workflow clarity, payment controls, responsive layout cleanup, and documentation accuracy.
+
+**Statements layout fit and rendering polish:** The Statements page now keeps its content inside the working column more reliably on laptop-sized screens. The statement export cards wrap their metric and action areas earlier, and the reports layout uses a dedicated width so Payment History, Client Aging, and saved statement rows stay visually contained instead of pushing past the viewport.
+
+**Line-item editor cleanup:** The cart trigger was removed from the quote and invoice line-items step. The table-style editor now stays focused on direct item entry with a single clear `Add Item` action, which avoids the glitchy cart interaction and reduces visual noise in the most frequently used part of the document flow.
+
+**Safer payment deletion:** Logged payments can now be removed intentionally from the Statements page through a dedicated `Delete Payment` action. Deleting either a logged payment or an in-editor payment entry now opens a confirmation modal first, then refreshes balances and reporting immediately after removal so users are not left wondering whether the payment actually changed.
+
+**Help, FAQ, and about-copy alignment:** The in-app Help & FAQ, the About SantoSync copy, and this README now reflect the current behavior: documents save cleanly before print, the document list is more clickable, payment history has stronger controls, backups are broader, and the old Step 3 cart button is no longer part of the quote/invoice editor flow.
 
 ## Version 1.5.0 Summary
 
@@ -68,7 +80,7 @@ Document cards now use the same icon-button system introduced for statement rows
 
 The Statements tab has been restructured to render inline within the main dashboard section. The filter tabs (All / Quotes / Invoices / Statements) remain visible at all times, so switching between document types feels like a true tab panel rather than a page transition. The separate "Back to Documents" button has been removed — any other tab takes you back naturally.
 
-The Help & FAQ modal has been fully upgraded: it now opens with a live search bar that filters topics as you type, a quick-jump index of pill-style section links, and inline visual demonstrations of the actual action buttons (rendered using the app's own CSS, so they look exactly as they do in the workspace). New help topics cover the Document Cards section, the PDF preview workflow, the Statements tab, and data backup/restore.
+The Help & FAQ modal has been fully upgraded: it now opens with a live search bar that filters topics as you type, a quick-jump index of pill-style section links, and inline visual demonstrations of the actual action buttons (rendered using the app's own CSS, so they look exactly as they do in the workspace). Topics now reflect the current sidebar navigation, the save-before-print workflow, broader backup and recovery options, the spreadsheet-style line-item editor, and the new payment deletion safeguards.
 
 ## Version 1.0.0 Summary
 
@@ -206,6 +218,7 @@ When the app is online with the API available, user accounts are stored in the s
 - Timestamped server-side dataset snapshots for recovery
 - CSV template export and CSV import
 - Calculator inside the document editor
+- Logged payment deletion with a confirmation modal from the Statements payment history
 - Compact dashboard with a tightened hero section and trimmed snapshot KPI grid (Documents, Quotes, Pipeline Value)
 - Single `+ New` button on the dashboard and Documents page header — opens a quick-action dropdown with Quote, Invoice, and Statement options
 - Document cards use stronger quote/invoice color separation, click-to-open behavior, and a visible `Draft` badge only when the document is still an autosaved draft
@@ -221,7 +234,7 @@ When the app is online with the API available, user accounts are stored in the s
 - Mobile-tuned modal sizing for cart, issue reporting, and document preview/export flows
 - Branded splash, auth, session-loading, about, and dashboard identity
 - Branded print/PDF preview output with SantoSync company identity
-- Help & FAQ modal with live keyword search, a quick-jump section index, and inline visual button demos rendered using the app's own CSS; all topics reflect the current sidebar-based navigation (no references to the old top toolbar)
+- Help & FAQ modal with live keyword search, a quick-jump section index, and inline visual button demos rendered using the app's own CSS; all topics reflect the current sidebar-based navigation and current line-item / payment workflows
 - The main search bar indexes both documents and statements — searching by client name, vendor, reference number, or date filters whichever tab is active with a single query
 
 ## Document Output Rules

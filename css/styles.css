@@ -1089,6 +1089,41 @@ body::after {
     max-width: 700px;
 }
 
+.payment-delete-confirm-content {
+    max-width: 540px;
+}
+
+.payment-delete-confirm-summary {
+    display: grid;
+    gap: 0.35rem;
+    margin-top: 0.9rem;
+    padding: 0.95rem 1rem;
+    border-radius: 16px;
+    border: 1px solid rgba(248, 113, 113, 0.22);
+    background: linear-gradient(180deg, rgba(255, 245, 245, 0.96), rgba(255, 250, 250, 0.98));
+}
+
+.payment-delete-confirm-summary strong {
+    color: #8f1d1d;
+    font-size: 0.98rem;
+}
+
+.payment-delete-confirm-summary span {
+    color: #6f4151;
+    font-size: 0.84rem;
+}
+
+.payment-delete-confirm-warning {
+    margin: 0.9rem 0 0;
+    color: #8f1d1d;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.payment-delete-confirm-actions {
+    justify-content: flex-end;
+}
+
 .saved-item-image-modal-stage {
     display: grid;
     place-items: center;
@@ -4499,6 +4534,21 @@ body::after {
     font-size: 0.8rem;
     padding: 0.38rem 0.72rem;
     border-radius: 10px;
+}
+
+.phist-nav-btn.is-danger,
+.payment-delete-confirm-btn {
+    border-color: rgba(185, 28, 28, 0.18);
+    background: linear-gradient(135deg, rgba(185, 28, 28, 0.92), rgba(220, 38, 38, 0.88));
+    color: #fff;
+    box-shadow: 0 12px 24px rgba(185, 28, 28, 0.18);
+}
+
+.phist-nav-btn.is-danger:hover,
+.payment-delete-confirm-btn:hover {
+    border-color: rgba(153, 27, 27, 0.2);
+    background: linear-gradient(135deg, rgba(153, 27, 27, 0.96), rgba(220, 38, 38, 0.92));
+    color: #fff;
 }
 
 .phist-empty {
@@ -10475,9 +10525,13 @@ body {
 .documents-grid,
 .clients-page-shell,
 .catalog-grid,
-.reports-layout,
 .settings-page > .settings-grid {
     width: min(100%, 1240px);
+    margin-inline: auto;
+}
+
+.reports-layout {
+    width: min(100%, 1120px);
     margin-inline: auto;
 }
 
@@ -10879,7 +10933,33 @@ body {
 }
 
 .reports-table-wrap {
+    max-width: 100%;
+    min-width: 0;
     overflow-x: auto;
+}
+
+@media (max-width: 1360px) {
+    .statement-export-row {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .statement-export-copy {
+        flex-basis: min(100%, 560px);
+    }
+
+    .statement-export-metrics {
+        width: 100%;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-column: 1 / -1;
+        grid-row: auto;
+    }
+
+    .statement-export-actions-bar {
+        width: 100%;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
 }
 
 .reports-table {

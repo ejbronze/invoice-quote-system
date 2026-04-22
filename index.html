@@ -702,7 +702,7 @@
                     </div>
                 </div>
                 <div class="about-copy">
-                    <p id="aboutProductCopy">SantoSync is a premium document workspace with clearer draft-versus-saved flow, click-to-open records, stronger payment reporting, and fuller backup recovery from first draft to final export.</p>
+                    <p id="aboutProductCopy">SantoSync is a premium document and operations workspace with cleaner save-versus-draft handling, more clickable records, stronger payment controls, responsive reporting layouts, and broader backup recovery across the shared workspace.</p>
                     <p id="aboutDeveloperCopy">Designed and developed by Edwin Jaquez through Palmchat Innovations Lab under Palmchat Innovations LLC NYC, with a focus on premium operational tools for modern trade and logistics teams.</p>
                 </div>
             </div>
@@ -785,7 +785,7 @@
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_reuse_items">Can I save line items to reuse later?</summary>
-                        <p data-i18n-html="help_a_reuse_items">Yes. In Step 3, use the cart icon next to <strong>Add Item</strong> to open your saved items. Any item saved from a previous document appears there and can be added with one click. The Catalog page aggregates all captured items across documents.</p>
+                        <p data-i18n-html="help_a_reuse_items">Yes. Reusable items now live in the <strong>Catalog</strong> and <strong>Pending Items Cart</strong> tools outside the Step 3 editor header. Keep the quote or invoice line-item table focused on direct entry, then manage reusable items from the Catalog or cart library when needed. The Catalog page still aggregates all captured items across documents.</p>
                     </details>
                     <details class="help-item">
                         <summary>What are Internal Notes and how are they different from regular Notes?</summary>
@@ -797,7 +797,7 @@
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_backup">How do I back up or restore my data?</summary>
-                        <p data-i18n-html="help_a_backup">Open <strong>Settings</strong> from the sidebar and use the <strong>JSON Backup</strong> option to export a full snapshot of your documents and clients. Use <strong>JSON Restore</strong> to import a previously saved backup. CSV import is also available for bulk document creation.</p>
+                        <p data-i18n-html="help_a_backup">Open <strong>Settings</strong> from the sidebar and use the <strong>JSON Backup</strong> option to export a full workspace snapshot, including documents, clients, saved items, statements, and admin data. Use <strong>JSON Restore</strong> to import a previously saved backup. The server also keeps timestamped recovery snapshots, and CSV import remains available for bulk document creation.</p>
                     </details>
                 </section>
 
@@ -832,7 +832,7 @@
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_mark_paid">How do I mark an invoice as paid?</summary>
-                        <p data-i18n-html="help_a_mark_paid">On the home screen, open the invoice card's three-dot menu and select the appropriate payment status — <strong>Unpaid</strong>, <strong>Pending</strong>, or <strong>Paid</strong>. Paid invoices are visually flagged and excluded from outstanding balance calculations in Invoice Reports.</p>
+                        <p data-i18n-html="help_a_mark_paid">On the Documents page, open the invoice card's three-dot menu and select the appropriate payment status — <strong>Unpaid</strong>, <strong>Pending</strong>, or <strong>Paid</strong>. For real payment tracking, open the invoice and use the payment ledger, or log a payment from the Statements page. Paid invoices are visually flagged and excluded from outstanding balance calculations in Invoice Reports.</p>
                     </details>
                 </section>
 
@@ -870,6 +870,10 @@
                                 <span class="help-visual-caption" data-i18n="help_vc_delete">Delete</span>
                             </span>
                         </div>
+                    </details>
+                    <details class="help-item">
+                        <summary>How do I delete a logged payment?</summary>
+                        <p>Go to the <strong>Statements</strong> page and expand the payment inside <strong>Payment History</strong>. Use <strong>Delete Payment</strong> to remove it. SantoSync now opens a confirmation modal before deleting logged payments, and the invoice balance plus reporting totals refresh immediately after the removal. If you are still editing an invoice, removing a payment from the invoice ledger uses the same confirmation step.</p>
                     </details>
                 </section>
 
@@ -1448,14 +1452,6 @@
                                 <div class="line-items-header">
                                     <label>Line Items</label>
                                     <div class="line-items-header-actions">
-                                        <button type="button" class="line-items-icon-btn" id="openSavedItemsBtn" aria-label="Open pending items cart" title="Open pending items cart">
-                                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                                <path d="M3.5 5h2.1l1.5 8.2a1.6 1.6 0 0 0 1.6 1.3h7.9a1.6 1.6 0 0 0 1.6-1.2l1.2-5.6H7.1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                                <circle cx="10" cy="18.2" r="1.4" fill="currentColor"/>
-                                                <circle cx="17.2" cy="18.2" r="1.4" fill="currentColor"/>
-                                            </svg>
-                                            <span class="line-items-icon-badge" id="openSavedItemsInlineCount">0</span>
-                                        </button>
                                         <button type="button" class="btn btn-secondary" id="addItemBtn">Add Item</button>
                                     </div>
                                 </div>
@@ -1674,6 +1670,24 @@
                         <p id="savedItemsLibraryCopy">Add an item to the open document, or remove it from the cart if it is no longer pending.</p>
                     </div>
                     <div class="client-management-list saved-items-grid" id="savedItemsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal nested-modal" id="paymentDeleteConfirmModal" aria-hidden="true" hidden>
+        <div class="modal-content settings-modal-content nested-modal-content payment-delete-confirm-content">
+            <div class="modal-header">
+                <h3 id="paymentDeleteConfirmTitle">Delete Logged Payment</h3>
+                <button class="close-btn" id="closePaymentDeleteConfirmModalBtn" type="button" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body settings-modal-body">
+                <p class="settings-copy" id="paymentDeleteConfirmCopy">This will permanently remove the selected payment from the invoice history and update the balance.</p>
+                <div class="payment-delete-confirm-summary" id="paymentDeleteConfirmSummary"></div>
+                <p class="payment-delete-confirm-warning">This action cannot be undone from the payment history screen.</p>
+                <div class="settings-actions payment-delete-confirm-actions">
+                    <button class="btn btn-secondary" id="cancelPaymentDeleteConfirmBtn" type="button">Cancel</button>
+                    <button class="btn btn-primary payment-delete-confirm-btn" id="confirmPaymentDeleteConfirmBtn" type="button">Delete Payment</button>
                 </div>
             </div>
         </div>
