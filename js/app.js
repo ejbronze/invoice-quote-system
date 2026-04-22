@@ -3423,6 +3423,11 @@ function setActivePage(page) {
     const validPages = ["overview", "documents", "clients", "catalog", "reports", "settings"];
     state.activePage = validPages.includes(page) ? page : "overview";
     applyPageState();
+    if (state.activePage === "reports") {
+        renderStatementsPage();
+    } else if (state.activePage === "catalog") {
+        renderCatalog();
+    }
     syncPageNavigation();
     closeTopbarMenu();
     closeNewMenu();
