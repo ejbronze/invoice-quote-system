@@ -3730,6 +3730,25 @@ function renderStatementsPage() {
 
     elements.statementExportsList.innerHTML = filtered.map(statement => {
         const accentClass = `merchant-${merchantColorIndex(statement.clientName || statement.payload?.clientName || "")}`;
+
+        const sourceIds = new Set(
+            (Array.isArray(statement.payload?.sourceInvoiceIds) ? statement.payload.sourceInvoiceIds : []).map(String)
+        );
+        const statementInvoiceRefs = new Set(
+            ((statement.payload?.rows) || [])
+                .map(r => String(r.invoiceNumber || "").trim().toLowerCase())
+                .filter(Boolean)
+        );
+        const linkedInvoices = state.documents.filter(doc =>
+            doc.type === "invoice" && (
+                sourceIds.has(String(doc.id)) ||
+                (sourceIds.size === 0 && statementInvoiceRefs.has(String(doc.refNumber || "").trim().toLowerCase()))
+            )
+        );
+        const liveOutstanding = linkedInvoices.reduce((sum, doc) => sum + getInvoiceOutstandingBalance(doc), 0);
+        const liveOutstandingFormatted = formatCurrency(liveOutstanding);
+        const isPaid = liveOutstanding <= 0;
+
         return `
         <article class="client-row statement-export-row ${accentClass}">
             <div class="client-row-copy statement-export-copy">
@@ -3748,13 +3767,17 @@ function renderStatementsPage() {
                         <span>Total</span>
                         <strong>${escapeHtml(statement.totalSelectedFormatted)}</strong>
                     </div>
-                    <div class="statement-export-metric is-grand">
-                        <span>Grand Total</span>
-                        <strong>${escapeHtml(statement.totalOutstandingFormatted)}</strong>
+                    <div class="statement-export-metric is-grand${isPaid ? " is-paid" : ""}">
+                        <span>Outstanding</span>
+                        <strong>${escapeHtml(liveOutstandingFormatted)}</strong>
                     </div>
                 </div>
             </div>
             <div class="client-row-actions statement-export-actions-bar">
+                ${!isPaid ? `<button class="statement-action-btn is-markpaid" type="button" data-statement-action="mark-paid" data-statement-id="${escapeHtml(statement.id)}" aria-label="Mark all invoices as paid" title="Mark all linked invoices as paid">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span class="visually-hidden">Mark as Paid</span>
+                </button>` : ""}
                 <button class="statement-action-btn is-open" type="button" data-statement-action="open" data-statement-id="${escapeHtml(statement.id)}" aria-label="${escapeHtml(t("open_statement"))}" title="${escapeHtml(t("open_statement"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>
                     <span class="visually-hidden">${escapeHtml(t("open_statement"))}</span>
@@ -3802,6 +3825,11 @@ function handleStatementExportsListClick(event) {
                 setImportStatus(error.message || "Unable to export the Excel statement report.", true);
                 window.alert(error.message || "Unable to export the Excel statement report.");
             });
+        return;
+    }
+
+    if (button.dataset.statementAction === "mark-paid") {
+        void markStatementAsPaid(statement.id);
         return;
     }
 
@@ -4256,6 +4284,38 @@ function handleGlobalClick(event) {
     const snapshotBtn = event.target.closest("[data-snapshot-action]");
     if (snapshotBtn) {
         void handleSnapshotAction(snapshotBtn);
+        return;
+    }
+
+    const phistToggle = event.target.closest("[data-phist-toggle]");
+    if (phistToggle) {
+        const idx = phistToggle.dataset.phistToggle;
+        const detail = document.getElementById(`phist-detail-${idx}`);
+        if (detail) {
+            const isOpen = !detail.hidden;
+            detail.hidden = isOpen;
+            phistToggle.setAttribute("aria-expanded", String(!isOpen));
+            phistToggle.closest(".phist-row")?.classList.toggle("is-open", !isOpen);
+        }
+        return;
+    }
+
+    const phistAction = event.target.closest("[data-phist-action]");
+    if (phistAction) {
+        const action = phistAction.dataset.phistAction;
+        if (action === "open-invoice") {
+            const invoiceId = phistAction.dataset.invoiceId;
+            if (invoiceId) {
+                setActivePage("documents");
+                editDocument(invoiceId);
+            }
+        } else if (action === "open-statement") {
+            const statementId = phistAction.dataset.statementId;
+            if (statementId) {
+                setActivePage("reports");
+                openStatementEditModal(statementId);
+            }
+        }
         return;
     }
 
@@ -7512,18 +7572,31 @@ function renderPaymentHistoryPanel() {
     }
 
     elements.paymentHistoryTableBody.innerHTML = entries.length
-        ? entries.map(entry => `
-            <tr>
-                <td>${escapeHtml(formatDisplayDate(entry.date) || entry.date || "—")}</td>
-                <td>${escapeHtml(entry.clientName)}</td>
-                <td>${escapeHtml(entry.invoiceNumber)}</td>
-                <td>${escapeHtml(entry.method || "—")}</td>
-                <td>${escapeHtml(entry.reference || "—")}</td>
-                <td class="reports-muted-cell">${escapeHtml(entry.notes || "—")}</td>
-                <td>${escapeHtml(formatCurrency(entry.amount || 0))}</td>
-            </tr>
-        `).join("")
-        : `<tr><td colspan="7">No payments recorded yet.</td></tr>`;
+        ? entries.map((entry, idx) => {
+            const linkedStatement = getStatementForInvoiceId(entry.invoiceId);
+            return `
+            <div class="phist-row" data-phist-index="${idx}">
+                <button class="phist-toggle" type="button" data-phist-toggle="${idx}" aria-expanded="false">
+                    <span class="phist-date">${escapeHtml(formatDisplayDate(entry.date) || entry.date || "—")}</span>
+                    <span class="phist-client">${escapeHtml(entry.clientName)}</span>
+                    <span class="phist-invoice">${escapeHtml(entry.invoiceNumber)}</span>
+                    <span class="phist-method">${escapeHtml(entry.method || "—")}</span>
+                    <span class="phist-amount">${escapeHtml(formatCurrency(entry.amount || 0))}</span>
+                    <svg class="phist-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="phist-detail" id="phist-detail-${idx}" hidden>
+                    <div class="phist-meta">
+                        ${entry.reference ? `<span><strong>Ref:</strong> ${escapeHtml(entry.reference)}</span>` : ""}
+                        ${entry.notes ? `<span><strong>Notes:</strong> ${escapeHtml(entry.notes)}</span>` : ""}
+                    </div>
+                    <div class="phist-nav-row">
+                        <button class="btn btn-secondary phist-nav-btn" type="button" data-phist-action="open-invoice" data-invoice-id="${escapeHtml(String(entry.invoiceId))}">Open Invoice ${escapeHtml(entry.invoiceNumber)}</button>
+                        ${linkedStatement ? `<button class="btn btn-secondary phist-nav-btn" type="button" data-phist-action="open-statement" data-statement-id="${escapeHtml(linkedStatement.id)}">View Statement ${escapeHtml(linkedStatement.referenceNumber || "")}</button>` : ""}
+                    </div>
+                </div>
+            </div>`;
+        }).join("")
+        : `<div class="phist-empty">No payments recorded yet.</div>`;
 }
 
 function renderClientAgingPanel() {
@@ -11194,13 +11267,18 @@ function handleDocumentCardKeydown(event) {
     editDocument(card.dataset.viewId);
 }
 
+const STATUS_PAYMENT_PREFIX = "status-paid-";
+
 async function updateDocumentPaymentStatus(id, status) {
     const doc = getDocumentById(id);
     if (!doc || doc.type !== "invoice") {
         return;
     }
 
-    if (getInvoicePayments(doc).length) {
+    const allPayments = getInvoicePayments(doc);
+    const realPayments = allPayments.filter(p => !String(p.id).startsWith(STATUS_PAYMENT_PREFIX));
+
+    if (realPayments.length) {
         state.openDocumentMenuId = null;
         renderDocuments();
         window.alert("This invoice already has tracked payments. Update the payment ledger instead of forcing the status.");
@@ -11214,18 +11292,112 @@ async function updateDocumentPaymentStatus(id, status) {
         return;
     }
 
-    const nextDocuments = state.documents.map(entry => (
-        isSameDocumentId(entry.id, id)
-            ? { ...entry, paymentStatus: nextStatus }
-            : entry
-    ));
+    let nextPayments = [];
+    if (nextStatus === "paid" && Number(doc.total || 0) > 0) {
+        nextPayments = normalizeInvoicePayments([{
+            id: `${STATUS_PAYMENT_PREFIX}${Date.now()}`,
+            date: new Date().toISOString().slice(0, 10),
+            amount: Number(doc.total),
+            method: "Marked as Paid",
+            reference: "",
+            notes: "Full payment applied via Mark as Paid",
+            appliedTo: "invoice",
+            createdAt: new Date().toISOString()
+        }]);
+    }
+
+    const updatedDoc = {
+        ...doc,
+        paymentStatus: nextStatus,
+        payments: nextPayments
+    };
+
+    const nextDocuments = state.documents.map(entry =>
+        isSameDocumentId(entry.id, id) ? updatedDoc : entry
+    );
 
     try {
         await saveDocumentsToServer(nextDocuments);
         state.openDocumentMenuId = null;
         renderDocuments();
+        renderPaymentHistoryPanel();
+        renderStatementsPage();
     } catch (error) {
         alert(`Unable to update invoice payment status.\n\n${error.message}`);
+    }
+}
+
+function getStatementLinkedInvoices(statement) {
+    const sourceIds = new Set(
+        (Array.isArray(statement.payload?.sourceInvoiceIds) ? statement.payload.sourceInvoiceIds : []).map(String)
+    );
+    const statementInvoiceRefs = new Set(
+        ((statement.payload?.rows) || [])
+            .map(r => String(r.invoiceNumber || "").trim().toLowerCase())
+            .filter(Boolean)
+    );
+    return state.documents.filter(doc =>
+        doc.type === "invoice" && (
+            sourceIds.has(String(doc.id)) ||
+            (sourceIds.size === 0 && statementInvoiceRefs.has(String(doc.refNumber || "").trim().toLowerCase()))
+        )
+    );
+}
+
+function getStatementForInvoiceId(invoiceId) {
+    const idStr = String(invoiceId);
+    return state.statementExports.find(stmt => {
+        const sourceIds = (Array.isArray(stmt.payload?.sourceInvoiceIds) ? stmt.payload.sourceInvoiceIds : []).map(String);
+        return sourceIds.includes(idStr);
+    }) || null;
+}
+
+async function markStatementAsPaid(statementId) {
+    const statement = state.statementExports.find(s => s.id === statementId);
+    if (!statement) { return; }
+
+    const linkedInvoices = getStatementLinkedInvoices(statement);
+    const unpaidInvoices = linkedInvoices.filter(doc => getInvoiceOutstandingBalance(doc) > 0);
+
+    if (!unpaidInvoices.length) {
+        window.alert("All invoices on this statement are already fully paid.");
+        return;
+    }
+
+    const confirmed = window.confirm(
+        `Mark ${unpaidInvoices.length} unpaid invoice${unpaidInvoices.length === 1 ? "" : "s"} on statement ${statement.referenceNumber || ""} as fully paid?`
+    );
+    if (!confirmed) { return; }
+
+    const now = new Date().toISOString();
+    const today = now.slice(0, 10);
+
+    const nextDocuments = state.documents.map(doc => {
+        if (!unpaidInvoices.some(inv => isSameDocumentId(inv.id, doc.id))) { return doc; }
+        const outstanding = getInvoiceOutstandingBalance(doc);
+        if (outstanding <= 0) { return doc; }
+        const existingReal = getInvoicePayments(doc).filter(p => !String(p.id).startsWith(STATUS_PAYMENT_PREFIX));
+        const newPayment = normalizeInvoicePayments([{
+            id: `${STATUS_PAYMENT_PREFIX}${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            date: today,
+            amount: outstanding,
+            method: "Marked as Paid",
+            reference: "",
+            notes: `Paid via statement ${statement.referenceNumber || statementId}`,
+            appliedTo: "invoice",
+            createdAt: now
+        }]);
+        return { ...doc, paymentStatus: "paid", payments: [...existingReal, ...newPayment] };
+    });
+
+    try {
+        await saveDocumentsToServer(nextDocuments);
+        renderDocuments();
+        renderPaymentHistoryPanel();
+        renderStatementsPage();
+        setImportStatus(`${unpaidInvoices.length} invoice${unpaidInvoices.length === 1 ? "" : "s"} marked as paid.`);
+    } catch (error) {
+        alert(`Unable to mark invoices as paid.\n\n${error.message}`);
     }
 }
 
