@@ -790,12 +790,20 @@
                         </div>
                     </details>
                     <details class="help-item">
+                        <summary>How do I add line items to a quote or invoice?</summary>
+                        <p>Step 3 shows a spreadsheet-style table where each row is one line item. Click <strong>+ Add Item</strong> to add a new row, then fill in the Description, Quantity, Unit Price, and Total inline. All fields are visible at once — no expanding or collapsing needed. Use <strong>Tab</strong> to move between columns; pressing Tab on the last field of the last row automatically adds a new row. Press <strong>Enter</strong> on any numeric field to advance to the next column, or use <strong>Cmd/Ctrl+Enter</strong> from anywhere to add a new row immediately.</p>
+                    </details>
+                    <details class="help-item">
                         <summary data-i18n="help_q_reuse_items">Can I save line items to reuse later?</summary>
                         <p data-i18n-html="help_a_reuse_items">Yes. In Step 3, use the cart icon next to <strong>Add Item</strong> to open your saved items. Any item saved from a previous document appears there and can be added with one click. The Catalog page aggregates all captured items across documents.</p>
                     </details>
                     <details class="help-item">
+                        <summary>What are Internal Notes and how are they different from regular Notes?</summary>
+                        <p>The <strong>Notes</strong> field in Step 3 appears on the printed document and is visible to your client. <strong>Internal Notes</strong> (marked with a "Private" badge) are saved with the document but never appear in PDF exports or printed output — they are for your team only. Use Internal Notes to log submission dates, follow-up reminders, payment context, or any operational detail. A brief preview of internal notes appears on the document card in the list view so your team can see them at a glance without opening the editor.</p>
+                    </details>
+                    <details class="help-item">
                         <summary data-i18n="help_q_payment_terms">How do I add or update payment terms?</summary>
-                        <p data-i18n-html="help_a_payment_terms">Scroll to the <strong>Document Notes &amp; Terms</strong> panel at the bottom of Step 3. The <strong>Terms of Payment</strong> field is pre-filled with a NET 30 minimum and a $10,000 monthly client limit note — update it to match your agreement.</p>
+                        <p data-i18n-html="help_a_payment_terms">Scroll to the <strong>Document Notes &amp; Terms</strong> panel at the bottom of Step 3. The <strong>Terms of Payment</strong> field is pre-filled with a NET 30 minimum and a $10,000 monthly client limit note — update it to match your agreement. Invoice cards in the document list show the calculated due date and whether the invoice is overdue, derived directly from this field.</p>
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_backup">How do I back up or restore my data?</summary>
@@ -1461,9 +1469,25 @@
                                         <button type="button" class="btn btn-secondary" id="addItemBtn">Add Item</button>
                                     </div>
                                 </div>
-                                <div class="items-container" id="itemsContainer"></div>
+                                <div class="items-table-wrap">
+                                    <table class="items-table">
+                                        <thead class="items-thead">
+                                            <tr>
+                                                <th class="it-th it-th-num">#</th>
+                                                <th class="it-th it-th-desc">Description</th>
+                                                <th class="it-th it-th-qty">Qty</th>
+                                                <th class="it-th it-th-unit">Unit Price</th>
+                                                <th class="it-th it-th-total">Total (USD)</th>
+                                                <th class="it-th it-th-cost" id="itemsColCost" hidden>Cost</th>
+                                                <th class="it-th it-th-margin" id="itemsColMargin" hidden>Margin</th>
+                                                <th class="it-th it-th-actions"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="items-container" id="itemsContainer"></tbody>
+                                    </table>
+                                </div>
                                 <div class="line-items-footer-actions">
-                                    <button type="button" class="btn btn-primary" id="addAnotherItemBtn">Add Another Item</button>
+                                    <button type="button" class="btn btn-primary" id="addAnotherItemBtn">+ Add Item</button>
                                 </div>
                             </div>
                             <div class="document-settings-panel">
@@ -1474,6 +1498,10 @@
                                 <div class="form-group">
                                     <label for="notes">Notes (Optional)</label>
                                     <textarea id="notes" rows="3" placeholder="Add any exclusions, terms, or additional notes for the full document..."></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="internalNotes" class="internal-notes-label">Internal Notes <span class="internal-notes-badge">Private</span></label>
+                                    <textarea id="internalNotes" rows="3" placeholder="Internal use only — not printed on the document. Track submission dates, follow-up reminders, or payment context here."></textarea>
                                 </div>
                                 <div class="form-group">
                                     <label for="paymentTerms">Terms of Payment</label>

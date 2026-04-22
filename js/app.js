@@ -103,7 +103,7 @@ const LANGUAGE_LOCALES = {
     es: "es-DO",
     fr: "fr-FR"
 };
-const APP_LAST_UPDATED = "2026-04-21T12:00:00";
+const APP_LAST_UPDATED = "2026-04-21T18:00:00";
 const BRAND = window.SANTO_BRAND || {
     name: "SantoSync",
     studioName: "Palmchat Innovations Lab",
@@ -1786,6 +1786,7 @@ function cacheElements() {
     elements.consigneeName = document.getElementById("consigneeName");
     elements.consigneeAddress = document.getElementById("consigneeAddress");
     elements.notes = document.getElementById("notes");
+    elements.internalNotes = document.getElementById("internalNotes");
     elements.paymentTerms = document.getElementById("paymentTerms");
     elements.paymentLedgerPanel = document.getElementById("paymentLedgerPanel");
     elements.paymentLedgerSummary = document.getElementById("paymentLedgerSummary");
@@ -4212,14 +4213,7 @@ async function saveCatalogItemFromModal() {
 }
 
 function syncItemActionMenus() {
-    elements.itemsContainer.querySelectorAll("[data-item-menu]").forEach(menu => {
-        const isOpen = menu.dataset.itemMenu === state.openItemMenuId;
-        menu.hidden = !isOpen;
-        menu.style.display = isOpen ? "grid" : "none";
-    });
-    elements.itemsContainer.querySelectorAll("[data-toggle-item-menu]").forEach(button => {
-        button.setAttribute("aria-expanded", String(button.dataset.toggleItemMenu === state.openItemMenuId));
-    });
+    // No per-item action menus in table layout.
 }
 
 function syncDocumentActionMenus() {
@@ -6509,6 +6503,14 @@ function renderClientManagementList() {
     elements.clientManagementList.innerHTML = state.clients.map(client => {
         const contacts = Array.isArray(client.contacts) ? client.contacts : [];
 
+        const clientDocs = state.documents.filter(doc =>
+            String(doc.clientName || "").trim().toLowerCase() === String(client.name || "").trim().toLowerCase()
+        );
+        const clientQuotes = clientDocs.filter(doc => doc.type === "quote");
+        const clientInvoices = clientDocs.filter(doc => doc.type === "invoice");
+        const totalInvoiced = clientInvoices.reduce((sum, doc) => sum + Number(doc.total || 0), 0);
+        const totalOutstanding = clientInvoices.reduce((sum, doc) => sum + getInvoiceOutstandingBalance(doc), 0);
+
         const badges = [
             client.address ? `<span class="client-row-badge"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a4.5 4.5 0 0 1 4.5 4.5c0 3-4.5 8.5-4.5 8.5S3.5 9 3.5 6A4.5 4.5 0 0 1 8 1.5Z"/><circle cx="8" cy="6" r="1.5"/></svg>${escapeHtml(client.address.split(/\n|,/)[0].trim())}</span>` : "",
             client.consigneeName ? `<span class="client-row-badge client-row-badge-consignee"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none"><path d="M8 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm-5 10c0-2.2 2.24-4 5-4s5 1.8 5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>${escapeHtml(client.consigneeName)}</span>` : "",
@@ -6528,6 +6530,38 @@ function renderClientManagementList() {
                 </div>
             </div>` : "";
 
+        const clientStatsSummary = clientDocs.length
+            ? `<div class="client-row-stats">
+                ${clientQuotes.length ? `<span class="client-row-stat">${clientQuotes.length} quote${clientQuotes.length > 1 ? "s" : ""}</span>` : ""}
+                ${clientInvoices.length ? `<span class="client-row-stat client-row-stat-invoice">${clientInvoices.length} invoice${clientInvoices.length > 1 ? "s" : ""}</span>` : ""}
+                ${totalInvoiced > 0 ? `<span class="client-row-stat client-row-stat-value">${escapeHtml(formatCurrency(totalInvoiced))} invoiced</span>` : ""}
+                ${totalOutstanding > 0 ? `<span class="client-row-stat client-row-stat-outstanding">${escapeHtml(formatCurrency(totalOutstanding))} outstanding</span>` : ""}
+              </div>`
+            : "";
+
+        const clientStatsDetail = clientDocs.length ? `
+            <div class="client-detail-section client-detail-stats-grid">
+                <span class="client-detail-label">Activity</span>
+                <div class="client-stats-grid">
+                    <div class="client-stat-cell">
+                        <span class="client-stat-value">${clientQuotes.length}</span>
+                        <span class="client-stat-label">Quotes</span>
+                    </div>
+                    <div class="client-stat-cell">
+                        <span class="client-stat-value">${clientInvoices.length}</span>
+                        <span class="client-stat-label">Invoices</span>
+                    </div>
+                    <div class="client-stat-cell">
+                        <span class="client-stat-value">${escapeHtml(formatCurrency(totalInvoiced))}</span>
+                        <span class="client-stat-label">Total Invoiced</span>
+                    </div>
+                    <div class="client-stat-cell${totalOutstanding > 0 ? " is-outstanding" : ""}">
+                        <span class="client-stat-value">${escapeHtml(formatCurrency(totalOutstanding))}</span>
+                        <span class="client-stat-label">Outstanding</span>
+                    </div>
+                </div>
+            </div>` : "";
+
         return `
         <article class="client-row" data-client-id="${escapeHtml(client.id)}">
             <div class="client-row-header" data-toggle-client="${escapeHtml(client.id)}" role="button" tabindex="0" aria-expanded="false">
@@ -6535,6 +6569,7 @@ function renderClientManagementList() {
                 <div class="client-row-headline">
                     <strong class="client-row-name">${escapeHtml(client.name)}</strong>
                     <div class="client-row-badges">${badges}</div>
+                    ${clientStatsSummary}
                 </div>
                 ${admin ? `<div class="client-row-actions" role="group">
                     <button class="statement-action-btn is-edit" type="button" data-client-action="edit-client" data-client-id="${escapeHtml(client.id)}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
@@ -6546,6 +6581,7 @@ function renderClientManagementList() {
                 </div>` : ""}
             </div>
             <div class="client-row-body" hidden>
+                ${clientStatsDetail}
                 ${client.address ? `
                 <div class="client-detail-section">
                     <span class="client-detail-label">
@@ -7157,8 +7193,13 @@ function handleInternalPricingToggleChange(event) {
 }
 
 function syncInternalPricingVisibility() {
-    elements.itemsContainer.querySelectorAll(".item-internal-panel").forEach(panel => {
-        panel.hidden = !state.showInternalPricing;
+    const show = state.showInternalPricing;
+    const costTh = document.getElementById("itemsColCost");
+    const marginTh = document.getElementById("itemsColMargin");
+    if (costTh) costTh.hidden = !show;
+    if (marginTh) marginTh.hidden = !show;
+    elements.itemsContainer.querySelectorAll(".it-cost, .it-margin").forEach(cell => {
+        cell.hidden = !show;
     });
 }
 
@@ -7828,6 +7869,7 @@ function loadLocalAppData() {
     renderClientOptions();
     prepareNewDocument("quote");
     renderDocuments();
+    renderStatementsPage();
     setImportStatus("Running in local test mode. Data is saved in this browser only.");
 }
 
@@ -7885,6 +7927,7 @@ async function bootstrapAppData() {
         renderClientOptions();
         prepareNewDocument("quote");
         renderDocuments();
+        renderStatementsPage();
     } catch (error) {
         loadLocalAppData();
         setImportStatus(`Server unavailable (${error.message}). Local test mode is active for this browser.`);
@@ -8917,6 +8960,7 @@ function resetForm() {
     elements.poNumber.value = "";
     elements.docTags.value = "";
     elements.notes.value = "";
+    elements.internalNotes.value = "";
     elements.paymentTerms.value = DEFAULT_PAYMENT_TERMS;
     elements.includeSignature.checked = true;
     elements.includeStamp.checked = false;
@@ -8944,6 +8988,7 @@ function prepareNewDocument(type = "quote") {
     elements.poNumber.value = "";
     elements.docTags.value = "";
     elements.notes.value = "";
+    elements.internalNotes.value = "";
     elements.paymentTerms.value = DEFAULT_PAYMENT_TERMS;
     elements.includeSignature.checked = true;
     elements.includeStamp.checked = false;
@@ -9109,96 +9154,44 @@ function addItem() {
     state.itemCounter += 1;
     const itemId = String(state.itemCounter);
 
-    const itemDiv = document.createElement("div");
-    itemDiv.className = "item-row expanded";
-    itemDiv.dataset.itemId = itemId;
-    itemDiv.dataset.priceDriver = "total";
-    itemDiv.innerHTML = `
-        <div class="item-row-header">
-            <button type="button" class="item-summary-toggle" data-toggle-item="${itemId}" aria-expanded="true">
-                <span class="item-summary-thumb" aria-hidden="true">
-                    <span class="item-summary-thumb-fallback">${state.itemCounter}</span>
-                </span>
-                <span class="item-summary-copy">
-                    <span class="item-summary-title-row">
-                        <span class="item-number">Item #${state.itemCounter}</span>
-                        <span class="item-summary-title">New line item</span>
-                    </span>
-                    <span class="item-summary-meta">Add the item description, then set quantity and pricing.</span>
-                    <span class="item-summary-stats" aria-hidden="true">
-                        <span class="item-summary-stat">
-                            <span class="item-summary-stat-label">Qty</span>
-                            <strong class="item-summary-qty">1</strong>
-                        </span>
-                        <span class="item-summary-stat">
-                            <span class="item-summary-stat-label">Unit</span>
-                            <strong class="item-summary-unit">$0.00</strong>
-                        </span>
-                        <span class="item-summary-stat item-summary-stat-total">
-                            <span class="item-summary-stat-label">Total</span>
-                            <strong class="item-summary-total">$0.00</strong>
-                        </span>
-                    </span>
-                </span>
+    const itemRow = document.createElement("tr");
+    itemRow.className = "item-row";
+    itemRow.dataset.itemId = itemId;
+    itemRow.dataset.priceDriver = "total";
+    itemRow.dataset.itemImageDataUrl = "";
+    itemRow.innerHTML = `
+        <td class="it-num"><span class="item-number">${state.itemCounter}</span></td>
+        <td class="it-desc">
+            <textarea class="item-description" rows="2" placeholder="Describe the item or service..."></textarea>
+        </td>
+        <td class="it-qty">
+            <input type="number" class="item-quantity" value="1" min="0" step="1">
+        </td>
+        <td class="it-unit">
+            <input type="number" class="item-unit-price" value="0.00" min="0" step="0.01" inputmode="decimal">
+        </td>
+        <td class="it-total">
+            <input type="number" class="item-total-price" value="0.00" min="0" step="0.01">
+        </td>
+        <td class="it-cost">
+            <input type="number" class="item-internal-cost" value="0" min="0" step="0.01">
+        </td>
+        <td class="it-margin">
+            <input type="text" class="item-upcharge-percent" value="0.00%" readonly tabindex="-1">
+        </td>
+        <td class="it-actions">
+            <button type="button" class="item-del-btn" data-remove-item="${itemId}" aria-label="Remove item" title="Remove item">
+                <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg>
             </button>
-            <div class="item-row-header-actions">
-                <button type="button" class="item-quick-action item-quick-action-primary" data-toggle-item="${itemId}">
-                    <span class="item-edit-label">Done</span>
-                </button>
-                <button type="button" class="item-quick-action item-quick-action-danger" data-remove-item="${itemId}">${escapeHtml(t("delete"))}</button>
-            </div>
-        </div>
-        <div class="item-editor">
-            <div class="item-editor-grid">
-                <div class="item-editor-main">
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea class="item-description" rows="2" placeholder="Item description..."></textarea>
-                    </div>
-                    <div class="form-row item-pricing-row">
-                        <div class="form-group">
-                            <label>Quantity</label>
-                            <input type="number" class="item-quantity" value="1" min="0" step="1">
-                        </div>
-                        <div class="form-group">
-                            <label>Unit Price (USD)</label>
-                            <input type="number" class="item-unit-price" value="0.00" min="0" step="0.01" inputmode="decimal">
-                        </div>
-                        <div class="form-group item-total-price-usd-group">
-                            <label>Total Price (USD)</label>
-                            <input type="number" class="item-total-price" value="0.00" min="0" step="0.01">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="item-internal-panel">
-                <div class="item-internal-header">
-                    <h6>Internal Only</h6>
-                    <p>Not included in the final printout.</p>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Internal Cost (USD)</label>
-                        <input type="number" class="item-internal-cost" value="0" min="0" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label>Upcharge %</label>
-                        <input type="text" class="item-upcharge-percent" value="0.00%" readonly>
-                        <small class="field-help">Calculated from selling total versus internal cost.</small>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </td>
     `;
 
-    elements.itemsContainer.appendChild(itemDiv);
-    itemDiv.dataset.itemImageDataUrl = "";
-    itemDiv.querySelector(".item-internal-panel").hidden = !state.showInternalPricing;
-    syncItemImageUI(itemDiv);
-    updateItemPricing(itemDiv);
-    setExpandedItem(itemDiv);
-    focusItemPrimaryField(itemDiv);
-    syncItemActionMenus();
+    elements.itemsContainer.appendChild(itemRow);
+    itemRow.querySelector(".it-cost").hidden = !state.showInternalPricing;
+    itemRow.querySelector(".it-margin").hidden = !state.showInternalPricing;
+    updateItemPricing(itemRow);
+    setExpandedItem(itemRow);
+    focusItemPrimaryField(itemRow);
     queueDraftAutosave();
 }
 
@@ -9327,43 +9320,44 @@ async function handleItemContainerClick(event) {
 function handleItemEditorKeydown(event) {
     const target = event.target;
     const itemRow = target.closest(".item-row");
-    if (!itemRow || event.key !== "Enter") {
+    if (!itemRow) return;
+
+    // Cmd/Ctrl+Enter anywhere → add new item
+    if (event.key === "Enter" && (event.metaKey || event.ctrlKey) && !event.shiftKey) {
+        event.preventDefault();
+        addItem();
         return;
     }
 
-    if (target.classList.contains("item-description")) {
-        if ((event.metaKey || event.ctrlKey) && !event.shiftKey) {
-            event.preventDefault();
+    // Enter on a numeric input → advance to next field or add new row
+    if (event.key === "Enter" && target.matches("input:not([readonly])")) {
+        event.preventDefault();
+        const focusable = Array.from(
+            itemRow.querySelectorAll("textarea, input:not([readonly]):not([tabindex='-1'])")
+        ).filter(el => !el.closest("[hidden]") && !el.hidden);
+        const idx = focusable.indexOf(target);
+        if (idx >= 0 && idx < focusable.length - 1) {
+            focusable[idx + 1].focus();
+            focusable[idx + 1].select?.();
+        } else {
             addItem();
         }
         return;
     }
 
-    if (!target.matches("input")) {
-        return;
-    }
-
-    event.preventDefault();
-
-    const sequence = [
-        ".item-quantity",
-        ".item-unit-price",
-        ".item-total-price",
-        ".item-internal-cost"
-    ];
-    const currentIndex = sequence.findIndex(selector => target.matches(selector));
-    const nextSelector = currentIndex >= 0 ? sequence[currentIndex + 1] : null;
-
-    if (nextSelector && (!target.matches(".item-total-price") || state.showInternalPricing)) {
-        const nextField = itemRow.querySelector(nextSelector);
-        if (nextField && !nextField.closest("[hidden]")) {
-            nextField.focus();
-            nextField.select?.();
-            return;
+    // Tab on last focusable field of last row → add new row
+    if (event.key === "Tab" && !event.shiftKey) {
+        const isLastRow = !itemRow.nextElementSibling;
+        if (isLastRow) {
+            const focusable = Array.from(
+                itemRow.querySelectorAll("textarea, input:not([readonly]):not([tabindex='-1'])")
+            ).filter(el => !el.closest("[hidden]") && !el.hidden);
+            if (focusable.length && focusable[focusable.length - 1] === target) {
+                event.preventDefault();
+                addItem();
+            }
         }
     }
-
-    addItem();
 }
 
 async function handleItemImageInputChange(event) {
@@ -9496,29 +9490,7 @@ function updateItemPricing(row, options = {}) {
 }
 
 function updateItemSummary(row) {
-    const description = row.querySelector(".item-description").value.trim();
-    const quantity = parseFloat(row.querySelector(".item-quantity").value) || 0;
-    const totalPrice = parseFloat(row.querySelector(".item-total-price").value) || 0;
-    const unitPrice = parseDecimalInput(row.querySelector(".item-unit-price").value);
-    const upchargePercent = row.querySelector(".item-upcharge-percent").value;
-    const title = description || "New line item";
-    const compactTitle = title.length > 72 ? `${title.slice(0, 69)}...` : title;
-    const summaryMeta = `Qty ${quantity || 0} | Unit ${formatCurrency(unitPrice)} | Total ${formatCurrency(totalPrice)}${state.showInternalPricing ? ` | Upcharge ${upchargePercent}` : ""}`;
-
-    row.querySelector(".item-summary-title").textContent = compactTitle;
-    row.querySelector(".item-summary-meta").textContent = summaryMeta;
-    const qtyNode = row.querySelector(".item-summary-qty");
-    const unitNode = row.querySelector(".item-summary-unit");
-    const totalNode = row.querySelector(".item-summary-total");
-    if (qtyNode) {
-        qtyNode.textContent = String(quantity || 0);
-    }
-    if (unitNode) {
-        unitNode.textContent = formatCurrency(unitPrice);
-    }
-    if (totalNode) {
-        totalNode.textContent = formatCurrency(totalPrice);
-    }
+    // All values are visible inline in the table — no separate summary needed.
 }
 
 function documentHasItemImages(doc) {
@@ -9596,28 +9568,12 @@ function updateItemInternalMetrics(row) {
 
 function refreshItemOrdering() {
     elements.itemsContainer.querySelectorAll(".item-row").forEach((row, index) => {
-        row.querySelector(".item-number").textContent = `Item #${index + 1}`;
-        const thumbFallback = row.querySelector(".item-summary-thumb-fallback");
-        if (thumbFallback) {
-            thumbFallback.textContent = String(index + 1);
-        }
-        updateItemSummary(row);
+        const numCell = row.querySelector(".item-number");
+        if (numCell) numCell.textContent = String(index + 1);
     });
 }
 
 function setExpandedItem(targetRow) {
-    elements.itemsContainer.querySelectorAll(".item-row").forEach(row => {
-        const isTarget = row === targetRow;
-        row.classList.toggle("expanded", isTarget);
-        const toggle = row.querySelector(".item-summary-toggle");
-        if (toggle) {
-            toggle.setAttribute("aria-expanded", String(isTarget));
-        }
-        const actionLabel = row.querySelector(".item-edit-label");
-        if (actionLabel) {
-            actionLabel.textContent = isTarget ? "Done" : "Edit Item";
-        }
-    });
     if (targetRow) {
         targetRow.scrollIntoView({ block: "nearest", behavior: "smooth" });
     }
@@ -9774,6 +9730,7 @@ function buildDocumentData() {
         poNumber: elements.poNumber.value || "N/A",
         tags: parseTags(elements.docTags.value),
         notes: elements.notes.value,
+        internalNotes: elements.internalNotes.value,
         paymentTerms: elements.paymentTerms.value,
         includeSignature: elements.includeSignature.checked,
         includeStamp: elements.includeStamp.checked,
@@ -10241,6 +10198,7 @@ async function persistDocument(options = {}) {
         poNumber: elements.poNumber.value,
         tags: parseTags(elements.docTags.value),
         notes: elements.notes.value,
+        internalNotes: elements.internalNotes.value,
         paymentTerms: elements.paymentTerms.value,
         includeSignature: elements.includeSignature.checked,
         includeStamp: elements.includeStamp.checked,
@@ -10702,6 +10660,21 @@ function getDocumentCardMarkup(doc) {
 
     const statusMarkup = statusBadges.join("");
 
+    let dueDateMarkup = "";
+    if (doc.type === "invoice" && paymentStatus !== "paid") {
+        const termDays = getInvoicePaymentTermDays(doc);
+        const dueDate = calculateInvoiceDueDate(doc);
+        const daysPastDue = getInvoiceDaysPastDue(doc);
+        const dueDateStr = formatDisplayDate(dueDate.toISOString().slice(0, 10));
+        const overdueText = daysPastDue > 0 ? ` · ${daysPastDue}d overdue` : "";
+        const dueCls = daysPastDue > 0 ? " is-overdue" : "";
+        dueDateMarkup = `<div class="document-card-due${dueCls}">Due ${escapeHtml(dueDateStr)} · NET${termDays}${escapeHtml(overdueText)}</div>`;
+    }
+
+    const internalNotesMarkup = doc.internalNotes
+        ? `<div class="document-card-internal-note">${escapeHtml(doc.internalNotes.length > 90 ? doc.internalNotes.slice(0, 90) + "…" : doc.internalNotes)}</div>`
+        : "";
+
     return `
         <article class="document-card document-card-${doc.type}" data-view-id="${escapeHtml(String(doc.id))}" tabindex="0" role="button" aria-label="${escapeHtml(`Open ${doc.type} ${doc.refNumber || ""}`.trim())}">
             <div class="document-card-copy">
@@ -10714,6 +10687,8 @@ function getDocumentCardMarkup(doc) {
                     <span class="document-card-date">${escapeHtml(formatDisplayDate(doc.date || ""))}</span>
                     <strong class="document-card-total">${escapeHtml(formatCurrency(doc.total || 0))}</strong>
                 </div>
+                ${dueDateMarkup}
+                ${internalNotesMarkup}
             </div>
             <div class="document-card-actions">
                 ${canViewPdf ? `
@@ -11049,6 +11024,7 @@ function populateFormFromDocument(doc) {
     elements.poNumber.value = doc.poNumber || "";
     elements.docTags.value = Array.isArray(doc.tags) ? doc.tags.join(", ") : "";
     elements.notes.value = doc.notes || "";
+    elements.internalNotes.value = doc.internalNotes || "";
     elements.paymentTerms.value = doc.paymentTerms || DEFAULT_PAYMENT_TERMS;
     elements.includeSignature.checked = doc.includeSignature !== false;
     elements.includeStamp.checked = Boolean(doc.includeStamp);

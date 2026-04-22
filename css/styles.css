@@ -3649,6 +3649,78 @@ body::after {
     color: var(--text-faint);
 }
 
+.client-row-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.55rem;
+    margin-top: 0.15rem;
+}
+
+.client-row-stat {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-faint);
+    white-space: nowrap;
+}
+
+.client-row-stat-invoice {
+    color: var(--brand-primary);
+}
+
+.client-row-stat-value {
+    color: var(--text-soft);
+}
+
+.client-row-stat-outstanding {
+    color: var(--warning);
+}
+
+.client-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+}
+
+.client-stat-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.55rem 0.65rem;
+    background: rgba(112, 135, 176, 0.05);
+    border-radius: 6px;
+    border: 1px solid var(--line);
+}
+
+.client-stat-cell.is-outstanding {
+    background: rgba(212, 87, 87, 0.06);
+    border-color: rgba(212, 87, 87, 0.18);
+}
+
+.client-stat-value {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.2;
+}
+
+.client-stat-cell.is-outstanding .client-stat-value {
+    color: var(--warning);
+}
+
+.client-stat-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+@media (max-width: 600px) {
+    .client-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 .client-row-actions {
     display: flex;
     gap: 0.35rem;
@@ -6533,6 +6605,147 @@ body::after {
     font-size: 0.8rem;
     line-height: 1.4;
 }
+
+/* ─── Table-based line-item editor ─────────────────────────────── */
+
+.items-table-wrap {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid var(--line-strong);
+    background: var(--surface-strong);
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.81rem;
+}
+
+.items-thead .it-th {
+    background: var(--bg-soft);
+    padding: 0.42rem 0.65rem;
+    text-align: left;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-faint);
+    border-bottom: 1px solid var(--line-strong);
+    white-space: nowrap;
+    user-select: none;
+}
+
+.it-th-num  { width: 30px; text-align: center; }
+.it-th-desc { min-width: 200px; }
+.it-th-qty  { width: 70px; }
+.it-th-unit { width: 120px; }
+.it-th-total { width: 120px; }
+.it-th-cost  { width: 110px; }
+.it-th-margin { width: 90px; }
+.it-th-actions { width: 36px; }
+
+.item-row td {
+    padding: 0.3rem 0.5rem;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+}
+
+.item-row:last-child td {
+    border-bottom: none;
+}
+
+.item-row:hover {
+    background: rgba(20, 89, 217, 0.025);
+}
+
+.item-row:focus-within {
+    background: rgba(20, 89, 217, 0.04);
+}
+
+.it-num {
+    text-align: center;
+}
+
+.it-num .item-number {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-faint);
+}
+
+/* Inputs & textareas inside table cells */
+.items-table .item-description,
+.items-table .item-quantity,
+.items-table .item-unit-price,
+.items-table .item-total-price,
+.items-table .item-internal-cost,
+.items-table .item-upcharge-percent {
+    width: 100%;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 0.28rem 0.35rem;
+    font-size: 0.81rem;
+    font-family: inherit;
+    color: var(--text);
+    outline: none;
+    resize: none;
+    transition: background 0.1s, border-color 0.1s, box-shadow 0.1s;
+}
+
+.items-table .item-description {
+    min-width: 160px;
+    display: block;
+    min-height: 2.4em;
+    line-height: 1.45;
+}
+
+.items-table input:focus,
+.items-table textarea:focus {
+    background: #fff;
+    border-color: rgba(20, 89, 217, 0.3);
+    box-shadow: 0 0 0 3px rgba(20, 89, 217, 0.1);
+}
+
+.items-table input[readonly] {
+    color: var(--text-faint);
+    cursor: default;
+}
+
+/* Delete button */
+.item-del-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    color: var(--text-faint);
+    cursor: pointer;
+    padding: 0;
+    opacity: 0.45;
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+
+.item-row:hover .item-del-btn,
+.item-del-btn:focus {
+    opacity: 1;
+}
+
+.item-del-btn:hover {
+    background: rgba(212, 87, 87, 0.1);
+    color: var(--warning);
+}
+
+.item-del-btn svg {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+}
+
+/* ─── Legacy card-style item-row (superseded by table layout) ─── */
 
 .item-row {
     background: rgba(248, 250, 255, 0.96);
@@ -10206,6 +10419,48 @@ body {
     color: var(--text);
     margin-left: auto;
     white-space: nowrap;
+}
+
+.document-card-due {
+    font-size: 0.72rem;
+    color: var(--text-faint);
+    margin-top: 0.3rem;
+}
+
+.document-card-due.is-overdue {
+    color: var(--warning);
+    font-weight: 700;
+}
+
+.document-card-internal-note {
+    font-size: 0.71rem;
+    color: var(--text-faint);
+    font-style: italic;
+    margin-top: 0.25rem;
+    padding: 0.22rem 0.5rem;
+    background: rgba(112, 135, 176, 0.07);
+    border-left: 2px solid rgba(112, 135, 176, 0.3);
+    border-radius: 0 3px 3px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.internal-notes-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.internal-notes-badge {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #7a5c00;
+    background: rgba(255, 200, 60, 0.18);
+    border: 1px solid rgba(180, 140, 0, 0.22);
+    border-radius: 999px;
+    padding: 0.1rem 0.45rem;
 }
 
 .document-card-statuses {

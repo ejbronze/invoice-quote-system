@@ -2,7 +2,21 @@
 
 SantoSync is a premium quote-and-invoice workspace for modern trade teams. It combines document creation, client history, per-user preferences, admin tools, and branded export output in one polished operational dashboard.
 
-Version: `1.4.0` — Last updated: April 21, 2026
+Version: `1.5.0` — Last updated: April 21, 2026
+
+## Version 1.5.0 Summary
+
+This release focuses on data persistence reliability, usability improvements to the line-item editor, new document intelligence fields, and richer client intelligence.
+
+**Payment History persistence fix:** Payment History and Client Aging data on the Statements page no longer reset to zero after a page refresh. The root cause was a timing issue in the bootstrap sequence — workspace state loaded first and rendered the panels with an empty document list, and the subsequent document load never re-triggered the panel render. Both `bootstrapAppData` and `loadLocalAppData` now call `renderStatementsPage` after documents are ready, so the panels always reflect the correct payment data on first load.
+
+**Table-based line-item editor:** The line-item entry experience has been redesigned from an expand/collapse card accordion into a compact spreadsheet-style table. Each item is now a single row showing all fields inline — Description, Quantity, Unit Price, and Total — so nothing is hidden and there is no clicking to expand. Tab moves between fields naturally, Enter on any numeric field advances to the next column, Tab from the last field of the last row adds a new row automatically, and Cmd/Ctrl+Enter adds a new row from anywhere. The internal Cost and Margin columns appear when the Internal Pricing toggle is enabled, matching the previous behavior. This layout significantly reduces scrolling and interaction cost when building multi-item quotes and invoices.
+
+**Internal Notes per document:** Every quote and invoice now has an Internal Notes field alongside the existing public Notes field. Internal notes are saved to the document record but are never printed or shown in PDF exports — they are strictly for team use. The field carries a "Private" label badge in the editor to make the distinction clear. When internal notes exist, a subtle italic callout appears on the document card in the list view (truncated at 90 characters). Use this field to log submission dates, follow-up reminders, payment context, or any operational detail that should travel with the document without appearing on client-facing output.
+
+**Invoice due date on document cards:** Invoice cards now display the calculated due date and payment term (e.g., "Due May 21, 2026 · NET30") for any invoice that is not yet fully paid. When the invoice is past due, the due-date line turns red and appends the number of overdue days (e.g., "Due Apr 5, 2026 · NET30 · 16d overdue"). This pulls from the existing payment terms parser and due-date calculator, so it respects NET15, NET30, NET60, and custom terms correctly.
+
+**Client card document statistics:** Each client card in the Clients directory now shows a compact summary of that client's activity — quote count, invoice count, total invoiced value, and outstanding balance — directly in the collapsed header row. Expanding the card reveals a four-cell stats grid. The outstanding cell is highlighted in red when there is an unpaid balance, providing an at-a-glance receivables signal per client without navigating to the aging report.
 
 ## Version 1.4.0 Summary
 
