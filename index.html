@@ -368,6 +368,7 @@
                                 </div>
                                 <button class="btn btn-primary" id="logPaymentBtn" type="button">+ Log Payment</button>
                             </div>
+                            <div class="report-alert-list" id="paymentExposureAlerts" hidden></div>
                             <div class="reports-metrics-grid" id="paymentHistoryMetrics"></div>
                             <div class="reports-table-wrap">
                                 <table class="reports-table">
@@ -711,7 +712,7 @@
                     </div>
                 </div>
                 <div class="about-copy">
-                    <p id="aboutProductCopy">SantoSync is a premium document workspace for teams that need quotes, invoices, and business identity details to stay aligned from first draft to final export.</p>
+                    <p id="aboutProductCopy">SantoSync is a premium document workspace with clearer draft-versus-saved flow, click-to-open records, stronger payment reporting, and fuller backup recovery from first draft to final export.</p>
                     <p id="aboutDeveloperCopy">Designed and developed by Edwin Jaquez through Palmchat Innovations Lab under Palmchat Innovations LLC NYC, with a focus on premium operational tools for modern trade and logistics teams.</p>
                 </div>
             </div>
@@ -794,7 +795,7 @@
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_payment_terms">How do I add or update payment terms?</summary>
-                        <p data-i18n-html="help_a_payment_terms">Scroll to the <strong>Document Notes &amp; Terms</strong> panel at the bottom of Step 3. The <strong>Terms of Payment</strong> field is pre-filled with a NET 15 default — update it to match your agreement.</p>
+                        <p data-i18n-html="help_a_payment_terms">Scroll to the <strong>Document Notes &amp; Terms</strong> panel at the bottom of Step 3. The <strong>Terms of Payment</strong> field is pre-filled with a NET 30 minimum and a $10,000 monthly client limit note — update it to match your agreement.</p>
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_backup">How do I back up or restore my data?</summary>
@@ -1476,7 +1477,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="paymentTerms">Terms of Payment</label>
-                                    <input type="text" id="paymentTerms" value="NET15 : Full payment for goods or services is due within 15 calendar days of the invoice date, aligned with shipping or completion.">
+                                    <input type="text" id="paymentTerms" value="NET30 : Full payment is due within a minimum of 30 calendar days from the invoice date. Monthly client balances due may not exceed $10,000 without approval.">
                                 </div>
                             </div>
                             <div class="document-settings-panel payment-ledger-panel" id="paymentLedgerPanel" hidden>
@@ -1620,7 +1621,7 @@
                 </div>
                 <div class="modal-footer-actions">
                     <button class="btn btn-secondary" id="saveBtn" type="button" style="display: none;">Save</button>
-                    <button class="btn btn-success" id="exportPdfBtn" type="button" style="display: none;">Open PDF Preview</button>
+                    <button class="btn btn-success" id="exportPdfBtn" type="button" style="display: none;">View / Print</button>
                 </div>
             </div>
         </div>

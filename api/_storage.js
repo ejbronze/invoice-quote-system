@@ -78,6 +78,10 @@ function getDatasetFilePath(name) {
     return path.join(getLocalDataDir(), "datasets", `${name}.json`);
 }
 
+function getDatasetSnapshotFilePath(name, stamp) {
+    return path.join(getLocalDataDir(), "backups", name, `${stamp}.json`);
+}
+
 function getLegacyPdfDirectory() {
     return path.join(getLocalDataDir(), "legacy-pdfs");
 }
@@ -400,6 +404,10 @@ async function writeLocalJsonFile(filePath, value) {
     await fs.writeFile(filePath, JSON.stringify(value, null, 2), "utf8");
 }
 
+function createSnapshotStamp() {
+    return new Date().toISOString().replace(/[:.]/g, "-");
+}
+
 async function readLocalDataset(name, fallbackValue) {
     const filePath = getDatasetFilePath(name);
     const existingValue = await readLocalJsonFile(filePath);
@@ -433,12 +441,21 @@ async function writeBlobDataset(name, value) {
     ensureBlobToken();
     const { put } = await loadBlobSdk();
     const token = getBlobToken();
+    const snapshotStamp = createSnapshotStamp();
 
-    // Use a fixed filename per dataset to avoid accumulating old versions
-    // Blob storage will handle versioning transparently
+    // Keep a stable "current" object for live reads and a timestamped copy for recovery.
     const blobPath = `todos-logistics/${name}/current.json`;
 
-    const newBlob = await put(blobPath, JSON.stringify(value), {
+    const serializedValue = JSON.stringify(value);
+
+    const newBlob = await put(blobPath, serializedValue, {
+        token,
+        access: getBlobAccessMode(),
+        contentType: "application/json",
+        addRandomSuffix: false
+    });
+
+    await put(`todos-logistics-backups/${name}/${snapshotStamp}.json`, serializedValue, {
         token,
         access: getBlobAccessMode(),
         contentType: "application/json",
@@ -450,7 +467,9 @@ async function writeBlobDataset(name, value) {
 
 async function writeDataset(name, value) {
     if (isLocalSandboxMode()) {
+        const snapshotStamp = createSnapshotStamp();
         await writeLocalJsonFile(getDatasetFilePath(name), value);
+        await writeLocalJsonFile(getDatasetSnapshotFilePath(name, snapshotStamp), value);
         return { url: getDatasetFilePath(name) };
     }
 

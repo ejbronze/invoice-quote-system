@@ -13,7 +13,7 @@
         sessionTitle: "Opening SantoSync",
         sessionMessage: "Signing in and syncing your operational workspace...",
         aboutMeaning: "SantoSync is a coined product name designed to feel premium, steady, and coordinated. It suggests a calm, dependable system that keeps commercial work synchronized from first quote to final invoice.",
-        aboutProduct: "SantoSync is a modern document and operations workspace for teams that need quotes, invoices, company identity, and day-to-day workflow details to stay aligned.",
+        aboutProduct: "SantoSync is a modern document and operations workspace with cleaner draft-versus-saved document flow, click-to-open records, stronger payment tracking, monthly exposure alerts, and fuller backup recovery across the workspace.",
         aboutDeveloper: "Created by Edwin Jaquez through Palmchat Innovations Lab under Palmchat Innovations LLC NYC, SantoSync is built to bring premium product identity and practical operational discipline into one workflow tool.",
         ui: {
             primary: "#1459d9",

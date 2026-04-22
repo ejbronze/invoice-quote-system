@@ -2,7 +2,19 @@
 
 SantoSync is a premium quote-and-invoice workspace for modern trade teams. It combines document creation, client history, per-user preferences, admin tools, and branded export output in one polished operational dashboard.
 
-Version: `1.3.0` — Last updated: April 20, 2026
+Version: `1.4.0` — Last updated: April 21, 2026
+
+## Version 1.4.0 Summary
+
+This release tightens the document workflow, improves recovery, and makes the workspace more clickable and easier to scan.
+
+**Document save-state cleanup:** Documents now use `Draft` only for autosaved, not-yet-confirmed work. A manual save marks the record as the confirmed version, which removes the old ambiguity where opening print preview could change the document state. The Step 6 action has been renamed to `View / Print`, and it only unlocks after the user has saved the document.
+
+**Clickable document list:** Document cards are now more direct to use. The whole card can be clicked to reopen the editor, keyboard users can open cards with `Enter` or `Space`, and the redundant `Logged` pill has been removed so only draft records stand out visually. Logged status is now implied by the absence of the draft marker.
+
+**Payment reliability and receivables controls:** Payment entries are reconciled back into shared storage more safely on bootstrap, which protects against the payment-history reset scenario where locally recovered invoice payments could disappear after signing back in. Invoices now default to a minimum `NET30` term, the due-date logic enforces that floor, and the reports page raises an alert when a client exceeds `$10,000` of outstanding balance due within the same month.
+
+**Full-workspace backup and recovery:** JSON backups now include the wider workspace state in addition to documents and clients: user accounts, issue reports, company profile, saved items, catalog items, statement exports, session logs, and activity logs. Server writes also keep timestamped dataset snapshots so recovery no longer depends only on manually exported files.
 
 ## Version 1.3.0 Summary
 
@@ -176,13 +188,17 @@ When the app is online with the API available, user accounts are stored in the s
 - Issue reporting with optional screenshot upload
 - Admin issue inbox with delete controls
 - Local fallback mode when the API is unavailable
-- JSON backup, restore, and selective export tools
+- Full-workspace JSON backup, restore, and selective export tools
+- Timestamped server-side dataset snapshots for recovery
 - CSV template export and CSV import
 - Calculator inside the document editor
 - Compact dashboard with a tightened hero section and trimmed snapshot KPI grid (Documents, Quotes, Pipeline Value)
 - Single `+ New` button on the dashboard and Documents page header — opens a quick-action dropdown with Quote, Invoice, and Statement options
-- Document cards use stronger quote/invoice color separation plus text badges for `Draft` / `Logged`
+- Document cards use stronger quote/invoice color separation, click-to-open behavior, and a visible `Draft` badge only when the document is still an autosaved draft
 - Invoice cards support `Paid` / `Unpaid` / `Pending` status badges and a menu action for payment tracking
+- Manual save now confirms a document before `View / Print` becomes available on Step 6
+- Payment History raises an alert when one client exceeds `$10,000` due in a single month
+- Invoice payment terms default to a minimum `NET30`
 - The top commercial snapshot value card auto-cycles through `Pipeline Value`, `Amount Invoiced`, and `Income Received` every 3 seconds; each state has a distinct background color (blue, green, amber). Clicking the card manually advances the cycle and resets the timer.
 - Document cards use icon-based action buttons (eye for PDF preview, pencil for edit) with animated tooltip labels on hover
 - The PDF preview popup window's Edit button correctly navigates back to the editor with the document loaded

@@ -10111,12 +10111,18 @@ body {
     transition: box-shadow 0.15s ease, transform 0.15s ease;
     position: relative;
     z-index: 1;
+    cursor: pointer;
 }
 
 .document-card:hover {
     box-shadow: 0 10px 24px rgba(24, 47, 86, 0.09);
     transform: translateY(-1px);
     z-index: 2;
+}
+
+.document-card:focus-visible {
+    outline: 2px solid var(--brand-primary);
+    outline-offset: 2px;
 }
 
 .document-card.has-open-menu {
@@ -10212,7 +10218,6 @@ body {
     border-color: rgba(180, 130, 20, 0.2);
 }
 
-.status-badge.is-logged,
 .status-badge.is-paid {
     color: #127052;
     background: rgba(224, 250, 241, 0.9);
@@ -10266,6 +10271,33 @@ body {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.8rem;
     margin-bottom: 0.95rem;
+}
+
+.report-alert-list {
+    display: grid;
+    gap: 0.75rem;
+    margin-bottom: 0.95rem;
+}
+
+.report-alert-card {
+    display: grid;
+    gap: 0.3rem;
+    padding: 0.95rem 1rem;
+    border: 1px solid rgba(212, 87, 87, 0.18);
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(255, 248, 245, 0.96), rgba(255, 243, 238, 0.92));
+    box-shadow: 0 12px 24px rgba(191, 95, 62, 0.08);
+}
+
+.report-alert-card strong {
+    color: #9f2f1f;
+    font-size: 0.95rem;
+}
+
+.report-alert-card p {
+    color: #7b4a40;
+    font-size: 0.84rem;
+    line-height: 1.45;
 }
 
 .reports-table-wrap {

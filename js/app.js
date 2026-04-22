@@ -55,7 +55,8 @@ const state = {
 };
 
 const DOP_PER_USD = 59;
-const DEFAULT_PAYMENT_TERMS = "NET15 : Full payment for goods or services is due within 15 calendar days of the invoice date, aligned with shipping or completion.";
+const DEFAULT_PAYMENT_TERMS = "NET30 : Full payment is due within a minimum of 30 calendar days from the invoice date. Monthly client balances due may not exceed $10,000 without approval.";
+const MONTHLY_CLIENT_DUE_LIMIT = 10000;
 const DEFAULT_ADMIN_USER = Object.freeze({
     id: "admin-root",
     username: "admin",
@@ -102,7 +103,7 @@ const LANGUAGE_LOCALES = {
     es: "es-DO",
     fr: "fr-FR"
 };
-const APP_LAST_UPDATED = "2026-04-20T12:00:00";
+const APP_LAST_UPDATED = "2026-04-21T12:00:00";
 const BRAND = window.SANTO_BRAND || {
     name: "SantoSync",
     studioName: "Palmchat Innovations Lab",
@@ -116,7 +117,7 @@ const BRAND = window.SANTO_BRAND || {
     sessionTitle: "Opening SantoSync",
     sessionMessage: "Signing in and syncing your operational workspace...",
     aboutMeaning: "SantoSync is a coined product name designed to feel premium, steady, and coordinated.",
-    aboutProduct: "SantoSync is a modern document and operations workspace for teams that need quotes, invoices, company identity, and day-to-day workflow details to stay aligned.",
+    aboutProduct: "SantoSync is a modern document and operations workspace with cleaner draft-versus-saved document flow, click-to-open records, stronger payment tracking, monthly exposure alerts, and fuller backup recovery across the workspace.",
     aboutDeveloper: "Created by Edwin Jaquez through Palmchat Innovations Lab under Palmchat Innovations LLC NYC."
 };
 const DEFAULT_COMPANY_PROFILE = Object.freeze({
@@ -362,7 +363,7 @@ const TRANSLATIONS = {
         export_csv_template: "Export CSV Template",
         import_csv: "Import CSV",
         json_backup: "JSON Backup",
-        json_backup_copy: "Export a full backup or restore documents and clients from a JSON file.",
+        json_backup_copy: "Export a full workspace backup or restore documents, clients, and admin data from a JSON file.",
         export_backup: "Export Backup",
         import_backup: "Import Backup",
         selective_export: "Selective Export",
@@ -386,8 +387,9 @@ const TRANSLATIONS = {
         previous: "Previous",
         next: "Next",
         save_draft: "Save Draft",
+        save_document: "Save Document",
         save_changes: "Save Changes",
-        save_preview_pdf: "Open Print Preview",
+        save_preview_pdf: "View / Print",
         document_summary: "Document Summary",
         ref_pending: "Ref pending",
         date_pending: "Date pending",
@@ -449,9 +451,9 @@ const TRANSLATIONS = {
         help_q_reuse_items: "Can I save line items to reuse later?",
         help_a_reuse_items: "Yes. In Step 3, use the cart icon next to <strong>Add Item</strong> to open your saved items. Any item saved from a previous document appears there and can be added with one click. The Catalog page aggregates all captured items across documents.",
         help_q_payment_terms: "How do I add or update payment terms?",
-        help_a_payment_terms: "Scroll to the <strong>Document Notes &amp; Terms</strong> panel at the bottom of Step 3. The <strong>Terms of Payment</strong> field is pre-filled with a NET 15 default \u2014 update it to match your agreement.",
+        help_a_payment_terms: "Scroll to the <strong>Document Notes &amp; Terms</strong> panel at the bottom of Step 3. The <strong>Terms of Payment</strong> field is pre-filled with a NET 30 minimum and a $10,000 monthly client limit note \u2014 update it to match your agreement.",
         help_q_backup: "How do I back up or restore my data?",
-        help_a_backup: "Open <strong>Settings</strong> from the sidebar and use the <strong>JSON Backup</strong> option to export a full snapshot of your documents and clients. Use <strong>JSON Restore</strong> to import a previously saved backup. CSV import is also available for bulk document creation.",
+        help_a_backup: "Open <strong>Settings</strong> from the sidebar and use the <strong>JSON Backup</strong> option to export a full workspace snapshot, including documents, clients, and admin data. Use <strong>JSON Restore</strong> to import a previously saved backup. The server now also keeps timestamped dataset snapshots for recovery.",
         help_q_action_icons: "What do the action icons on document cards do?",
         help_a_action_icons: "Each card shows two icon buttons on the right. The <strong>eye icon</strong> opens the PDF preview in a new window. The <strong>pencil icon</strong> opens the document in the editor. A three-dot menu gives access to additional actions like payment status, type conversion, and delete.",
         help_vl_card_actions: "Card action buttons",
@@ -697,7 +699,7 @@ const TRANSLATIONS = {
         export_csv_template: "Exportar Plantilla CSV",
         import_csv: "Importar CSV",
         json_backup: "Respaldo JSON",
-        json_backup_copy: "Exporta un respaldo completo o restaura documentos y clientes desde un archivo JSON.",
+        json_backup_copy: "Exporta un respaldo completo del espacio de trabajo o restaura documentos, clientes y datos administrativos desde un archivo JSON.",
         export_backup: "Exportar Respaldo",
         import_backup: "Importar Respaldo",
         selective_export: "Exportación Selectiva",
@@ -721,8 +723,9 @@ const TRANSLATIONS = {
         previous: "Anterior",
         next: "Siguiente",
         save_draft: "Guardar Borrador",
+        save_document: "Guardar Documento",
         save_changes: "Guardar Cambios",
-        save_preview_pdf: "Abrir Vista de Impresión",
+        save_preview_pdf: "Ver / Imprimir",
         document_summary: "Resumen del Documento",
         ref_pending: "Ref pendiente",
         date_pending: "Fecha pendiente",
@@ -784,9 +787,9 @@ const TRANSLATIONS = {
         help_q_reuse_items: "\u00bfPuedo guardar l\u00edneas de art\u00edculos para reutilizarlas?",
         help_a_reuse_items: "S\u00ed. En el Paso 3, usa el \u00edcono del carrito junto a <strong>Agregar Art\u00edculo</strong> para abrir tus art\u00edculos guardados. Cualquier art\u00edculo guardado de un documento anterior aparece ah\u00ed y puede agregarse con un clic. La p\u00e1gina de Cat\u00e1logo agrupa todos los art\u00edculos capturados.",
         help_q_payment_terms: "\u00bfC\u00f3mo agrego o actualizo los t\u00e9rminos de pago?",
-        help_a_payment_terms: "Baja hasta el panel de <strong>Notas y T\u00e9rminos del Documento</strong> al final del Paso 3. El campo <strong>Condiciones de Pago</strong> viene prellenado con NET 15 \u2014 actual\u00edzalo seg\u00fan tu acuerdo.",
+        help_a_payment_terms: "Baja hasta el panel de <strong>Notas y T\u00e9rminos del Documento</strong> al final del Paso 3. El campo <strong>Condiciones de Pago</strong> viene prellenado con un m\u00ednimo NET 30 y una nota de l\u00edmite mensual de $10,000 \u2014 actual\u00edzalo seg\u00fan tu acuerdo.",
         help_q_backup: "\u00bfC\u00f3mo respaldo o restauro mis datos?",
-        help_a_backup: "Abre <strong>Configuraci\u00f3n</strong> desde la barra lateral y usa la opci\u00f3n <strong>Respaldo JSON</strong> para exportar un resguardo completo. Usa <strong>Restaurar JSON</strong> para importar un respaldo guardado. La importaci\u00f3n CSV tambi\u00e9n est\u00e1 disponible.",
+        help_a_backup: "Abre <strong>Configuraci\u00f3n</strong> desde la barra lateral y usa la opci\u00f3n <strong>Respaldo JSON</strong> para exportar un resumen completo del espacio de trabajo, incluidos documentos, clientes y datos administrativos. Usa <strong>Restaurar JSON</strong> para importar un respaldo guardado. El servidor ahora tambi\u00e9n conserva instant\u00e1neas con fecha para recuperaci\u00f3n.",
         help_q_action_icons: "\u00bfQu\u00e9 hacen los \u00edconos de acci\u00f3n en las tarjetas de documentos?",
         help_a_action_icons: "Cada tarjeta muestra dos botones de \u00edconos. El <strong>\u00edcono de ojo</strong> abre la vista previa del PDF en una nueva ventana. El <strong>\u00edcono de l\u00e1piz</strong> abre el documento en el editor. El men\u00fa de tres puntos da acceso a acciones adicionales como estado de pago, conversi\u00f3n de tipo y eliminar.",
         help_vl_card_actions: "Botones de acci\u00f3n de la tarjeta",
@@ -1030,7 +1033,7 @@ const TRANSLATIONS = {
         export_csv_template: "Exporter le Modèle CSV",
         import_csv: "Importer CSV",
         json_backup: "Sauvegarde JSON",
-        json_backup_copy: "Exportez une sauvegarde complète ou restaurez documents et clients depuis un fichier JSON.",
+        json_backup_copy: "Exportez une sauvegarde complète de l’espace de travail ou restaurez documents, clients et données d’administration depuis un fichier JSON.",
         export_backup: "Exporter la Sauvegarde",
         import_backup: "Importer la Sauvegarde",
         selective_export: "Export Sélectif",
@@ -1054,8 +1057,9 @@ const TRANSLATIONS = {
         previous: "Précédent",
         next: "Suivant",
         save_draft: "Enregistrer le Brouillon",
+        save_document: "Enregistrer le document",
         save_changes: "Enregistrer les Modifications",
-        save_preview_pdf: "Ouvrir l’aperçu d’impression",
+        save_preview_pdf: "Voir / Imprimer",
         document_summary: "Résumé du Document",
         ref_pending: "Réf en attente",
         date_pending: "Date en attente",
@@ -1117,9 +1121,9 @@ const TRANSLATIONS = {
         help_q_reuse_items: "Puis-je enregistrer des lignes d\u2019articles pour les r\u00e9utiliser\u00a0?",
         help_a_reuse_items: "Oui. \u00c0 l\u2019\u00e9tape\u00a03, utilisez l\u2019ic\u00f4ne de panier \u00e0 c\u00f4t\u00e9 d\u2019<strong>Ajouter un article</strong> pour ouvrir vos articles enregistr\u00e9s. Tout article sauvegard\u00e9 depuis un document pr\u00e9c\u00e9dent y appara\u00eet et peut \u00eatre ajout\u00e9 en un clic. La page Catalogue regroupe tous les articles captur\u00e9s.",
         help_q_payment_terms: "Comment ajouter ou mettre \u00e0 jour les conditions de paiement\u00a0?",
-        help_a_payment_terms: "Faites d\u00e9filer jusqu\u2019au panneau <strong>Notes et conditions du document</strong> en bas de l\u2019\u00e9tape\u00a03. Le champ <strong>Conditions de paiement</strong> est pr\u00e9rempli avec NET\u00a015 \u2014 mettez-le \u00e0 jour selon votre accord.",
+        help_a_payment_terms: "Faites d\u00e9filer jusqu\u2019au panneau <strong>Notes et conditions du document</strong> en bas de l\u2019\u00e9tape\u00a03. Le champ <strong>Conditions de paiement</strong> est pr\u00e9rempli avec un minimum NET\u00a030 et une note de limite mensuelle de 10\u00a0000\u00a0$ \u2014 mettez-le \u00e0 jour selon votre accord.",
         help_q_backup: "Comment sauvegarder ou restaurer mes donn\u00e9es\u00a0?",
-        help_a_backup: "Ouvrez <strong>Paramètres</strong> dans la barre lat\u00e9rale et utilisez l\u2019option <strong>Sauvegarde JSON</strong> pour exporter un instantan\u00e9 complet. Utilisez <strong>Restaurer JSON</strong> pour importer une sauvegarde. L\u2019importation CSV est \u00e9galement disponible.",
+        help_a_backup: "Ouvrez <strong>Paramètres</strong> dans la barre lat\u00e9rale et utilisez l\u2019option <strong>Sauvegarde JSON</strong> pour exporter un instantané complet de l’espace de travail, y compris les documents, clients et données d’administration. Utilisez <strong>Restaurer JSON</strong> pour importer une sauvegarde. Le serveur conserve désormais aussi des instantanés horodatés pour la récupération.",
         help_q_action_icons: "Que font les ic\u00f4nes d\u2019action sur les cartes de documents\u00a0?",
         help_a_action_icons: "Chaque carte affiche deux boutons d\u2019ic\u00f4nes. L\u2019<strong>ic\u00f4ne en forme d\u2019\u0153il</strong> ouvre l\u2019aper\u00e7u PDF dans une nouvelle fen\u00eatre. L\u2019<strong>ic\u00f4ne de crayon</strong> ouvre le document dans l\u2019\u00e9diteur. Le menu \u00e0 trois points donne acc\u00e8s \u00e0 des actions suppl\u00e9mentaires comme le statut de paiement, la conversion de type et la suppression.",
         help_vl_card_actions: "Boutons d\u2019action de la carte",
@@ -1651,6 +1655,7 @@ function cacheElements() {
     elements.catalogPage = document.getElementById("catalogPage");
     elements.statementsPage = document.getElementById("statementsPage");
     elements.statementExportsList = document.getElementById("statementExportsList");
+    elements.paymentExposureAlerts = document.getElementById("paymentExposureAlerts");
     elements.paymentHistoryMetrics = document.getElementById("paymentHistoryMetrics");
     elements.paymentHistoryTableBody = document.getElementById("paymentHistoryTableBody");
     elements.agingMetrics = document.getElementById("agingMetrics");
@@ -3036,6 +3041,90 @@ function getStoredSessionUser() {
     }
 }
 
+function getDocumentSyncKey(doc) {
+    const type = String(doc?.type || "quote").toLowerCase();
+    const refNumber = String(doc?.refNumber || "").trim().toUpperCase();
+    return refNumber ? `${type}::${refNumber}` : `${type}::${String(doc?.id || "")}`;
+}
+
+function getPaymentSyncKey(payment) {
+    return [
+        String(payment?.id || "").trim(),
+        String(payment?.date || "").trim(),
+        Number(payment?.amount || 0).toFixed(2),
+        String(payment?.reference || "").trim().toLowerCase(),
+        String(payment?.notes || "").trim().toLowerCase()
+    ].join("::");
+}
+
+function mergeInvoicePaymentCollections(primaryPayments, secondaryPayments) {
+    const merged = [];
+    const seen = new Set();
+
+    normalizeInvoicePayments([...(Array.isArray(primaryPayments) ? primaryPayments : []), ...(Array.isArray(secondaryPayments) ? secondaryPayments : [])])
+        .forEach(payment => {
+            const key = getPaymentSyncKey(payment);
+            if (seen.has(key)) {
+                return;
+            }
+            seen.add(key);
+            merged.push(payment);
+        });
+
+    return merged.sort((left, right) => Date.parse(right.date || right.createdAt || 0) - Date.parse(left.date || left.createdAt || 0));
+}
+
+function mergeLocalDocumentsIntoServerDocuments(serverDocuments, localDocuments) {
+    const normalizedServer = normalizeDocuments(serverDocuments);
+    const normalizedLocal = normalizeDocuments(localDocuments);
+    const localByKey = new Map(normalizedLocal.map(doc => [getDocumentSyncKey(doc), doc]));
+    let didChange = false;
+
+    const mergedDocuments = normalizedServer.map(serverDoc => {
+        const localDoc = localByKey.get(getDocumentSyncKey(serverDoc));
+        if (!localDoc) {
+            return serverDoc;
+        }
+
+        localByKey.delete(getDocumentSyncKey(serverDoc));
+
+        if (serverDoc.type !== "invoice" || localDoc.type !== "invoice") {
+            return serverDoc;
+        }
+
+        const mergedPayments = mergeInvoicePaymentCollections(serverDoc.payments, localDoc.payments);
+        const hasPaymentUpgrade = mergedPayments.length !== getInvoicePayments(serverDoc).length;
+        const nextPaymentTerms = String(localDoc.paymentTerms || "").trim() || serverDoc.paymentTerms || DEFAULT_PAYMENT_TERMS;
+        const shouldUseLocalTerms = nextPaymentTerms !== (serverDoc.paymentTerms || DEFAULT_PAYMENT_TERMS);
+
+        if (!hasPaymentUpgrade && !shouldUseLocalTerms) {
+            return serverDoc;
+        }
+
+        didChange = true;
+        return {
+            ...serverDoc,
+            paymentTerms: nextPaymentTerms,
+            payments: mergedPayments,
+            paymentStatus: getInvoiceDerivedPaymentStatus({
+                ...serverDoc,
+                paymentTerms: nextPaymentTerms,
+                payments: mergedPayments
+            })
+        };
+    });
+
+    localByKey.forEach(localDoc => {
+        mergedDocuments.push(localDoc);
+        didChange = true;
+    });
+
+    return {
+        documents: normalizeDocuments(mergedDocuments),
+        didChange
+    };
+}
+
 async function migrateLocalDataToServer() {
     // Check if we have local data that needs to be migrated
     const localDocuments = readLocalDataset(LOCAL_DOCUMENTS_STORAGE_KEY, []);
@@ -3048,31 +3137,34 @@ async function migrateLocalDataToServer() {
     const serverHasDocuments = state.documents.length > 1; // More than just default
     const serverHasClients = state.clients.length > 1; // More than just default CCXpress
 
-    if ((hasLocalDocuments && !serverHasDocuments) || (hasLocalClients && !serverHasClients)) {
+    const mergedDocumentResult = hasLocalDocuments
+        ? mergeLocalDocumentsIntoServerDocuments(state.documents, localDocuments)
+        : { documents: state.documents, didChange: false };
+
+    if (mergedDocumentResult.didChange || (hasLocalDocuments && !serverHasDocuments) || (hasLocalClients && !serverHasClients)) {
         console.log("Migrating local data to server...");
 
         try {
-            // Migrate documents if server is empty but local has data
-            if (hasLocalDocuments && !serverHasDocuments) {
+            if (hasLocalDocuments && mergedDocumentResult.didChange) {
+                await saveDocumentsToServer(mergedDocumentResult.documents);
+                console.log(`Synced ${localDocuments.length} locally saved documents back to server`);
+                clearLocalDataset(LOCAL_DOCUMENTS_STORAGE_KEY);
+            } else if (hasLocalDocuments && !serverHasDocuments) {
                 await saveDocumentsToServer(localDocuments);
                 console.log(`Migrated ${localDocuments.length} documents to server`);
+                clearLocalDataset(LOCAL_DOCUMENTS_STORAGE_KEY);
             }
 
             // Migrate clients if server only has default client
             if (hasLocalClients && !serverHasClients) {
                 await saveClientsToServer(localClients);
                 console.log(`Migrated ${localClients.length} clients to server`);
-            }
-
-            // Clear local data after successful migration
-            if (hasLocalDocuments && !serverHasDocuments) {
-                clearLocalDataset(LOCAL_DOCUMENTS_STORAGE_KEY);
-            }
-            if (hasLocalClients && !serverHasClients) {
                 clearLocalDataset(LOCAL_CLIENTS_STORAGE_KEY);
             }
 
-            setImportStatus("✓ Local data has been migrated to server storage.");
+            setImportStatus(mergedDocumentResult.didChange
+                ? "Recovered locally saved payments and synced them back to server storage."
+                : "✓ Local data has been migrated to server storage.");
         } catch (error) {
             console.error("Data migration failed:", error);
             setImportStatus("⚠️ Data migration failed. Your local data is still safe in browser storage.", true);
@@ -7173,21 +7265,24 @@ function getInvoiceDerivedPaymentStatus(doc) {
     return "pending";
 }
 
-function calculateInvoiceDueDate(invoice) {
-    const invoiceDate = parseLocalDateValue(invoice?.date || new Date());
+function getInvoicePaymentTermDays(invoice) {
     const normalizedTerms = String(invoice?.paymentTerms || DEFAULT_PAYMENT_TERMS).trim().toUpperCase();
     const netMatch = normalizedTerms.match(/NET\s*[- ]?(\d{1,3})/i);
     const dayMatch = normalizedTerms.match(/\b(\d{1,3})\s*(DAY|DAYS)\b/i);
     const looseNumberMatch = normalizedTerms.match(/\b(\d{1,3})\b/);
-    const offsetDays = Number(
+    const parsedDays = Number(
         (netMatch && netMatch[1]) ||
         (dayMatch && dayMatch[1]) ||
         (looseNumberMatch && looseNumberMatch[1]) ||
-        0
+        30
     );
+    return Math.max(30, Number.isFinite(parsedDays) ? parsedDays : 30);
+}
 
+function calculateInvoiceDueDate(invoice) {
+    const invoiceDate = parseLocalDateValue(invoice?.date || new Date());
     const dueDate = new Date(invoiceDate);
-    dueDate.setDate(dueDate.getDate() + (Number.isFinite(offsetDays) ? offsetDays : 0));
+    dueDate.setDate(dueDate.getDate() + getInvoicePaymentTermDays(invoice));
     return dueDate;
 }
 
@@ -7263,6 +7358,42 @@ function getClientAgingRows(referenceDate = new Date()) {
     return [...grouped.values()].sort((left, right) => right.totalOutstanding - left.totalOutstanding);
 }
 
+function getMonthlyPaymentExposureAlerts(referenceDate = new Date()) {
+    const grouped = new Map();
+
+    state.documents
+        .filter(doc => doc.type === "invoice")
+        .forEach(doc => {
+            const outstanding = getInvoiceOutstandingBalance(doc);
+            if (outstanding <= 0) {
+                return;
+            }
+
+            const dueDate = calculateInvoiceDueDate(doc);
+            const monthKey = `${dueDate.getFullYear()}-${String(dueDate.getMonth() + 1).padStart(2, "0")}`;
+            const clientName = String(doc.clientName || t("unknown_client")).trim() || t("unknown_client");
+            const key = `${clientName}::${monthKey}`;
+            const group = grouped.get(key) || {
+                clientName,
+                monthKey,
+                dueDate,
+                totalOutstanding: 0,
+                invoiceCount: 0
+            };
+
+            group.totalOutstanding += outstanding;
+            group.invoiceCount += 1;
+            if (dueDate > group.dueDate) {
+                group.dueDate = dueDate;
+            }
+            grouped.set(key, group);
+        });
+
+    return [...grouped.values()]
+        .filter(group => group.totalOutstanding > MONTHLY_CLIENT_DUE_LIMIT)
+        .sort((left, right) => right.totalOutstanding - left.totalOutstanding);
+}
+
 function renderReportsMetrics(container, metrics) {
     if (!container) {
         return;
@@ -7284,12 +7415,23 @@ function renderPaymentHistoryPanel() {
     const entries = getPaymentHistoryEntries();
     const totalPaid = entries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0);
     const uniqueClients = new Set(entries.map(entry => entry.clientName)).size;
+    const exposureAlerts = getMonthlyPaymentExposureAlerts();
 
     renderReportsMetrics(elements.paymentHistoryMetrics, [
         { label: "Payments Logged", value: String(entries.length) },
         { label: "Clients Touched", value: String(uniqueClients) },
         { label: "Total Applied", value: formatCurrency(totalPaid) }
     ]);
+
+    if (elements.paymentExposureAlerts) {
+        elements.paymentExposureAlerts.hidden = exposureAlerts.length === 0;
+        elements.paymentExposureAlerts.innerHTML = exposureAlerts.map(alert => `
+            <article class="report-alert-card">
+                <strong>Monthly due alert: ${escapeHtml(alert.clientName)}</strong>
+                <p>${escapeHtml(`${formatCurrency(alert.totalOutstanding)} is due across ${alert.invoiceCount} invoice${alert.invoiceCount === 1 ? "" : "s"} in ${alert.dueDate.toLocaleString(getCurrentLocale(), { month: "long", year: "numeric" })}. This exceeds the ${formatCurrency(MONTHLY_CLIENT_DUE_LIMIT)} monthly limit.`)}</p>
+            </article>
+        `).join("");
+    }
 
     elements.paymentHistoryTableBody.innerHTML = entries.length
         ? entries.map(entry => `
@@ -7831,12 +7973,22 @@ function exportSystemBackup() {
     const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
     downloadJSONFile(`invoice-quote-backup-${stamp}.json`, {
         exportedAt: new Date().toISOString(),
-        version: 1,
+        version: 2,
         documents: state.documents,
-        clients: state.clients
+        clients: state.clients,
+        workspace: {
+            userAccounts: state.userAccounts,
+            issueReports: state.issueReports,
+            companyProfile: state.companyProfile,
+            savedItems: state.savedItems,
+            catalogItems: state.catalogItems,
+            statementExports: state.statementExports,
+            sessionLogs: state.sessionLogs,
+            activityLogs: state.activityLogs
+        }
     });
     closeSettingsModal();
-    setImportStatus("Backup exported. Keep the JSON file somewhere safe.");
+    setImportStatus("Full workspace backup exported. Keep the JSON file somewhere safe.");
 }
 
 function exportCsvTemplate() {
@@ -8234,6 +8386,28 @@ async function handleBackupImportSelect(event) {
         const payload = JSON.parse(text);
         const nextDocuments = normalizeDocuments(payload.documents || (payload.document ? [payload.document] : []));
         const nextClients = normalizeClients(payload.clients || state.clients);
+        const hasWorkspaceBackup = Boolean(payload.workspace) || [
+            payload.userAccounts,
+            payload.issueReports,
+            payload.companyProfile,
+            payload.savedItems,
+            payload.catalogItems,
+            payload.statementExports,
+            payload.sessionLogs,
+            payload.activityLogs
+        ].some(value => value !== undefined);
+        const nextWorkspaceState = hasWorkspaceBackup
+            ? (payload.workspace || {
+                userAccounts: payload.userAccounts,
+                issueReports: payload.issueReports,
+                companyProfile: payload.companyProfile,
+                savedItems: payload.savedItems,
+                catalogItems: payload.catalogItems,
+                statementExports: payload.statementExports,
+                sessionLogs: payload.sessionLogs,
+                activityLogs: payload.activityLogs
+            })
+            : null;
 
         if (!nextDocuments.length && !payload.document) {
             throw new Error("This backup file does not contain any documents.");
@@ -8248,10 +8422,17 @@ async function handleBackupImportSelect(event) {
             saveClientsToServer(nextClients)
         ]);
 
+        if (hasWorkspaceBackup && nextWorkspaceState) {
+            applyWorkspaceState(nextWorkspaceState);
+            await persistSharedWorkspaceData();
+        }
+
         closeSettingsModal();
         renderClientOptions();
         renderDocuments();
-        setImportStatus("Backup imported successfully.");
+        setImportStatus(hasWorkspaceBackup
+            ? "Full workspace backup imported successfully."
+            : "Documents and clients backup imported successfully.");
     } catch (error) {
         setImportStatus(`Backup import failed: ${error.message}`, true);
     }
@@ -8677,6 +8858,18 @@ function closeModal() {
     resetForm();
 }
 
+function isUserSavedDocument(doc) {
+    return String(doc?.status || "").toLowerCase() === "logged";
+}
+
+function getCurrentEditorDocument() {
+    return state.editingDocumentId !== null ? getDocumentById(state.editingDocumentId) : null;
+}
+
+function canCurrentEditorViewPrint() {
+    return isUserSavedDocument(getCurrentEditorDocument());
+}
+
 function updateModalTitle() {
     const type = elements.docType.value;
     state.currentDocType = type;
@@ -8689,7 +8882,7 @@ function updateModalTitle() {
         elements.modalTitle.textContent = `New ${docLabel}`;
     }
 
-    const saveButtonLabel = state.editingDocumentId !== null ? t("save_changes") : t("save_draft");
+    const saveButtonLabel = state.editingDocumentId !== null ? t("save_changes") : t("save_document");
     elements.saveBtn.innerHTML = getActionButtonMarkup(
         '<svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 4v6h8V4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 17h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
         ""
@@ -8787,7 +8980,7 @@ function goToStep(step) {
     elements.prevBtn.textContent = step === totalSteps ? "Back to Edit" : "Previous";
     elements.nextBtn.textContent = step === totalSteps - 1 ? "Review Document" : step === totalSteps - 2 ? "Continue to Preview" : "Continue";
     elements.saveBtn.style.display = (isPrefilled || step === totalSteps) ? "block" : "none";
-    elements.exportPdfBtn.style.display = step === totalSteps ? "block" : "none";
+    elements.exportPdfBtn.style.display = step === totalSteps && canCurrentEditorViewPrint() ? "block" : "none";
 
     if (step >= totalSteps - 1) {
         generatePreviews();
@@ -9828,17 +10021,22 @@ function shouldUseMobilePreviewLauncher() {
 
 function buildMobilePreviewLauncherMarkup(doc) {
     const documentLabel = doc.type === "quote" ? "quote" : "invoice";
+    const canViewPrint = canCurrentEditorViewPrint();
 
     return `
         <div class="mobile-preview-launcher-card">
             <span class="mobile-preview-launcher-kicker">Print-ready preview</span>
             <h6>Open the ${escapeHtml(documentLabel)} in a separate preview.</h6>
-            <p>The preview uses the same layout and content that will be printed or saved as PDF.</p>
+            <p>${escapeHtml(canViewPrint
+                ? "The preview uses the same layout and content that will be printed or saved as PDF."
+                : "Save this document first to unlock the print-ready preview on Step 6.")}</p>
             <div class="mobile-preview-launcher-meta">
                 <span>${escapeHtml(doc.refNumber || "Reference pending")}</span>
                 <span>${escapeHtml(formatDisplayDate(doc.date) || "Date pending")}</span>
             </div>
-            <button class="btn btn-secondary" type="button" data-open-preview-window="true">Open Print Preview</button>
+            ${canViewPrint
+                ? `<button class="btn btn-secondary" type="button" data-open-preview-window="true">${escapeHtml(t("save_preview_pdf"))}</button>`
+                : `<button class="btn btn-secondary" type="button" disabled>Save First</button>`}
         </div>
     `;
 }
@@ -9997,6 +10195,11 @@ function handlePreviewContainerClick(event) {
         return;
     }
 
+    if (!canCurrentEditorViewPrint()) {
+        window.alert("Save this document first to unlock View / Print.");
+        return;
+    }
+
     openPrintWindow(buildDocumentData());
 }
 
@@ -10010,9 +10213,9 @@ async function persistDocument(options = {}) {
     } = options;
     const isEditing = state.editingDocumentId !== null;
     const existingDocument = isEditing ? getDocumentById(state.editingDocumentId) : null;
-    const nextStatus = exportAfterSave
-        ? "logged"
-        : (forceDraft ? "draft" : (existingDocument?.status === "logged" ? "logged" : "draft"));
+    const nextStatus = forceDraft
+        ? (isUserSavedDocument(existingDocument) ? "logged" : "draft")
+        : "logged";
     const doc = {
         ...(existingDocument || {}),
         id: state.editingDocumentId ?? Date.now(),
@@ -10116,7 +10319,17 @@ async function persistDocument(options = {}) {
     }
 
     if (keepOpen) {
+        updateModalTitle();
+        goToStep(state.currentStep);
         updateEditorSummary();
+        if (!silent) {
+            setImportStatus(exportAfterSave
+                ? `${doc.type === "quote" ? "Quote" : "Invoice"} saved. View / Print opened in a new window.`
+                : `${doc.type === "quote" ? "Quote" : "Invoice"} saved. View / Print is now available on Step 6.`);
+        }
+        if (exportAfterSave) {
+            openPrintWindow(doc, previewWindow);
+        }
         return;
     }
 
@@ -10139,16 +10352,24 @@ async function saveDocumentOnly() {
     if (!validateDocumentForSave()) {
         return;
     }
-    await persistDocument({ exportAfterSave: false });
+    await persistDocument({
+        exportAfterSave: false,
+        keepOpen: state.currentStep === getTotalSteps()
+    });
 }
 
 async function saveAndExportDocument() {
     if (!validateDocumentForSave()) {
         return;
     }
+    if (!canCurrentEditorViewPrint()) {
+        window.alert("Save this document first. View / Print unlocks after the document has been saved by a user.");
+        return;
+    }
     const previewWindow = createPrintWindow(buildDocumentData());
     await persistDocument({
         exportAfterSave: true,
+        keepOpen: true,
         previewWindow
     });
 }
@@ -10462,17 +10683,22 @@ function getKpiCardMarkup(label, value, meta = "") {
 }
 
 function getDocumentCardMarkup(doc) {
-    const statusLabel = doc.status === "draft" ? t("status_draft") : t("status_logged");
     const paymentStatus = doc.type === "invoice" ? getInvoiceDerivedPaymentStatus(doc) : "";
-    const statusMarkup = doc.type === "invoice"
-        ? [
-            getStatusBadgeMarkup(statusLabel, doc.status === "draft" ? "is-draft" : "is-logged"),
-            getStatusBadgeMarkup(getPaymentStatusLabel(paymentStatus), `is-${paymentStatus}`)
-        ].join("")
-        : getStatusBadgeMarkup(statusLabel, doc.status === "draft" ? "is-draft" : "is-logged");
+    const canViewPdf = isUserSavedDocument(doc);
+    const statusBadges = [];
+
+    if (doc.status === "draft") {
+        statusBadges.push(getStatusBadgeMarkup(t("status_draft"), "is-draft"));
+    }
+
+    if (doc.type === "invoice") {
+        statusBadges.push(getStatusBadgeMarkup(getPaymentStatusLabel(paymentStatus), `is-${paymentStatus}`));
+    }
+
+    const statusMarkup = statusBadges.join("");
 
     return `
-        <article class="document-card document-card-${doc.type}" data-view-id="${escapeHtml(String(doc.id))}">
+        <article class="document-card document-card-${doc.type}" data-view-id="${escapeHtml(String(doc.id))}" tabindex="0" role="button" aria-label="${escapeHtml(`Open ${doc.type} ${doc.refNumber || ""}`.trim())}">
             <div class="document-card-copy">
                 <div class="document-card-head">
                     <strong class="document-card-ref">${escapeHtml(doc.refNumber || "Reference pending")}</strong>
@@ -10485,9 +10711,10 @@ function getDocumentCardMarkup(doc) {
                 </div>
             </div>
             <div class="document-card-actions">
+                ${canViewPdf ? `
                 <button type="button" class="statement-action-btn is-open" data-action="export-pdf" data-id="${escapeHtml(String(doc.id))}" aria-label="${escapeHtml(t("view_pdf"))}" title="${escapeHtml(t("view_pdf"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>
-                </button>
+                </button>` : ""}
                 <button type="button" class="statement-action-btn is-edit" data-action="edit" data-id="${escapeHtml(String(doc.id))}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
                 </button>
@@ -10753,10 +10980,22 @@ async function handleDocumentCardClick(event) {
     if (!card) {
         return;
     }
+
+    editDocument(card.dataset.viewId);
 }
 
 function handleDocumentCardKeydown(event) {
-    return;
+    if (event.key !== "Enter" && event.key !== " ") {
+        return;
+    }
+
+    const card = event.target.closest("[data-view-id]");
+    if (!card) {
+        return;
+    }
+
+    event.preventDefault();
+    editDocument(card.dataset.viewId);
 }
 
 async function updateDocumentPaymentStatus(id, status) {
