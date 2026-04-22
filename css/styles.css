@@ -9946,6 +9946,20 @@ body {
     gap: 1rem;
 }
 
+.workspace-hero,
+.workspace-actions,
+.overview-secondary-grid,
+.page-header,
+.filter-bar,
+.documents-grid,
+.clients-page-shell,
+.catalog-grid,
+.reports-layout,
+.settings-page > .settings-grid {
+    width: min(100%, 1240px);
+    margin-inline: auto;
+}
+
 .page-header,
 .page-section-heading {
     display: flex;
