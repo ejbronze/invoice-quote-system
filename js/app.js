@@ -119,7 +119,7 @@ const BRAND = window.SANTO_BRAND || {
     sessionTitle: "Opening SantoSync",
     sessionMessage: "Signing in and syncing your operational workspace...",
     aboutMeaning: "SantoSync is a coined product name designed to feel premium, steady, and coordinated.",
-    aboutProduct: "SantoSync is a modern document and operations workspace with cleaner save-versus-draft handling, more clickable records, stronger payment controls, responsive reporting layouts, and fuller backup recovery across the shared workspace.",
+    aboutProduct: "SantoSync is a modern document and operations workspace with cleaner save-versus-draft handling, more clickable records, stronger payment controls, a sharper modern typography system, responsive reporting layouts, and fuller backup recovery across the shared workspace.",
     aboutDeveloper: "Created by Edwin Jaquez through Palmchat Innovations Lab under Palmchat Innovations LLC NYC."
 };
 const DEFAULT_COMPANY_PROFILE = Object.freeze({
@@ -569,7 +569,7 @@ const TRANSLATIONS = {
         footer_report_cta: "Enviar / Reportar Problemas",
         about_veloris: `Sobre ${BRAND.name}`,
         about_brand_meaning: "SantoSync es un nombre creado para sugerir coordinación, elegancia y fiabilidad para flujos comerciales modernos.",
-        about_product_copy: "SantoSync es un espacio moderno de documentos y operaciones con mejor manejo entre borradores y guardados, registros más clicables, controles de pago más sólidos, reportes responsivos y recuperación más amplia del espacio compartido.",
+        about_product_copy: "SantoSync es un espacio moderno de documentos y operaciones con mejor manejo entre borradores y guardados, registros más clicables, controles de pago más sólidos, una tipografía más moderna y nítida, reportes responsivos y recuperación más amplia del espacio compartido.",
         about_developer_copy: `Diseñado y desarrollado por ${BRAND.developerName} a través de ${BRAND.studioName}, bajo ${BRAND.legalName}.`,
         company_profile: "Perfil de Empresa",
         company_profile_copy: "Los datos empresariales guardados aquí aparecen en cotizaciones, facturas y vistas de exportación.",
@@ -905,7 +905,7 @@ const TRANSLATIONS = {
         footer_report_cta: "Soumettre / Signaler un Problème",
         about_veloris: `À propos de ${BRAND.name}`,
         about_brand_meaning: "SantoSync est un nom imaginé pour évoquer la coordination, l’élégance et la fiabilité dans les flux commerciaux.",
-        about_product_copy: "SantoSync est un espace moderne de documents et d’opérations avec une meilleure distinction entre brouillons et enregistrements, des fiches plus cliquables, des contrôles de paiement renforcés, des rapports plus adaptatifs et une récupération plus complète de l’espace partagé.",
+        about_product_copy: "SantoSync est un espace moderne de documents et d’opérations avec une meilleure distinction entre brouillons et enregistrements, des fiches plus cliquables, des contrôles de paiement renforcés, une typographie plus nette et contemporaine, des rapports plus adaptatifs et une récupération plus complète de l’espace partagé.",
         about_developer_copy: `Conçu et développé par ${BRAND.developerName} via ${BRAND.studioName}, sous ${BRAND.legalName}.`,
         company_profile: "Profil Société",
         company_profile_copy: "Les informations d’identité enregistrées ici apparaissent dans les devis, factures et vues d’export.",

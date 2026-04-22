@@ -2,7 +2,17 @@
 
 SantoSync is a premium quote-and-invoice workspace for modern trade teams. It combines document creation, client history, per-user preferences, admin tools, and branded export output in one polished operational dashboard.
 
-Version: `1.6.0` — Last updated: April 22, 2026
+Version: `1.6.1` — Last updated: April 22, 2026
+
+## Version 1.6.1 Summary
+
+This release refreshes the app's visual tone so SantoSync feels newer, cleaner, and less old-timey without changing the underlying workflows.
+
+**Typography refresh:** The product now uses a more modern type system with `Manrope` for UI text and `Sora` for headings and branded display moments. This replaces the older serif-heavy look with a sharper, more contemporary voice that feels closer to a clean Helvetica-inspired workspace while still keeping enough personality for SantoSync.
+
+**Visual consistency pass:** The new font pairing carries through the splash screen, sign-in flow, dashboard headings, page headers, brand lockups, and about surfaces so the interface reads as one coherent system instead of mixing modern UI copy with vintage-looking display text.
+
+**Documentation sync:** README, Help & FAQ, and About SantoSync copy now reflect the updated visual direction alongside the recent workflow, payment, and recovery improvements shipped in the previous release updates.
 
 ## Version 1.6.0 Summary
 
@@ -91,6 +101,7 @@ This version brought SantoSync into a more complete shared-workspace release. Th
 - Name: `SantoSync`
 - Positioning: Premium workflow sync for quotes, invoices, and trade operations
 - Core feel: Coordinated, modern, calm, and reliable
+- Typography direction: Modern neo-grotesk UI with cleaner, sharper headings
 - Developer: Edwin Jaquez
 - Studio: Palmchat Innovations Lab
 - Legal credit: Palmchat Innovations LLC NYC
