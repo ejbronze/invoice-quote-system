@@ -2061,6 +2061,13 @@ function bindEvents() {
     elements.itemsContainer.addEventListener("change", handleItemsChange);
     elements.itemsContainer.addEventListener("change", handleItemImageInputChange);
     elements.itemsContainer.addEventListener("keydown", handleItemEditorKeydown);
+    elements.itemsContainer.addEventListener("pointerdown", handleItemDragPointerDown);
+    elements.itemsContainer.addEventListener("dragstart", handleItemDragStart);
+    elements.itemsContainer.addEventListener("dragover", handleItemDragOver);
+    elements.itemsContainer.addEventListener("dragleave", handleItemDragLeave);
+    elements.itemsContainer.addEventListener("drop", handleItemDrop);
+    elements.itemsContainer.addEventListener("dragend", handleItemDragEnd);
+    document.addEventListener("keydown", handleGlobalShortcuts);
     elements.addPaymentEntryBtn?.addEventListener("click", addPaymentEntry);
     elements.paymentLedgerList?.addEventListener("click", handlePaymentLedgerListClick);
     elements.paymentLedgerList?.addEventListener("input", syncPaymentLedgerUi);
@@ -4234,6 +4241,15 @@ function syncDocumentActionMenus() {
 function handleTopbarSettingsClick() {
     closeTopbarMenu();
     openSettingsModal();
+}
+
+function handleGlobalShortcuts(event) {
+    if ((event.metaKey || event.ctrlKey) && !event.shiftKey && event.key === "s") {
+        if (elements.documentModal && !elements.documentModal.hidden) {
+            event.preventDefault();
+            saveDocumentOnly();
+        }
+    }
 }
 
 function handleGlobalClick(event) {
@@ -7194,10 +7210,10 @@ function handleInternalPricingToggleChange(event) {
 
 function syncInternalPricingVisibility() {
     const show = state.showInternalPricing;
-    const costTh = document.getElementById("itemsColCost");
-    const marginTh = document.getElementById("itemsColMargin");
-    if (costTh) costTh.hidden = !show;
-    if (marginTh) marginTh.hidden = !show;
+    ["itemsColCost", "itemsColMargin", "itemsSubtotalCost", "itemsSubtotalMargin"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.hidden = !show;
+    });
     elements.itemsContainer.querySelectorAll(".it-cost, .it-margin").forEach(cell => {
         cell.hidden = !show;
     });
@@ -9160,9 +9176,14 @@ function addItem() {
     itemRow.dataset.priceDriver = "total";
     itemRow.dataset.itemImageDataUrl = "";
     itemRow.innerHTML = `
-        <td class="it-num"><span class="item-number">${state.itemCounter}</span></td>
+        <td class="it-num">
+            <span class="item-drag-handle" title="Drag to reorder" aria-hidden="true">
+                <svg viewBox="0 0 10 14" fill="currentColor"><circle cx="3" cy="2" r="1.2"/><circle cx="7" cy="2" r="1.2"/><circle cx="3" cy="7" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="3" cy="12" r="1.2"/><circle cx="7" cy="12" r="1.2"/></svg>
+            </span>
+            <span class="item-number">${state.itemCounter}</span>
+        </td>
         <td class="it-desc">
-            <textarea class="item-description" rows="2" placeholder="Describe the item or service..."></textarea>
+            <textarea class="item-description" placeholder="Describe the item or service..."></textarea>
         </td>
         <td class="it-qty">
             <input type="number" class="item-quantity" value="1" min="0" step="1">
@@ -9430,10 +9451,20 @@ function syncItemImageUI(row) {
     }
 }
 
+function autoResizeTextarea(textarea) {
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+}
+
 function handleItemsChange(event) {
     const activeRow = event?.target?.closest?.(".item-row") || null;
     const isInputEvent = event?.type === "input";
     const activeTarget = event?.target || null;
+
+    if (isInputEvent && activeTarget?.classList?.contains("item-description")) {
+        autoResizeTextarea(activeTarget);
+    }
 
     if (activeRow && activeTarget?.classList?.contains("item-unit-price")) {
         activeRow.dataset.priceDriver = "unit";
@@ -9573,6 +9604,85 @@ function refreshItemOrdering() {
     });
 }
 
+// ─── Drag-to-reorder ────────────────────────────────────────────
+
+let _dragRow = null;
+let _dragOverRow = null;
+let _dragDropBefore = false;
+
+function handleItemDragPointerDown(event) {
+    const onHandle = Boolean(event.target.closest(".item-drag-handle"));
+    elements.itemsContainer.querySelectorAll(".item-row").forEach(row => {
+        row.setAttribute("draggable", onHandle ? "true" : "false");
+    });
+}
+
+function handleItemDragStart(event) {
+    const row = event.target.closest(".item-row");
+    if (!row || row.getAttribute("draggable") !== "true") {
+        event.preventDefault();
+        return;
+    }
+    _dragRow = row;
+    row.classList.add("is-dragging");
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", row.dataset.itemId || "");
+}
+
+function handleItemDragOver(event) {
+    if (!_dragRow) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+
+    const row = event.target.closest(".item-row");
+    _clearDropIndicators();
+    if (!row || row === _dragRow) return;
+
+    const rect = row.getBoundingClientRect();
+    _dragDropBefore = event.clientY < rect.top + rect.height / 2;
+    row.classList.add(_dragDropBefore ? "drop-before" : "drop-after");
+    _dragOverRow = row;
+}
+
+function handleItemDragLeave(event) {
+    if (!event.relatedTarget || !event.relatedTarget.closest("#itemsContainer")) {
+        _clearDropIndicators();
+        _dragOverRow = null;
+    }
+}
+
+function handleItemDrop(event) {
+    event.preventDefault();
+    if (!_dragRow || !_dragOverRow) { _clearDragState(); return; }
+    const target = _dragDropBefore ? _dragOverRow : _dragOverRow.nextSibling;
+    elements.itemsContainer.insertBefore(_dragRow, target);
+    _clearDragState();
+    refreshItemOrdering();
+    calculateTotals();
+    queueDraftAutosave();
+}
+
+function handleItemDragEnd() {
+    _clearDragState();
+}
+
+function _clearDropIndicators() {
+    elements.itemsContainer.querySelectorAll(".drop-before, .drop-after").forEach(r => {
+        r.classList.remove("drop-before", "drop-after");
+    });
+}
+
+function _clearDragState() {
+    if (_dragRow) {
+        _dragRow.classList.remove("is-dragging");
+        _dragRow.setAttribute("draggable", "false");
+    }
+    _clearDropIndicators();
+    _dragRow = null;
+    _dragOverRow = null;
+    _dragDropBefore = false;
+}
+
 function setExpandedItem(targetRow) {
     if (targetRow) {
         targetRow.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -9585,6 +9695,8 @@ function calculateTotals() {
         const totalPrice = parseFloat(row.querySelector(".item-total-price").value) || 0;
         subtotal += totalPrice;
     });
+    const subtotalCell = document.getElementById("itemsSubtotalCell");
+    if (subtotalCell) subtotalCell.textContent = formatCurrency(subtotal);
     return subtotal;
 }
 
@@ -11049,6 +11161,10 @@ function populateFormFromDocument(doc) {
     });
 
     syncInternalPricingVisibility();
+    window.requestAnimationFrame(() => {
+        elements.itemsContainer.querySelectorAll(".item-description").forEach(autoResizeTextarea);
+        calculateTotals();
+    });
 }
 
 function editDocument(id) {
