@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SantoSync</title>
-    <link rel="stylesheet" href="css/styles.css?v=24">
+    <link rel="stylesheet" href="css/styles.css?v=25">
 </head>
 <body>
     <div class="brand-splash" id="brandSplash" aria-hidden="true" hidden>
@@ -90,10 +90,12 @@
                 <nav class="sidebar-nav-links">
                     <button class="sidebar-nav-link active" type="button" data-page-nav="overview">Dashboard</button>
                     <button class="sidebar-nav-link" type="button" data-page-nav="documents">Documents</button>
+                    <button class="sidebar-nav-link" type="button" data-page-nav="notes">Notes</button>
                     <button class="sidebar-nav-link" type="button" data-page-nav="clients">Clients</button>
                     <button class="sidebar-nav-link" type="button" data-page-nav="catalog">Catalog</button>
                     <button class="sidebar-nav-link" type="button" data-page-nav="reports">Statements</button>
                     <button class="sidebar-nav-link" id="settingsNavBtn" type="button" data-page-nav="settings">Settings</button>
+                    <button class="sidebar-nav-link" id="sidebarCalculatorBtn" type="button">Calculator</button>
                 </nav>
                 <div class="sidebar-footer">
                     <div class="currency-display" id="currencyDisplay">
@@ -124,10 +126,12 @@
                 <div class="mobile-drawer-links">
                     <button class="sidebar-nav-link active" type="button" data-page-nav="overview">Dashboard</button>
                     <button class="sidebar-nav-link" type="button" data-page-nav="documents">Documents</button>
+                    <button class="sidebar-nav-link" type="button" data-page-nav="notes">Notes</button>
                     <button class="sidebar-nav-link" type="button" data-page-nav="clients">Clients</button>
                     <button class="sidebar-nav-link" type="button" data-page-nav="catalog">Catalog</button>
                     <button class="sidebar-nav-link" type="button" data-page-nav="reports">Statements</button>
                     <button class="sidebar-nav-link" id="settingsDrawerBtn" type="button" data-page-nav="settings">Settings</button>
+                    <button class="sidebar-nav-link" id="mobileDrawerCalculatorBtn" type="button">Calculator</button>
                 </div>
                 <div class="mobile-drawer-footer">
                     <label class="sidebar-language-picker">
@@ -290,12 +294,62 @@
                             </div>
                         </div>
                     </div>
+                    <div class="documents-selection-toolbar" id="documentsSelectionToolbar" hidden>
+                        <div class="documents-selection-copy">
+                            <span class="invoice-report-stage-step">Selected</span>
+                            <strong id="documentsSelectionTitle">0 documents selected</strong>
+                            <span id="documentsSelectionMeta">Choose more documents or download the current selection as a ZIP.</span>
+                        </div>
+                        <div class="documents-selection-actions">
+                            <button class="btn btn-secondary" id="selectVisibleDocumentsBtn" type="button">Select Visible</button>
+                            <button class="btn btn-secondary" id="clearSelectedDocumentsBtn" type="button">Clear Selection</button>
+                            <button class="btn btn-primary" id="downloadSelectedDocumentsZipBtn" type="button">Download ZIP</button>
+                        </div>
+                    </div>
                     <div class="documents-grid" id="documentsGrid">
                         <div class="empty-state">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z"></path>
                             </svg>
                             <p>No documents yet. Create your first quote or invoice!</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="app-page notes-page" id="notesPage" hidden>
+                    <div class="page-header">
+                        <div>
+                            <span class="page-eyebrow">Notes</span>
+                            <h2>Notes across documents</h2>
+                            <p class="dashboard-subtitle">Review internal notes for quotes, invoices, and statements without opening each record one by one.</p>
+                        </div>
+                    </div>
+                    <div class="notes-page-shell">
+                        <div class="notes-page-toolbar">
+                            <label class="search-field">
+                                <span class="search-label">Search</span>
+                                <input type="search" id="notesSearchInput" placeholder="Search note text, client, or reference">
+                            </label>
+                            <label class="sort-field">
+                                <span class="search-label">Client</span>
+                                <select id="notesClientFilter">
+                                    <option value="all">All clients</option>
+                                </select>
+                            </label>
+                            <div class="documents-toolbar">
+                                <div class="filter-row document-folder-tabs" aria-label="Notes filters">
+                                    <button class="filter-chip active" type="button" data-notes-filter="all">All</button>
+                                    <button class="filter-chip" type="button" data-notes-filter="invoice">Invoices</button>
+                                    <button class="filter-chip" type="button" data-notes-filter="quote">Quotes</button>
+                                    <button class="filter-chip" type="button" data-notes-filter="statement">Statements</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="notes-page-summary" id="notesPageSummary"></div>
+                        <div class="notes-feed" id="notesFeed">
+                            <div class="empty-state compact-empty-state">
+                                <p>No notes yet.</p>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -2019,8 +2073,10 @@
         </div>
     </div>
 
+    <script src="js/vendor/jszip.min.js"></script>
+    <script src="js/vendor/html2pdf.bundle.min.js"></script>
     <script src="js/brand.js?v=2"></script>
     <script src="js/statement-of-account.js?v=2"></script>
-    <script src="js/app.js?v=16"></script>
+    <script src="js/app.js?v=17"></script>
 </body>
 </html>

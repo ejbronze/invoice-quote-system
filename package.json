@@ -8,6 +8,8 @@
   },
   "dependencies": {
     "@vercel/blob": "^0.27.0",
-    "exceljs": "^4.4.0"
+    "exceljs": "^4.4.0",
+    "html2pdf.js": "^0.14.0",
+    "jszip": "^3.10.1"
   }
 }

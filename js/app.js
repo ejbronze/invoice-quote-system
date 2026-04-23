@@ -27,6 +27,9 @@ const state = {
     workspaceDataMode: "server",
     runtimeMode: "unknown",
     activePage: "overview",
+    notesFilter: "all",
+    notesSearchQuery: "",
+    notesClientFilter: "all",
     issueReports: [],
     companyProfile: null,
     exchangeRateUsdToDop: 59,
@@ -50,12 +53,15 @@ const state = {
     documentEditorDirty: false,
     mobileOverviewCollapsed: true,
     selectedInvoiceReportIds: [],
+    selectedDocumentIds: [],
     statementExportInProgress: false,
     statementExportStep: 1,
     activeQuickPaymentInvoiceId: null,
     activeQuickPaymentStatementId: null,
     pendingPaymentDeleteContext: null,
-    activeNotesDocId: null
+    activeNotesDocId: null,
+    activeNotesTargetType: null,
+    activeNotesTargetId: null
 };
 
 const DOP_PER_USD = 59;
@@ -562,9 +568,9 @@ const TRANSLATIONS = {
         help_q_diff_quote_invoice: "What is the difference between a Quote and an Invoice?",
         help_a_diff_quote_invoice: "A <strong>Quote</strong> is a price estimate sent before work begins. An <strong>Invoice</strong> is a formal payment request issued after work is completed or goods are delivered. You can switch between the two in Step 1 of the editor.",
         help_q_export_pdf: "How do I export a document to PDF?",
-        help_a_export_pdf: "Click the <strong>eye icon</strong> on any document card to open the PDF preview window, then use your browser\u2019s print dialog to save as PDF. You can also reach the preview from <strong>Step 6 \u2013 Final Preview</strong> inside the editor.",
-        help_vl_pdf_preview: "Open PDF preview",
-        help_vc_preview_pdf: "Preview PDF",
+        help_a_export_pdf: "Click the <strong>download icon</strong> on any saved document card to download the PDF immediately. If you want to review the layout first, you can still use <strong>Step 6 \u2013 Final Preview</strong> inside the editor.",
+        help_vl_pdf_preview: "Download PDF",
+        help_vc_preview_pdf: "Download PDF",
         help_q_reuse_items: "Can I save line items to reuse later?",
         help_a_reuse_items: "Yes. Reusable items now live in the <strong>Catalog</strong> and <strong>Pending Items Cart</strong> tools outside the Step 3 editor header. Keep the quote or invoice line-item table focused on direct entry, then manage reusable items from the Catalog or cart library when needed. The Catalog page still aggregates all captured items across documents.",
         help_q_payment_terms: "How do I set payment terms on an invoice?",
@@ -572,7 +578,7 @@ const TRANSLATIONS = {
         help_q_backup: "How do I back up or restore my data?",
         help_a_backup: "Open <strong>Settings</strong> from the sidebar and use the <strong>JSON Backup</strong> option to export a full workspace snapshot, including documents, clients, and admin data. Use <strong>JSON Restore</strong> to import a previously saved backup. The server now also keeps timestamped dataset snapshots for recovery.",
         help_q_action_icons: "What do the action icons on document cards do?",
-        help_a_action_icons: "Each card shows two icon buttons on the right. The <strong>eye icon</strong> opens the PDF preview in a new window. The <strong>pencil icon</strong> opens the document in the editor. A three-dot menu gives access to additional actions like payment status, type conversion, and delete.",
+        help_a_action_icons: "Each card shows action buttons on the right. The <strong>download icon</strong> saves the PDF immediately. The <strong>pencil icon</strong> opens the document in the editor. A three-dot menu gives access to additional actions like payment status, type conversion, and delete.",
         help_vl_card_actions: "Card action buttons",
         help_q_pdf_preview: "How do I use the PDF preview window?",
         help_a_pdf_preview: "The preview window shows the print-ready document. Use <strong>Print</strong> to open your browser\u2019s print dialog and save as PDF. Use <strong>Edit</strong> to jump back to the editor with the document loaded. <strong>Close Preview</strong> dismisses the window.",
@@ -1011,9 +1017,9 @@ const TRANSLATIONS = {
         help_q_diff_quote_invoice: "\u00bfCu\u00e1l es la diferencia entre una Cotizaci\u00f3n y una Factura?",
         help_a_diff_quote_invoice: "Una <strong>Cotizaci\u00f3n</strong> es un estimado de precio enviado antes de comenzar el trabajo. Una <strong>Factura</strong> es una solicitud formal de pago emitida despu\u00e9s de completar el trabajo o entregar bienes. Puedes cambiar entre ambos en el Paso 1 del editor.",
         help_q_export_pdf: "\u00bfC\u00f3mo exporto un documento a PDF?",
-        help_a_export_pdf: "Haz clic en el <strong>\u00edcono de ojo</strong> en cualquier tarjeta para abrir la vista previa del PDF, luego usa el di\u00e1logo de impresi\u00f3n del navegador para guardar como PDF. Tambi\u00e9n puedes acceder desde el <strong>Paso 6 \u2013 Vista Final</strong> del editor.",
-        help_vl_pdf_preview: "Abrir vista previa PDF",
-        help_vc_preview_pdf: "Vista PDF",
+        help_a_export_pdf: "Haz clic en el <strong>\u00edcono de descarga</strong> en cualquier tarjeta guardada para descargar el PDF de inmediato. Si quieres revisar el dise\u00f1o primero, todav\u00eda puedes usar el <strong>Paso 6 \u2013 Vista Final</strong> dentro del editor.",
+        help_vl_pdf_preview: "Descargar PDF",
+        help_vc_preview_pdf: "Descargar PDF",
         help_q_reuse_items: "\u00bfPuedo guardar l\u00edneas de art\u00edculos para reutilizarlas?",
         help_a_reuse_items: "S\u00ed. Los art\u00edculos reutilizables ahora viven en las herramientas de <strong>Cat\u00e1logo</strong> y <strong>Carrito de Art\u00edculos Pendientes</strong>, fuera del encabezado del Paso 3. Mant\u00e9n la tabla de l\u00edneas enfocada en entrada directa y gestiona los art\u00edculos reutilizables desde el Cat\u00e1logo o la biblioteca del carrito cuando lo necesites. La p\u00e1gina de Cat\u00e1logo sigue agrupando todos los art\u00edculos capturados.",
         help_q_payment_terms: "\u00bfC\u00f3mo configuro los t\u00e9rminos de pago en una factura?",
@@ -1021,7 +1027,7 @@ const TRANSLATIONS = {
         help_q_backup: "\u00bfC\u00f3mo respaldo o restauro mis datos?",
         help_a_backup: "Abre <strong>Configuraci\u00f3n</strong> desde la barra lateral y usa la opci\u00f3n <strong>Respaldo JSON</strong> para exportar un resumen completo del espacio de trabajo, incluidos documentos, clientes y datos administrativos. Usa <strong>Restaurar JSON</strong> para importar un respaldo guardado. El servidor ahora tambi\u00e9n conserva instant\u00e1neas con fecha para recuperaci\u00f3n.",
         help_q_action_icons: "\u00bfQu\u00e9 hacen los \u00edconos de acci\u00f3n en las tarjetas de documentos?",
-        help_a_action_icons: "Cada tarjeta muestra dos botones de \u00edconos. El <strong>\u00edcono de ojo</strong> abre la vista previa del PDF en una nueva ventana. El <strong>\u00edcono de l\u00e1piz</strong> abre el documento en el editor. El men\u00fa de tres puntos da acceso a acciones adicionales como estado de pago, conversi\u00f3n de tipo y eliminar.",
+        help_a_action_icons: "Cada tarjeta muestra botones de acci\u00f3n. El <strong>\u00edcono de descarga</strong> guarda el PDF de inmediato. El <strong>\u00edcono de l\u00e1piz</strong> abre el documento en el editor. El men\u00fa de tres puntos da acceso a acciones adicionales como estado de pago, conversi\u00f3n de tipo y eliminar.",
         help_vl_card_actions: "Botones de acci\u00f3n de la tarjeta",
         help_q_pdf_preview: "\u00bfC\u00f3mo uso la ventana de vista previa del PDF?",
         help_a_pdf_preview: "La ventana de vista previa muestra el documento listo para imprimir. Usa <strong>Imprimir</strong> para abrir el di\u00e1logo de impresi\u00f3n y guardar como PDF. Usa <strong>Editar</strong> para volver al editor con el documento cargado. <strong>Cerrar Vista</strong> cierra la ventana.",
@@ -1458,9 +1464,9 @@ const TRANSLATIONS = {
         help_q_diff_quote_invoice: "Quelle est la diff\u00e9rence entre un devis et une facture\u00a0?",
         help_a_diff_quote_invoice: "Un <strong>devis</strong> est une estimation de prix envoy\u00e9e avant le d\u00e9but du travail. Une <strong>facture</strong> est une demande de paiement formelle \u00e9mise apr\u00e8s la fin du travail ou la livraison des biens. Vous pouvez passer de l\u2019un \u00e0 l\u2019autre \u00e0 l\u2019\u00e9tape\u00a01 de l\u2019\u00e9diteur.",
         help_q_export_pdf: "Comment exporter un document en PDF\u00a0?",
-        help_a_export_pdf: "Cliquez sur l\u2019<strong>ic\u00f4ne en forme d\u2019\u0153il</strong> sur une carte pour ouvrir l\u2019aper\u00e7u PDF, puis utilisez la bo\u00eete de dialogue d\u2019impression du navigateur pour enregistrer en PDF. Vous pouvez aussi acc\u00e9der \u00e0 l\u2019aper\u00e7u depuis l\u2019<strong>\u00e9tape\u00a06 \u2013 Aper\u00e7u final</strong> de l\u2019\u00e9diteur.",
-        help_vl_pdf_preview: "Ouvrir l\u2019aper\u00e7u PDF",
-        help_vc_preview_pdf: "Aper\u00e7u PDF",
+        help_a_export_pdf: "Cliquez sur l\u2019<strong>ic\u00f4ne de t\u00e9l\u00e9chargement</strong> d\u2019un document enregistr\u00e9 pour r\u00e9cup\u00e9rer le PDF imm\u00e9diatement. Si vous voulez v\u00e9rifier la mise en page d\u2019abord, vous pouvez toujours utiliser l\u2019<strong>\u00e9tape\u00a06 \u2013 Aper\u00e7u final</strong> dans l\u2019\u00e9diteur.",
+        help_vl_pdf_preview: "T\u00e9l\u00e9charger le PDF",
+        help_vc_preview_pdf: "T\u00e9l\u00e9charger le PDF",
         help_q_reuse_items: "Puis-je enregistrer des lignes d\u2019articles pour les r\u00e9utiliser\u00a0?",
         help_a_reuse_items: "Oui. Les articles r\u00e9utilisables se g\u00e8rent maintenant depuis le <strong>Catalogue</strong> et le <strong>Panier d\u2019articles en attente</strong>, en dehors de l\u2019en-t\u00eate de l\u2019\u00e9tape\u00a03. Gardez le tableau des lignes concentr\u00e9 sur la saisie directe, puis g\u00e9rez les articles r\u00e9utilisables depuis le Catalogue ou la biblioth\u00e8que du panier quand n\u00e9cessaire. Le Catalogue continue de regrouper tous les articles captur\u00e9s.",
         help_q_payment_terms: "Comment configurer les conditions de paiement sur une facture\u00a0?",
@@ -1468,7 +1474,7 @@ const TRANSLATIONS = {
         help_q_backup: "Comment sauvegarder ou restaurer mes donn\u00e9es\u00a0?",
         help_a_backup: "Ouvrez <strong>Paramètres</strong> dans la barre lat\u00e9rale et utilisez l\u2019option <strong>Sauvegarde JSON</strong> pour exporter un instantané complet de l’espace de travail, y compris les documents, clients et données d’administration. Utilisez <strong>Restaurer JSON</strong> pour importer une sauvegarde. Le serveur conserve désormais aussi des instantanés horodatés pour la récupération.",
         help_q_action_icons: "Que font les ic\u00f4nes d\u2019action sur les cartes de documents\u00a0?",
-        help_a_action_icons: "Chaque carte affiche deux boutons d\u2019ic\u00f4nes. L\u2019<strong>ic\u00f4ne en forme d\u2019\u0153il</strong> ouvre l\u2019aper\u00e7u PDF dans une nouvelle fen\u00eatre. L\u2019<strong>ic\u00f4ne de crayon</strong> ouvre le document dans l\u2019\u00e9diteur. Le menu \u00e0 trois points donne acc\u00e8s \u00e0 des actions suppl\u00e9mentaires comme le statut de paiement, la conversion de type et la suppression.",
+        help_a_action_icons: "Chaque carte affiche des boutons d\u2019action. L\u2019<strong>ic\u00f4ne de t\u00e9l\u00e9chargement</strong> enregistre le PDF imm\u00e9diatement. L\u2019<strong>ic\u00f4ne de crayon</strong> ouvre le document dans l\u2019\u00e9diteur. Le menu \u00e0 trois points donne acc\u00e8s \u00e0 des actions suppl\u00e9mentaires comme le statut de paiement, la conversion de type et la suppression.",
         help_vl_card_actions: "Boutons d\u2019action de la carte",
         help_q_pdf_preview: "Comment utiliser la fen\u00eatre d\u2019aper\u00e7u PDF\u00a0?",
         help_a_pdf_preview: "La fen\u00eatre d\u2019aper\u00e7u montre le document pr\u00eat \u00e0 l\u2019impression. Utilisez <strong>Imprimer</strong> pour ouvrir la bo\u00eete de dialogue d\u2019impression et enregistrer en PDF. Utilisez <strong>Modifier</strong> pour revenir \u00e0 l\u2019\u00e9diteur avec le document charg\u00e9. <strong>Fermer l\u2019aper\u00e7u</strong> ferme la fen\u00eatre.",
@@ -1621,10 +1627,13 @@ function applyTranslations() {
     setElementText(".workspace-hero .eyebrow", t("hero_kicker"));
     document.querySelectorAll('[data-page-nav="overview"]').forEach(button => { button.textContent = t("dashboard"); });
     document.querySelectorAll('[data-page-nav="documents"]').forEach(button => { button.textContent = t("documents"); });
+    document.querySelectorAll('[data-page-nav="notes"]').forEach(button => { button.textContent = t("item_notes"); });
     document.querySelectorAll('[data-page-nav="clients"]').forEach(button => { button.textContent = t("clients_heading"); });
     document.querySelectorAll('[data-page-nav="catalog"]').forEach(button => { button.textContent = t("catalog"); });
     document.querySelectorAll('[data-page-nav="reports"]').forEach(button => { button.textContent = t("statements"); });
     document.querySelectorAll('[data-page-nav="settings"]').forEach(button => { button.textContent = t("settings"); });
+    if (elements.sidebarCalculatorBtn) elements.sidebarCalculatorBtn.textContent = "Calculator";
+    if (elements.mobileDrawerCalculatorBtn) elements.mobileDrawerCalculatorBtn.textContent = "Calculator";
     document.querySelectorAll(".brand-lockup-copy span").forEach(span => { span.textContent = t("document_workspace"); });
     updateHeroOperationalSummary();
     setElementText("#viewAllDocumentsBtn", t("documents"));
@@ -1953,6 +1962,8 @@ function cacheElements() {
     elements.pageNavButtons = Array.from(document.querySelectorAll("[data-page-nav]"));
     elements.settingsNavBtn = document.getElementById("settingsNavBtn");
     elements.settingsDrawerBtn = document.getElementById("settingsDrawerBtn");
+    elements.sidebarCalculatorBtn = document.getElementById("sidebarCalculatorBtn");
+    elements.mobileDrawerCalculatorBtn = document.getElementById("mobileDrawerCalculatorBtn");
     elements.mobileDrawer = document.getElementById("mobileDrawer");
     elements.mobileNavBackdrop = document.getElementById("mobileNavBackdrop");
     elements.closeMobileDrawerBtn = document.getElementById("closeMobileDrawerBtn");
@@ -2209,6 +2220,12 @@ function cacheElements() {
     elements.stepIndicator = document.querySelector(".step-indicator");
     elements.modalTitle = document.getElementById("modalTitle");
     elements.documentsGrid = document.getElementById("documentsGrid");
+    elements.documentsSelectionToolbar = document.getElementById("documentsSelectionToolbar");
+    elements.documentsSelectionTitle = document.getElementById("documentsSelectionTitle");
+    elements.documentsSelectionMeta = document.getElementById("documentsSelectionMeta");
+    elements.selectVisibleDocumentsBtn = document.getElementById("selectVisibleDocumentsBtn");
+    elements.clearSelectedDocumentsBtn = document.getElementById("clearSelectedDocumentsBtn");
+    elements.downloadSelectedDocumentsZipBtn = document.getElementById("downloadSelectedDocumentsZipBtn");
     elements.docType = document.getElementById("docType");
     elements.refNumber = document.getElementById("refNumber");
     elements.docDate = document.getElementById("docDate");
@@ -2447,6 +2464,20 @@ function bindEvents() {
         setActivePage("documents");
         editDocument(button.dataset.openOverviewDoc);
     });
+    elements.overviewSummaryGrid?.addEventListener("click", event => {
+        const button = event.target.closest("[data-summary-nav]");
+        if (!button) {
+            return;
+        }
+        const filter = button.dataset.summaryFilter || "all";
+        const targetPage = button.dataset.summaryNav || "overview";
+        if (targetPage === "documents") {
+            openDocumentsPageWithFilter(filter);
+        } else {
+            setActivePage(targetPage);
+        }
+        closeMobileDrawer();
+    });
     document.addEventListener("click", handleImageUploadTriggerClick);
     elements.savedItemImageInput.addEventListener("change", handleSavedItemImageInputChange);
     elements.savedItemImageRemoveBtn.addEventListener("click", clearSavedItemImageSelection);
@@ -2501,6 +2532,7 @@ function bindEvents() {
     elements.stepIndicator.addEventListener("click", handleStepIndicatorClick);
     elements.previewContainer.addEventListener("click", handlePreviewContainerClick);
     elements.documentsGrid.addEventListener("click", handleDocumentCardClick);
+    elements.documentsGrid.addEventListener("change", handleDocumentsGridChange);
     elements.itemsContainer.addEventListener("click", handleItemContainerClick);
     elements.itemsContainer.addEventListener("input", handleItemsChange);
     elements.itemsContainer.addEventListener("change", handleItemsChange);
@@ -2533,12 +2565,31 @@ function bindEvents() {
     elements.documentsGrid.addEventListener("keydown", handleDocumentCardKeydown);
     elements.tagSuggestions.addEventListener("click", handleKeywordSuggestionClick);
     elements.calculatorLauncherModal.addEventListener("click", toggleCalculator);
+    elements.sidebarCalculatorBtn?.addEventListener("click", () => {
+        toggleCalculator();
+        closeMobileDrawer();
+    });
+    elements.mobileDrawerCalculatorBtn?.addEventListener("click", () => {
+        toggleCalculator();
+        closeMobileDrawer();
+    });
     elements.calculatorMinimizeBtn.addEventListener("click", hideCalculator);
     elements.calculatorCloseBtn.addEventListener("click", hideCalculator);
     elements.calculatorGrid.addEventListener("click", handleCalculatorButtonClick);
     elements.calculatorDragHandle.addEventListener("pointerdown", startCalculatorDrag);
     window.addEventListener("pointermove", handleCalculatorDrag);
     window.addEventListener("pointerup", stopCalculatorDrag);
+    elements.selectVisibleDocumentsBtn?.addEventListener("click", selectVisibleDocuments);
+    elements.clearSelectedDocumentsBtn?.addEventListener("click", clearSelectedDocuments);
+    elements.downloadSelectedDocumentsZipBtn?.addEventListener("click", async () => {
+        try {
+            setImportStatus("Preparing ZIP download...");
+            await downloadSelectedDocumentsZip();
+            setImportStatus("ZIP download ready.");
+        } catch (error) {
+            window.alert(error.message || "Unable to create the ZIP download right now.");
+        }
+    });
     elements.filterButtons.forEach(button => {
         button.addEventListener("click", () => {
             if (state.activePage !== "documents") {
@@ -2763,6 +2814,8 @@ function showCalculator() {
     elements.calculatorWidget.classList.remove("hidden");
     elements.calculatorWidget.classList.add("is-visible");
     elements.calculatorLauncherModal.setAttribute("aria-expanded", "true");
+    elements.sidebarCalculatorBtn?.setAttribute("aria-pressed", "true");
+    elements.mobileDrawerCalculatorBtn?.setAttribute("aria-pressed", "true");
 
     if (!elements.calculatorWidget.style.left) {
         elements.calculatorWidget.style.left = `${Math.max(window.innerWidth - 360, 16)}px`;
@@ -2777,6 +2830,8 @@ function hideCalculator() {
     elements.calculatorWidget.classList.remove("is-visible");
     elements.calculatorWidget.hidden = true;
     elements.calculatorLauncherModal.setAttribute("aria-expanded", "false");
+    elements.sidebarCalculatorBtn?.setAttribute("aria-pressed", "false");
+    elements.mobileDrawerCalculatorBtn?.setAttribute("aria-pressed", "false");
 }
 
 function handleCalculatorButtonClick(event) {
@@ -9085,18 +9140,15 @@ async function saveClientsToServer(clients) {
 
 function downloadTextFile(filename, content, mimeType) {
     const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    downloadBlobFile(filename, blob);
 }
 
 function downloadJSONFile(filename, data) {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    downloadBlobFile(filename, blob);
+}
+
+function downloadBlobFile(filename, blob) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -11882,17 +11934,204 @@ function getDocumentById(id) {
     return state.documents.find(entry => isSameDocumentId(entry.id, id));
 }
 
+function isDocumentSelected(id) {
+    return state.selectedDocumentIds.some(entry => isSameDocumentId(entry, id));
+}
+
+function getSelectedDocuments() {
+    return state.selectedDocumentIds
+        .map(getDocumentById)
+        .filter(Boolean);
+}
+
+function slugifyFilePart(value, fallback = "document") {
+    const normalized = String(value || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    return normalized || fallback;
+}
+
+function getTodayStamp() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+function getDocumentPdfFileName(doc) {
+    const referencePart = slugifyFilePart(doc?.refNumber || doc?.type || "document", doc?.type || "document");
+    const clientPart = slugifyFilePart(doc?.clientName || "client", "client");
+    const datePart = String(doc?.date || "").trim() || getTodayStamp();
+    return `${referencePart}-${clientPart}-${datePart}.pdf`;
+}
+
+function getDocumentZipFileName(selectedDocuments = []) {
+    const datePart = getTodayStamp();
+    const selectedTypes = new Set(selectedDocuments.map(doc => String(doc?.type || "").trim()).filter(Boolean));
+    const selectedClients = new Set(selectedDocuments.map(doc => String(doc?.clientName || "").trim()).filter(Boolean));
+    if (selectedClients.size === 1) {
+        return `santosync-${slugifyFilePart([...selectedClients][0], "client")}-documents-${datePart}.zip`;
+    }
+    if (selectedTypes.size === 1) {
+        return `santosync-${slugifyFilePart([...selectedTypes][0], "documents")}-${datePart}.zip`;
+    }
+    return `santosync-documents-${datePart}.zip`;
+}
+
+function createDocumentExportNode(doc) {
+    const stampStyle = getDocumentStampStyle(doc);
+    const shell = document.createElement("div");
+    shell.className = "pdf-export-shell";
+    shell.innerHTML = `
+        <div class="pdf-export-page" data-pdf-export-page>
+            <div class="pdf-export-scale-wrap" data-pdf-scale-wrap>
+                ${buildDocumentMarkup(doc, stampStyle, { printPreview: true })}
+            </div>
+        </div>
+    `;
+    const sheet = shell.querySelector(".document-sheet");
+    sheet?.classList.add("pdf-export-sheet");
+    return shell;
+}
+
+function applyPdfFitStrategy(exportNode) {
+    const page = exportNode.querySelector("[data-pdf-export-page]");
+    const scaleWrap = exportNode.querySelector("[data-pdf-scale-wrap]");
+    const sheet = exportNode.querySelector(".pdf-export-sheet");
+    if (!page || !scaleWrap || !sheet) {
+        return { scaleApplied: 1, usedCompactType: false };
+    }
+
+    const maxHeight = 11 * 96;
+    let scaleApplied = 1;
+    let usedCompactType = false;
+
+    sheet.classList.add("pdf-fit-tight");
+    const tightenHeight = sheet.scrollHeight;
+    if (tightenHeight > maxHeight) {
+        scaleApplied = Math.min(maxHeight / tightenHeight, 1);
+        scaleWrap.style.transformOrigin = "top center";
+        scaleWrap.style.transform = `scale(${scaleApplied})`;
+        page.style.height = `${Math.ceil(tightenHeight * scaleApplied)}px`;
+    } else {
+        page.style.height = `${tightenHeight}px`;
+    }
+
+    if (tightenHeight * scaleApplied > maxHeight) {
+        sheet.classList.add("pdf-fit-compact-type");
+        usedCompactType = true;
+        const compactHeight = sheet.scrollHeight;
+        scaleApplied = Math.min(maxHeight / compactHeight, 1);
+        scaleWrap.style.transform = `scale(${scaleApplied})`;
+        page.style.height = `${Math.ceil(compactHeight * scaleApplied)}px`;
+    }
+
+    return { scaleApplied, usedCompactType };
+}
+
+async function generateDocumentPdfBlob(doc) {
+    if (!window.html2pdf) {
+        throw new Error("PDF export is unavailable right now.");
+    }
+
+    const exportNode = createDocumentExportNode(doc);
+    document.body.appendChild(exportNode);
+    try {
+        applyPdfFitStrategy(exportNode);
+        return await window.html2pdf()
+            .set({
+                filename: getDocumentPdfFileName(doc),
+                margin: [0, 0, 0, 0],
+                pagebreak: { mode: ["avoid-all"] },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: "#ffffff",
+                    logging: false
+                },
+                jsPDF: {
+                    unit: "in",
+                    format: "letter",
+                    orientation: "portrait"
+                }
+            })
+            .from(exportNode.querySelector("[data-pdf-export-page]"))
+            .outputPdf("blob");
+    } finally {
+        exportNode.remove();
+    }
+}
+
+async function downloadDocumentPdf(doc) {
+    const blob = await generateDocumentPdfBlob(doc);
+    downloadBlobFile(getDocumentPdfFileName(doc), blob);
+}
+
+async function downloadSelectedDocumentsZip() {
+    const selectedDocuments = getSelectedDocuments();
+    if (!selectedDocuments.length) {
+        window.alert("Select at least one document to create a ZIP download.");
+        return;
+    }
+
+    if (!window.JSZip) {
+        throw new Error("ZIP export is unavailable right now.");
+    }
+
+    const zip = new window.JSZip();
+    const failures = [];
+
+    for (const doc of selectedDocuments) {
+        try {
+            const blob = await generateDocumentPdfBlob(doc);
+            zip.file(getDocumentPdfFileName(doc), blob);
+        } catch (error) {
+            failures.push({
+                doc,
+                message: error?.message || "Export failed."
+            });
+        }
+    }
+
+    if (!Object.keys(zip.files).length) {
+        const details = failures.length
+            ? failures.map(entry => `${entry.doc?.refNumber || "Unknown document"}: ${entry.message}`).join("\n")
+            : "No PDFs were generated.";
+        throw new Error(details);
+    }
+
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    downloadBlobFile(getDocumentZipFileName(selectedDocuments), zipBlob);
+
+    if (failures.length) {
+        window.alert(`Downloaded a ZIP with ${selectedDocuments.length - failures.length} PDF(s).\n\nSome documents could not be exported:\n${failures.map(entry => `${entry.doc?.refNumber || "Unknown document"}: ${entry.message}`).join("\n")}`);
+    }
+}
+
 function getStatusBadgeMarkup(label, className = "") {
     return `<span class="status-badge ${className}">${escapeHtml(label)}</span>`;
 }
 
-function getKpiCardMarkup(label, value, meta = "") {
+function getOverviewSummaryCardMarkup({ key, label, value, meta = "", hint = "", icon = "", tone = "default", targetPage = "overview", targetFilter = "" }) {
     return `
-        <article class="summary-card">
-            <span class="summary-card-label">${escapeHtml(label)}</span>
-            <strong class="summary-card-value">${escapeHtml(value)}</strong>
-            ${meta ? `<span class="summary-card-meta">${escapeHtml(meta)}</span>` : ""}
-        </article>
+        <button
+            class="summary-card summary-card-${escapeHtml(tone)}"
+            type="button"
+            data-summary-nav="${escapeHtml(targetPage)}"
+            ${targetFilter ? `data-summary-filter="${escapeHtml(targetFilter)}"` : ""}
+            aria-label="${escapeHtml(`Open ${label}`)}"
+        >
+            <span class="summary-card-icon" aria-hidden="true">${icon}</span>
+            <span class="summary-card-copy">
+                <span class="summary-card-label">${escapeHtml(label)}</span>
+                <strong class="summary-card-value">${escapeHtml(value)}</strong>
+                ${meta ? `<span class="summary-card-meta">${escapeHtml(meta)}</span>` : ""}
+            </span>
+            <span class="summary-card-trailing">
+                <span class="summary-card-hint">${escapeHtml(hint || "Open")}</span>
+                <span class="summary-card-arrow" aria-hidden="true">
+                    <svg viewBox="0 0 20 20" fill="none"><path d="M7 5.5 12 10l-5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+            </span>
+        </button>
     `;
 }
 
@@ -11933,9 +12172,14 @@ function getDocumentCardMarkup(doc) {
 
     const noteCount = Array.isArray(doc.noteLog) ? doc.noteLog.length : 0;
     const noteBadge = noteCount > 0 ? `<span class="notes-count-badge">${noteCount}</span>` : "";
+    const isSelected = isDocumentSelected(doc.id);
 
     return `
         <article class="document-card document-card-${doc.type}" data-view-id="${escapeHtml(String(doc.id))}" tabindex="0" role="button" aria-label="${escapeHtml(`Open ${doc.type} ${doc.refNumber || ""}`.trim())}">
+            <label class="document-card-selector" aria-label="${escapeHtml(`Select ${doc.refNumber || doc.type}`)}">
+                <input type="checkbox" data-doc-select="${escapeHtml(String(doc.id))}" ${isSelected ? "checked" : ""}>
+                <span class="document-card-selector-ui" aria-hidden="true"></span>
+            </label>
             <div class="document-card-copy">
                 <div class="document-card-head">
                     <strong class="document-card-ref">${escapeHtml(doc.refNumber || "Reference pending")}</strong>
@@ -11951,8 +12195,8 @@ function getDocumentCardMarkup(doc) {
             </div>
             <div class="document-card-actions">
                 ${canViewPdf ? `
-                <button type="button" class="statement-action-btn is-open" data-action="export-pdf" data-id="${escapeHtml(String(doc.id))}" aria-label="${escapeHtml(t("view_pdf"))}" title="${escapeHtml(t("view_pdf"))}">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>
+                <button type="button" class="statement-action-btn is-open" data-action="export-pdf" data-id="${escapeHtml(String(doc.id))}" aria-label="Download PDF" title="Download PDF">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="m8 11 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
                 </button>` : ""}
                 <button type="button" class="statement-action-btn is-edit" data-action="edit" data-id="${escapeHtml(String(doc.id))}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
@@ -12020,11 +12264,64 @@ function renderOverviewPanels() {
 
     if (elements.overviewSummaryGrid) {
         elements.overviewSummaryGrid.innerHTML = [
-            getKpiCardMarkup(t("clients"), String(state.clients.length), "Saved billing records"),
-            getKpiCardMarkup(t("statements"), String(state.statementExports.length), "Generated exports"),
-            getKpiCardMarkup(t("invoice_reports"), String(state.documents.filter(doc => doc.type === "invoice").length), "Invoices ready for review")
+            getOverviewSummaryCardMarkup({
+                key: "quotes",
+                label: t("quotes"),
+                value: String(state.documents.filter(doc => doc.type === "quote").length),
+                meta: "Drafts, sent proposals, and pipeline work",
+                hint: "Open quotes",
+                tone: "quote",
+                targetPage: "documents",
+                targetFilter: "quote",
+                icon: `<svg viewBox="0 0 20 20" fill="none"><path d="M5 2.5h7l3 3v12H5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 2.5v3h3" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M7.5 10h5M7.5 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`
+            }),
+            getOverviewSummaryCardMarkup({
+                key: "invoices",
+                label: t("invoices"),
+                value: String(state.documents.filter(doc => doc.type === "invoice").length),
+                meta: "Saved invoices ready to review or download",
+                hint: "Open invoices",
+                tone: "invoice",
+                targetPage: "documents",
+                targetFilter: "invoice",
+                icon: `<svg viewBox="0 0 20 20" fill="none"><rect x="4" y="3" width="12" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`
+            }),
+            getOverviewSummaryCardMarkup({
+                key: "clients",
+                label: t("clients"),
+                value: String(state.clients.length),
+                meta: "Saved billing records and consignee details",
+                hint: "Open clients",
+                tone: "clients",
+                targetPage: "clients",
+                icon: `<svg viewBox="0 0 20 20" fill="none"><path d="M10 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 16.5a5.5 5.5 0 0 1 11 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`
+            }),
+            getOverviewSummaryCardMarkup({
+                key: "statements",
+                label: t("statements"),
+                value: String(state.statementExports.length),
+                meta: "Generated statement exports and payment review",
+                hint: "Open statements",
+                tone: "statements",
+                targetPage: "reports",
+                icon: `<svg viewBox="0 0 20 20" fill="none"><path d="M4 4.5h12M4 9.5h12M4 14.5h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`
+            })
         ].join("");
     }
+}
+
+function syncDocumentsSelectionToolbar() {
+    if (!elements.documentsSelectionToolbar || !elements.documentsSelectionTitle || !elements.documentsSelectionMeta || !elements.downloadSelectedDocumentsZipBtn) {
+        return;
+    }
+
+    const selectedCount = getSelectedDocuments().length;
+    elements.documentsSelectionToolbar.hidden = selectedCount === 0;
+    elements.documentsSelectionTitle.textContent = `${selectedCount} document${selectedCount === 1 ? "" : "s"} selected`;
+    elements.documentsSelectionMeta.textContent = selectedCount === 1
+        ? "Download this PDF directly or add more documents for a combined ZIP."
+        : "Download every selected document as a single ZIP package.";
+    elements.downloadSelectedDocumentsZipBtn.disabled = selectedCount === 0;
 }
 
 function renderDocuments() {
@@ -12032,8 +12329,11 @@ function renderDocuments() {
     renderOverviewPanels();
     renderCatalog();
     renderInvoiceReport();
+    const documentIdSet = new Set(state.documents.map(doc => String(doc.id)));
+    state.selectedDocumentIds = state.selectedDocumentIds.filter(id => documentIdSet.has(String(id)));
 
     const visibleDocuments = getFilteredDocuments();
+    syncDocumentsSelectionToolbar();
 
     if (state.documents.length === 0) {
         elements.documentsGrid.innerHTML = `
@@ -12062,6 +12362,7 @@ function renderDocuments() {
     elements.documentsGrid.innerHTML = visibleDocuments.map(getDocumentCardMarkup).join("");
 
     syncDocumentActionMenus();
+    syncDocumentsSelectionToolbar();
 }
 
 function handleSearchInput(event) {
@@ -12079,6 +12380,11 @@ function setActiveFilter(filter) {
     state.activeFilter = filter;
     syncDocumentFilters();
     renderDocuments();
+}
+
+function openDocumentsPageWithFilter(filter = "all") {
+    setActivePage("documents");
+    setActiveFilter(filter);
 }
 
 function syncDocumentFilters() {
@@ -12165,6 +12471,10 @@ async function saveClient() {
 }
 
 async function handleDocumentCardClick(event) {
+    if (event.target.closest(".document-card-selector")) {
+        return;
+    }
+
     const menuToggleButton = event.target.closest("[data-toggle-document-menu]");
     if (menuToggleButton) {
         event.preventDefault();
@@ -12202,7 +12512,13 @@ async function handleDocumentCardClick(event) {
         } else if (action === "export-pdf") {
             const doc = getDocumentById(docId);
             if (doc) {
-                openPrintWindow(doc);
+                try {
+                    setImportStatus(`Preparing ${doc.refNumber || "document"} PDF download...`);
+                    await downloadDocumentPdf(doc);
+                    setImportStatus(`${doc.refNumber || "Document"} downloaded as PDF.`);
+                } catch (error) {
+                    window.alert(error.message || "Unable to download this PDF right now.");
+                }
             }
         } else if (action === "quick-payment") {
             openQuickPaymentModal(docId);
@@ -12230,6 +12546,10 @@ async function handleDocumentCardClick(event) {
 }
 
 function handleDocumentCardKeydown(event) {
+    if (event.target.closest(".document-card-selector, .document-card-actions, [data-show-tags]")) {
+        return;
+    }
+
     if (event.key !== "Enter" && event.key !== " ") {
         return;
     }
@@ -12241,6 +12561,34 @@ function handleDocumentCardKeydown(event) {
 
     event.preventDefault();
     editDocument(card.dataset.viewId);
+}
+
+function handleDocumentsGridChange(event) {
+    const checkbox = event.target.closest("[data-doc-select]");
+    if (!checkbox) {
+        return;
+    }
+
+    const documentId = String(checkbox.dataset.docSelect || "");
+    const nextSelection = new Set(state.selectedDocumentIds.map(String));
+    if (checkbox.checked) {
+        nextSelection.add(documentId);
+    } else {
+        nextSelection.delete(documentId);
+    }
+    state.selectedDocumentIds = [...nextSelection];
+    syncDocumentsSelectionToolbar();
+}
+
+function selectVisibleDocuments() {
+    const visibleIds = getFilteredDocuments().map(doc => String(doc.id));
+    state.selectedDocumentIds = Array.from(new Set([...state.selectedDocumentIds.map(String), ...visibleIds]));
+    renderDocuments();
+}
+
+function clearSelectedDocuments() {
+    state.selectedDocumentIds = [];
+    renderDocuments();
 }
 
 const STATUS_PAYMENT_PREFIX = "status-paid-";
