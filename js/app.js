@@ -1955,6 +1955,7 @@ function cacheElements() {
     elements.workspaceShell = document.querySelector(".workspace-shell");
     elements.overviewPage = document.getElementById("overviewPage");
     elements.documentsPage = document.getElementById("documentsPage");
+    elements.notesPage = document.getElementById("notesPage");
     elements.clientsPage = document.getElementById("clientsPage");
     elements.reportsPage = document.getElementById("reportsPage");
     elements.sidebarNav = document.getElementById("sidebarNav");
@@ -2220,6 +2221,11 @@ function cacheElements() {
     elements.stepIndicator = document.querySelector(".step-indicator");
     elements.modalTitle = document.getElementById("modalTitle");
     elements.documentsGrid = document.getElementById("documentsGrid");
+    elements.notesSearchInput = document.getElementById("notesSearchInput");
+    elements.notesClientFilter = document.getElementById("notesClientFilter");
+    elements.notesFilterButtons = Array.from(document.querySelectorAll("[data-notes-filter]"));
+    elements.notesPageSummary = document.getElementById("notesPageSummary");
+    elements.notesFeed = document.getElementById("notesFeed");
     elements.documentsSelectionToolbar = document.getElementById("documentsSelectionToolbar");
     elements.documentsSelectionTitle = document.getElementById("documentsSelectionTitle");
     elements.documentsSelectionMeta = document.getElementById("documentsSelectionMeta");
@@ -3359,6 +3365,23 @@ function normalizeCatalogItems(items) {
         : [];
 }
 
+function normalizeNoteLog(notes) {
+    if (!Array.isArray(notes)) {
+        return [];
+    }
+
+    return notes
+        .filter(note => note && typeof note === "object" && String(note.text || "").trim())
+        .map(note => ({
+            id: String(note.id || `note-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+            text: String(note.text || "").trim(),
+            author: String(note.author || "Unknown").trim() || "Unknown",
+            userId: String(note.userId || "").trim(),
+            createdAt: String(note.createdAt || new Date().toISOString()),
+            editedAt: note.editedAt ? String(note.editedAt) : null
+        }));
+}
+
 function normalizeStatementExports(items) {
     if (!Array.isArray(items)) {
         return [];
@@ -3384,6 +3407,7 @@ function normalizeStatementExports(items) {
                 rowCount: Number.parseInt(item.rowCount, 10) || Number(payload?.rows?.length || 0),
                 totalSelectedFormatted: String(item.totalSelectedFormatted || payload?.totalSelectedFormatted || totals?.selectedTotalFormatted || "").trim(),
                 totalOutstandingFormatted: String(item.totalOutstandingFormatted || payload?.grandTotalFormatted || totals?.grandTotalFormatted || "").trim(),
+                noteLog: normalizeNoteLog(item.noteLog),
                 payload
             };
         })
@@ -3944,11 +3968,13 @@ function closeMobileDrawer() {
 }
 
 function setActivePage(page) {
-    const validPages = ["overview", "documents", "clients", "catalog", "reports", "settings"];
+    const validPages = ["overview", "documents", "notes", "clients", "catalog", "reports", "settings"];
     state.activePage = validPages.includes(page) ? page : "overview";
     applyPageState();
     if (state.activePage === "reports") {
         renderStatementsPage();
+    } else if (state.activePage === "notes") {
+        renderNotesPage();
     } else if (state.activePage === "catalog") {
         renderCatalog();
     }
@@ -3966,6 +3992,7 @@ function setActivePage(page) {
 function applyPageState() {
     if (elements.overviewPage) elements.overviewPage.hidden = state.activePage !== "overview";
     if (elements.documentsPage) elements.documentsPage.hidden = state.activePage !== "documents";
+    if (elements.notesPage) elements.notesPage.hidden = state.activePage !== "notes";
     if (elements.clientsPage) elements.clientsPage.hidden = state.activePage !== "clients";
     if (elements.catalogPage) elements.catalogPage.hidden = state.activePage !== "catalog";
     if (elements.reportsPage) elements.reportsPage.hidden = state.activePage !== "reports";
