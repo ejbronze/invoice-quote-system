@@ -4410,16 +4410,29 @@ function renderCatalog() {
         return;
     }
 
+    const allActive = getCatalogEntries().filter(item => !item.archived);
     const entries = getFilteredCatalogEntries();
     if (!entries.length) {
-        elements.catalogGrid.innerHTML = `
-            <div class="empty-state">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h10"></path>
-                </svg>
-                <p>No pricing library items match the current filters.</p>
-            </div>
-        `;
+        if (allActive.length === 0) {
+            elements.catalogGrid.innerHTML = `
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM16 3H8M16 21H8"/>
+                    </svg>
+                    <p>No pricing library items yet.</p>
+                    <button class="btn btn-primary" type="button" data-catalog-action="add-new">Add Your First Item</button>
+                </div>
+            `;
+        } else {
+            elements.catalogGrid.innerHTML = `
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <p>No items match your search or filters.</p>
+                </div>
+            `;
+        }
         syncProcurementLibrarySelect();
         syncDocumentLibrarySelect();
         return;
@@ -4977,6 +4990,12 @@ async function deleteStatementExport(statementId) {
 }
 
 function handleCatalogGridClick(event) {
+    const addButton = event.target.closest("[data-catalog-action=\"add-new\"]");
+    if (addButton) {
+        openCatalogItemModal();
+        return;
+    }
+
     const openButton = event.target.closest("[data-catalog-action=\"open\"]");
     if (openButton) {
         const item = getCatalogEntries().find(entry => entry.id === openButton.dataset.catalogId);
@@ -5425,21 +5444,29 @@ function getProcurementFileStem(sheet) {
 }
 
 function buildProcurementCsv(sheet) {
-    const headers = ["Line Number", "Item Description", "Brand", "Pack Size", "Unit", "Unit Price", "Currency", "Lead Time", "Supplier", "Quantity", "Notes"];
+    const meta = [
+        ["Procurement Sheet", sheet.refNumber || ""],
+        ["Client", sheet.clientName || ""],
+        ["Date", sheet.date || ""],
+        ["Currency", sheet.currency || "USD"],
+        ...(sheet.notes ? [["Notes", sheet.notes]] : []),
+        []
+    ];
+    const headers = ["Line No.", "Item Description", "Brand", "Pack Size", "Unit", "Quantity", "Unit Price", "Currency", "Lead Time", "Supplier", "Notes"];
     const rows = (sheet.procurementItems || []).map(row => [
         row.lineNumber,
         row.description,
         row.brand,
         row.packSize,
         row.unit,
+        row.quantityTbd ? "TBD" : (row.quantity || ""),
         Number(row.unitPrice || 0).toFixed(2),
-        row.currency,
+        row.currency || sheet.currency || "USD",
         row.leadTime,
         row.supplier,
-        row.quantityTbd ? "TBD" : row.quantity,
         row.notes
     ]);
-    return [headers, ...rows].map(row => row.map(escapeCsvCell).join(",")).join("\n");
+    return [...meta, headers, ...rows].map(r => r.map(escapeCsvCell).join(",")).join("\n");
 }
 
 function exportOpenProcurementCsv() {
@@ -5491,8 +5518,15 @@ function convertProcurementSheetToQuote(sheet) {
     const items = (sheet.procurementItems || []).map(row => {
         const quantity = row.quantityTbd ? 1 : (Number.parseFloat(row.quantity) || 1);
         const unitPrice = Number.parseFloat(row.unitPrice) || 0;
+        const descriptionParts = [
+            row.description,
+            row.brand ? `Brand: ${row.brand}` : "",
+            row.packSize ? `Pack: ${row.packSize}` : "",
+            row.leadTime ? `Lead time: ${row.leadTime}` : "",
+            row.quantityTbd ? "Qty: TBD — confirm quantity before ordering" : ""
+        ].filter(Boolean);
         return {
-            description: [row.description, row.brand ? `Brand: ${row.brand}` : "", row.packSize ? `Pack: ${row.packSize}` : "", row.leadTime ? `Lead time: ${row.leadTime}` : ""].filter(Boolean).join("\n"),
+            description: descriptionParts.join("\n"),
             quantity,
             price: unitPrice,
             unitPrice,
@@ -13412,8 +13446,10 @@ function getDocumentCardMarkup(doc) {
         : "";
     const isSelected = isDocumentSelected(doc.id);
 
+    const rowCount = isProcurement ? (doc.procurementItems || []).length : 0;
+    const savedDateLabel = isProcurement && doc.printedAt ? ` · Saved ${formatDisplayDate(doc.printedAt)}` : "";
     const totalLabel = isProcurement
-        ? `${(doc.procurementItems || []).length} row${(doc.procurementItems || []).length === 1 ? "" : "s"}`
+        ? `${rowCount} row${rowCount === 1 ? "" : "s"}${savedDateLabel}`
         : formatCurrency(doc.total || 0);
 
     return `
@@ -13444,6 +13480,10 @@ function getDocumentCardMarkup(doc) {
                 ${isProcurement ? `
                 <button type="button" class="statement-action-btn is-open" data-action="export-excel" data-id="${escapeHtml(String(doc.id))}" aria-label="Export Excel" title="Export Excel">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M14 3v4h4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="m9 10 4 4M13 10l-4 4M9 18h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <button type="button" class="statement-action-btn is-open" data-action="convert" data-id="${escapeHtml(String(doc.id))}" aria-label="Convert to Quote" title="Convert to Quote">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M14 2v6h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="m8 13 3 3 5-5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span class="visually-hidden">Convert to Quote</span>
                 </button>` : ""}
                 <button type="button" class="statement-action-btn is-edit" data-action="edit" data-id="${escapeHtml(String(doc.id))}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
