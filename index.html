@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SantoSync</title>
-    <link rel="stylesheet" href="css/styles.css?v=26">
+    <link rel="stylesheet" href="css/styles.css?v=27">
 </head>
 <body>
     <div class="brand-splash" id="brandSplash" aria-hidden="true" hidden>
@@ -1830,6 +1830,7 @@
                     <table class="procurement-table">
                         <thead>
                             <tr>
+                                <th class="proc-select-col"><input type="checkbox" id="selectAllProcurementRows" title="Select / deselect all rows" aria-label="Select all rows"></th>
                                 <th>#</th>
                                 <th>Description</th>
                                 <th>Brand</th>
@@ -1849,11 +1850,31 @@
                 </div>
                 <div class="settings-actions procurement-actions">
                     <button class="btn btn-secondary" id="addProcurementRowBtn" type="button">Add Row</button>
-                    <button class="btn btn-secondary" id="importProcurementCsvBtn" type="button">Import CSV</button>
+
+                    <div class="proc-dropdown" id="importProcurementDropdown">
+                        <button class="btn btn-secondary proc-dropdown-trigger" type="button" aria-haspopup="true" aria-expanded="false" id="importProcurementDropdownBtn">
+                            Import <span class="proc-dropdown-caret" aria-hidden="true">▾</span>
+                        </button>
+                        <div class="proc-dropdown-menu" role="menu">
+                            <button type="button" role="menuitem" data-procurement-import="csv">Import CSV</button>
+                            <button type="button" role="menuitem" data-procurement-import="xlsx">Import Excel (.xlsx)</button>
+                        </div>
+                    </div>
                     <input type="file" id="procurementCsvFileInput" accept=".csv" hidden>
-                    <button class="btn btn-secondary" id="exportProcurementCsvBtn" type="button">Export CSV</button>
-                    <button class="btn btn-secondary" id="exportProcurementExcelBtn" type="button">Export Excel</button>
-                    <button class="btn btn-secondary" id="convertProcurementToQuoteBtn" type="button">Convert to Quote</button>
+                    <input type="file" id="procurementXlsxFileInput" accept=".xlsx,.xls" hidden>
+
+                    <div class="proc-dropdown" id="exportProcurementDropdown">
+                        <button class="btn btn-secondary proc-dropdown-trigger" type="button" aria-haspopup="true" aria-expanded="false" id="exportProcurementDropdownBtn">
+                            Export <span class="proc-dropdown-caret" aria-hidden="true">▾</span>
+                        </button>
+                        <div class="proc-dropdown-menu" role="menu">
+                            <button type="button" role="menuitem" data-procurement-export="csv">Export CSV</button>
+                            <button type="button" role="menuitem" data-procurement-export="xlsx">Export Excel (.xlsx)</button>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-secondary" id="convertSelectedToQuoteBtn" type="button" hidden>Convert Selected to Quote</button>
+                    <button class="btn btn-secondary" id="convertProcurementToQuoteBtn" type="button">Convert All to Quote</button>
                     <button class="btn btn-primary" id="saveProcurementSheetBtn" type="button">Save Sheet</button>
                 </div>
             </div>
@@ -2250,6 +2271,6 @@
     <script src="js/vendor/html2pdf.bundle.min.js"></script>
     <script src="js/brand.js?v=2"></script>
     <script src="js/statement-of-account.js?v=2"></script>
-    <script src="js/app.js?v=18"></script>
+    <script src="js/app.js?v=19"></script>
 </body>
 </html>

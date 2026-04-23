@@ -2333,10 +2333,14 @@ function cacheElements() {
     elements.createProcurementLibraryItemBtn = document.getElementById("createProcurementLibraryItemBtn");
     elements.procurementRowsContainer = document.getElementById("procurementRowsContainer");
     elements.addProcurementRowBtn = document.getElementById("addProcurementRowBtn");
-    elements.importProcurementCsvBtn = document.getElementById("importProcurementCsvBtn");
+    elements.importProcurementDropdown = document.getElementById("importProcurementDropdown");
+    elements.importProcurementDropdownBtn = document.getElementById("importProcurementDropdownBtn");
+    elements.exportProcurementDropdown = document.getElementById("exportProcurementDropdown");
+    elements.exportProcurementDropdownBtn = document.getElementById("exportProcurementDropdownBtn");
     elements.procurementCsvFileInput = document.getElementById("procurementCsvFileInput");
-    elements.exportProcurementCsvBtn = document.getElementById("exportProcurementCsvBtn");
-    elements.exportProcurementExcelBtn = document.getElementById("exportProcurementExcelBtn");
+    elements.procurementXlsxFileInput = document.getElementById("procurementXlsxFileInput");
+    elements.selectAllProcurementRows = document.getElementById("selectAllProcurementRows");
+    elements.convertSelectedToQuoteBtn = document.getElementById("convertSelectedToQuoteBtn");
     elements.convertProcurementToQuoteBtn = document.getElementById("convertProcurementToQuoteBtn");
     elements.saveProcurementSheetBtn = document.getElementById("saveProcurementSheetBtn");
     elements.viewAllDocumentsBtn = document.getElementById("viewAllDocumentsBtn");
@@ -2554,17 +2558,41 @@ function bindEvents() {
         }
     });
     elements.addProcurementRowBtn?.addEventListener("click", () => addProcurementRow());
-    elements.importProcurementCsvBtn?.addEventListener("click", () => elements.procurementCsvFileInput?.click());
     elements.procurementCsvFileInput?.addEventListener("change", handleProcurementCsvImport);
+    elements.procurementXlsxFileInput?.addEventListener("change", handleProcurementXlsxImport);
     elements.procurementRowsContainer?.addEventListener("input", refreshProcurementRowOrdering);
     elements.procurementRowsContainer?.addEventListener("change", handleProcurementRowsChange);
     elements.procurementRowsContainer?.addEventListener("click", handleProcurementRowsClick);
     elements.insertProcurementLibraryItemBtn?.addEventListener("click", insertSelectedLibraryItemIntoProcurement);
     elements.createProcurementLibraryItemBtn?.addEventListener("click", () => openCatalogItemModal({ returnToProcurement: true }));
     elements.saveProcurementSheetBtn?.addEventListener("click", () => saveProcurementSheet({ keepOpen: true }));
-    elements.exportProcurementCsvBtn?.addEventListener("click", exportOpenProcurementCsv);
-    elements.exportProcurementExcelBtn?.addEventListener("click", exportOpenProcurementExcel);
+    elements.convertSelectedToQuoteBtn?.addEventListener("click", convertSelectedProcurementRowsToQuote);
     elements.convertProcurementToQuoteBtn?.addEventListener("click", convertOpenProcurementToQuote);
+    elements.selectAllProcurementRows?.addEventListener("change", handleSelectAllProcurementRows);
+    // Procurement Import / Export dropdowns
+    elements.importProcurementDropdownBtn?.addEventListener("click", e => {
+        e.stopPropagation();
+        toggleProcurementDropdown(elements.importProcurementDropdown);
+    });
+    elements.exportProcurementDropdownBtn?.addEventListener("click", e => {
+        e.stopPropagation();
+        toggleProcurementDropdown(elements.exportProcurementDropdown);
+    });
+    elements.importProcurementDropdown?.addEventListener("click", e => {
+        const btn = e.target.closest("[data-procurement-import]");
+        if (!btn) return;
+        closeProcurementDropdowns();
+        if (btn.dataset.procurementImport === "csv") elements.procurementCsvFileInput?.click();
+        else if (btn.dataset.procurementImport === "xlsx") elements.procurementXlsxFileInput?.click();
+    });
+    elements.exportProcurementDropdown?.addEventListener("click", e => {
+        const btn = e.target.closest("[data-procurement-export]");
+        if (!btn) return;
+        closeProcurementDropdowns();
+        if (btn.dataset.procurementExport === "csv") exportOpenProcurementCsv();
+        else if (btn.dataset.procurementExport === "xlsx") exportOpenProcurementExcel();
+    });
+    document.addEventListener("click", closeProcurementDropdowns);
     elements.saveCompanyProfileBtn.addEventListener("click", saveCompanyProfile);
     elements.addSavedItemBtn.addEventListener("click", addSavedItemFromModal);
     elements.savedItemsList.addEventListener("click", handleSavedItemsListClick);
@@ -3672,26 +3700,54 @@ async function saveCatalogItems(items) {
 
 // Auto-syncs items from documents/procurement into the library.
 // items: [{ name, brand, packSize, unit, unitPrice, currency, leadTime, supplier, notes }]
-// docRef: { docId, docRefNumber, docType, date }
+// docRef: { docId, docRefNumber, docType, date, clientName }
 async function upsertItemsIntoCatalog(items, docRef) {
     const incoming = items.filter(i => String(i.name || "").trim());
     if (!incoming.length) return;
 
-    const existing = state.catalogItems.map(e => ({ ...e }));
+    function makeRef(ref) {
+        if (!ref) return null;
+        return {
+            docId: String(ref.docId),
+            docRefNumber: String(ref.docRefNumber || ""),
+            docType: String(ref.docType || "document"),
+            date: String(ref.date || ""),
+            clientName: String(ref.clientName || "")
+        };
+    }
+
+    function mergeRefs(existing, newRef) {
+        const refs = Array.isArray(existing) ? [...existing] : [];
+        if (!newRef) return refs;
+        const alreadyPresent = refs.some(r => r.docId === newRef.docId);
+        if (!alreadyPresent) refs.push(newRef);
+        // Sort most recent first by date
+        return refs.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    }
+
+    const catalog = state.catalogItems.map(e => ({ ...e }));
     let changed = false;
 
     for (const item of incoming) {
-        const normName = String(item.name).toLowerCase().trim();
-        const matchIdx = existing.findIndex(e => e.name.toLowerCase().trim() === normName);
+        const normName = String(item.name).toLowerCase().trim().replace(/\s+/g, " ");
+        // Primary match: exact normalized name. Secondary: name + brand.
+        let matchIdx = catalog.findIndex(e =>
+            e.name.toLowerCase().trim().replace(/\s+/g, " ") === normName
+        );
+        if (matchIdx < 0 && item.brand) {
+            matchIdx = catalog.findIndex(e =>
+                e.name.toLowerCase().trim().replace(/\s+/g, " ") === normName &&
+                (e.brand || "").toLowerCase().trim() === String(item.brand).toLowerCase().trim()
+            );
+        }
+
+        const ref = makeRef(docRef);
 
         if (matchIdx >= 0) {
-            const entry = existing[matchIdx];
-            const refs = Array.isArray(entry.documentRefs) ? [...entry.documentRefs] : [];
-            if (docRef && !refs.some(r => r.docId === String(docRef.docId))) {
-                refs.push({ docId: String(docRef.docId), docRefNumber: docRef.docRefNumber || "", docType: docRef.docType || "document", date: docRef.date || "" });
-            }
-            existing[matchIdx] = {
+            const entry = catalog[matchIdx];
+            catalog[matchIdx] = {
                 ...entry,
+                // Only overwrite with non-blank incoming values
                 ...(item.unitPrice > 0 ? { price: item.unitPrice, sellPrice: item.unitPrice } : {}),
                 ...(item.currency ? { currency: item.currency } : {}),
                 ...(item.brand ? { brand: item.brand } : {}),
@@ -3699,15 +3755,16 @@ async function upsertItemsIntoCatalog(items, docRef) {
                 ...(item.packSize ? { packSize: item.packSize, unitSize: item.packSize } : {}),
                 ...(item.unit ? { unit: item.unit } : {}),
                 ...(item.leadTime ? { leadTime: item.leadTime } : {}),
-                documentRefs: refs,
+                // Preserve archived status — do not un-archive automatically
+                archived: entry.archived,
+                documentRefs: mergeRefs(entry.documentRefs, ref),
                 dateUpdated: new Date().toISOString()
             };
             changed = true;
         } else {
-            const refs = docRef ? [{ docId: String(docRef.docId), docRefNumber: docRef.docRefNumber || "", docType: docRef.docType || "document", date: docRef.date || "" }] : [];
-            existing.unshift({
+            catalog.unshift({
                 id: `catalog-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-                referenceId: `PLI-${String(existing.length + 1).padStart(4, "0")}`,
+                referenceId: `PLI-${String(catalog.length + 1).padStart(4, "0")}`,
                 name: String(item.name).trim(),
                 details: String(item.notes || "").trim(),
                 notes: "",
@@ -3728,14 +3785,14 @@ async function upsertItemsIntoCatalog(items, docRef) {
                 country: "",
                 tags: [],
                 archived: false,
-                documentRefs: refs
+                documentRefs: ref ? [ref] : []
             });
             changed = true;
         }
     }
 
     if (changed) {
-        await saveCatalogItems(existing);
+        await saveCatalogItems(catalog);
     }
 }
 
@@ -4525,12 +4582,21 @@ function renderCatalog() {
 
     elements.catalogGrid.innerHTML = entries.map(item => {
         const refs = Array.isArray(item.documentRefs) ? item.documentRefs : [];
-        const refsLabel = refs.length
-            ? refs.slice(-4).map(r => {
-                const typeTag = r.docType === "procurement" ? "Proc" : r.docType === "invoice" ? "Inv" : "Quote";
-                return `${typeTag} ${escapeHtml(r.docRefNumber || "")}`;
-            }).join(", ")
+        const SHOW_MAX = 4;
+        const visibleRefs = refs.slice(0, SHOW_MAX);
+        const overflow = refs.length - SHOW_MAX;
+
+        const refsHtml = visibleRefs.length
+            ? `<span class="catalog-card-used-in">Used in: ${
+                visibleRefs.map(r => {
+                    const typeTag = r.docType === "procurement" ? "Proc" : r.docType === "invoice" ? "Inv" : "Quote";
+                    const label = `${typeTag} ${escapeHtml(r.docRefNumber || "")}`;
+                    const title = [r.clientName, r.date].filter(Boolean).join(" · ");
+                    return `<button class="catalog-ref-link" type="button" data-open-doc-id="${escapeHtml(r.docId)}"${title ? ` title="${escapeHtml(title)}"` : ""}>${label}</button>`;
+                }).join(", ")
+            }${overflow > 0 ? ` <span class="catalog-ref-overflow">+${overflow} more</span>` : ""}</span>`
             : "";
+
         return `
         <article class="catalog-card">
             <button class="catalog-card-trigger" type="button" data-catalog-action="open" data-catalog-id="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.name)}">
@@ -4543,7 +4609,7 @@ function renderCatalog() {
                     <strong>${escapeHtml(item.name)}</strong>
                     <span>${escapeHtml([item.brand, item.supplier || item.vendor, item.packSize || item.unitSize].filter(Boolean).join(" · ") || item.referenceId || "Library item")}</span>
                     <small>${escapeHtml(`${item.currency || "USD"} ${formatAmount(item.sellPrice ?? item.price ?? 0)}${item.leadTime ? ` · ${item.leadTime}` : ""}`)}</small>
-                    ${refsLabel ? `<span class="catalog-card-used-in">Used in: ${refsLabel}</span>` : ""}
+                    ${refsHtml}
                 </div>
             </button>
             <button class="catalog-edit-btn" type="button" data-catalog-action="edit" data-catalog-id="${escapeHtml(item.id)}">${escapeHtml(t("edit"))}</button>
@@ -5085,6 +5151,20 @@ async function deleteStatementExport(statementId) {
 }
 
 function handleCatalogGridClick(event) {
+    const refLink = event.target.closest(".catalog-ref-link[data-open-doc-id]");
+    if (refLink) {
+        event.stopPropagation();
+        const docId = refLink.dataset.openDocId;
+        const doc = state.documents.find(d => isSameDocumentId(d.id, docId));
+        if (doc && doc.isProcurement) {
+            const sheet = doc;
+            openProcurementSheetModal(sheet);
+        } else if (doc) {
+            editDocument(docId);
+        }
+        return;
+    }
+
     const addButton = event.target.closest("[data-catalog-action=\"add-new\"]");
     if (addButton) {
         openCatalogItemModal();
@@ -5284,8 +5364,11 @@ function createProcurementSnapshotFromLibraryItem(item) {
 
 function getProcurementRowMarkup(row = {}) {
     const data = createProcurementRowData(row);
+    const tbdClass = data.quantityTbd ? " procurement-row--tbd" : "";
+    const tbdTip = "TBD = To Be Determined. Use when the quantity is not yet confirmed. Pricing and supplier info can still be filled in, and you can convert this item to a quote later.";
     return `
-        <tr class="procurement-row" data-procurement-row-id="${escapeHtml(data.id)}" data-library-item-id="${escapeHtml(data.libraryItemId)}">
+        <tr class="procurement-row${tbdClass}" data-procurement-row-id="${escapeHtml(data.id)}" data-library-item-id="${escapeHtml(data.libraryItemId)}">
+            <td class="proc-select-col"><input type="checkbox" class="procurement-row-select" aria-label="Select row"></td>
             <td><span class="procurement-line-number">${escapeHtml(String(data.lineNumber))}</span></td>
             <td><textarea data-procurement-field="description" rows="2" placeholder="Item description">${escapeHtml(data.description)}</textarea></td>
             <td><input type="text" data-procurement-field="brand" value="${escapeHtml(data.brand)}"></td>
@@ -5295,9 +5378,9 @@ function getProcurementRowMarkup(row = {}) {
             <td><input type="text" data-procurement-field="currency" value="${escapeHtml(data.currency)}"></td>
             <td><input type="text" data-procurement-field="leadTime" value="${escapeHtml(data.leadTime)}"></td>
             <td><input type="text" data-procurement-field="supplier" value="${escapeHtml(data.supplier)}"></td>
-            <td>
+            <td class="proc-qty-cell">
                 <input type="text" data-procurement-field="quantity" value="${escapeHtml(data.quantity)}" ${data.quantityTbd ? "disabled" : ""} placeholder="Qty">
-                <label class="procurement-tbd-toggle"><input type="checkbox" data-procurement-field="quantityTbd" ${data.quantityTbd ? "checked" : ""}> TBD</label>
+                <label class="procurement-tbd-toggle" title="${escapeHtml(tbdTip)}"><input type="checkbox" data-procurement-field="quantityTbd" ${data.quantityTbd ? "checked" : ""}> TBD <span class="tbd-help" aria-hidden="true" title="${escapeHtml(tbdTip)}">?</span></label>
             </td>
             <td><textarea data-procurement-field="notes" rows="2" placeholder="Row notes">${escapeHtml(data.notes)}</textarea></td>
             <td class="procurement-row-actions">
@@ -5329,16 +5412,44 @@ function refreshProcurementRowOrdering() {
 
 function handleProcurementRowsChange(event) {
     const toggle = event.target.closest('[data-procurement-field="quantityTbd"]');
-    if (!toggle) {
+    if (toggle) {
+        const row = toggle.closest(".procurement-row");
+        const quantityInput = row?.querySelector('[data-procurement-field="quantity"]');
+        if (quantityInput) {
+            quantityInput.disabled = toggle.checked;
+            if (toggle.checked) quantityInput.value = "";
+        }
+        row?.classList.toggle("procurement-row--tbd", toggle.checked);
         return;
     }
-    const row = toggle.closest(".procurement-row");
-    const quantityInput = row?.querySelector('[data-procurement-field="quantity"]');
-    if (quantityInput) {
-        quantityInput.disabled = toggle.checked;
-        if (toggle.checked) {
-            quantityInput.value = "";
-        }
+
+    const rowCheckbox = event.target.closest(".procurement-row-select");
+    if (rowCheckbox) {
+        syncProcurementRowSelection();
+    }
+}
+
+function syncProcurementRowSelection() {
+    if (!elements.procurementRowsContainer) return;
+    const all = elements.procurementRowsContainer.querySelectorAll(".procurement-row-select");
+    const checked = elements.procurementRowsContainer.querySelectorAll(".procurement-row-select:checked");
+    if (elements.selectAllProcurementRows) {
+        elements.selectAllProcurementRows.indeterminate = checked.length > 0 && checked.length < all.length;
+        elements.selectAllProcurementRows.checked = all.length > 0 && checked.length === all.length;
+    }
+    if (elements.convertSelectedToQuoteBtn) {
+        elements.convertSelectedToQuoteBtn.hidden = checked.length === 0;
+    }
+}
+
+function handleSelectAllProcurementRows(event) {
+    const checked = event.target.checked;
+    elements.procurementRowsContainer?.querySelectorAll(".procurement-row-select").forEach(cb => {
+        cb.checked = checked;
+    });
+    if (elements.convertSelectedToQuoteBtn) {
+        const total = elements.procurementRowsContainer?.querySelectorAll(".procurement-row-select").length || 0;
+        elements.convertSelectedToQuoteBtn.hidden = !checked || total === 0;
     }
 }
 
@@ -5467,6 +5578,12 @@ function openProcurementSheetModal(sheet = null, initialRows = null) {
 
 function closeProcurementSheetModal() {
     state.editingProcurementSheetId = null;
+    closeProcurementDropdowns();
+    if (elements.convertSelectedToQuoteBtn) elements.convertSelectedToQuoteBtn.hidden = true;
+    if (elements.selectAllProcurementRows) {
+        elements.selectAllProcurementRows.checked = false;
+        elements.selectAllProcurementRows.indeterminate = false;
+    }
     setModalState(elements.procurementSheetModal, false);
 }
 
@@ -5667,7 +5784,7 @@ async function saveProcurementSheet(options = {}) {
     state.editingProcurementSheetId = sheet.id;
     renderDocuments();
 
-    const procDocRef = { docId: sheet.id, docRefNumber: sheet.refNumber, docType: "procurement", date: sheet.date };
+    const procDocRef = { docId: sheet.id, docRefNumber: sheet.refNumber, docType: "procurement", date: sheet.date, clientName: sheet.clientName || "" };
     const procCatalogItems = sheet.procurementItems.map(row => ({
         name: row.description,
         brand: row.brand,
@@ -5681,7 +5798,7 @@ async function saveProcurementSheet(options = {}) {
     }));
     await upsertItemsIntoCatalog(procCatalogItems, procDocRef);
 
-    setImportStatus(`Procurement sheet ${sheet.refNumber} saved.`);
+    setImportStatus(`Procurement sheet ${sheet.refNumber} saved and synced to Pricing Library.`);
     if (!options.keepOpen) {
         closeProcurementSheetModal();
     }
@@ -5814,6 +5931,36 @@ function parseProcurementCsvText(text) {
     return rows;
 }
 
+function toggleProcurementDropdown(dropdown) {
+    if (!dropdown) return;
+    const isOpen = dropdown.classList.contains("open");
+    closeProcurementDropdowns();
+    if (!isOpen) {
+        dropdown.classList.add("open");
+        const trigger = dropdown.querySelector(".proc-dropdown-trigger");
+        if (trigger) trigger.setAttribute("aria-expanded", "true");
+    }
+}
+
+function closeProcurementDropdowns() {
+    document.querySelectorAll(".proc-dropdown.open").forEach(d => {
+        d.classList.remove("open");
+        const trigger = d.querySelector(".proc-dropdown-trigger");
+        if (trigger) trigger.setAttribute("aria-expanded", "false");
+    });
+}
+
+function finishProcurementImport(rows, skipped, sourceLabel) {
+    if (!rows.length) {
+        window.alert(`No items found in the ${sourceLabel}. Make sure the file has an 'Item Description' column.`);
+        return;
+    }
+    rows.forEach(row => addProcurementRow(row));
+    const parts = [`Imported ${rows.length} row${rows.length === 1 ? "" : "s"} from ${sourceLabel}`];
+    if (skipped > 0) parts.push(`skipped ${skipped} empty row${skipped === 1 ? "" : "s"}`);
+    setImportStatus(parts.join(", ") + ".");
+}
+
 function handleProcurementCsvImport(event) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -5821,20 +5968,34 @@ function handleProcurementCsvImport(event) {
 
     const reader = new FileReader();
     reader.onload = e => {
-        const text = e.target.result;
-        const parsed = parseProcurementCsvText(text);
-        if (!parsed.length) {
-            window.alert("No items found in the CSV. Make sure the file has an 'Item Description' column.");
-            return;
-        }
-        const existingRows = elements.procurementRowsContainer?.querySelectorAll(".procurement-row").length || 0;
-        parsed.forEach(row => addProcurementRow(row));
-        setImportStatus(`Imported ${parsed.length} row${parsed.length === 1 ? "" : "s"} from CSV.`);
-        if (existingRows > 0 && parsed.length > 0) {
-            window.alert(`Added ${parsed.length} row${parsed.length === 1 ? "" : "s"} from CSV.`);
-        }
+        const parsed = parseProcurementCsvText(e.target.result);
+        finishProcurementImport(parsed, 0, "CSV");
     };
     reader.readAsText(file);
+}
+
+async function handleProcurementXlsxImport(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    event.target.value = "";
+
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        const response = await fetch("/api/import-procurement-xlsx", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ data: base64 })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            window.alert(payload.error || "Unable to import the Excel file.");
+            return;
+        }
+        finishProcurementImport(payload.rows || [], payload.skipped || 0, "Excel");
+    } catch (error) {
+        window.alert(error.message || "Unable to import the Excel file.");
+    }
 }
 
 async function downloadProcurementExcel(sheet) {
@@ -5863,24 +6024,73 @@ async function exportOpenProcurementExcel() {
 async function convertOpenProcurementToQuote() {
     try {
         const sheet = await saveProcurementSheet({ keepOpen: true });
-        if (!sheet) {
-            return;
-        }
-        const quote = convertProcurementSheetToQuote(sheet);
+        if (!sheet) return;
+        const quote = convertProcurementSheetToQuote(sheet, sheet.procurementItems);
         await saveDocumentsToServer([quote, ...state.documents]);
         closeProcurementSheetModal();
         renderDocuments();
         editDocument(quote.id);
-        setImportStatus(`Created quote ${quote.refNumber} from ${sheet.refNumber}.`);
+        setImportStatus(`Created quote ${quote.refNumber} from all rows in ${sheet.refNumber}.`);
     } catch (error) {
         window.alert(error.message || "Unable to convert procurement sheet to quote.");
     }
 }
 
-function convertProcurementSheetToQuote(sheet) {
+async function convertSelectedProcurementRowsToQuote() {
+    const selectedRowEls = Array.from(
+        elements.procurementRowsContainer?.querySelectorAll(".procurement-row-select:checked") || []
+    ).map(cb => cb.closest(".procurement-row")).filter(Boolean);
+
+    if (!selectedRowEls.length) {
+        window.alert("Select at least one row first.");
+        return;
+    }
+
+    try {
+        const sheet = await saveProcurementSheet({ keepOpen: true });
+        if (!sheet) return;
+
+        // Collect the selected rows from the live DOM (post-save)
+        const selectedRows = selectedRowEls.map(rowEl => {
+            const getValue = field => rowEl.querySelector(`[data-procurement-field="${field}"]`)?.value || "";
+            const quantityTbd = rowEl.querySelector('[data-procurement-field="quantityTbd"]')?.checked ?? false;
+            return createProcurementRowData({
+                id: rowEl.dataset.procurementRowId,
+                description: getValue("description"),
+                brand: getValue("brand"),
+                packSize: getValue("packSize"),
+                unit: getValue("unit"),
+                unitPrice: getValue("unitPrice"),
+                currency: getValue("currency"),
+                leadTime: getValue("leadTime"),
+                supplier: getValue("supplier"),
+                quantity: getValue("quantity"),
+                quantityTbd,
+                notes: getValue("notes")
+            });
+        }).filter(r => r.description);
+
+        if (!selectedRows.length) {
+            window.alert("None of the selected rows have a description. Fill in at least one item description.");
+            return;
+        }
+
+        const quote = convertProcurementSheetToQuote(sheet, selectedRows);
+        await saveDocumentsToServer([quote, ...state.documents]);
+        closeProcurementSheetModal();
+        renderDocuments();
+        editDocument(quote.id);
+        setImportStatus(`Created quote ${quote.refNumber} from ${selectedRows.length} selected row${selectedRows.length === 1 ? "" : "s"}.`);
+    } catch (error) {
+        window.alert(error.message || "Unable to convert selected rows to quote.");
+    }
+}
+
+function convertProcurementSheetToQuote(sheet, rows = null) {
     const date = getLocalDateInputValue();
     const refNumber = createProcurementReference(date);
-    const items = (sheet.procurementItems || []).map(row => {
+    const sourceRows = Array.isArray(rows) ? rows : (sheet.procurementItems || []);
+    const items = sourceRows.map(row => {
         const quantity = row.quantityTbd ? 1 : (Number.parseFloat(row.quantity) || 1);
         const unitPrice = Number.parseFloat(row.unitPrice) || 0;
         const descriptionParts = [
@@ -5916,7 +6126,9 @@ function convertProcurementSheetToQuote(sheet) {
         poNumber: sheet.refNumber || "",
         tags: parseTags(`procurement, ${sheet.refNumber || ""}, ${sheet.clientName || ""}`),
         notes: sheet.notes || "",
-        internalNotes: `Converted from procurement sheet ${sheet.refNumber || sheet.id}.`,
+        internalNotes: rows && rows.length < (sheet.procurementItems || []).length
+            ? `Converted from ${rows.length} selected row${rows.length === 1 ? "" : "s"} of procurement sheet ${sheet.refNumber || sheet.id}.`
+            : `Converted from procurement sheet ${sheet.refNumber || sheet.id}.`,
         paymentTerms: DEFAULT_PAYMENT_TERMS,
         paymentTermsMode: "net30",
         paymentTermsDays: 30,
@@ -13175,7 +13387,7 @@ async function persistDocument(options = {}) {
         );
 
         if (!forceDraft && !silent) {
-            const docRef = { docId: String(doc.id), docRefNumber: doc.refNumber, docType: doc.type, date: doc.date };
+            const docRef = { docId: String(doc.id), docRefNumber: doc.refNumber, docType: doc.type, date: doc.date, clientName: doc.clientName || "" };
             const docCatalogItems = (doc.items || [])
                 .filter(item => String(item.description || "").trim())
                 .map(item => ({
@@ -13184,6 +13396,8 @@ async function persistDocument(options = {}) {
                     currency: "USD"
                 }));
             upsertItemsIntoCatalog(docCatalogItems, docRef).catch(() => {});
+            const docLabel = doc.type === "quote" ? "Quote" : "Invoice";
+            setImportStatus(`${docLabel} ${doc.refNumber} saved and Pricing Library updated.`);
         }
     } catch (error) {
         if (!silent) {

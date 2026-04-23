@@ -7427,6 +7427,124 @@ body::after {
     gap: 0.5rem;
     justify-content: flex-end;
     margin-top: 1rem;
+    align-items: center;
+}
+
+/* ─── Procurement dropdown buttons ──────────────────────────── */
+
+.proc-dropdown {
+    position: relative;
+}
+
+.proc-dropdown-caret {
+    font-size: 0.65em;
+    margin-left: 0.2em;
+    opacity: 0.7;
+}
+
+.proc-dropdown-menu {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 4px);
+    right: 0;
+    z-index: 120;
+    min-width: 160px;
+    background: var(--surface-strong);
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    padding: 0.3rem;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.proc-dropdown.open .proc-dropdown-menu {
+    display: flex;
+}
+
+.proc-dropdown-menu button {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    border-radius: 5px;
+    padding: 0.45rem 0.75rem;
+    font: inherit;
+    font-size: 0.8rem;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.proc-dropdown-menu button:hover {
+    background: var(--bg-soft);
+    color: var(--blue-deep);
+}
+
+/* ─── Procurement row select checkbox column ─────────────────── */
+
+.proc-select-col {
+    width: 28px;
+    text-align: center;
+    padding: 0.25rem !important;
+}
+
+.proc-select-col input[type="checkbox"] {
+    width: auto !important;
+    cursor: pointer;
+    accent-color: var(--blue-deep, #1459d9);
+}
+
+/* ─── TBD row styling ────────────────────────────────────────── */
+
+.procurement-row--tbd {
+    background: rgba(241, 245, 255, 0.55);
+}
+
+.procurement-row--tbd [data-procurement-field="quantity"] {
+    font-style: italic;
+    color: var(--text-faint);
+}
+
+.tbd-help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: var(--line-strong);
+    color: var(--text-muted);
+    font-size: 0.6rem;
+    font-weight: 700;
+    font-style: normal;
+    cursor: help;
+    vertical-align: middle;
+    margin-left: 1px;
+}
+
+/* ─── Catalog card ref links ─────────────────────────────────── */
+
+.catalog-ref-link {
+    display: inline;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-size: inherit;
+    color: var(--blue-deep);
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    transition: text-decoration-color 0.15s;
+}
+
+.catalog-ref-link:hover {
+    text-decoration-color: currentColor;
+}
+
+.catalog-ref-overflow {
+    color: var(--text-faint);
+    font-style: italic;
 }
 
 .items-subtotal-label {
