@@ -1202,8 +1202,12 @@
             </div>
             <button class="close-btn" id="closeNotesDrawerBtn" type="button" aria-label="Close notes">×</button>
         </div>
+        <div class="notes-drawer-tabs" id="notesDrawerTabs">
+            <button type="button" class="notes-drawer-tab is-active" data-notes-tab="notes">Notes</button>
+            <button type="button" class="notes-drawer-tab" data-notes-tab="history">History</button>
+        </div>
         <div class="notes-drawer-feed" id="notesDrawerFeed"></div>
-        <div class="notes-drawer-compose">
+        <div class="notes-drawer-compose" id="notesDrawerCompose">
             <textarea id="notesDrawerInput" rows="3" placeholder="Add an internal note… (Ctrl+Enter to post)"></textarea>
             <div class="notes-drawer-compose-actions">
                 <button class="btn btn-primary" id="notesDrawerSubmitBtn" type="button">Post Note</button>
@@ -1789,13 +1793,35 @@
         <div class="modal-content settings-modal-content procurement-modal-content">
             <div class="modal-header">
                 <h3 id="procurementSheetTitle">New Procurement Sheet</h3>
-                <button class="close-btn" id="closeProcurementSheetModalBtn" type="button" aria-label="Close">x</button>
+                <div class="proc-modal-header-actions">
+                    <button class="proc-translate-btn" id="procurementTranslateBtn" type="button" aria-label="Translate sheet" title="Translate this sheet">
+                        <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1.5 3.5h7M5 3.5V2M7.5 3.5c-.4 1.8-1.8 3.2-3.5 4.2M6 6c.6.9 1.8 1.7 3 2.2"/>
+                            <path d="M8.5 10l2-5 2 5m-3.4-1.5h2.8"/>
+                        </svg>
+                    </button>
+                    <button class="close-btn" id="closeProcurementSheetModalBtn" type="button" aria-label="Close">x</button>
+                </div>
             </div>
             <div class="modal-body settings-modal-body">
+                <div class="proc-translate-panel" id="procTranslatePanel" hidden>
+                    <div class="proc-translate-panel-inner">
+                        <div class="proc-translate-controls">
+                            <span class="proc-translate-label">Translate to:</span>
+                            <label class="proc-lang-opt"><input type="radio" name="procTranslateLang" value="es" checked> Spanish</label>
+                            <label class="proc-lang-opt"><input type="radio" name="procTranslateLang" value="fr"> French</label>
+                            <button class="btn btn-secondary proc-translate-action-btn" id="procTranslatePreviewBtn" type="button">Preview</button>
+                            <button class="btn btn-primary proc-translate-action-btn" id="procTranslateDuplicateBtn" type="button" disabled>Duplicate as Translated</button>
+                            <button class="btn btn-secondary proc-translate-action-btn" id="procTranslateInPlaceBtn" type="button" disabled>Translate In Place</button>
+                        </div>
+                        <div class="proc-translate-status" id="procTranslateStatus"></div>
+                        <div class="proc-translate-preview" id="procTranslatePreview" hidden></div>
+                    </div>
+                </div>
                 <div class="procurement-editor-head">
-                    <div class="settings-grid report-grid">
+                    <div class="proc-header-compact">
                         <label class="form-group">
-                            <span>Reference Number</span>
+                            <span>Ref. No.</span>
                             <input type="text" id="procurementRefNumberInput" placeholder="TL-2026-0423-01">
                         </label>
                         <label class="form-group">
@@ -1803,16 +1829,16 @@
                             <input type="date" id="procurementDateInput">
                         </label>
                         <label class="form-group">
-                            <span>Bid / Client Name</span>
+                            <span>Client / Bid</span>
                             <input type="text" id="procurementClientInput" placeholder="Alliad UNSOH bid request">
                         </label>
                         <label class="form-group">
                             <span>Currency</span>
                             <input type="text" id="procurementCurrencyInput" value="USD">
                         </label>
-                        <label class="form-group report-field-wide">
+                        <label class="form-group proc-notes-compact">
                             <span>Notes</span>
-                            <textarea id="procurementNotesInput" rows="2" placeholder="Submission notes, assumptions, or request context."></textarea>
+                            <textarea id="procurementNotesInput" rows="1" placeholder="Submission notes, assumptions, or request context."></textarea>
                         </label>
                     </div>
                     <div class="procurement-library-insert">
@@ -1838,8 +1864,8 @@
                                 <th>Unit</th>
                                 <th>Unit Price</th>
                                 <th>Currency</th>
-                                <th>Lead Time</th>
-                                <th>Supplier</th>
+                                <th class="proc-internal-col">Lead Time</th>
+                                <th class="proc-internal-col">Supplier</th>
                                 <th>Qty</th>
                                 <th>Notes</th>
                                 <th></th>
@@ -1850,6 +1876,7 @@
                 </div>
                 <div class="settings-actions procurement-actions">
                     <button class="btn btn-secondary" id="addProcurementRowBtn" type="button">Add Row</button>
+                    <button class="btn btn-secondary proc-internal-toggle-btn" id="procInternalFieldsToggleBtn" type="button">Show internal fields</button>
 
                     <div class="proc-dropdown" id="importProcurementDropdown">
                         <button class="btn btn-secondary proc-dropdown-trigger" type="button" aria-haspopup="true" aria-expanded="false" id="importProcurementDropdownBtn">
@@ -2144,12 +2171,21 @@
                     <div class="catalog-details-copy">
                         <h4 id="catalogDetailsName">Item Name</h4>
                         <p id="catalogDetailsMeta">Manual · Updated recently</p>
+                        <span class="catalog-details-ref-badge" id="catalogDetailsRefId"></span>
                     </div>
                 </div>
                 <div class="catalog-details-grid">
                     <div class="catalog-details-stat">
-                        <span>Price</span>
+                        <span>Sell Price</span>
                         <strong id="catalogDetailsPrice">$0.00</strong>
+                    </div>
+                    <div class="catalog-details-stat">
+                        <span>Cost Price</span>
+                        <strong id="catalogDetailsCostPrice">—</strong>
+                    </div>
+                    <div class="catalog-details-stat">
+                        <span>Currency</span>
+                        <strong id="catalogDetailsCurrency">—</strong>
                     </div>
                     <div class="catalog-details-stat">
                         <span>Category</span>
@@ -2160,12 +2196,28 @@
                         <strong id="catalogDetailsBrand">—</strong>
                     </div>
                     <div class="catalog-details-stat">
-                        <span>Unit Size</span>
+                        <span>Pack Size</span>
                         <strong id="catalogDetailsUnitSize">—</strong>
                     </div>
                     <div class="catalog-details-stat">
-                        <span>Vendor</span>
+                        <span>Unit</span>
+                        <strong id="catalogDetailsUnit">—</strong>
+                    </div>
+                    <div class="catalog-details-stat">
+                        <span>Vendor / Supplier</span>
                         <strong id="catalogDetailsVendor">—</strong>
+                    </div>
+                    <div class="catalog-details-stat">
+                        <span>Lead Time</span>
+                        <strong id="catalogDetailsLeadTime">—</strong>
+                    </div>
+                    <div class="catalog-details-stat">
+                        <span>Country</span>
+                        <strong id="catalogDetailsCountry">—</strong>
+                    </div>
+                    <div class="catalog-details-stat">
+                        <span>Tax</span>
+                        <strong id="catalogDetailsTax">—</strong>
                     </div>
                 </div>
                 <div class="catalog-details-section">
@@ -2175,6 +2227,17 @@
                 <div class="catalog-details-section">
                     <span>Notes</span>
                     <p id="catalogDetailsNotes">—</p>
+                </div>
+                <div class="catalog-details-section" id="catalogDetailsDocRefsSection" hidden>
+                    <span>Used In</span>
+                    <div id="catalogDetailsDocRefs" class="catalog-details-doc-refs"></div>
+                </div>
+                <div class="catalog-details-actions">
+                    <button class="btn btn-primary" type="button" id="catalogDetailsAddToDocBtn">Add to Document</button>
+                </div>
+                <div class="catalog-details-doc-picker" id="catalogDetailsDocPicker" hidden>
+                    <p class="catalog-doc-picker-label">Choose a document to add this item to:</p>
+                    <div id="catalogDetailsDocPickerList" class="catalog-doc-picker-list"></div>
                 </div>
             </div>
         </div>

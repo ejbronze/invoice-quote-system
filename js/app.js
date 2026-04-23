@@ -67,7 +67,9 @@ const state = {
     pricingSearchQuery: "",
     pricingCategoryFilter: "all",
     pricingSupplierFilter: "all",
-    editingProcurementSheetId: null
+    editingProcurementSheetId: null,
+    notesDrawerTab: "notes",
+    pendingCatalogInsertItem: null
 };
 
 const DOP_PER_USD = 59;
@@ -2175,6 +2177,20 @@ function cacheElements() {
     elements.catalogDetailsVendor = document.getElementById("catalogDetailsVendor");
     elements.catalogDetailsText = document.getElementById("catalogDetailsText");
     elements.catalogDetailsNotes = document.getElementById("catalogDetailsNotes");
+    elements.catalogDetailsRefId = document.getElementById("catalogDetailsRefId");
+    elements.catalogDetailsCostPrice = document.getElementById("catalogDetailsCostPrice");
+    elements.catalogDetailsCurrency = document.getElementById("catalogDetailsCurrency");
+    elements.catalogDetailsUnit = document.getElementById("catalogDetailsUnit");
+    elements.catalogDetailsLeadTime = document.getElementById("catalogDetailsLeadTime");
+    elements.catalogDetailsCountry = document.getElementById("catalogDetailsCountry");
+    elements.catalogDetailsTax = document.getElementById("catalogDetailsTax");
+    elements.catalogDetailsDocRefsSection = document.getElementById("catalogDetailsDocRefsSection");
+    elements.catalogDetailsDocRefs = document.getElementById("catalogDetailsDocRefs");
+    elements.catalogDetailsAddToDocBtn = document.getElementById("catalogDetailsAddToDocBtn");
+    elements.catalogDetailsDocPicker = document.getElementById("catalogDetailsDocPicker");
+    elements.catalogDetailsDocPickerList = document.getElementById("catalogDetailsDocPickerList");
+    elements.notesDrawerTabs = document.getElementById("notesDrawerTabs");
+    elements.notesDrawerCompose = document.getElementById("notesDrawerCompose");
     elements.catalogItemNameInput = document.getElementById("catalogItemNameInput");
     elements.catalogItemCostInput = document.getElementById("catalogItemCostInput");
     elements.catalogItemPriceInput = document.getElementById("catalogItemPriceInput");
@@ -2343,6 +2359,14 @@ function cacheElements() {
     elements.convertSelectedToQuoteBtn = document.getElementById("convertSelectedToQuoteBtn");
     elements.convertProcurementToQuoteBtn = document.getElementById("convertProcurementToQuoteBtn");
     elements.saveProcurementSheetBtn = document.getElementById("saveProcurementSheetBtn");
+    elements.procurementTranslateBtn = document.getElementById("procurementTranslateBtn");
+    elements.procTranslatePanel = document.getElementById("procTranslatePanel");
+    elements.procTranslatePreviewBtn = document.getElementById("procTranslatePreviewBtn");
+    elements.procTranslateDuplicateBtn = document.getElementById("procTranslateDuplicateBtn");
+    elements.procTranslateInPlaceBtn = document.getElementById("procTranslateInPlaceBtn");
+    elements.procTranslateStatus = document.getElementById("procTranslateStatus");
+    elements.procTranslatePreview = document.getElementById("procTranslatePreview");
+    elements.procInternalFieldsToggleBtn = document.getElementById("procInternalFieldsToggleBtn");
     elements.viewAllDocumentsBtn = document.getElementById("viewAllDocumentsBtn");
     elements.overviewRecentDocuments = document.getElementById("overviewRecentDocuments");
     elements.overviewSummaryGrid = document.getElementById("overviewSummaryGrid");
@@ -2593,6 +2617,11 @@ function bindEvents() {
         else if (btn.dataset.procurementExport === "xlsx") exportOpenProcurementExcel();
     });
     document.addEventListener("click", closeProcurementDropdowns);
+    elements.procurementTranslateBtn?.addEventListener("click", toggleProcTranslatePanel);
+    elements.procTranslatePreviewBtn?.addEventListener("click", handleProcTranslatePreview);
+    elements.procTranslateDuplicateBtn?.addEventListener("click", () => handleProcTranslateApply("duplicate"));
+    elements.procTranslateInPlaceBtn?.addEventListener("click", () => handleProcTranslateApply("inplace"));
+    elements.procInternalFieldsToggleBtn?.addEventListener("click", toggleProcInternalFields);
     elements.saveCompanyProfileBtn.addEventListener("click", saveCompanyProfile);
     elements.addSavedItemBtn.addEventListener("click", addSavedItemFromModal);
     elements.savedItemsList.addEventListener("click", handleSavedItemsListClick);
@@ -2883,6 +2912,21 @@ function bindEvents() {
         if (event.target === elements.catalogDetailsModal) {
             closeCatalogDetailsModal();
         }
+    });
+    elements.catalogDetailsAddToDocBtn?.addEventListener("click", () => {
+        showCatalogDocPicker();
+    });
+    elements.catalogDetailsDocPickerList?.addEventListener("click", event => {
+        const btn = event.target.closest("[data-catalog-add-doc-id]");
+        if (!btn) return;
+        const docId = btn.dataset.catalogAddDocId;
+        if (state.pendingCatalogInsertItem) {
+            addCatalogItemToDocument(state.pendingCatalogInsertItem, docId);
+        }
+    });
+    elements.notesDrawerTabs?.addEventListener("click", event => {
+        const tab = event.target.closest("[data-notes-tab]");
+        if (tab) switchNotesDrawerTab(tab.dataset.notesTab);
     });
     elements.invoiceReportsModal.addEventListener("click", event => {
         if (event.target === elements.invoiceReportsModal) {
@@ -4447,18 +4491,47 @@ function openCatalogDetailsModal(item) {
         return;
     }
 
+    state.pendingCatalogInsertItem = item;
+    hideCatalogDocPicker();
+
     const fallbackLabel = (item.name || "Item").trim().slice(0, 2).toUpperCase() || "IT";
     setElementText("#catalogDetailsTitle", item.name || "Catalog Item");
     setElementText("#catalogDetailsName", item.name || "Untitled item");
-    setElementText("#catalogDetailsMeta", `${item.referenceId || t(`source_${item.sourceKey}`)} · ${formatDateTime(item.dateUpdated)}`);
-    setElementText("#catalogDetailsPrice", formatCurrency(item.sellPrice ?? item.price ?? 0));
+    setElementText("#catalogDetailsMeta", `Updated ${formatDateTime(item.dateUpdated)}`);
+    setElementText("#catalogDetailsFallback", fallbackLabel);
+
+    if (elements.catalogDetailsRefId) {
+        elements.catalogDetailsRefId.textContent = item.referenceId || "";
+        elements.catalogDetailsRefId.hidden = !item.referenceId;
+    }
+
+    const sellPrice = item.sellPrice ?? item.price ?? 0;
+    const costPrice = item.costPrice ?? null;
+    setElementText("#catalogDetailsPrice", formatCurrency(sellPrice));
+    setElementText("#catalogDetailsCostPrice", costPrice != null ? formatCurrency(costPrice) : "—");
+    setElementText("#catalogDetailsCurrency", item.currency || "—");
     setElementText("#catalogDetailsCategory", item.category || "—");
     setElementText("#catalogDetailsBrand", item.brand || "—");
     setElementText("#catalogDetailsUnitSize", item.packSize || item.unitSize || "—");
+    setElementText("#catalogDetailsUnit", item.unit || "—");
     setElementText("#catalogDetailsVendor", item.supplier || item.vendor || "—");
+    setElementText("#catalogDetailsLeadTime", item.leadTime || "—");
+    setElementText("#catalogDetailsCountry", item.country || "—");
+    setElementText("#catalogDetailsTax", item.taxIncluded ? "Included" : "—");
     setElementText("#catalogDetailsText", item.details || "—");
     setElementText("#catalogDetailsNotes", item.notes || "—");
-    setElementText("#catalogDetailsFallback", fallbackLabel);
+
+    // Document references
+    const docRefs = Array.isArray(item.documentRefs) ? item.documentRefs : [];
+    if (elements.catalogDetailsDocRefsSection) {
+        elements.catalogDetailsDocRefsSection.hidden = docRefs.length === 0;
+    }
+    if (elements.catalogDetailsDocRefs && docRefs.length) {
+        elements.catalogDetailsDocRefs.innerHTML = docRefs.map(r => {
+            const label = `${r.docRefNumber || r.docId} ${r.clientName ? `· ${r.clientName}` : ""}`.trim();
+            return `<button class="catalog-ref-link" type="button" data-open-doc-id="${escapeHtml(String(r.docId))}">${escapeHtml(label)}</button>`;
+        }).join("");
+    }
 
     if (item.imageDataUrl) {
         elements.catalogDetailsImage.src = item.imageDataUrl;
@@ -4474,7 +4547,96 @@ function openCatalogDetailsModal(item) {
 }
 
 function closeCatalogDetailsModal() {
+    state.pendingCatalogInsertItem = null;
+    hideCatalogDocPicker();
     setModalState(elements.catalogDetailsModal, false);
+}
+
+function getCatalogDocPickerOptions() {
+    const currentId = state.editingDocumentId ?? state.editingProcurementSheetId;
+    return state.documents
+        .filter(doc => doc.status === "logged" && ["quote", "invoice", "procurement"].includes(doc.type))
+        .sort((a, b) => ((b.printedAt || b.date || "") > (a.printedAt || a.date || "") ? 1 : -1))
+        .map(doc => ({
+            id: doc.id,
+            type: doc.type,
+            refNumber: doc.refNumber || "—",
+            clientName: doc.clientName || "",
+            isCurrent: currentId !== null && isSameDocumentId(doc.id, currentId)
+        }))
+        .sort((a, b) => (b.isCurrent ? 1 : 0) - (a.isCurrent ? 1 : 0));
+}
+
+function showCatalogDocPicker() {
+    if (!elements.catalogDetailsDocPicker || !elements.catalogDetailsDocPickerList) return;
+    if (elements.catalogDetailsAddToDocBtn?.dataset.pickerOpen === "1") {
+        hideCatalogDocPicker();
+        return;
+    }
+    const docs = getCatalogDocPickerOptions();
+    if (!docs.length) {
+        elements.catalogDetailsDocPickerList.innerHTML = `<p class="catalog-doc-picker-empty">No saved documents found. Create a Quote, Invoice, or Procurement Sheet first.</p>`;
+    } else {
+        elements.catalogDetailsDocPickerList.innerHTML = docs.map(d => {
+            const typeLabel = d.type === "procurement" ? "Procurement" : d.type === "invoice" ? "Invoice" : "Quote";
+            const currentBadge = d.isCurrent ? `<span class="catalog-doc-picker-badge">Current</span>` : "";
+            return `<button type="button" class="catalog-doc-picker-item${d.isCurrent ? " is-current" : ""}" data-catalog-add-doc-id="${escapeHtml(String(d.id))}">
+                <span class="catalog-doc-picker-type">${escapeHtml(typeLabel)}</span>
+                <span class="catalog-doc-picker-ref">${escapeHtml(d.refNumber)}</span>
+                <span class="catalog-doc-picker-client">${escapeHtml(d.clientName || "—")}</span>
+                ${currentBadge}
+            </button>`;
+        }).join("");
+    }
+    elements.catalogDetailsDocPicker.hidden = false;
+    if (elements.catalogDetailsAddToDocBtn) {
+        elements.catalogDetailsAddToDocBtn.textContent = "Cancel";
+        elements.catalogDetailsAddToDocBtn.dataset.pickerOpen = "1";
+    }
+}
+
+function hideCatalogDocPicker() {
+    if (!elements.catalogDetailsDocPicker) return;
+    elements.catalogDetailsDocPicker.hidden = true;
+    if (elements.catalogDetailsAddToDocBtn) {
+        elements.catalogDetailsAddToDocBtn.textContent = "Add to Document";
+        delete elements.catalogDetailsAddToDocBtn.dataset.pickerOpen;
+    }
+}
+
+function addCatalogItemToDocument(item, targetDocId) {
+    if (!item || !targetDocId) return;
+    const targetDoc = getDocumentById(targetDocId);
+    if (!targetDoc) return;
+    closeCatalogDetailsModal();
+    if (targetDoc.type === "procurement") {
+        const isCurrentlyEditing = state.editingProcurementSheetId !== null &&
+            isSameDocumentId(state.editingProcurementSheetId, targetDocId);
+        if (!isCurrentlyEditing) {
+            openProcurementSheetModal(targetDoc);
+        }
+        addProcurementRow({
+            description: item.name || "",
+            brand: item.brand || "",
+            packSize: item.packSize || item.unitSize || "",
+            unit: item.unit || "",
+            unitPrice: Number.parseFloat(item.sellPrice ?? item.price) || 0,
+            currency: item.currency || "USD",
+            leadTime: item.leadTime || "",
+            supplier: item.supplier || item.vendor || "",
+            notes: item.notes || "",
+            libraryItemId: item.id || "",
+            libraryReferenceId: item.referenceId || ""
+        });
+        setImportStatus(`"${item.name}" added to ${targetDoc.refNumber}.`);
+    } else {
+        const isCurrentlyEditing = state.editingDocumentId !== null &&
+            isSameDocumentId(state.editingDocumentId, targetDocId);
+        if (!isCurrentlyEditing) {
+            editDocument(targetDocId);
+        }
+        insertLibraryItemIntoDocument(item);
+    }
 }
 
 function getCatalogEntries() {
@@ -5288,6 +5450,201 @@ async function archiveCatalogItemFromModal() {
     setImportStatus("Library item archived. Existing document line items were not changed.");
 }
 
+// ── Internal fields toggle ─────────────────────────────────────
+
+function toggleProcInternalFields() {
+    const wrap = elements.procurementSheetModal?.querySelector(".procurement-table-wrap");
+    const btn = elements.procInternalFieldsToggleBtn;
+    if (!wrap || !btn) return;
+    const showing = wrap.classList.toggle("proc-show-internal");
+    btn.textContent = showing ? "Hide internal fields" : "Show internal fields";
+    btn.classList.toggle("active", showing);
+}
+
+function autoShowInternalFieldsIfNeeded() {
+    const rows = elements.procurementRowsContainer?.querySelectorAll(".procurement-row") || [];
+    const hasData = Array.from(rows).some(row => {
+        const lt = row.querySelector('[data-procurement-field="leadTime"]')?.value.trim();
+        const sup = row.querySelector('[data-procurement-field="supplier"]')?.value.trim();
+        return lt || sup;
+    });
+    if (!hasData) return;
+    const wrap = elements.procurementSheetModal?.querySelector(".procurement-table-wrap");
+    const btn = elements.procInternalFieldsToggleBtn;
+    if (wrap) wrap.classList.add("proc-show-internal");
+    if (btn) {
+        btn.textContent = "Hide internal fields";
+        btn.classList.add("active");
+    }
+}
+
+// ── Translation panel ──────────────────────────────────────────
+
+let _procCachedTranslations = null;
+
+function getProcTranslateLang() {
+    return elements.procTranslatePanel?.querySelector('input[name="procTranslateLang"]:checked')?.value || "es";
+}
+
+function setProcTranslateStatus(message, isError = false) {
+    if (!elements.procTranslateStatus) return;
+    elements.procTranslateStatus.textContent = message;
+    elements.procTranslateStatus.classList.toggle("error", isError);
+}
+
+function toggleProcTranslatePanel() {
+    const panel = elements.procTranslatePanel;
+    if (!panel) return;
+    const opening = panel.hidden;
+    panel.hidden = !opening;
+    elements.procurementTranslateBtn?.classList.toggle("active", opening);
+    if (!opening) {
+        _procCachedTranslations = null;
+        setProcTranslateStatus("");
+        if (elements.procTranslatePreview) elements.procTranslatePreview.hidden = true;
+        if (elements.procTranslateDuplicateBtn) elements.procTranslateDuplicateBtn.disabled = true;
+        if (elements.procTranslateInPlaceBtn) elements.procTranslateInPlaceBtn.disabled = true;
+    }
+}
+
+function resetProcTranslatePanel() {
+    if (elements.procTranslatePanel) elements.procTranslatePanel.hidden = true;
+    elements.procurementTranslateBtn?.classList.remove("active");
+    _procCachedTranslations = null;
+    setProcTranslateStatus("");
+    if (elements.procTranslatePreview) elements.procTranslatePreview.hidden = true;
+    if (elements.procTranslateDuplicateBtn) elements.procTranslateDuplicateBtn.disabled = true;
+    if (elements.procTranslateInPlaceBtn) elements.procTranslateInPlaceBtn.disabled = true;
+}
+
+async function translateText(text, targetLang) {
+    const trimmed = text.trim();
+    if (!trimmed) return text;
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(trimmed)}&langpair=en|${targetLang}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Translation service unavailable.");
+    const data = await response.json();
+    if (data.responseStatus !== 200) return text;
+    return data.responseData?.translatedText || text;
+}
+
+async function translateProcurementRowsData(rows, targetLang) {
+    const results = [];
+    for (const row of rows) {
+        const description = await translateText(row.description, targetLang);
+        const notes = row.notes ? await translateText(row.notes, targetLang) : row.notes;
+        results.push({ ...row, description, notes });
+    }
+    return results;
+}
+
+async function handleProcTranslatePreview() {
+    const lang = getProcTranslateLang();
+    const langLabel = lang === "es" ? "Spanish" : "French";
+    const rows = collectProcurementRows();
+
+    if (!rows.length || !rows.some(r => r.description)) {
+        setProcTranslateStatus("Add descriptions to rows before translating.", true);
+        return;
+    }
+
+    const count = rows.filter(r => r.description).length;
+    setProcTranslateStatus(`Translating ${count} row${count === 1 ? "" : "s"} to ${langLabel}…`);
+    if (elements.procTranslatePreviewBtn) elements.procTranslatePreviewBtn.disabled = true;
+
+    try {
+        const translatedRows = await translateProcurementRowsData(rows, lang);
+        _procCachedTranslations = { rows: translatedRows, lang, originalRows: rows };
+
+        const previewEl = elements.procTranslatePreview;
+        if (previewEl) {
+            previewEl.innerHTML = translatedRows
+                .filter(r => r.description)
+                .map(row => {
+                    const orig = rows.find(r => r.id === row.id);
+                    return `<div class="proc-translate-preview-row">
+                        <span class="proc-translate-original">${escapeHtml(orig?.description || "")}</span>
+                        <span class="proc-translate-arrow">→</span>
+                        <span class="proc-translate-translated">${escapeHtml(row.description)}</span>
+                    </div>`;
+                }).join("");
+            previewEl.hidden = false;
+        }
+
+        if (elements.procTranslateDuplicateBtn) elements.procTranslateDuplicateBtn.disabled = false;
+        if (elements.procTranslateInPlaceBtn) elements.procTranslateInPlaceBtn.disabled = false;
+        setProcTranslateStatus(`Preview ready — choose how to apply the ${langLabel} translation.`);
+    } catch (error) {
+        setProcTranslateStatus(error.message || "Translation failed.", true);
+    } finally {
+        if (elements.procTranslatePreviewBtn) elements.procTranslatePreviewBtn.disabled = false;
+    }
+}
+
+async function handleProcTranslateApply(mode) {
+    if (!_procCachedTranslations) return;
+    const { rows: translatedRows, lang } = _procCachedTranslations;
+    const langLabel = lang === "es" ? "Spanish" : "French";
+    const langTag = lang === "es" ? "ES" : "FR";
+
+    if (mode === "inplace") {
+        const allRowEls = elements.procurementRowsContainer?.querySelectorAll(".procurement-row") || [];
+        allRowEls.forEach(rowEl => {
+            const translated = translatedRows.find(r => r.id === rowEl.dataset.procurementRowId);
+            if (!translated) return;
+            const descInput = rowEl.querySelector('[data-procurement-field="description"]');
+            const notesInput = rowEl.querySelector('[data-procurement-field="notes"]');
+            if (descInput) descInput.value = translated.description;
+            if (notesInput && translated.notes) notesInput.value = translated.notes;
+        });
+        setProcTranslateStatus(`Translated to ${langLabel} in place.`);
+        _procCachedTranslations = null;
+        if (elements.procTranslateDuplicateBtn) elements.procTranslateDuplicateBtn.disabled = true;
+        if (elements.procTranslateInPlaceBtn) elements.procTranslateInPlaceBtn.disabled = true;
+        if (elements.procTranslatePreview) elements.procTranslatePreview.hidden = true;
+        return;
+    }
+
+    // mode === "duplicate"
+    if (elements.procTranslateDuplicateBtn) elements.procTranslateDuplicateBtn.disabled = true;
+    setProcTranslateStatus(`Saving ${langLabel} version…`);
+
+    try {
+        const currentSheet = buildProcurementSheetFromEditor();
+        const translatedNotes = currentSheet.notes ? await translateText(currentSheet.notes, lang) : currentSheet.notes;
+        const langRef = `${currentSheet.refNumber || createProcurementReference()}-${langTag}`;
+        const translatedSheet = {
+            ...currentSheet,
+            id: Date.now(),
+            refNumber: langRef,
+            notes: translatedNotes,
+            procurementItems: translatedRows,
+            items: translatedRows.map(row => ({
+                description: row.description,
+                quantity: row.quantityTbd ? "TBD" : row.quantity,
+                unitPrice: row.unitPrice,
+                price: row.unitPrice,
+                totalPrice: row.quantityTbd ? 0 : (Number.parseFloat(row.quantity) || 0) * row.unitPrice
+            })),
+            printedAt: new Date().toISOString(),
+            changeHistory: [{
+                date: new Date().toISOString(),
+                summary: `Created as ${langLabel} translation of ${currentSheet.refNumber}`,
+                type: "system"
+            }]
+        };
+        const nextDocuments = [translatedSheet, ...state.documents];
+        await saveDocumentsToServer(nextDocuments);
+        renderDocuments();
+        setProcTranslateStatus(`${langLabel} version saved as "${langRef}" — find it in your documents list.`);
+        _procCachedTranslations = null;
+        if (elements.procTranslateInPlaceBtn) elements.procTranslateInPlaceBtn.disabled = true;
+    } catch (error) {
+        setProcTranslateStatus(error.message || "Unable to save translated version.", true);
+        if (elements.procTranslateDuplicateBtn) elements.procTranslateDuplicateBtn.disabled = false;
+    }
+}
+
 function syncProcurementLibrarySelect() {
     if (!elements.procurementLibrarySelect) {
         return;
@@ -5376,8 +5733,8 @@ function getProcurementRowMarkup(row = {}) {
             <td><input type="text" data-procurement-field="unit" value="${escapeHtml(data.unit)}"></td>
             <td><input type="number" step="0.01" min="0" data-procurement-field="unitPrice" value="${escapeHtml(String(Number(data.unitPrice || 0).toFixed(2)))}"></td>
             <td><input type="text" data-procurement-field="currency" value="${escapeHtml(data.currency)}"></td>
-            <td><input type="text" data-procurement-field="leadTime" value="${escapeHtml(data.leadTime)}"></td>
-            <td><input type="text" data-procurement-field="supplier" value="${escapeHtml(data.supplier)}"></td>
+            <td class="proc-internal-col"><input type="text" data-procurement-field="leadTime" value="${escapeHtml(data.leadTime)}"></td>
+            <td class="proc-internal-col"><input type="text" data-procurement-field="supplier" value="${escapeHtml(data.supplier)}"></td>
             <td class="proc-qty-cell">
                 <input type="text" data-procurement-field="quantity" value="${escapeHtml(data.quantity)}" ${data.quantityTbd ? "disabled" : ""} placeholder="Qty">
                 <label class="procurement-tbd-toggle" title="${escapeHtml(tbdTip)}"><input type="checkbox" data-procurement-field="quantityTbd" ${data.quantityTbd ? "checked" : ""}> TBD <span class="tbd-help" aria-hidden="true" title="${escapeHtml(tbdTip)}">?</span></label>
@@ -5561,6 +5918,13 @@ function populateProcurementEditor(sheet = null, initialRows = null) {
     elements.procurementClientInput.value = doc.clientName || "";
     elements.procurementCurrencyInput.value = doc.currency || "USD";
     elements.procurementNotesInput.value = doc.notes || "";
+    resetProcTranslatePanel();
+    const tableWrap = elements.procurementSheetModal?.querySelector(".procurement-table-wrap");
+    if (tableWrap) tableWrap.classList.remove("proc-show-internal");
+    if (elements.procInternalFieldsToggleBtn) {
+        elements.procInternalFieldsToggleBtn.textContent = "Show internal fields";
+        elements.procInternalFieldsToggleBtn.classList.remove("active");
+    }
     elements.procurementRowsContainer.innerHTML = "";
     const rows = initialRows || (Array.isArray(doc.procurementItems) ? doc.procurementItems : []);
     if (rows.length) {
@@ -5569,6 +5933,7 @@ function populateProcurementEditor(sheet = null, initialRows = null) {
         addProcurementRow();
     }
     syncProcurementLibrarySelect();
+    autoShowInternalFieldsIfNeeded();
 }
 
 function openProcurementSheetModal(sheet = null, initialRows = null) {
@@ -5579,6 +5944,7 @@ function openProcurementSheetModal(sheet = null, initialRows = null) {
 function closeProcurementSheetModal() {
     state.editingProcurementSheetId = null;
     closeProcurementDropdowns();
+    resetProcTranslatePanel();
     if (elements.convertSelectedToQuoteBtn) elements.convertSelectedToQuoteBtn.hidden = true;
     if (elements.selectAllProcurementRows) {
         elements.selectAllProcurementRows.checked = false;
@@ -5776,6 +6142,11 @@ async function saveProcurementSheet(options = {}) {
         window.alert("Add at least one procurement row before saving.");
         return null;
     }
+
+    const existingSheet = state.editingProcurementSheetId
+        ? getDocumentById(state.editingProcurementSheetId)
+        : null;
+    appendDocumentChangeHistory(sheet, existingSheet, existingSheet ? null : ["Procurement sheet created"]);
 
     const nextDocuments = state.editingProcurementSheetId
         ? state.documents.map(doc => isSameDocumentId(doc.id, state.editingProcurementSheetId) ? sheet : doc)
@@ -6445,6 +6816,8 @@ function openNotesDrawer(targetId, targetType = "document") {
         elements.notesDrawerRef.textContent = `${typeLabel}${refLabel ? ` · ${refLabel}` : ""}${clientLabel ? ` · ${clientLabel}` : ""}`;
     }
     if (elements.notesDrawerInput) elements.notesDrawerInput.value = "";
+    state.notesDrawerTab = "notes";
+    syncNotesDrawerTabs();
     renderNotesFeed(target, targetType);
     elements.notesDrawer.removeAttribute("hidden");
     elements.notesDrawerOverlay.removeAttribute("hidden");
@@ -6455,6 +6828,48 @@ function openNotesDrawer(targetId, targetType = "document") {
         elements.notesDrawerOverlay.classList.add("active");
         elements.notesDrawerInput?.focus();
     });
+}
+
+function syncNotesDrawerTabs() {
+    elements.notesDrawerTabs?.querySelectorAll("[data-notes-tab]").forEach(btn => {
+        btn.classList.toggle("is-active", btn.dataset.notesTab === state.notesDrawerTab);
+    });
+    if (elements.notesDrawerCompose) {
+        elements.notesDrawerCompose.hidden = state.notesDrawerTab !== "notes";
+    }
+}
+
+function switchNotesDrawerTab(tab) {
+    state.notesDrawerTab = tab || "notes";
+    syncNotesDrawerTabs();
+    const target = getNotesTarget(state.activeNotesTargetType, state.activeNotesTargetId);
+    if (state.notesDrawerTab === "history") {
+        renderHistoryFeed(target);
+    } else {
+        renderNotesFeed(target, state.activeNotesTargetType);
+    }
+}
+
+function renderHistoryFeed(target) {
+    if (!elements.notesDrawerFeed) return;
+    const history = Array.isArray(target?.changeHistory) ? target.changeHistory : [];
+    if (!history.length) {
+        elements.notesDrawerFeed.innerHTML = `<p class="notes-empty">No change history yet. History is recorded each time this document is saved.</p>`;
+        return;
+    }
+    elements.notesDrawerFeed.innerHTML = [...history].reverse().map(entry => {
+        const timeLabel = formatNoteTimestamp(entry.timestamp);
+        const changesHtml = (entry.changes || []).map(c => `<li>${escapeHtml(c)}</li>`).join("");
+        return `<div class="note-item note-item--system">
+            <div class="note-item-header">
+                <span class="note-item-system-badge">System</span>
+                <span class="note-item-author">${escapeHtml(entry.user || "System")}</span>
+                <span class="note-item-time">${escapeHtml(timeLabel)}</span>
+            </div>
+            <ul class="note-item-history-list">${changesHtml}</ul>
+        </div>`;
+    }).join("");
+    elements.notesDrawerFeed.scrollTop = 0;
 }
 
 function closeNotesDrawer() {
@@ -13269,6 +13684,115 @@ function handlePreviewContainerClick(event) {
     openPrintWindow(buildDocumentData());
 }
 
+function generateDocumentDiff(oldDoc, newDoc) {
+    if (!oldDoc || !newDoc) return [];
+    const changes = [];
+
+    if ((oldDoc.clientName || "") !== (newDoc.clientName || "")) {
+        changes.push(`Changed client from "${oldDoc.clientName || "—"}" to "${newDoc.clientName || "—"}"`);
+    }
+    if ((oldDoc.date || "") !== (newDoc.date || "")) {
+        changes.push(`Changed date from ${oldDoc.date || "—"} to ${newDoc.date || "—"}`);
+    }
+    if ((oldDoc.poNumber || "") !== (newDoc.poNumber || "")) {
+        if (newDoc.poNumber) changes.push(`Set PO number to "${newDoc.poNumber}"`);
+        else changes.push("Removed PO number");
+    }
+    if ((oldDoc.notes || "") !== (newDoc.notes || "")) {
+        changes.push("Updated document notes");
+    }
+    if ((oldDoc.internalNotes || "") !== (newDoc.internalNotes || "")) {
+        changes.push("Updated internal notes");
+    }
+    if ((oldDoc.type || "") !== (newDoc.type || "")) {
+        const oldLabel = oldDoc.type === "quote" ? "Quote" : "Invoice";
+        const newLabel = newDoc.type === "quote" ? "Quote" : "Invoice";
+        changes.push(`Converted from ${oldLabel} to ${newLabel}`);
+    }
+    if (newDoc.type === "invoice" && (oldDoc.paymentStatus || "") !== (newDoc.paymentStatus || "")) {
+        changes.push(`Payment status changed to "${newDoc.paymentStatus || "—"}"`);
+    }
+    const oldTags = (Array.isArray(oldDoc.tags) ? [...oldDoc.tags] : []).sort().join(",");
+    const newTags = (Array.isArray(newDoc.tags) ? [...newDoc.tags] : []).sort().join(",");
+    if (oldTags !== newTags) changes.push("Updated tags");
+
+    const oldTotal = Number(oldDoc.total || 0);
+    const newTotal = Number(newDoc.total || 0);
+    if (Math.abs(oldTotal - newTotal) > 0.005) {
+        changes.push(`Total changed from ${formatCurrency(oldTotal)} to ${formatCurrency(newTotal)}`);
+    }
+
+    // Line items diff (quote / invoice)
+    if (newDoc.type !== "procurement") {
+        const oldItems = Array.isArray(oldDoc.items) ? oldDoc.items : [];
+        const newItems = Array.isArray(newDoc.items) ? newDoc.items : [];
+        const getKey = i => String(i.description || "").split("\n")[0].trim().toLowerCase();
+        const oldByKey = new Map(oldItems.map(i => [getKey(i), i]));
+        const newByKey = new Map(newItems.map(i => [getKey(i), i]));
+        const added = newItems.filter(i => !oldByKey.has(getKey(i)));
+        const removed = oldItems.filter(i => !newByKey.has(getKey(i)));
+        if (added.length === 1) {
+            const name = String(added[0].description || "").split("\n")[0].trim();
+            const fromLib = added[0].libraryItemId ? " (from Pricing Library)" : "";
+            changes.push(`Added item: "${name}"${fromLib}`);
+        } else if (added.length > 1) {
+            const fromLib = added.some(i => i.libraryItemId) ? " (includes Pricing Library items)" : "";
+            changes.push(`Added ${added.length} items${fromLib}`);
+        }
+        if (removed.length === 1) {
+            changes.push(`Removed item: "${String(removed[0].description || "").split("\n")[0].trim()}"`);
+        } else if (removed.length > 1) {
+            changes.push(`Removed ${removed.length} items`);
+        }
+        let priceChanges = 0, qtyChanges = 0;
+        for (const [key, oldItem] of oldByKey) {
+            const newItem = newByKey.get(key);
+            if (!newItem) continue;
+            if (Math.abs((Number(oldItem.unitPrice) || 0) - (Number(newItem.unitPrice) || 0)) > 0.005) priceChanges++;
+            if ((Number(oldItem.quantity) || 0) !== (Number(newItem.quantity) || 0)) qtyChanges++;
+        }
+        if (priceChanges > 0) changes.push(`Updated price on ${priceChanges} item${priceChanges > 1 ? "s" : ""}`);
+        if (qtyChanges > 0) changes.push(`Updated quantity on ${qtyChanges} item${qtyChanges > 1 ? "s" : ""}`);
+    }
+
+    // Procurement rows diff
+    if (newDoc.type === "procurement") {
+        const oldRows = Array.isArray(oldDoc.procurementItems) ? oldDoc.procurementItems : [];
+        const newRows = Array.isArray(newDoc.procurementItems) ? newDoc.procurementItems : [];
+        const diff = newRows.length - oldRows.length;
+        if (diff > 0) changes.push(`Added ${diff} procurement row${diff > 1 ? "s" : ""}`);
+        else if (diff < 0) changes.push(`Removed ${Math.abs(diff)} procurement row${Math.abs(diff) > 1 ? "s" : ""}`);
+        let rowChanges = 0;
+        const checkCount = Math.min(oldRows.length, newRows.length);
+        for (let i = 0; i < checkCount; i++) {
+            const o = oldRows[i], n = newRows[i];
+            if ((o.description || "") !== (n.description || "") ||
+                String(o.quantity || "") !== String(n.quantity || "") ||
+                Math.abs((Number(o.unitPrice) || 0) - (Number(n.unitPrice) || 0)) > 0.005) {
+                rowChanges++;
+            }
+        }
+        if (rowChanges > 0) changes.push(`Updated ${rowChanges} row${rowChanges > 1 ? "s" : ""}`);
+    }
+
+    return changes;
+}
+
+function appendDocumentChangeHistory(doc, oldDoc, overrideChanges = null) {
+    const changes = overrideChanges ?? generateDocumentDiff(oldDoc, doc);
+    if (!changes.length) return doc;
+    const entry = {
+        id: `hist-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        timestamp: new Date().toISOString(),
+        userId: state.currentUser?.userId || "",
+        user: state.currentUser?.displayName || "System",
+        changes
+    };
+    const existing = Array.isArray(doc.changeHistory) ? doc.changeHistory : [];
+    doc.changeHistory = [...existing, entry];
+    return doc;
+}
+
 async function persistDocument(options = {}) {
     const {
         silent = false,
@@ -13346,6 +13870,10 @@ async function persistDocument(options = {}) {
     doc.paymentStatus = doc.type === "invoice"
         ? getInvoiceDerivedPaymentStatus(doc)
         : null;
+
+    if (!forceDraft) {
+        appendDocumentChangeHistory(doc, existingDocument, isEditing ? null : ["Document created"]);
+    }
 
     let nextDocuments;
 

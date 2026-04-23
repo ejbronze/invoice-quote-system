@@ -7522,6 +7522,195 @@ body::after {
     margin-left: 1px;
 }
 
+/* ─── Procurement modal header actions ───────────────────────── */
+.proc-modal-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-shrink: 0;
+}
+
+.proc-translate-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: none;
+    border: 1px solid var(--line, #e2e8f0);
+    border-radius: 6px;
+    color: var(--text-soft, #64748b);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.proc-translate-btn svg {
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
+}
+
+.proc-translate-btn:hover,
+.proc-translate-btn.active {
+    background: #eff6ff;
+    border-color: #93c5fd;
+    color: #1d4ed8;
+}
+
+/* ─── Compact procurement header ─────────────────────────────── */
+.proc-header-compact {
+    display: grid;
+    grid-template-columns: 190px 145px 1fr 72px 2fr;
+    gap: 0.5rem;
+    align-items: start;
+    margin-bottom: 0.6rem;
+}
+
+.proc-header-compact .form-group {
+    margin: 0;
+}
+
+.proc-header-compact .form-group > span {
+    display: block;
+    font-size: 0.63rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-faint, #94a3b8);
+    margin-bottom: 0.2rem;
+}
+
+.proc-header-compact input,
+.proc-header-compact textarea {
+    font-size: 0.82rem;
+    padding: 0.28rem 0.42rem;
+    height: 32px;
+    box-sizing: border-box;
+}
+
+.proc-header-compact .proc-notes-compact textarea {
+    height: 32px;
+    resize: none;
+    overflow: hidden;
+    line-height: 1.45;
+}
+
+/* ─── Internal fields (Lead Time / Supplier) ─────────────────── */
+.proc-internal-col {
+    display: none;
+}
+
+.proc-show-internal .proc-internal-col {
+    display: table-cell;
+}
+
+.proc-internal-toggle-btn {
+    font-size: 0.76rem;
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
+}
+
+.proc-internal-toggle-btn.active {
+    background: var(--bg-soft, #f8fafc);
+    border-color: #93c5fd;
+    color: var(--blue-deep, #1459d9);
+}
+
+/* ─── Translation panel ──────────────────────────────────────── */
+.proc-translate-panel {
+    border: 1px solid var(--line, #e2e8f0);
+    border-radius: 8px;
+    background: var(--bg-soft, #f8fafc);
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+}
+
+.proc-translate-panel-inner {
+    padding: 0.65rem 0.9rem;
+    display: grid;
+    gap: 0.45rem;
+}
+
+.proc-translate-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.proc-translate-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text, #1e293b);
+    margin-right: 0.15rem;
+}
+
+.proc-lang-opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.82rem;
+    color: var(--text, #1e293b);
+    cursor: pointer;
+    user-select: none;
+}
+
+.proc-translate-action-btn {
+    font-size: 0.76rem !important;
+    padding: 0.25rem 0.65rem !important;
+    height: auto !important;
+}
+
+.proc-translate-status {
+    font-size: 0.76rem;
+    color: var(--text-soft, #64748b);
+    min-height: 1em;
+}
+
+.proc-translate-status.error {
+    color: #dc2626;
+}
+
+.proc-translate-preview {
+    border-top: 1px solid var(--line, #e2e8f0);
+    padding-top: 0.4rem;
+    display: grid;
+    gap: 0;
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.proc-translate-preview-row {
+    display: grid;
+    grid-template-columns: 1fr 18px 1fr;
+    align-items: start;
+    gap: 0.4rem;
+    font-size: 0.74rem;
+    padding: 0.22rem 0;
+    border-bottom: 1px solid var(--line, #e2e8f0);
+}
+
+.proc-translate-preview-row:last-child {
+    border-bottom: none;
+}
+
+.proc-translate-original {
+    color: var(--text-soft, #64748b);
+}
+
+.proc-translate-arrow {
+    color: var(--text-faint, #94a3b8);
+    font-size: 0.68rem;
+    align-self: center;
+    text-align: center;
+}
+
+.proc-translate-translated {
+    color: var(--text, #1e293b);
+    font-weight: 500;
+}
+
 /* ─── Catalog card ref links ─────────────────────────────────── */
 
 .catalog-ref-link {
@@ -8729,6 +8918,18 @@ body.print-window .print-preview-sheet {
 }
 
 @media (max-width: 768px) {
+    .proc-header-compact {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .proc-header-compact .proc-notes-compact {
+        grid-column: 1 / -1;
+    }
+
+    .proc-translate-controls {
+        gap: 0.4rem;
+    }
+
     .pricing-library-toolbar,
     .procurement-library-insert {
         grid-template-columns: 1fr;
@@ -12676,4 +12877,156 @@ body #procurementSheetModal:not([hidden]) {
     padding: 0 3px;
     pointer-events: none;
     box-sizing: border-box;
+}
+
+/* ── Notes Drawer Tabs ─────────────────────────────────── */
+.notes-drawer-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    padding: 0 0.6rem;
+    gap: 0.15rem;
+}
+.notes-drawer-tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-soft);
+    cursor: pointer;
+    margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+    border-radius: 0;
+}
+.notes-drawer-tab:hover {
+    color: var(--text);
+}
+.notes-drawer-tab.is-active {
+    color: var(--accent, #2563eb);
+    border-bottom-color: var(--accent, #2563eb);
+}
+
+/* ── History Feed Entries ──────────────────────────────── */
+.note-item--system {
+    background: var(--surface-alt, rgba(248, 250, 253, 0.9));
+    border-left: 3px solid var(--border);
+}
+.note-item-system-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-faint, #94a3b8);
+    background: rgba(148, 163, 184, 0.12);
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+    margin-right: 0.15rem;
+}
+.note-item-history-list {
+    margin: 0.35rem 0 0;
+    padding-left: 1.2rem;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--text);
+}
+.note-item-history-list li {
+    margin-bottom: 0.1rem;
+}
+
+/* ── Catalog Details — extended fields ─────────────────── */
+.catalog-details-ref-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-soft);
+    background: rgba(148, 163, 184, 0.12);
+    border-radius: 5px;
+    padding: 0.15rem 0.5rem;
+    margin-top: 0.1rem;
+}
+.catalog-details-doc-refs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.25rem;
+}
+.catalog-details-actions {
+    padding-top: 0.25rem;
+}
+.catalog-details-doc-picker {
+    background: var(--surface-alt, rgba(248, 250, 253, 0.97));
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.85rem;
+    display: grid;
+    gap: 0.5rem;
+}
+.catalog-doc-picker-label {
+    font-size: 0.78rem;
+    color: var(--text-soft);
+    margin: 0;
+}
+.catalog-doc-picker-list {
+    display: grid;
+    gap: 0.35rem;
+    max-height: 220px;
+    overflow-y: auto;
+}
+.catalog-doc-picker-item {
+    display: grid;
+    grid-template-columns: auto 1fr 2fr auto;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.55rem 0.75rem;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s, border-color 0.12s;
+    font-size: 0.82rem;
+}
+.catalog-doc-picker-item:hover {
+    background: rgba(37, 99, 235, 0.05);
+    border-color: rgba(37, 99, 235, 0.3);
+}
+.catalog-doc-picker-item.is-current {
+    border-color: rgba(37, 99, 235, 0.5);
+    background: rgba(37, 99, 235, 0.04);
+}
+.catalog-doc-picker-type {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-soft);
+}
+.catalog-doc-picker-ref {
+    font-weight: 700;
+    color: var(--text);
+}
+.catalog-doc-picker-client {
+    color: var(--text-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.catalog-doc-picker-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: rgba(37, 99, 235, 0.12);
+    color: #2563eb;
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+    white-space: nowrap;
+}
+.catalog-doc-picker-empty {
+    font-size: 0.82rem;
+    color: var(--text-soft);
+    text-align: center;
+    padding: 0.75rem 0;
+    margin: 0;
 }
