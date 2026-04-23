@@ -2561,6 +2561,44 @@ function bindEvents() {
     elements.paymentLedgerList?.addEventListener("change", syncPaymentLedgerUi);
     elements.documentSearch.addEventListener("input", handleSearchInput);
     elements.documentSort.addEventListener("change", handleSortChange);
+    elements.notesSearchInput?.addEventListener("input", event => {
+        state.notesSearchQuery = event.target.value || "";
+        renderNotesPage();
+    });
+    elements.notesClientFilter?.addEventListener("change", event => {
+        state.notesClientFilter = event.target.value || "all";
+        renderNotesPage();
+    });
+    elements.notesFilterButtons?.forEach(button => {
+        button.addEventListener("click", () => {
+            state.notesFilter = button.dataset.notesFilter || "all";
+            renderNotesPage();
+        });
+    });
+    elements.notesFeed?.addEventListener("click", event => {
+        const trigger = event.target.closest("[data-open-note-target]");
+        if (!trigger) {
+            return;
+        }
+        openNoteLinkedRecord({
+            targetId: trigger.dataset.openNoteTarget,
+            targetType: trigger.dataset.openNoteTargetType
+        });
+    });
+    elements.notesFeed?.addEventListener("keydown", event => {
+        if (event.key !== "Enter" && event.key !== " ") {
+            return;
+        }
+        const trigger = event.target.closest("[data-open-note-target]");
+        if (!trigger) {
+            return;
+        }
+        event.preventDefault();
+        openNoteLinkedRecord({
+            targetId: trigger.dataset.openNoteTarget,
+            targetType: trigger.dataset.openNoteTargetType
+        });
+    });
     elements.statementFilterButtons.forEach(button => {
         button.addEventListener("click", () => {
             state.statementStatusFilter = button.dataset.statementFilter || "pending";
@@ -4246,6 +4284,7 @@ function renderStatementsPage() {
         return;
     }
 
+    renderNotesPage();
     renderPaymentHistoryPanel();
     renderClientAgingPanel();
     syncStatementFilterButtons();
@@ -4290,6 +4329,12 @@ function renderStatementsPage() {
 
     elements.statementExportsList.innerHTML = filtered.map(statement => {
         const accentClass = `merchant-${merchantColorIndex(statement.clientName || statement.payload?.clientName || "")}`;
+        const noteCount = Array.isArray(statement.noteLog) ? statement.noteLog.length : 0;
+        const noteBadge = noteCount > 0 ? `<span class="notes-count-badge">${noteCount}</span>` : "";
+        const latestNote = noteCount > 0 ? statement.noteLog[noteCount - 1] : null;
+        const latestNoteMarkup = latestNote
+            ? `<div class="statement-export-note-preview"><strong>Latest note:</strong> ${escapeHtml((latestNote.text || "").length > 120 ? `${latestNote.text.slice(0, 120)}…` : latestNote.text || "")}</div>`
+            : "";
 
         const liveOutstanding = getStatementLiveOutstanding(statement);
         const liveOutstandingFormatted = formatCurrency(liveOutstanding);
@@ -4304,6 +4349,7 @@ function renderStatementsPage() {
                 </div>
                 <span class="statement-export-client">Client</span>
                 <strong>${escapeHtml(statement.clientName)}</strong>
+                ${latestNoteMarkup}
                 <div class="statement-export-metrics">
                     <div class="statement-export-metric">
                         <span>${escapeHtml(t("statement_metric_invoices"))}</span>
@@ -4331,6 +4377,11 @@ function renderStatementsPage() {
                 <button class="statement-action-btn is-open" type="button" data-statement-action="excel" data-statement-id="${escapeHtml(statement.id)}" aria-label="${escapeHtml(t("statement_generate_excel"))}" title="${escapeHtml(t("statement_generate_excel"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M14 3v4h4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="m9 10 4 4M13 10l-4 4M9 18h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     <span class="visually-hidden">${escapeHtml(t("statement_generate_excel"))}</span>
+                </button>
+                <button class="statement-action-btn is-notes" type="button" data-statement-action="notes" data-statement-id="${escapeHtml(statement.id)}" aria-label="Notes" title="Notes">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    ${noteBadge}
+                    <span class="visually-hidden">Notes</span>
                 </button>
                 <button class="statement-action-btn is-edit" type="button" data-statement-action="edit" data-statement-id="${escapeHtml(statement.id)}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
@@ -4389,6 +4440,11 @@ function handleStatementExportsListClick(event) {
 
     if (button.dataset.statementAction === "mark-paid") {
         void markStatementAsPaid(statement.id);
+        return;
+    }
+
+    if (button.dataset.statementAction === "notes") {
+        openNotesDrawer(statement.id, "statement");
         return;
     }
 
@@ -5047,15 +5103,67 @@ function closeQuickPaymentModal() {
 
 // ─── Notes Drawer ────────────────────────────────────────────
 
-function openNotesDrawer(docId) {
-    const doc = getDocumentById(docId);
-    if (!doc) return;
-    state.activeNotesDocId = String(docId);
+function getStatementExportById(id) {
+    return state.statementExports.find(entry => String(entry.id) === String(id));
+}
+
+function getNotesTarget(targetType, targetId) {
+    if (targetType === "statement") {
+        return getStatementExportById(targetId);
+    }
+    return getDocumentById(targetId);
+}
+
+function getActiveNotesTarget() {
+    if (!state.activeNotesTargetType || !state.activeNotesTargetId) {
+        return null;
+    }
+    return getNotesTarget(state.activeNotesTargetType, state.activeNotesTargetId);
+}
+
+function getNotesTargetReference(target, targetType) {
+    if (!target) {
+        return "";
+    }
+    if (targetType === "statement") {
+        return target.referenceNumber || target.title || "Statement";
+    }
+    return target.refNumber || "";
+}
+
+function getNotesTargetClientName(target, targetType) {
+    if (!target) {
+        return "";
+    }
+    if (targetType === "statement") {
+        return target.clientName || target.payload?.clientName || t("unknown_client");
+    }
+    return target.clientName || t("unknown_client");
+}
+
+function getNotesTargetTypeLabel(target, targetType) {
+    if (targetType === "statement") {
+        return "Statement";
+    }
+    return target?.type === "invoice" ? "Invoice" : "Quote";
+}
+
+function openNotesDrawer(targetId, targetType = "document") {
+    const target = getNotesTarget(targetType, targetId);
+    if (!target) return;
+    state.activeNotesTargetType = targetType;
+    state.activeNotesTargetId = String(targetId);
+    state.activeNotesDocId = targetType === "document" ? String(targetId) : null;
     state.openDocumentMenuId = null;
     syncDocumentActionMenus();
-    if (elements.notesDrawerRef) elements.notesDrawerRef.textContent = doc.refNumber || "";
+    if (elements.notesDrawerRef) {
+        const refLabel = getNotesTargetReference(target, targetType);
+        const typeLabel = getNotesTargetTypeLabel(target, targetType);
+        const clientLabel = getNotesTargetClientName(target, targetType);
+        elements.notesDrawerRef.textContent = `${typeLabel}${refLabel ? ` · ${refLabel}` : ""}${clientLabel ? ` · ${clientLabel}` : ""}`;
+    }
     if (elements.notesDrawerInput) elements.notesDrawerInput.value = "";
-    renderNotesFeed(doc);
+    renderNotesFeed(target, targetType);
     elements.notesDrawer.removeAttribute("hidden");
     elements.notesDrawerOverlay.removeAttribute("hidden");
     elements.notesDrawer.setAttribute("aria-hidden", "false");
@@ -5069,6 +5177,8 @@ function openNotesDrawer(docId) {
 
 function closeNotesDrawer() {
     state.activeNotesDocId = null;
+    state.activeNotesTargetType = null;
+    state.activeNotesTargetId = null;
     elements.notesDrawer?.classList.remove("active");
     elements.notesDrawerOverlay?.classList.remove("active");
     elements.notesDrawer?.setAttribute("aria-hidden", "true");
@@ -5081,9 +5191,9 @@ function closeNotesDrawer() {
     }, 240);
 }
 
-function renderNotesFeed(doc) {
+function renderNotesFeed(target, targetType = "document") {
     if (!elements.notesDrawerFeed) return;
-    const notes = Array.isArray(doc.noteLog) ? doc.noteLog : [];
+    const notes = Array.isArray(target?.noteLog) ? target.noteLog : [];
     if (notes.length === 0) {
         elements.notesDrawerFeed.innerHTML = `<p class="notes-empty">No notes yet. Add one below.</p>`;
         return;
@@ -5141,11 +5251,12 @@ function handleNotesFeedClick(event) {
 }
 
 async function submitNote() {
-    const docId = state.activeNotesDocId;
+    const targetType = state.activeNotesTargetType;
+    const targetId = state.activeNotesTargetId;
     const text = elements.notesDrawerInput?.value.trim();
-    if (!docId || !text) return;
-    const doc = getDocumentById(docId);
-    if (!doc) return;
+    if (!targetType || !targetId || !text) return;
+    const target = getNotesTarget(targetType, targetId);
+    if (!target) return;
     const note = {
         id: String(Date.now()),
         text,
@@ -5154,31 +5265,37 @@ async function submitNote() {
         createdAt: new Date().toISOString(),
         editedAt: null
     };
-    const updatedDoc = { ...doc, noteLog: [...(Array.isArray(doc.noteLog) ? doc.noteLog : []), note] };
-    await saveNoteLogUpdate(updatedDoc);
+    const updatedTarget = { ...target, noteLog: [...(Array.isArray(target.noteLog) ? target.noteLog : []), note] };
+    await saveNoteLogUpdate(updatedTarget, targetType);
     if (elements.notesDrawerInput) elements.notesDrawerInput.value = "";
-    renderNotesFeed(getDocumentById(docId) || updatedDoc);
+    renderNotesFeed(getNotesTarget(targetType, targetId) || updatedTarget, targetType);
     renderDocuments();
+    renderStatementsPage();
+    renderNotesPage();
 }
 
 async function deleteNote(noteId) {
-    const docId = state.activeNotesDocId;
-    if (!docId) return;
-    const doc = getDocumentById(docId);
-    if (!doc) return;
+    const targetType = state.activeNotesTargetType;
+    const targetId = state.activeNotesTargetId;
+    if (!targetType || !targetId) return;
+    const target = getNotesTarget(targetType, targetId);
+    if (!target) return;
     if (!window.confirm("Delete this note?")) return;
-    const updatedDoc = { ...doc, noteLog: (doc.noteLog || []).filter(n => String(n.id) !== String(noteId)) };
-    await saveNoteLogUpdate(updatedDoc);
-    renderNotesFeed(getDocumentById(docId) || updatedDoc);
+    const updatedTarget = { ...target, noteLog: (target.noteLog || []).filter(n => String(n.id) !== String(noteId)) };
+    await saveNoteLogUpdate(updatedTarget, targetType);
+    renderNotesFeed(getNotesTarget(targetType, targetId) || updatedTarget, targetType);
     renderDocuments();
+    renderStatementsPage();
+    renderNotesPage();
 }
 
 function startEditNote(noteId) {
-    const docId = state.activeNotesDocId;
-    if (!docId) return;
-    const doc = getDocumentById(docId);
-    if (!doc) return;
-    const note = (doc.noteLog || []).find(n => String(n.id) === String(noteId));
+    const targetType = state.activeNotesTargetType;
+    const targetId = state.activeNotesTargetId;
+    if (!targetType || !targetId) return;
+    const target = getNotesTarget(targetType, targetId);
+    if (!target) return;
+    const note = (target.noteLog || []).find(n => String(n.id) === String(noteId));
     if (!note) return;
     const noteEl = elements.notesDrawerFeed?.querySelector(`[data-note-id="${CSS.escape(String(noteId))}"]`);
     if (!noteEl) return;
@@ -5197,36 +5314,190 @@ function startEditNote(noteId) {
 }
 
 async function saveEditNote(noteId) {
-    const docId = state.activeNotesDocId;
-    if (!docId) return;
-    const doc = getDocumentById(docId);
-    if (!doc) return;
+    const targetType = state.activeNotesTargetType;
+    const targetId = state.activeNotesTargetId;
+    if (!targetType || !targetId) return;
+    const target = getNotesTarget(targetType, targetId);
+    if (!target) return;
     const noteEl = elements.notesDrawerFeed?.querySelector(`[data-note-id="${CSS.escape(String(noteId))}"]`);
     const newText = noteEl?.querySelector(".note-edit-textarea")?.value.trim();
     if (!newText) return;
-    const updatedDoc = {
-        ...doc,
-        noteLog: (doc.noteLog || []).map(n =>
+    const updatedTarget = {
+        ...target,
+        noteLog: (target.noteLog || []).map(n =>
             String(n.id) === String(noteId) ? { ...n, text: newText, editedAt: new Date().toISOString() } : n
         )
     };
-    await saveNoteLogUpdate(updatedDoc);
-    renderNotesFeed(getDocumentById(docId) || updatedDoc);
+    await saveNoteLogUpdate(updatedTarget, targetType);
+    renderNotesFeed(getNotesTarget(targetType, targetId) || updatedTarget, targetType);
     renderDocuments();
+    renderStatementsPage();
+    renderNotesPage();
 }
 
 function cancelEditNote(noteId) {
-    const docId = state.activeNotesDocId;
-    if (!docId) return;
-    const doc = getDocumentById(docId);
-    if (doc) renderNotesFeed(doc);
+    const target = getActiveNotesTarget();
+    if (target) {
+        renderNotesFeed(target, state.activeNotesTargetType);
+    }
 }
 
-async function saveNoteLogUpdate(updatedDoc) {
-    const idx = state.documents.findIndex(d => String(d.id) === String(updatedDoc.id));
+async function saveNoteLogUpdate(updatedTarget, targetType = "document") {
+    if (targetType === "statement") {
+        const nextStatements = state.statementExports.map(entry =>
+            String(entry.id) === String(updatedTarget.id) ? { ...updatedTarget, noteLog: normalizeNoteLog(updatedTarget.noteLog) } : entry
+        );
+        await saveStatementExportsState(nextStatements);
+        return;
+    }
+
+    const idx = state.documents.findIndex(d => String(d.id) === String(updatedTarget.id));
     if (idx === -1) return;
-    const nextDocuments = state.documents.map((d, i) => i === idx ? updatedDoc : d);
+    const nextDocuments = state.documents.map((d, i) =>
+        i === idx ? { ...updatedTarget, noteLog: normalizeNoteLog(updatedTarget.noteLog) } : d
+    );
     await saveDocumentsToServer(nextDocuments);
+}
+
+function getAllSystemNotes() {
+    const documentNotes = state.documents.flatMap(doc =>
+        normalizeNoteLog(doc.noteLog).map(note => ({
+            ...note,
+            targetType: "document",
+            documentType: doc.type === "invoice" ? "invoice" : "quote",
+            targetId: String(doc.id),
+            documentReference: doc.refNumber || "Reference pending",
+            clientName: doc.clientName || t("unknown_client"),
+            sortDate: note.editedAt || note.createdAt
+        }))
+    );
+
+    const statementNotes = state.statementExports.flatMap(statement =>
+        normalizeNoteLog(statement.noteLog).map(note => ({
+            ...note,
+            targetType: "statement",
+            documentType: "statement",
+            targetId: String(statement.id),
+            documentReference: statement.referenceNumber || statement.title || "Statement",
+            clientName: statement.clientName || t("unknown_client"),
+            sortDate: note.editedAt || note.createdAt
+        }))
+    );
+
+    return [...documentNotes, ...statementNotes].sort((left, right) => {
+        const rightTime = Date.parse(right.sortDate || right.createdAt || "") || 0;
+        const leftTime = Date.parse(left.sortDate || left.createdAt || "") || 0;
+        return rightTime - leftTime;
+    });
+}
+
+function getFilteredSystemNotes() {
+    const query = state.notesSearchQuery.trim().toLowerCase();
+    return getAllSystemNotes().filter(note => {
+        const matchesType = state.notesFilter === "all" || note.documentType === state.notesFilter;
+        const matchesClient = state.notesClientFilter === "all" || String(note.clientName || "") === state.notesClientFilter;
+        const haystack = [
+            note.text,
+            note.clientName,
+            note.documentReference
+        ].join(" ").toLowerCase();
+        const matchesSearch = !query || haystack.includes(query);
+        return matchesType && matchesClient && matchesSearch;
+    });
+}
+
+function syncNotesFilterButtons() {
+    elements.notesFilterButtons?.forEach(button => {
+        const isActive = button.dataset.notesFilter === state.notesFilter;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
+}
+
+function renderNotesClientOptions() {
+    if (!elements.notesClientFilter) {
+        return;
+    }
+
+    const clients = Array.from(new Set(getAllSystemNotes().map(note => String(note.clientName || "").trim()).filter(Boolean)))
+        .sort((left, right) => left.localeCompare(right, getCurrentLocale(), { sensitivity: "base" }));
+    const currentValue = state.notesClientFilter;
+    elements.notesClientFilter.innerHTML = `<option value="all">All clients</option>${clients.map(client => `<option value="${escapeHtml(client)}">${escapeHtml(client)}</option>`).join("")}`;
+    elements.notesClientFilter.value = clients.includes(currentValue) ? currentValue : "all";
+    state.notesClientFilter = elements.notesClientFilter.value;
+}
+
+function openNoteLinkedRecord(note) {
+    if (!note) {
+        return;
+    }
+
+    if (note.targetType === "statement") {
+        setActivePage("reports");
+        openStatementEditModal(note.targetId);
+        return;
+    }
+
+    setActivePage("documents");
+    editDocument(note.targetId);
+}
+
+function renderNotesPage() {
+    if (!elements.notesFeed || !elements.notesPageSummary) {
+        return;
+    }
+
+    renderNotesClientOptions();
+    syncNotesFilterButtons();
+    const notes = getFilteredSystemNotes();
+    elements.notesPageSummary.innerHTML = `
+        <article class="invoice-report-summary-card">
+            <span>Visible Notes</span>
+            <strong>${escapeHtml(String(notes.length))}</strong>
+        </article>
+        <article class="invoice-report-summary-card">
+            <span>Invoices</span>
+            <strong>${escapeHtml(String(notes.filter(note => note.documentType === "invoice").length))}</strong>
+        </article>
+        <article class="invoice-report-summary-card">
+            <span>Quotes</span>
+            <strong>${escapeHtml(String(notes.filter(note => note.documentType === "quote").length))}</strong>
+        </article>
+        <article class="invoice-report-summary-card">
+            <span>Statements</span>
+            <strong>${escapeHtml(String(notes.filter(note => note.documentType === "statement").length))}</strong>
+        </article>
+    `;
+
+    if (!notes.length) {
+        elements.notesFeed.innerHTML = `<div class="empty-state compact-empty-state"><p>No notes match the current filters.</p></div>`;
+        return;
+    }
+
+    elements.notesFeed.innerHTML = notes.map(note => {
+        const preview = note.text.length > 220 ? `${note.text.slice(0, 220)}…` : note.text;
+        const typeLabel = note.documentType === "statement" ? "Statement" : note.documentType === "invoice" ? "Invoice" : "Quote";
+        return `
+            <article class="notes-feed-item" data-open-note-target="${escapeHtml(note.targetId)}" data-open-note-target-type="${escapeHtml(note.targetType)}" tabindex="0" role="button" aria-label="${escapeHtml(`Open ${typeLabel} ${note.documentReference}`)}">
+                <div class="notes-feed-item-main">
+                    <div class="notes-feed-item-head">
+                        <div class="notes-feed-item-meta">
+                            <span class="notes-feed-item-type is-${escapeHtml(note.documentType)}">${escapeHtml(typeLabel)}</span>
+                            <strong>${escapeHtml(note.documentReference)}</strong>
+                            <span>${escapeHtml(note.clientName || t("unknown_client"))}</span>
+                        </div>
+                        <span class="notes-feed-item-time">${escapeHtml(formatNoteTimestamp(note.createdAt))}</span>
+                    </div>
+                    <p class="notes-feed-item-text">${escapeHtml(preview)}</p>
+                    <div class="notes-feed-item-foot">
+                        <span>${escapeHtml(note.author || "Unknown")}</span>
+                        ${note.editedAt ? `<span>Edited</span>` : ""}
+                    </div>
+                </div>
+                <button class="btn btn-secondary notes-feed-open-btn" type="button" data-open-note-target="${escapeHtml(note.targetId)}" data-open-note-target-type="${escapeHtml(note.targetType)}">Open Record</button>
+            </article>
+        `;
+    }).join("");
 }
 
 function openLogPaymentModal() {
@@ -12199,6 +12470,10 @@ function getDocumentCardMarkup(doc) {
 
     const noteCount = Array.isArray(doc.noteLog) ? doc.noteLog.length : 0;
     const noteBadge = noteCount > 0 ? `<span class="notes-count-badge">${noteCount}</span>` : "";
+    const latestNote = noteCount > 0 ? doc.noteLog[noteCount - 1] : null;
+    const latestNoteMarkup = latestNote
+        ? `<div class="document-card-note-preview"><strong>Latest note:</strong> ${escapeHtml((latestNote.text || "").length > 110 ? `${latestNote.text.slice(0, 110)}…` : latestNote.text || "")}</div>`
+        : "";
     const isSelected = isDocumentSelected(doc.id);
 
     return `
@@ -12218,6 +12493,7 @@ function getDocumentCardMarkup(doc) {
                     <strong class="document-card-total">${escapeHtml(formatCurrency(doc.total || 0))}</strong>
                 </div>
                 ${dueDateMarkup}
+                ${latestNoteMarkup}
                 ${internalNotesMarkup}
             </div>
             <div class="document-card-actions">
@@ -12356,6 +12632,7 @@ function renderDocuments() {
     renderOverviewPanels();
     renderCatalog();
     renderInvoiceReport();
+    renderNotesPage();
     const documentIdSet = new Set(state.documents.map(doc => String(doc.id)));
     state.selectedDocumentIds = state.selectedDocumentIds.filter(id => documentIdSet.has(String(id)));
 
