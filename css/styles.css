@@ -7228,6 +7228,104 @@ body::after {
 
 .procurement-modal-content {
     width: min(1180px, calc(100vw - 1.5rem));
+    max-width: none;
+}
+
+/* ── Procurement sheet picker popover ────────────────────────── */
+.proc-sheet-picker {
+    position: fixed;
+    z-index: 1200;
+    background: var(--surface, #fff);
+    border: 1px solid var(--line, #e2e8f0);
+    border-radius: 10px;
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.14);
+    padding: 0.75rem;
+    min-width: 240px;
+    display: grid;
+    gap: 0.5rem;
+}
+
+.proc-sheet-picker-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text, #1e293b);
+}
+
+.proc-sheet-picker-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--text-soft, #64748b);
+    padding: 2px 5px;
+    border-radius: 4px;
+}
+
+.proc-sheet-picker-close:hover {
+    background: var(--surface-strong, #f1f5f9);
+}
+
+.proc-sheet-picker-select {
+    width: 100%;
+    padding: 0.38rem 0.5rem;
+    border: 1px solid var(--line, #e2e8f0);
+    border-radius: 6px;
+    background: var(--surface, #fff);
+    font-size: 0.83rem;
+    color: var(--text, #1e293b);
+}
+
+.proc-sheet-picker .btn {
+    font-size: 0.82rem;
+    padding: 0.38rem 0.75rem;
+}
+
+/* ── Item-to-procurement button ──────────────────────────────── */
+.item-to-proc-btn,
+.item-to-doc-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: none;
+    border: 1px solid var(--line, #e2e8f0);
+    border-radius: 5px;
+    color: var(--text-soft, #64748b);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.item-to-proc-btn svg,
+.item-to-doc-btn svg {
+    width: 12px;
+    height: 12px;
+    pointer-events: none;
+}
+
+.item-to-proc-btn:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    color: #1d4ed8;
+}
+
+.item-to-doc-btn:hover {
+    background: #dcfce7;
+    border-color: #86efac;
+    color: #15803d;
+}
+
+.procurement-row-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
 }
 
 .procurement-editor-head {
@@ -7313,6 +7411,9 @@ body::after {
 }
 
 .procurement-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
     justify-content: flex-end;
     margin-top: 1rem;
 }

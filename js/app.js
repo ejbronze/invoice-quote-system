@@ -2546,6 +2546,11 @@ function bindEvents() {
     elements.previewStatementEditBtn?.addEventListener("click", () => saveStatementEdit({ openPreview: true }));
     elements.saveStatementEditBtn?.addEventListener("click", () => saveStatementEdit({ openPreview: false }));
     elements.closeProcurementSheetModalBtn?.addEventListener("click", closeProcurementSheetModal);
+    elements.procurementSheetModal?.addEventListener("click", event => {
+        if (event.target === elements.procurementSheetModal) {
+            closeProcurementSheetModal();
+        }
+    });
     elements.addProcurementRowBtn?.addEventListener("click", () => addProcurementRow());
     elements.procurementRowsContainer?.addEventListener("input", refreshProcurementRowOrdering);
     elements.procurementRowsContainer?.addEventListener("change", handleProcurementRowsChange);
@@ -5205,7 +5210,10 @@ function getProcurementRowMarkup(row = {}) {
                 <label class="procurement-tbd-toggle"><input type="checkbox" data-procurement-field="quantityTbd" ${data.quantityTbd ? "checked" : ""}> TBD</label>
             </td>
             <td><textarea data-procurement-field="notes" rows="2" placeholder="Row notes">${escapeHtml(data.notes)}</textarea></td>
-            <td><button type="button" class="item-del-btn" data-remove-procurement-row="${escapeHtml(data.id)}" aria-label="Remove row" title="Remove row"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg></button></td>
+            <td class="procurement-row-actions">
+                <button type="button" class="item-to-doc-btn" data-send-to-doc="${escapeHtml(data.id)}" aria-label="Add to open document" title="Add to open document"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2h7l3 3v9H3z"/><path d="M10 2v3h3"/><path d="M5.5 9l2 2 3-3"/></svg></button>
+                <button type="button" class="item-del-btn" data-remove-procurement-row="${escapeHtml(data.id)}" aria-label="Remove row" title="Remove row"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg></button>
+            </td>
         </tr>
     `;
 }
@@ -5245,6 +5253,29 @@ function handleProcurementRowsChange(event) {
 }
 
 function handleProcurementRowsClick(event) {
+    const sendToDocButton = event.target.closest("[data-send-to-doc]");
+    if (sendToDocButton) {
+        const rowEl = sendToDocButton.closest(".procurement-row");
+        if (rowEl) {
+            const getValue = field => rowEl.querySelector(`[data-procurement-field="${field}"]`)?.value || "";
+            const quantityTbd = rowEl.querySelector('[data-procurement-field="quantityTbd"]')?.checked ?? false;
+            const rowData = createProcurementRowData({
+                id: rowEl.dataset.procurementRowId,
+                description: getValue("description"),
+                brand: getValue("brand"),
+                packSize: getValue("packSize"),
+                unit: getValue("unit"),
+                unitPrice: getValue("unitPrice"),
+                leadTime: getValue("leadTime"),
+                supplier: getValue("supplier"),
+                quantity: getValue("quantity"),
+                quantityTbd
+            });
+            addProcurementRowToCurrentDocument(rowData);
+        }
+        return;
+    }
+
     const removeButton = event.target.closest("[data-remove-procurement-row]");
     if (!removeButton) {
         return;
@@ -5319,7 +5350,7 @@ function buildProcurementSheetFromEditor() {
     };
 }
 
-function populateProcurementEditor(sheet = null) {
+function populateProcurementEditor(sheet = null, initialRows = null) {
     const today = getLocalDateInputValue();
     const doc = sheet || {};
     state.editingProcurementSheetId = sheet?.id || null;
@@ -5330,7 +5361,7 @@ function populateProcurementEditor(sheet = null) {
     elements.procurementCurrencyInput.value = doc.currency || "USD";
     elements.procurementNotesInput.value = doc.notes || "";
     elements.procurementRowsContainer.innerHTML = "";
-    const rows = Array.isArray(doc.procurementItems) ? doc.procurementItems : [];
+    const rows = initialRows || (Array.isArray(doc.procurementItems) ? doc.procurementItems : []);
     if (rows.length) {
         rows.forEach(row => addProcurementRow(row));
     } else {
@@ -5339,8 +5370,8 @@ function populateProcurementEditor(sheet = null) {
     syncProcurementLibrarySelect();
 }
 
-function openProcurementSheetModal(sheet = null) {
-    populateProcurementEditor(sheet);
+function openProcurementSheetModal(sheet = null, initialRows = null) {
+    populateProcurementEditor(sheet, initialRows);
     setModalState(elements.procurementSheetModal, true);
 }
 
@@ -5408,6 +5439,124 @@ function insertSelectedLibraryItemIntoDocument() {
         return;
     }
     insertLibraryItemIntoDocument(item);
+}
+
+function showProcSheetPicker(itemId, anchorElement) {
+    document.getElementById("procSheetPicker")?.remove();
+
+    const procSheets = state.documents
+        .filter(doc => doc.type === "procurement")
+        .sort((a, b) => (b.printedAt || b.date || "") > (a.printedAt || a.date || "") ? 1 : -1);
+
+    const picker = document.createElement("div");
+    picker.id = "procSheetPicker";
+    picker.className = "proc-sheet-picker";
+    picker.innerHTML = `
+        <div class="proc-sheet-picker-head">
+            <span>Send to Procurement Sheet</span>
+            <button type="button" class="proc-sheet-picker-close" aria-label="Close">×</button>
+        </div>
+        <select class="proc-sheet-picker-select" id="procSheetPickerSelect">
+            <option value="">+ New Procurement Sheet</option>
+            ${procSheets.map(sheet => `<option value="${escapeHtml(String(sheet.id))}">${escapeHtml(sheet.refNumber || sheet.clientName || "Untitled sheet")}</option>`).join("")}
+        </select>
+        <button type="button" class="btn btn-primary proc-sheet-picker-submit" id="procSheetPickerSubmit">Add to Sheet</button>
+    `;
+
+    document.body.appendChild(picker);
+
+    const rect = anchorElement.getBoundingClientRect();
+    picker.style.top = `${Math.min(rect.bottom + 6, window.innerHeight - 160)}px`;
+    picker.style.left = `${Math.max(8, Math.min(rect.left - 100, window.innerWidth - 260))}px`;
+
+    picker.querySelector("#procSheetPickerSubmit").addEventListener("click", () => {
+        const selectedSheetId = picker.querySelector("#procSheetPickerSelect").value || null;
+        picker.remove();
+        void confirmSendItemToProcurement(itemId, selectedSheetId);
+    });
+
+    picker.querySelector(".proc-sheet-picker-close").addEventListener("click", () => picker.remove());
+
+    const closeOnOutside = e => {
+        if (!picker.contains(e.target) && e.target !== anchorElement) {
+            picker.remove();
+            document.removeEventListener("click", closeOnOutside, true);
+        }
+    };
+    setTimeout(() => document.addEventListener("click", closeOnOutside, true), 0);
+}
+
+async function confirmSendItemToProcurement(itemId, sheetId) {
+    const row = elements.itemsContainer.querySelector(`[data-item-id="${itemId}"]`);
+    if (!row) {
+        return;
+    }
+
+    const description = row.querySelector(".item-description").value.trim();
+    if (!description) {
+        window.alert("Add a description before sending to a Procurement Sheet.");
+        return;
+    }
+
+    const unitPrice = parseDecimalInput(row.querySelector(".item-unit-price").value) || 0;
+    const quantity = Number.parseFloat(row.querySelector(".item-quantity").value) || 1;
+
+    const procRow = createProcurementRowData({ description, unitPrice, quantity: String(quantity) });
+
+    if (!sheetId) {
+        openProcurementSheetModal(null, [procRow]);
+        return;
+    }
+
+    try {
+        const sheet = getDocumentById(sheetId);
+        if (!sheet) {
+            return;
+        }
+        const updatedSheet = {
+            ...sheet,
+            procurementItems: [...(sheet.procurementItems || []), procRow],
+            printedAt: new Date().toISOString()
+        };
+        const nextDocuments = state.documents.map(doc => isSameDocumentId(doc.id, sheet.id) ? updatedSheet : doc);
+        await saveDocumentsToServer(nextDocuments);
+        renderDocuments();
+        setImportStatus(`"${description.slice(0, 40)}" added to ${sheet.refNumber || "procurement sheet"}.`);
+    } catch (error) {
+        window.alert(error.message || "Unable to add item to procurement sheet.");
+    }
+}
+
+function addProcurementRowToCurrentDocument(rowData) {
+    if (!elements.documentModal?.classList.contains("active")) {
+        window.alert("Open a quote or invoice first, then use this button to add the row to it.");
+        return;
+    }
+
+    addItem();
+    const itemRow = elements.itemsContainer.querySelector(".item-row:last-child");
+    if (!itemRow) {
+        return;
+    }
+
+    const descriptionParts = [
+        rowData.description,
+        rowData.brand ? `Brand: ${rowData.brand}` : "",
+        rowData.packSize ? `Pack: ${rowData.packSize}` : "",
+        rowData.leadTime ? `Lead time: ${rowData.leadTime}` : ""
+    ].filter(Boolean);
+
+    const qty = rowData.quantityTbd ? 1 : (Number.parseFloat(rowData.quantity) || 1);
+    const unitPrice = Number.parseFloat(rowData.unitPrice) || 0;
+
+    itemRow.querySelector(".item-description").value = descriptionParts.join("\n");
+    itemRow.querySelector(".item-quantity").value = String(qty);
+    itemRow.querySelector(".item-unit-price").value = unitPrice.toFixed(2);
+    itemRow.dataset.priceDriver = "unit";
+    updateItemPricing(itemRow, { sourceField: "unit" });
+    autoResizeTextarea(itemRow.querySelector(".item-description"));
+    handleItemsChange({ target: itemRow.querySelector(".item-unit-price"), type: "input" });
+    setImportStatus(`Row added to the open document.`);
 }
 
 async function saveProcurementSheet(options = {}) {
@@ -5499,17 +5648,20 @@ async function exportOpenProcurementExcel() {
 }
 
 async function convertOpenProcurementToQuote() {
-    const sheet = await saveProcurementSheet({ keepOpen: true });
-    if (!sheet) {
-        return;
+    try {
+        const sheet = await saveProcurementSheet({ keepOpen: true });
+        if (!sheet) {
+            return;
+        }
+        const quote = convertProcurementSheetToQuote(sheet);
+        await saveDocumentsToServer([quote, ...state.documents]);
+        closeProcurementSheetModal();
+        renderDocuments();
+        editDocument(quote.id);
+        setImportStatus(`Created quote ${quote.refNumber} from ${sheet.refNumber}.`);
+    } catch (error) {
+        window.alert(error.message || "Unable to convert procurement sheet to quote.");
     }
-
-    const quote = convertProcurementSheetToQuote(sheet);
-    await saveDocumentsToServer([quote, ...state.documents]);
-    closeProcurementSheetModal();
-    renderDocuments();
-    editDocument(quote.id);
-    setImportStatus(`Created quote ${quote.refNumber} from ${sheet.refNumber}.`);
 }
 
 function convertProcurementSheetToQuote(sheet) {
@@ -11631,6 +11783,9 @@ function addItem() {
             <input type="text" class="item-upcharge-percent" value="0.00%" readonly tabindex="-1">
         </td>
         <td class="it-actions">
+            <button type="button" class="item-to-proc-btn" data-send-to-proc="${itemId}" aria-label="Add to Procurement Sheet" title="Add to Procurement Sheet">
+                <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="5" width="14" height="9" rx="1.5"/><path d="m4.5 9.5 2 2 4-3"/><path d="M5 5V3.5a1.5 1.5 0 0 1 3 0V5"/></svg>
+            </button>
             <button type="button" class="item-del-btn" data-remove-item="${itemId}" aria-label="Remove item" title="Remove item">
                 <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg>
             </button>
@@ -11721,6 +11876,12 @@ async function handleItemContainerClick(event) {
         elements.itemsContainer.querySelectorAll("[data-toggle-item-menu]").forEach(button => {
             button.setAttribute("aria-expanded", String(button.dataset.toggleItemMenu === state.openItemMenuId));
         });
+        return;
+    }
+
+    const sendToProcButton = event.target.closest("[data-send-to-proc]");
+    if (sendToProcButton) {
+        showProcSheetPicker(sendToProcButton.dataset.sendToProc, sendToProcButton);
         return;
     }
 
