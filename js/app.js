@@ -1632,8 +1632,16 @@ function applyTranslations() {
     document.querySelectorAll('[data-page-nav="catalog"]').forEach(button => { button.textContent = t("catalog"); });
     document.querySelectorAll('[data-page-nav="reports"]').forEach(button => { button.textContent = t("statements"); });
     document.querySelectorAll('[data-page-nav="settings"]').forEach(button => { button.textContent = t("settings"); });
-    if (elements.sidebarCalculatorBtn) elements.sidebarCalculatorBtn.textContent = "Calculator";
-    if (elements.mobileDrawerCalculatorBtn) elements.mobileDrawerCalculatorBtn.textContent = "Calculator";
+    if (elements.sidebarCalculatorBtn) {
+        elements.sidebarCalculatorBtn.innerHTML = getCalculatorButtonMarkup();
+        elements.sidebarCalculatorBtn.setAttribute("aria-label", "Calculator");
+        elements.sidebarCalculatorBtn.setAttribute("title", "Calculator");
+    }
+    if (elements.mobileDrawerCalculatorBtn) {
+        elements.mobileDrawerCalculatorBtn.innerHTML = getCalculatorButtonMarkup();
+        elements.mobileDrawerCalculatorBtn.setAttribute("aria-label", "Calculator");
+        elements.mobileDrawerCalculatorBtn.setAttribute("title", "Calculator");
+    }
     document.querySelectorAll(".brand-lockup-copy span").forEach(span => { span.textContent = t("document_workspace"); });
     updateHeroOperationalSummary();
     setElementText("#viewAllDocumentsBtn", t("documents"));
@@ -12408,7 +12416,25 @@ function getStatusBadgeMarkup(label, className = "") {
     return `<span class="status-badge ${className}">${escapeHtml(label)}</span>`;
 }
 
-function getOverviewSummaryCardMarkup({ key, label, value, meta = "", hint = "", icon = "", tone = "default", targetPage = "overview", targetFilter = "" }) {
+function getCalculatorButtonMarkup() {
+    return `
+        <span class="sidebar-utility-icon" aria-hidden="true">
+            <svg viewBox="0 0 20 20" fill="none">
+                <rect x="3.5" y="2.5" width="13" height="15" rx="3" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M6.5 6.5h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <circle cx="7" cy="10.5" r="1" fill="currentColor"/>
+                <circle cx="10" cy="10.5" r="1" fill="currentColor"/>
+                <circle cx="13" cy="10.5" r="1" fill="currentColor"/>
+                <circle cx="7" cy="13.5" r="1" fill="currentColor"/>
+                <circle cx="10" cy="13.5" r="1" fill="currentColor"/>
+                <path d="M12.3 12.8h1.4M13 12.1v1.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+        </span>
+        <span class="visually-hidden">Calculator</span>
+    `;
+}
+
+function getOverviewSummaryCardMarkup({ label, value, icon = "", tone = "default", targetPage = "overview", targetFilter = "" }) {
     return `
         <button
             class="summary-card summary-card-${escapeHtml(tone)}"
@@ -12421,13 +12447,9 @@ function getOverviewSummaryCardMarkup({ key, label, value, meta = "", hint = "",
             <span class="summary-card-copy">
                 <span class="summary-card-label">${escapeHtml(label)}</span>
                 <strong class="summary-card-value">${escapeHtml(value)}</strong>
-                ${meta ? `<span class="summary-card-meta">${escapeHtml(meta)}</span>` : ""}
             </span>
-            <span class="summary-card-trailing">
-                <span class="summary-card-hint">${escapeHtml(hint || "Open")}</span>
-                <span class="summary-card-arrow" aria-hidden="true">
-                    <svg viewBox="0 0 20 20" fill="none"><path d="M7 5.5 12 10l-5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </span>
+            <span class="summary-card-arrow" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none"><path d="M7 5.5 12 10l-5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </span>
         </button>
     `;
@@ -12568,43 +12590,31 @@ function renderOverviewPanels() {
     if (elements.overviewSummaryGrid) {
         elements.overviewSummaryGrid.innerHTML = [
             getOverviewSummaryCardMarkup({
-                key: "quotes",
                 label: t("quotes"),
                 value: String(state.documents.filter(doc => doc.type === "quote").length),
-                meta: "Drafts, sent proposals, and pipeline work",
-                hint: "Open quotes",
                 tone: "quote",
                 targetPage: "documents",
                 targetFilter: "quote",
                 icon: `<svg viewBox="0 0 20 20" fill="none"><path d="M5 2.5h7l3 3v12H5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 2.5v3h3" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M7.5 10h5M7.5 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`
             }),
             getOverviewSummaryCardMarkup({
-                key: "invoices",
                 label: t("invoices"),
                 value: String(state.documents.filter(doc => doc.type === "invoice").length),
-                meta: "Saved invoices ready to review or download",
-                hint: "Open invoices",
                 tone: "invoice",
                 targetPage: "documents",
                 targetFilter: "invoice",
                 icon: `<svg viewBox="0 0 20 20" fill="none"><rect x="4" y="3" width="12" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`
             }),
             getOverviewSummaryCardMarkup({
-                key: "clients",
                 label: t("clients"),
                 value: String(state.clients.length),
-                meta: "Saved billing records and consignee details",
-                hint: "Open clients",
                 tone: "clients",
                 targetPage: "clients",
                 icon: `<svg viewBox="0 0 20 20" fill="none"><path d="M10 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 16.5a5.5 5.5 0 0 1 11 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`
             }),
             getOverviewSummaryCardMarkup({
-                key: "statements",
                 label: t("statements"),
                 value: String(state.statementExports.length),
-                meta: "Generated statement exports and payment review",
-                hint: "Open statements",
                 tone: "statements",
                 targetPage: "reports",
                 icon: `<svg viewBox="0 0 20 20" fill="none"><path d="M4 4.5h12M4 9.5h12M4 14.5h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`
