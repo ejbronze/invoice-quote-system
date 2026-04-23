@@ -2568,6 +2568,17 @@ body::after {
     line-height: 1.35;
 }
 
+.catalog-card-used-in {
+    display: block;
+    color: var(--blue-deep);
+    font-size: 0.65rem;
+    font-weight: 500;
+    opacity: 0.72;
+    margin-top: 0.15rem;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
 .catalog-edit-btn {
     justify-self: center;
     border: 1px solid rgba(66, 99, 235, 0.16);

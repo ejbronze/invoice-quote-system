@@ -2333,6 +2333,8 @@ function cacheElements() {
     elements.createProcurementLibraryItemBtn = document.getElementById("createProcurementLibraryItemBtn");
     elements.procurementRowsContainer = document.getElementById("procurementRowsContainer");
     elements.addProcurementRowBtn = document.getElementById("addProcurementRowBtn");
+    elements.importProcurementCsvBtn = document.getElementById("importProcurementCsvBtn");
+    elements.procurementCsvFileInput = document.getElementById("procurementCsvFileInput");
     elements.exportProcurementCsvBtn = document.getElementById("exportProcurementCsvBtn");
     elements.exportProcurementExcelBtn = document.getElementById("exportProcurementExcelBtn");
     elements.convertProcurementToQuoteBtn = document.getElementById("convertProcurementToQuoteBtn");
@@ -2552,6 +2554,8 @@ function bindEvents() {
         }
     });
     elements.addProcurementRowBtn?.addEventListener("click", () => addProcurementRow());
+    elements.importProcurementCsvBtn?.addEventListener("click", () => elements.procurementCsvFileInput?.click());
+    elements.procurementCsvFileInput?.addEventListener("change", handleProcurementCsvImport);
     elements.procurementRowsContainer?.addEventListener("input", refreshProcurementRowOrdering);
     elements.procurementRowsContainer?.addEventListener("change", handleProcurementRowsChange);
     elements.procurementRowsContainer?.addEventListener("click", handleProcurementRowsClick);
@@ -3531,7 +3535,10 @@ function normalizeCatalogItems(items) {
                 leadTime: String(item.leadTime || "").trim(),
                 country: String(item.country || item.sourceCountry || item.source || "").trim(),
                 tags: parseTags(Array.isArray(item.tags) ? item.tags.join(", ") : item.tags || ""),
-                archived: Boolean(item.archived)
+                archived: Boolean(item.archived),
+                documentRefs: Array.isArray(item.documentRefs)
+                    ? item.documentRefs.filter(r => r && r.docId)
+                    : []
             }))
             .filter(item => item.name)
         : [];
@@ -3661,6 +3668,75 @@ async function saveCatalogItems(items) {
     cacheWorkspaceStateLocally();
     renderCatalog();
     await persistSharedWorkspaceData();
+}
+
+// Auto-syncs items from documents/procurement into the library.
+// items: [{ name, brand, packSize, unit, unitPrice, currency, leadTime, supplier, notes }]
+// docRef: { docId, docRefNumber, docType, date }
+async function upsertItemsIntoCatalog(items, docRef) {
+    const incoming = items.filter(i => String(i.name || "").trim());
+    if (!incoming.length) return;
+
+    const existing = state.catalogItems.map(e => ({ ...e }));
+    let changed = false;
+
+    for (const item of incoming) {
+        const normName = String(item.name).toLowerCase().trim();
+        const matchIdx = existing.findIndex(e => e.name.toLowerCase().trim() === normName);
+
+        if (matchIdx >= 0) {
+            const entry = existing[matchIdx];
+            const refs = Array.isArray(entry.documentRefs) ? [...entry.documentRefs] : [];
+            if (docRef && !refs.some(r => r.docId === String(docRef.docId))) {
+                refs.push({ docId: String(docRef.docId), docRefNumber: docRef.docRefNumber || "", docType: docRef.docType || "document", date: docRef.date || "" });
+            }
+            existing[matchIdx] = {
+                ...entry,
+                ...(item.unitPrice > 0 ? { price: item.unitPrice, sellPrice: item.unitPrice } : {}),
+                ...(item.currency ? { currency: item.currency } : {}),
+                ...(item.brand ? { brand: item.brand } : {}),
+                ...(item.supplier ? { supplier: item.supplier, vendor: item.supplier } : {}),
+                ...(item.packSize ? { packSize: item.packSize, unitSize: item.packSize } : {}),
+                ...(item.unit ? { unit: item.unit } : {}),
+                ...(item.leadTime ? { leadTime: item.leadTime } : {}),
+                documentRefs: refs,
+                dateUpdated: new Date().toISOString()
+            };
+            changed = true;
+        } else {
+            const refs = docRef ? [{ docId: String(docRef.docId), docRefNumber: docRef.docRefNumber || "", docType: docRef.docType || "document", date: docRef.date || "" }] : [];
+            existing.unshift({
+                id: `catalog-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                referenceId: `PLI-${String(existing.length + 1).padStart(4, "0")}`,
+                name: String(item.name).trim(),
+                details: String(item.notes || "").trim(),
+                notes: "",
+                costPrice: 0,
+                price: item.unitPrice || 0,
+                sellPrice: item.unitPrice || 0,
+                currency: item.currency || "USD",
+                taxIncluded: false,
+                dateUpdated: new Date().toISOString(),
+                category: "",
+                brand: String(item.brand || "").trim(),
+                unitSize: String(item.packSize || "").trim(),
+                packSize: String(item.packSize || "").trim(),
+                unit: String(item.unit || "").trim(),
+                vendor: String(item.supplier || "").trim(),
+                supplier: String(item.supplier || "").trim(),
+                leadTime: String(item.leadTime || "").trim(),
+                country: "",
+                tags: [],
+                archived: false,
+                documentRefs: refs
+            });
+            changed = true;
+        }
+    }
+
+    if (changed) {
+        await saveCatalogItems(existing);
+    }
 }
 
 function normalizeSavedItems(items) {
@@ -4447,7 +4523,15 @@ function renderCatalog() {
         return;
     }
 
-    elements.catalogGrid.innerHTML = entries.map(item => `
+    elements.catalogGrid.innerHTML = entries.map(item => {
+        const refs = Array.isArray(item.documentRefs) ? item.documentRefs : [];
+        const refsLabel = refs.length
+            ? refs.slice(-4).map(r => {
+                const typeTag = r.docType === "procurement" ? "Proc" : r.docType === "invoice" ? "Inv" : "Quote";
+                return `${typeTag} ${escapeHtml(r.docRefNumber || "")}`;
+            }).join(", ")
+            : "";
+        return `
         <article class="catalog-card">
             <button class="catalog-card-trigger" type="button" data-catalog-action="open" data-catalog-id="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.name)}">
                 <div class="catalog-card-bubble" aria-hidden="true">
@@ -4459,11 +4543,13 @@ function renderCatalog() {
                     <strong>${escapeHtml(item.name)}</strong>
                     <span>${escapeHtml([item.brand, item.supplier || item.vendor, item.packSize || item.unitSize].filter(Boolean).join(" · ") || item.referenceId || "Library item")}</span>
                     <small>${escapeHtml(`${item.currency || "USD"} ${formatAmount(item.sellPrice ?? item.price ?? 0)}${item.leadTime ? ` · ${item.leadTime}` : ""}`)}</small>
+                    ${refsLabel ? `<span class="catalog-card-used-in">Used in: ${refsLabel}</span>` : ""}
                 </div>
             </button>
             <button class="catalog-edit-btn" type="button" data-catalog-action="edit" data-catalog-id="${escapeHtml(item.id)}">${escapeHtml(t("edit"))}</button>
         </article>
-    `).join("");
+    `;
+    }).join("");
     syncProcurementLibrarySelect();
     syncDocumentLibrarySelect();
 }
@@ -5580,6 +5666,21 @@ async function saveProcurementSheet(options = {}) {
     await saveDocumentsToServer(nextDocuments);
     state.editingProcurementSheetId = sheet.id;
     renderDocuments();
+
+    const procDocRef = { docId: sheet.id, docRefNumber: sheet.refNumber, docType: "procurement", date: sheet.date };
+    const procCatalogItems = sheet.procurementItems.map(row => ({
+        name: row.description,
+        brand: row.brand,
+        packSize: row.packSize,
+        unit: row.unit,
+        unitPrice: Number.parseFloat(row.unitPrice) || 0,
+        currency: row.currency || sheet.currency || "USD",
+        leadTime: row.leadTime,
+        supplier: row.supplier,
+        notes: row.notes
+    }));
+    await upsertItemsIntoCatalog(procCatalogItems, procDocRef);
+
     setImportStatus(`Procurement sheet ${sheet.refNumber} saved.`);
     if (!options.keepOpen) {
         closeProcurementSheetModal();
@@ -5626,6 +5727,114 @@ function exportOpenProcurementCsv() {
     const sheet = getOpenProcurementSheetSnapshot();
     downloadTextFile(`${getProcurementFileStem(sheet)}.csv`, `${buildProcurementCsv(sheet)}\n`, "text/csv;charset=utf-8");
     setImportStatus("Procurement CSV exported.");
+}
+
+function parseProcurementCsvText(text) {
+    // Parse a CSV (our own export format or a plain table) into procurement rows.
+    // Tolerates the metadata preamble by scanning for the header row.
+    const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+
+    function splitCsvLine(line) {
+        const cells = [];
+        let inQuote = false;
+        let cell = "";
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') {
+                if (inQuote && line[i + 1] === '"') { cell += '"'; i++; }
+                else { inQuote = !inQuote; }
+            } else if (ch === "," && !inQuote) {
+                cells.push(cell.trim());
+                cell = "";
+            } else {
+                cell += ch;
+            }
+        }
+        cells.push(cell.trim());
+        return cells;
+    }
+
+    // Find header row: first row where column 1 (index 1) matches "Item Description" or "description"
+    let headerIdx = -1;
+    for (let i = 0; i < lines.length; i++) {
+        const cells = splitCsvLine(lines[i]);
+        const col1 = (cells[1] || "").toLowerCase().trim();
+        if (col1 === "item description" || col1 === "description") {
+            headerIdx = i;
+            break;
+        }
+    }
+
+    // Fall back: treat first non-blank line as header
+    if (headerIdx === -1) {
+        headerIdx = lines.findIndex(l => l.trim());
+    }
+    if (headerIdx === -1) return [];
+
+    const headers = splitCsvLine(lines[headerIdx]).map(h => h.toLowerCase().trim());
+    const col = key => {
+        const aliases = {
+            lineNumber: ["line no.", "#", "line", "line number"],
+            description: ["item description", "description", "item"],
+            brand: ["brand"],
+            packSize: ["pack size", "packsize", "pack"],
+            unit: ["unit"],
+            quantity: ["quantity", "qty"],
+            unitPrice: ["unit price", "unitprice", "price"],
+            currency: ["currency"],
+            leadTime: ["lead time", "leadtime"],
+            supplier: ["supplier", "vendor"],
+            notes: ["notes", "note"]
+        };
+        const list = aliases[key] || [key];
+        const idx = headers.findIndex(h => list.includes(h));
+        return idx;
+    };
+
+    const rows = [];
+    for (let i = headerIdx + 1; i < lines.length; i++) {
+        const cells = splitCsvLine(lines[i]);
+        if (cells.every(c => !c)) continue;
+        const description = (cells[col("description")] || "").trim();
+        if (!description) continue;
+        rows.push({
+            description,
+            brand: (cells[col("brand")] || "").trim(),
+            packSize: (cells[col("packSize")] || "").trim(),
+            unit: (cells[col("unit")] || "").trim(),
+            quantity: (cells[col("quantity")] || "").trim(),
+            quantityTbd: (cells[col("quantity")] || "").trim().toUpperCase() === "TBD",
+            unitPrice: Number.parseFloat(cells[col("unitPrice")]) || 0,
+            currency: (cells[col("currency")] || "").trim() || "USD",
+            leadTime: (cells[col("leadTime")] || "").trim(),
+            supplier: (cells[col("supplier")] || "").trim(),
+            notes: (cells[col("notes")] || "").trim()
+        });
+    }
+    return rows;
+}
+
+function handleProcurementCsvImport(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    event.target.value = "";
+
+    const reader = new FileReader();
+    reader.onload = e => {
+        const text = e.target.result;
+        const parsed = parseProcurementCsvText(text);
+        if (!parsed.length) {
+            window.alert("No items found in the CSV. Make sure the file has an 'Item Description' column.");
+            return;
+        }
+        const existingRows = elements.procurementRowsContainer?.querySelectorAll(".procurement-row").length || 0;
+        parsed.forEach(row => addProcurementRow(row));
+        setImportStatus(`Imported ${parsed.length} row${parsed.length === 1 ? "" : "s"} from CSV.`);
+        if (existingRows > 0 && parsed.length > 0) {
+            window.alert(`Added ${parsed.length} row${parsed.length === 1 ? "" : "s"} from CSV.`);
+        }
+    };
+    reader.readAsText(file);
 }
 
 async function downloadProcurementExcel(sheet) {
@@ -12964,6 +13173,18 @@ async function persistDocument(options = {}) {
             isEditing ? "updated document" : "created document",
             `${doc.type === "quote" ? "Quote" : "Invoice"} ${doc.refNumber} for ${doc.clientName || "unknown client"}.`
         );
+
+        if (!forceDraft && !silent) {
+            const docRef = { docId: String(doc.id), docRefNumber: doc.refNumber, docType: doc.type, date: doc.date };
+            const docCatalogItems = (doc.items || [])
+                .filter(item => String(item.description || "").trim())
+                .map(item => ({
+                    name: String(item.description).trim(),
+                    unitPrice: Number.parseFloat(item.unitPrice || item.price) || 0,
+                    currency: "USD"
+                }));
+            upsertItemsIntoCatalog(docCatalogItems, docRef).catch(() => {});
+        }
     } catch (error) {
         if (!silent) {
             alert(`Unable to save this ${doc.type} to the server.\n\n${error.message}`);
