@@ -4213,7 +4213,11 @@ function setModalState(modal, isOpen) {
         return;
     }
 
-    if (isOpen) modal.removeAttribute("hidden");
+    if (isOpen) {
+        modal.removeAttribute("hidden");
+    } else {
+        modal.setAttribute("hidden", "");
+    }
     modal.classList.toggle("active", isOpen);
     modal.setAttribute("aria-hidden", isOpen ? "false" : "true");
 
