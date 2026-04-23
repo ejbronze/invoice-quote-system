@@ -61,10 +61,13 @@ const state = {
     pendingPaymentDeleteContext: null,
     activeNotesDocId: null,
     activeNotesTargetType: null,
-    activeNotesTargetId: null
+    activeNotesTargetId: null,
+    activeNotesRecordTargetType: null,
+    activeNotesRecordTargetId: null
 };
 
 const DOP_PER_USD = 59;
+const BULK_ZIP_THRESHOLD = 4;
 const DEFAULT_PAYMENT_TERMS = "NET30 : Full payment is due within a minimum of 30 calendar days from the invoice date. Monthly client balances due may not exceed $10,000 without approval.";
 const MONTHLY_CLIENT_DUE_LIMIT = 10000;
 const DEFAULT_ADMIN_USER = Object.freeze({
@@ -2217,6 +2220,19 @@ function cacheElements() {
     elements.clientActivityModalCopy = document.getElementById("clientActivityModalCopy");
     elements.clientActivityModalList = document.getElementById("clientActivityModalList");
     elements.closeClientActivityModalBtn = document.getElementById("closeClientActivityModalBtn");
+    elements.notesRecordModal = document.getElementById("notesRecordModal");
+    elements.closeNotesRecordModalBtn = document.getElementById("closeNotesRecordModalBtn");
+    elements.notesRecordModalTitle = document.getElementById("notesRecordModalTitle");
+    elements.notesRecordModalCopy = document.getElementById("notesRecordModalCopy");
+    elements.notesRecordModalType = document.getElementById("notesRecordModalType");
+    elements.notesRecordModalReference = document.getElementById("notesRecordModalReference");
+    elements.notesRecordModalClient = document.getElementById("notesRecordModalClient");
+    elements.notesRecordSummaryGrid = document.getElementById("notesRecordSummaryGrid");
+    elements.notesRecordNotesList = document.getElementById("notesRecordNotesList");
+    elements.notesRecordNotesCount = document.getElementById("notesRecordNotesCount");
+    elements.notesRecordOpenClientBtn = document.getElementById("notesRecordOpenClientBtn");
+    elements.notesRecordManageNotesBtn = document.getElementById("notesRecordManageNotesBtn");
+    elements.notesRecordOpenDocumentBtn = document.getElementById("notesRecordOpenDocumentBtn");
     elements.documentModal = document.getElementById("documentModal");
     elements.editorProgressStep = document.getElementById("editorProgressStep");
     elements.editorProgressTitle = document.getElementById("editorProgressTitle");
@@ -2522,6 +2538,17 @@ function bindEvents() {
     elements.closeClientModalBtn?.addEventListener("click", closeClientModal);
     elements.closeClientActivityModalBtn?.addEventListener("click", closeClientActivityModal);
     elements.clientActivityModalList?.addEventListener("click", handleClientActivityModalClick);
+    elements.closeNotesRecordModalBtn?.addEventListener("click", closeNotesRecordModal);
+    elements.notesRecordOpenDocumentBtn?.addEventListener("click", () => handleNotesRecordModalAction("open-record"));
+    elements.notesRecordOpenClientBtn?.addEventListener("click", () => handleNotesRecordModalAction("open-client"));
+    elements.notesRecordManageNotesBtn?.addEventListener("click", () => handleNotesRecordModalAction("manage-notes"));
+    elements.notesRecordSummaryGrid?.addEventListener("click", event => {
+        const trigger = event.target.closest("[data-notes-record-action]");
+        if (!trigger) {
+            return;
+        }
+        handleNotesRecordModalAction(trigger.dataset.notesRecordAction || "open-record");
+    });
     elements.issueInboxList.addEventListener("click", handleIssueInboxClick);
     elements.valueToggleCard.addEventListener("click", () => toggleValueView(true));
     elements.overviewMobileToggle?.addEventListener("click", toggleMobileOverview);
@@ -2588,7 +2615,7 @@ function bindEvents() {
         if (!trigger) {
             return;
         }
-        openNoteLinkedRecord({
+        openNotesRecordModal({
             targetId: trigger.dataset.openNoteTarget,
             targetType: trigger.dataset.openNoteTargetType
         });
@@ -2602,7 +2629,7 @@ function bindEvents() {
             return;
         }
         event.preventDefault();
-        openNoteLinkedRecord({
+        openNotesRecordModal({
             targetId: trigger.dataset.openNoteTarget,
             targetType: trigger.dataset.openNoteTargetType
         });
@@ -2635,11 +2662,12 @@ function bindEvents() {
     elements.clearSelectedDocumentsBtn?.addEventListener("click", clearSelectedDocuments);
     elements.downloadSelectedDocumentsZipBtn?.addEventListener("click", async () => {
         try {
-            setImportStatus("Preparing ZIP download...");
-            await downloadSelectedDocumentsZip();
-            setImportStatus("ZIP download ready.");
+            const selectedCount = getSelectedDocuments().length;
+            setImportStatus(selectedCount >= BULK_ZIP_THRESHOLD ? "Preparing download ZIP..." : "Preparing PDF download...");
+            await downloadSelectedDocuments();
+            setImportStatus(selectedCount >= BULK_ZIP_THRESHOLD ? "ZIP download ready." : "PDF download ready.");
         } catch (error) {
-            window.alert(error.message || "Unable to create the ZIP download right now.");
+            window.alert(error.message || "Unable to download the selected documents right now.");
         }
     });
     elements.filterButtons.forEach(button => {
@@ -5399,13 +5427,59 @@ function getAllSystemNotes() {
     });
 }
 
-function getFilteredSystemNotes() {
+function getAllNoteRecords() {
+    const documentRecords = state.documents
+        .filter(doc => normalizeNoteLog(doc.noteLog).length > 0)
+        .map(doc => {
+            const notes = normalizeNoteLog(doc.noteLog);
+            const latestNote = notes[notes.length - 1];
+            return {
+                targetType: "document",
+                targetId: String(doc.id),
+                documentType: doc.type === "invoice" ? "invoice" : "quote",
+                documentReference: doc.refNumber || "Reference pending",
+                clientName: doc.clientName || t("unknown_client"),
+                noteCount: notes.length,
+                latestNote,
+                sortDate: latestNote?.editedAt || latestNote?.createdAt || "",
+                allNotesText: notes.map(note => String(note.text || "")).join(" "),
+                target: doc
+            };
+        });
+
+    const statementRecords = state.statementExports
+        .filter(statement => normalizeNoteLog(statement.noteLog).length > 0)
+        .map(statement => {
+            const notes = normalizeNoteLog(statement.noteLog);
+            const latestNote = notes[notes.length - 1];
+            return {
+                targetType: "statement",
+                targetId: String(statement.id),
+                documentType: "statement",
+                documentReference: statement.referenceNumber || statement.title || "Statement",
+                clientName: statement.clientName || t("unknown_client"),
+                noteCount: notes.length,
+                latestNote,
+                sortDate: latestNote?.editedAt || latestNote?.createdAt || "",
+                allNotesText: notes.map(note => String(note.text || "")).join(" "),
+                target: statement
+            };
+        });
+
+    return [...documentRecords, ...statementRecords].sort((left, right) => {
+        const rightTime = Date.parse(right.sortDate || "") || 0;
+        const leftTime = Date.parse(left.sortDate || "") || 0;
+        return rightTime - leftTime;
+    });
+}
+
+function getFilteredNoteRecords() {
     const query = state.notesSearchQuery.trim().toLowerCase();
-    return getAllSystemNotes().filter(note => {
+    return getAllNoteRecords().filter(note => {
         const matchesType = state.notesFilter === "all" || note.documentType === state.notesFilter;
         const matchesClient = state.notesClientFilter === "all" || String(note.clientName || "") === state.notesClientFilter;
         const haystack = [
-            note.text,
+            note.allNotesText,
             note.clientName,
             note.documentReference
         ].join(" ").toLowerCase();
@@ -5427,7 +5501,7 @@ function renderNotesClientOptions() {
         return;
     }
 
-    const clients = Array.from(new Set(getAllSystemNotes().map(note => String(note.clientName || "").trim()).filter(Boolean)))
+    const clients = Array.from(new Set(getAllNoteRecords().map(note => String(note.clientName || "").trim()).filter(Boolean)))
         .sort((left, right) => left.localeCompare(right, getCurrentLocale(), { sensitivity: "base" }));
     const currentValue = state.notesClientFilter;
     elements.notesClientFilter.innerHTML = `<option value="all">All clients</option>${clients.map(client => `<option value="${escapeHtml(client)}">${escapeHtml(client)}</option>`).join("")}`;
@@ -5450,6 +5524,159 @@ function openNoteLinkedRecord(note) {
     editDocument(note.targetId);
 }
 
+function getNoteRecordByTarget(targetId, targetType = "document") {
+    return getAllNoteRecords().find(record =>
+        record.targetType === targetType && String(record.targetId) === String(targetId)
+    ) || null;
+}
+
+function getClientByName(clientName) {
+    const normalized = String(clientName || "").trim().toLowerCase();
+    return state.clients.find(client => String(client.name || "").trim().toLowerCase() === normalized) || null;
+}
+
+function revealClientProfile(clientName) {
+    const client = getClientByName(clientName);
+    if (!client) {
+        return false;
+    }
+
+    setActivePage("clients");
+    const card = elements.clientManagementList?.querySelector(`[data-client-id="${CSS.escape(String(client.id))}"]`);
+    const header = card?.querySelector("[data-toggle-client]");
+    const body = card?.querySelector(".client-row-body");
+    if (card && header && body) {
+        card.classList.add("is-expanded");
+        header.setAttribute("aria-expanded", "true");
+        body.hidden = false;
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    return true;
+}
+
+function closeNotesRecordModal() {
+    state.activeNotesRecordTargetType = null;
+    state.activeNotesRecordTargetId = null;
+    setModalState(elements.notesRecordModal, false);
+}
+
+function buildNotesRecordSummaryCards(record) {
+    const target = record?.target;
+    if (!target) {
+        return [];
+    }
+
+    const cards = [
+        { label: "Reference", value: record.documentReference, action: "open-record" },
+        { label: "Client", value: record.clientName || t("unknown_client"), action: "open-client" },
+        { label: "Type", value: record.documentType === "statement" ? "Statement" : record.documentType === "invoice" ? "Invoice" : "Quote", action: "open-type" }
+    ];
+
+    if (record.targetType === "statement") {
+        cards.push(
+            { label: "Outstanding", value: formatCurrency(getStatementLiveOutstanding(target)), action: "open-record" },
+            { label: "Rows", value: String(target.rowCount || target.payload?.rows?.length || 0), action: "open-record" },
+            { label: "Notes", value: String(record.noteCount), action: "manage-notes" }
+        );
+        return cards;
+    }
+
+    cards.push(
+        { label: "Total", value: formatCurrency(target.total || 0), action: "open-record" },
+        {
+            label: target.type === "invoice" ? "Status" : "Date",
+            value: target.type === "invoice" ? getPaymentStatusLabel(getInvoiceDerivedPaymentStatus(target)) : formatDisplayDate(target.date || ""),
+            action: "open-record"
+        },
+        { label: "Notes", value: String(record.noteCount), action: "manage-notes" }
+    );
+    return cards;
+}
+
+function renderNotesRecordModal(record) {
+    if (!record || !elements.notesRecordSummaryGrid || !elements.notesRecordNotesList) {
+        return;
+    }
+
+    const target = record.target;
+    const notes = normalizeNoteLog(target?.noteLog);
+    const typeLabel = record.documentType === "statement" ? "Statement" : record.documentType === "invoice" ? "Invoice" : "Quote";
+    const client = getClientByName(record.clientName);
+
+    elements.notesRecordModalTitle.textContent = `${typeLabel} Summary`;
+    elements.notesRecordModalCopy.textContent = "Review the linked record, jump to the client profile, and scan every internal note without leaving the Notes page.";
+    elements.notesRecordModalType.textContent = typeLabel;
+    elements.notesRecordModalReference.textContent = record.documentReference;
+    elements.notesRecordModalClient.textContent = record.clientName || t("unknown_client");
+    elements.notesRecordOpenClientBtn.disabled = !client;
+    elements.notesRecordSummaryGrid.innerHTML = buildNotesRecordSummaryCards(record).map(card => `
+        <button class="notes-record-summary-card" type="button" data-notes-record-action="${escapeHtml(card.action)}">
+            <span>${escapeHtml(card.label)}</span>
+            <strong>${escapeHtml(card.value || "—")}</strong>
+        </button>
+    `).join("");
+    elements.notesRecordNotesCount.textContent = `${notes.length} note${notes.length === 1 ? "" : "s"}`;
+    elements.notesRecordNotesList.innerHTML = notes.length
+        ? notes.slice().reverse().map(note => `
+            <article class="notes-record-note-item">
+                <div class="notes-record-note-head">
+                    <strong>${escapeHtml(note.author || "Unknown")}</strong>
+                    <span>${escapeHtml(note.editedAt ? `${formatNoteTimestamp(note.createdAt)} · edited` : formatNoteTimestamp(note.createdAt))}</span>
+                </div>
+                <p>${escapeHtml(note.text)}</p>
+            </article>
+        `).join("")
+        : `<div class="empty-state compact-empty-state"><p>No notes yet for this record.</p></div>`;
+}
+
+function openNotesRecordModal(entry) {
+    const record = getNoteRecordByTarget(entry?.targetId, entry?.targetType || "document");
+    if (!record) {
+        return;
+    }
+
+    state.activeNotesRecordTargetType = record.targetType;
+    state.activeNotesRecordTargetId = String(record.targetId);
+    renderNotesRecordModal(record);
+    setModalState(elements.notesRecordModal, true);
+}
+
+function handleNotesRecordModalAction(action) {
+    const record = getNoteRecordByTarget(state.activeNotesRecordTargetId, state.activeNotesRecordTargetType || "document");
+    if (!record) {
+        return;
+    }
+
+    if (action === "open-client") {
+        if (revealClientProfile(record.clientName)) {
+            closeNotesRecordModal();
+        }
+        return;
+    }
+
+    if (action === "manage-notes") {
+        closeNotesRecordModal();
+        openNotesDrawer(record.targetId, record.targetType);
+        return;
+    }
+
+    if (action === "open-type") {
+        closeNotesRecordModal();
+        if (record.targetType === "statement") {
+            setActivePage("reports");
+        } else {
+            openDocumentsPageWithFilter(record.documentType);
+        }
+        return;
+    }
+
+    closeNotesRecordModal();
+    openNoteLinkedRecord({
+        targetId: record.targetId,
+        targetType: record.targetType
+    });
+}
+
 function renderNotesPage() {
     if (!elements.notesFeed || !elements.notesPageSummary) {
         return;
@@ -5457,52 +5684,54 @@ function renderNotesPage() {
 
     renderNotesClientOptions();
     syncNotesFilterButtons();
-    const notes = getFilteredSystemNotes();
+    const records = getFilteredNoteRecords();
     elements.notesPageSummary.innerHTML = `
         <article class="invoice-report-summary-card">
-            <span>Visible Notes</span>
-            <strong>${escapeHtml(String(notes.length))}</strong>
+            <span>Visible Records</span>
+            <strong>${escapeHtml(String(records.length))}</strong>
         </article>
         <article class="invoice-report-summary-card">
             <span>Invoices</span>
-            <strong>${escapeHtml(String(notes.filter(note => note.documentType === "invoice").length))}</strong>
+            <strong>${escapeHtml(String(records.filter(note => note.documentType === "invoice").length))}</strong>
         </article>
         <article class="invoice-report-summary-card">
             <span>Quotes</span>
-            <strong>${escapeHtml(String(notes.filter(note => note.documentType === "quote").length))}</strong>
+            <strong>${escapeHtml(String(records.filter(note => note.documentType === "quote").length))}</strong>
         </article>
         <article class="invoice-report-summary-card">
             <span>Statements</span>
-            <strong>${escapeHtml(String(notes.filter(note => note.documentType === "statement").length))}</strong>
+            <strong>${escapeHtml(String(records.filter(note => note.documentType === "statement").length))}</strong>
         </article>
     `;
 
-    if (!notes.length) {
+    if (!records.length) {
         elements.notesFeed.innerHTML = `<div class="empty-state compact-empty-state"><p>No notes match the current filters.</p></div>`;
         return;
     }
 
-    elements.notesFeed.innerHTML = notes.map(note => {
-        const preview = note.text.length > 220 ? `${note.text.slice(0, 220)}…` : note.text;
-        const typeLabel = note.documentType === "statement" ? "Statement" : note.documentType === "invoice" ? "Invoice" : "Quote";
+    elements.notesFeed.innerHTML = records.map(record => {
+        const previewSource = record.latestNote?.text || "";
+        const preview = previewSource.length > 180 ? `${previewSource.slice(0, 180)}…` : previewSource;
+        const typeLabel = record.documentType === "statement" ? "Statement" : record.documentType === "invoice" ? "Invoice" : "Quote";
         return `
-            <article class="notes-feed-item" data-open-note-target="${escapeHtml(note.targetId)}" data-open-note-target-type="${escapeHtml(note.targetType)}" tabindex="0" role="button" aria-label="${escapeHtml(`Open ${typeLabel} ${note.documentReference}`)}">
+            <article class="notes-feed-item" data-open-note-target="${escapeHtml(record.targetId)}" data-open-note-target-type="${escapeHtml(record.targetType)}" tabindex="0" role="button" aria-label="${escapeHtml(`Open ${typeLabel} summary for ${record.documentReference}`)}">
                 <div class="notes-feed-item-main">
                     <div class="notes-feed-item-head">
                         <div class="notes-feed-item-meta">
-                            <span class="notes-feed-item-type is-${escapeHtml(note.documentType)}">${escapeHtml(typeLabel)}</span>
-                            <strong>${escapeHtml(note.documentReference)}</strong>
-                            <span>${escapeHtml(note.clientName || t("unknown_client"))}</span>
+                            <span class="notes-feed-item-type is-${escapeHtml(record.documentType)}">${escapeHtml(typeLabel)}</span>
+                            <strong>${escapeHtml(record.documentReference)}</strong>
+                            <span>${escapeHtml(record.clientName || t("unknown_client"))}</span>
+                            <span class="notes-feed-item-count">${escapeHtml(String(record.noteCount))} note${record.noteCount === 1 ? "" : "s"}</span>
                         </div>
-                        <span class="notes-feed-item-time">${escapeHtml(formatNoteTimestamp(note.createdAt))}</span>
+                        <span class="notes-feed-item-time">${escapeHtml(formatNoteTimestamp(record.latestNote?.createdAt || record.sortDate))}</span>
                     </div>
                     <p class="notes-feed-item-text">${escapeHtml(preview)}</p>
                     <div class="notes-feed-item-foot">
-                        <span>${escapeHtml(note.author || "Unknown")}</span>
-                        ${note.editedAt ? `<span>Edited</span>` : ""}
+                        <span>${escapeHtml(record.latestNote?.author || "Unknown")}</span>
+                        <span>Latest note</span>
                     </div>
                 </div>
-                <button class="btn btn-secondary notes-feed-open-btn" type="button" data-open-note-target="${escapeHtml(note.targetId)}" data-open-note-target-type="${escapeHtml(note.targetType)}">Open Record</button>
+                <button class="btn btn-secondary notes-feed-open-btn" type="button" data-open-note-target="${escapeHtml(record.targetId)}" data-open-note-target-type="${escapeHtml(record.targetType)}">View Summary</button>
             </article>
         `;
     }).join("");
@@ -12371,6 +12600,31 @@ async function downloadDocumentPdf(doc) {
     downloadBlobFile(getDocumentPdfFileName(doc), blob);
 }
 
+async function downloadSelectedDocumentsAsPdf() {
+    const selectedDocuments = getSelectedDocuments();
+    if (!selectedDocuments.length) {
+        window.alert("Select at least one document to download.");
+        return;
+    }
+
+    const failures = [];
+
+    for (const doc of selectedDocuments) {
+        try {
+            await downloadDocumentPdf(doc);
+        } catch (error) {
+            failures.push({
+                doc,
+                message: error?.message || "Export failed."
+            });
+        }
+    }
+
+    if (failures.length) {
+        window.alert(`Downloaded ${selectedDocuments.length - failures.length} PDF(s).\n\nSome documents could not be exported:\n${failures.map(entry => `${entry.doc?.refNumber || "Unknown document"}: ${entry.message}`).join("\n")}`);
+    }
+}
+
 async function downloadSelectedDocumentsZip() {
     const selectedDocuments = getSelectedDocuments();
     if (!selectedDocuments.length) {
@@ -12410,6 +12664,21 @@ async function downloadSelectedDocumentsZip() {
     if (failures.length) {
         window.alert(`Downloaded a ZIP with ${selectedDocuments.length - failures.length} PDF(s).\n\nSome documents could not be exported:\n${failures.map(entry => `${entry.doc?.refNumber || "Unknown document"}: ${entry.message}`).join("\n")}`);
     }
+}
+
+async function downloadSelectedDocuments() {
+    const selectedDocuments = getSelectedDocuments();
+    if (!selectedDocuments.length) {
+        window.alert("Select at least one document to download.");
+        return;
+    }
+
+    if (selectedDocuments.length >= BULK_ZIP_THRESHOLD) {
+        await downloadSelectedDocumentsZip();
+        return;
+    }
+
+    await downloadSelectedDocumentsAsPdf();
 }
 
 function getStatusBadgeMarkup(label, className = "") {
@@ -12631,9 +12900,11 @@ function syncDocumentsSelectionToolbar() {
     const selectedCount = getSelectedDocuments().length;
     elements.documentsSelectionToolbar.hidden = selectedCount === 0;
     elements.documentsSelectionTitle.textContent = `${selectedCount} document${selectedCount === 1 ? "" : "s"} selected`;
-    elements.documentsSelectionMeta.textContent = selectedCount === 1
-        ? "Download this PDF directly or add more documents for a combined ZIP."
-        : "Download every selected document as a single ZIP package.";
+    elements.documentsSelectionMeta.textContent = selectedCount >= BULK_ZIP_THRESHOLD
+        ? "Large selections download as a ZIP package."
+        : selectedCount === 1
+            ? "This selection will download as a PDF."
+            : "Small selections download as separate PDFs.";
     elements.downloadSelectedDocumentsZipBtn.disabled = selectedCount === 0;
 }
 

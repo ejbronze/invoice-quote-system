@@ -11186,8 +11186,178 @@ body {
     gap: 0.4rem 0.8rem;
 }
 
+.notes-feed-item-count {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(20, 89, 217, 0.08);
+    color: var(--brand-primary);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
 .notes-feed-open-btn {
     white-space: nowrap;
+}
+
+.notes-record-modal-content {
+    max-width: 940px;
+}
+
+.notes-record-modal-title-wrap {
+    display: grid;
+    gap: 0.22rem;
+}
+
+.notes-record-modal-body {
+    display: grid;
+    gap: 1rem;
+}
+
+.notes-record-modal-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.05rem;
+    border: 1px solid rgba(112, 135, 176, 0.14);
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 249, 255, 0.95));
+}
+
+.notes-record-modal-hero-copy {
+    display: grid;
+    gap: 0.2rem;
+}
+
+.notes-record-modal-kicker {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--brand-primary);
+}
+
+.notes-record-modal-hero-copy strong {
+    font-size: 1.35rem;
+    letter-spacing: -0.03em;
+    color: var(--text);
+}
+
+.notes-record-modal-hero-copy span:last-child {
+    color: var(--text-soft);
+    font-size: 0.92rem;
+}
+
+.notes-record-modal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.55rem;
+}
+
+.notes-record-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.notes-record-summary-card {
+    display: grid;
+    gap: 0.3rem;
+    padding: 0.95rem 1rem;
+    border: 1px solid rgba(112, 135, 176, 0.14);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.92);
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.notes-record-summary-card:hover,
+.notes-record-summary-card:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(24, 47, 86, 0.08);
+    border-color: rgba(20, 89, 217, 0.22);
+}
+
+.notes-record-summary-card span {
+    color: var(--text-faint);
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.notes-record-summary-card strong {
+    color: var(--text);
+    font-size: 1rem;
+    line-height: 1.35;
+}
+
+.notes-record-notes-section {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.notes-record-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.notes-record-section-head h4 {
+    font-size: 1rem;
+}
+
+.notes-record-section-head span {
+    color: var(--text-soft);
+    font-size: 0.84rem;
+    font-weight: 600;
+}
+
+.notes-record-notes-list {
+    display: grid;
+    gap: 0.75rem;
+    max-height: 48vh;
+    overflow: auto;
+    padding-right: 0.1rem;
+}
+
+.notes-record-note-item {
+    display: grid;
+    gap: 0.45rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(112, 135, 176, 0.12);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.92);
+}
+
+.notes-record-note-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.8rem;
+}
+
+.notes-record-note-head strong {
+    color: var(--text);
+}
+
+.notes-record-note-head span {
+    color: var(--text-faint);
+}
+
+.notes-record-note-item p {
+    margin: 0;
+    color: var(--text);
+    font-size: 0.9rem;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .document-card {
@@ -11865,6 +12035,24 @@ body #catalogDetailsModal:not([hidden]) {
 
     .notes-feed-open-btn {
         width: 100%;
+    }
+
+    .notes-record-modal-hero,
+    .notes-record-section-head,
+    .notes-record-note-head {
+        display: grid;
+    }
+
+    .notes-record-modal-actions {
+        justify-content: stretch;
+    }
+
+    .notes-record-modal-actions .btn {
+        width: 100%;
+    }
+
+    .notes-record-summary-grid {
+        grid-template-columns: 1fr;
     }
 
     .sidebar-utility-link {

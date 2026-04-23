@@ -298,12 +298,12 @@
                         <div class="documents-selection-copy">
                             <span class="invoice-report-stage-step">Selected</span>
                             <strong id="documentsSelectionTitle">0 documents selected</strong>
-                            <span id="documentsSelectionMeta">Choose more documents or download the current selection as a ZIP.</span>
+                            <span id="documentsSelectionMeta">Small selections download as PDFs. Larger selections download as a ZIP.</span>
                         </div>
                         <div class="documents-selection-actions">
                             <button class="btn btn-secondary" id="selectVisibleDocumentsBtn" type="button">Select Visible</button>
                             <button class="btn btn-secondary" id="clearSelectedDocumentsBtn" type="button">Clear Selection</button>
-                            <button class="btn btn-primary" id="downloadSelectedDocumentsZipBtn" type="button">Download ZIP</button>
+                            <button class="btn btn-primary" id="downloadSelectedDocumentsZipBtn" type="button">Download</button>
                         </div>
                     </div>
                     <div class="documents-grid" id="documentsGrid">
@@ -1784,6 +1784,40 @@
             <div class="modal-body settings-modal-body">
                 <p class="settings-copy" id="clientActivityModalCopy">Open the linked quotes, invoices, or statements for this client.</p>
                 <div class="client-activity-modal-list" id="clientActivityModalList"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal settings-modal" id="notesRecordModal" aria-hidden="true" hidden>
+        <div class="modal-content settings-modal-content notes-record-modal-content">
+            <div class="modal-header">
+                <div class="notes-record-modal-title-wrap">
+                    <h3 id="notesRecordModalTitle">Document Summary</h3>
+                    <p class="settings-copy" id="notesRecordModalCopy">Review the linked record, jump to the client, and scan every note in one place.</p>
+                </div>
+                <button class="close-btn" id="closeNotesRecordModalBtn" type="button" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body settings-modal-body notes-record-modal-body">
+                <div class="notes-record-modal-hero">
+                    <div class="notes-record-modal-hero-copy">
+                        <span class="notes-record-modal-kicker" id="notesRecordModalType">Quote</span>
+                        <strong id="notesRecordModalReference">TL-0000</strong>
+                        <span id="notesRecordModalClient">Unknown client</span>
+                    </div>
+                    <div class="notes-record-modal-actions">
+                        <button class="btn btn-secondary" id="notesRecordOpenClientBtn" type="button">Client Profile</button>
+                        <button class="btn btn-secondary" id="notesRecordManageNotesBtn" type="button">Manage Notes</button>
+                        <button class="btn btn-primary" id="notesRecordOpenDocumentBtn" type="button">Open Document</button>
+                    </div>
+                </div>
+                <div class="notes-record-summary-grid" id="notesRecordSummaryGrid"></div>
+                <div class="notes-record-notes-section">
+                    <div class="notes-record-section-head">
+                        <h4>All Notes</h4>
+                        <span id="notesRecordNotesCount">0 notes</span>
+                    </div>
+                    <div class="notes-record-notes-list" id="notesRecordNotesList"></div>
+                </div>
             </div>
         </div>
     </div>
