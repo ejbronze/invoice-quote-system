@@ -1794,12 +1794,22 @@
             <div class="modal-header">
                 <h3 id="procurementSheetTitle">New Procurement Sheet</h3>
                 <div class="proc-modal-header-actions">
-                    <button class="proc-translate-btn" id="procurementTranslateBtn" type="button" aria-label="Translate sheet" title="Translate this sheet">
-                        <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M1.5 3.5h7M5 3.5V2M7.5 3.5c-.4 1.8-1.8 3.2-3.5 4.2M6 6c.6.9 1.8 1.7 3 2.2"/>
-                            <path d="M8.5 10l2-5 2 5m-3.4-1.5h2.8"/>
-                        </svg>
-                    </button>
+                    <div class="proc-translate-tooltip-wrap">
+                        <button class="proc-translate-btn" id="procurementTranslateBtn" type="button" aria-label="Translate sheet">
+                            <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1.5 3.5h7M5 3.5V2M7.5 3.5c-.4 1.8-1.8 3.2-3.5 4.2M6 6c.6.9 1.8 1.7 3 2.2"/>
+                                <path d="M8.5 10l2-5 2 5m-3.4-1.5h2.8"/>
+                            </svg>
+                        </button>
+                        <div class="proc-translate-tooltip" role="tooltip">
+                            <strong class="proc-translate-tooltip-title">Translation Tools</strong>
+                            <div class="proc-translate-tooltip-items">
+                                <div class="proc-translate-tooltip-item"><span class="proc-tooltip-term">Preview</span><span class="proc-tooltip-desc">See how the sheet will look translated before making changes.</span></div>
+                                <div class="proc-translate-tooltip-item"><span class="proc-tooltip-term">Duplicate as Translated</span><span class="proc-tooltip-desc">Creates a new version in the selected language. Your original stays unchanged.</span></div>
+                                <div class="proc-translate-tooltip-item"><span class="proc-tooltip-term">Translate In Place</span><span class="proc-tooltip-desc">Replaces the current text with the selected language.</span></div>
+                            </div>
+                        </div>
+                    </div>
                     <button class="close-btn" id="closeProcurementSheetModalBtn" type="button" aria-label="Close">x</button>
                 </div>
             </div>
@@ -1842,14 +1852,16 @@
                         </label>
                     </div>
                     <div class="procurement-library-insert">
-                        <label class="form-group">
-                            <span>Insert from Pricing Library</span>
-                            <select id="procurementLibrarySelect">
-                                <option value="">Choose a library item</option>
-                            </select>
-                        </label>
-                        <button class="btn btn-secondary" id="insertProcurementLibraryItemBtn" type="button">Insert Item</button>
-                        <button class="btn btn-secondary" id="createProcurementLibraryItemBtn" type="button">Create Library Item</button>
+                        <div class="proc-lib-combobox-wrap">
+                            <div class="proc-lib-combobox">
+                                <svg class="proc-lib-search-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="4"/><line x1="10" y1="10" x2="14" y2="14"/></svg>
+                                <input type="text" id="procLibSearchInput" class="proc-lib-search" placeholder="Search pricing library…" autocomplete="off" aria-label="Search pricing library items">
+                                <div class="proc-lib-dropdown" id="procLibDropdown" role="listbox" hidden></div>
+                            </div>
+                            <button class="btn btn-secondary proc-lib-create-btn" id="createProcurementLibraryItemBtn" type="button">+ Create item</button>
+                        </div>
+                        <select id="procurementLibrarySelect" hidden aria-hidden="true"></select>
+                        <button id="insertProcurementLibraryItemBtn" hidden></button>
                     </div>
                 </div>
                 <div class="procurement-table-wrap">
@@ -1857,17 +1869,18 @@
                         <thead>
                             <tr>
                                 <th class="proc-select-col"><input type="checkbox" id="selectAllProcurementRows" title="Select / deselect all rows" aria-label="Select all rows"></th>
-                                <th>#</th>
-                                <th>Description</th>
+                                <th class="proc-th-num">#</th>
+                                <th class="proc-th-desc">Description</th>
                                 <th>Brand</th>
                                 <th>Pack Size</th>
                                 <th>Unit</th>
                                 <th>Unit Price</th>
-                                <th>Currency</th>
-                                <th class="proc-internal-col">Lead Time</th>
-                                <th class="proc-internal-col">Supplier</th>
                                 <th>Qty</th>
-                                <th>Notes</th>
+                                <th class="proc-th-total">Total</th>
+                                <th class="proc-col-lead-time">Lead Time</th>
+                                <th class="proc-col-supplier">Supplier</th>
+                                <th class="proc-col-currency">Currency</th>
+                                <th class="proc-col-notes">Notes</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -1876,7 +1889,15 @@
                 </div>
                 <div class="settings-actions procurement-actions">
                     <button class="btn btn-secondary" id="addProcurementRowBtn" type="button">Add Row</button>
-                    <button class="btn btn-secondary proc-internal-toggle-btn" id="procInternalFieldsToggleBtn" type="button">Show internal fields</button>
+                    <div class="proc-dropdown proc-dropdown-persist" id="procColumnsDropdown">
+                        <button class="btn btn-secondary proc-dropdown-trigger" type="button" aria-haspopup="true" aria-expanded="false" id="procColumnsDropdownBtn">Columns <span class="proc-dropdown-caret" aria-hidden="true">▾</span></button>
+                        <div class="proc-dropdown-menu proc-columns-menu" role="menu">
+                            <label class="proc-col-label"><input type="checkbox" data-col-toggle="lead-time"> Lead Time</label>
+                            <label class="proc-col-label"><input type="checkbox" data-col-toggle="supplier"> Supplier</label>
+                            <label class="proc-col-label"><input type="checkbox" data-col-toggle="currency"> Currency</label>
+                            <label class="proc-col-label"><input type="checkbox" data-col-toggle="notes"> Notes</label>
+                        </div>
+                    </div>
 
                     <div class="proc-dropdown" id="importProcurementDropdown">
                         <button class="btn btn-secondary proc-dropdown-trigger" type="button" aria-haspopup="true" aria-expanded="false" id="importProcurementDropdownBtn">
@@ -1891,8 +1912,10 @@
                     <input type="file" id="procurementXlsxFileInput" accept=".xlsx,.xls" hidden>
 
                     <div class="proc-dropdown" id="exportProcurementDropdown">
-                        <button class="btn btn-secondary proc-dropdown-trigger" type="button" aria-haspopup="true" aria-expanded="false" id="exportProcurementDropdownBtn">
-                            Export <span class="proc-dropdown-caret" aria-hidden="true">▾</span>
+                        <button class="btn btn-secondary proc-dropdown-trigger proc-export-btn" type="button" aria-haspopup="true" aria-expanded="false" id="exportProcurementDropdownBtn">
+                            <img src="/assets/icons/icon-excel.png" alt="" class="btn-custom-icon">
+                            <span>Export</span>
+                            <span class="proc-dropdown-caret" aria-hidden="true">▾</span>
                         </button>
                         <div class="proc-dropdown-menu" role="menu">
                             <button type="button" role="menuitem" data-procurement-export="csv">Export CSV</button>

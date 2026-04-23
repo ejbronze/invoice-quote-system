@@ -2366,7 +2366,8 @@ function cacheElements() {
     elements.procTranslateInPlaceBtn = document.getElementById("procTranslateInPlaceBtn");
     elements.procTranslateStatus = document.getElementById("procTranslateStatus");
     elements.procTranslatePreview = document.getElementById("procTranslatePreview");
-    elements.procInternalFieldsToggleBtn = document.getElementById("procInternalFieldsToggleBtn");
+    elements.procColumnsDropdown = document.getElementById("procColumnsDropdown");
+    elements.procColumnsDropdownBtn = document.getElementById("procColumnsDropdownBtn");
     elements.viewAllDocumentsBtn = document.getElementById("viewAllDocumentsBtn");
     elements.overviewRecentDocuments = document.getElementById("overviewRecentDocuments");
     elements.overviewSummaryGrid = document.getElementById("overviewSummaryGrid");
@@ -2584,7 +2585,14 @@ function bindEvents() {
     elements.addProcurementRowBtn?.addEventListener("click", () => addProcurementRow());
     elements.procurementCsvFileInput?.addEventListener("change", handleProcurementCsvImport);
     elements.procurementXlsxFileInput?.addEventListener("change", handleProcurementXlsxImport);
-    elements.procurementRowsContainer?.addEventListener("input", refreshProcurementRowOrdering);
+    elements.procurementRowsContainer?.addEventListener("input", e => {
+        refreshProcurementRowOrdering();
+        refreshProcurementRowTotals();
+        const rowEl = e.target.closest(".procurement-row");
+        if (rowEl && e.target.matches('[data-procurement-field="notes"]')) {
+            updateProcNotesIconDot(rowEl);
+        }
+    });
     elements.procurementRowsContainer?.addEventListener("change", handleProcurementRowsChange);
     elements.procurementRowsContainer?.addEventListener("click", handleProcurementRowsClick);
     elements.insertProcurementLibraryItemBtn?.addEventListener("click", insertSelectedLibraryItemIntoProcurement);
@@ -2621,7 +2629,24 @@ function bindEvents() {
     elements.procTranslatePreviewBtn?.addEventListener("click", handleProcTranslatePreview);
     elements.procTranslateDuplicateBtn?.addEventListener("click", () => handleProcTranslateApply("duplicate"));
     elements.procTranslateInPlaceBtn?.addEventListener("click", () => handleProcTranslateApply("inplace"));
-    elements.procInternalFieldsToggleBtn?.addEventListener("click", toggleProcInternalFields);
+    elements.procColumnsDropdownBtn?.addEventListener("click", e => {
+        e.stopPropagation();
+        toggleProcurementDropdown(elements.procColumnsDropdown);
+    });
+    elements.procColumnsDropdown?.addEventListener("change", e => {
+        const cb = e.target.closest("[data-col-toggle]");
+        if (cb) toggleProcColumn(cb.dataset.colToggle, cb.checked);
+    });
+    // Library search combobox
+    document.getElementById("procLibSearchInput")?.addEventListener("focus", openProcLibDropdown);
+    document.getElementById("procLibSearchInput")?.addEventListener("input", e => {
+        renderProcLibItems(filterProcLibItems(e.target.value), e.target.value);
+    });
+    document.getElementById("procLibDropdown")?.addEventListener("click", handleProcLibDropdownClick);
+    document.addEventListener("click", e => {
+        const wrap = document.getElementById("procLibDropdown")?.closest(".proc-lib-combobox-wrap");
+        if (wrap && !wrap.contains(e.target)) closeProcLibDropdown();
+    });
     elements.saveCompanyProfileBtn.addEventListener("click", saveCompanyProfile);
     elements.addSavedItemBtn.addEventListener("click", addSavedItemFromModal);
     elements.savedItemsList.addEventListener("click", handleSavedItemsListClick);
@@ -5450,32 +5475,136 @@ async function archiveCatalogItemFromModal() {
     setImportStatus("Library item archived. Existing document line items were not changed.");
 }
 
-// ── Internal fields toggle ─────────────────────────────────────
+// ── Column visibility (Columns dropdown) ──────────────────────
 
-function toggleProcInternalFields() {
+function toggleProcColumn(colName, forceState) {
     const wrap = elements.procurementSheetModal?.querySelector(".procurement-table-wrap");
-    const btn = elements.procInternalFieldsToggleBtn;
-    if (!wrap || !btn) return;
-    const showing = wrap.classList.toggle("proc-show-internal");
-    btn.textContent = showing ? "Hide internal fields" : "Show internal fields";
-    btn.classList.toggle("active", showing);
+    if (!wrap) return;
+    const cls = `proc-show-col-${colName}`;
+    const show = typeof forceState === "boolean" ? forceState : !wrap.classList.contains(cls);
+    wrap.classList.toggle(cls, show);
+    const cb = elements.procurementSheetModal?.querySelector(`[data-col-toggle="${colName}"]`);
+    if (cb) cb.checked = show;
+}
+
+function initProcColumnsState() {
+    const wrap = elements.procurementSheetModal?.querySelector(".procurement-table-wrap");
+    if (wrap) {
+        wrap.classList.remove("proc-show-col-lead-time", "proc-show-col-supplier", "proc-show-col-currency", "proc-show-col-notes");
+    }
+    elements.procurementSheetModal?.querySelectorAll("[data-col-toggle]").forEach(cb => { cb.checked = false; });
 }
 
 function autoShowInternalFieldsIfNeeded() {
     const rows = elements.procurementRowsContainer?.querySelectorAll(".procurement-row") || [];
-    const hasData = Array.from(rows).some(row => {
-        const lt = row.querySelector('[data-procurement-field="leadTime"]')?.value.trim();
-        const sup = row.querySelector('[data-procurement-field="supplier"]')?.value.trim();
-        return lt || sup;
-    });
-    if (!hasData) return;
-    const wrap = elements.procurementSheetModal?.querySelector(".procurement-table-wrap");
-    const btn = elements.procInternalFieldsToggleBtn;
-    if (wrap) wrap.classList.add("proc-show-internal");
-    if (btn) {
-        btn.textContent = "Hide internal fields";
-        btn.classList.add("active");
+    const hasLT  = Array.from(rows).some(r => r.querySelector('[data-procurement-field="leadTime"]')?.value.trim());
+    const hasSup = Array.from(rows).some(r => r.querySelector('[data-procurement-field="supplier"]')?.value.trim());
+    if (hasLT)  toggleProcColumn("lead-time", true);
+    if (hasSup) toggleProcColumn("supplier",  true);
+}
+
+// ── Library search combobox ────────────────────────────────────
+
+function filterProcLibItems(query) {
+    const q = query.toLowerCase().trim();
+    const all = getActiveLibraryItems();
+    if (!q) return all;
+    return all.filter(item =>
+        (item.name || "").toLowerCase().includes(q) ||
+        (item.brand || "").toLowerCase().includes(q) ||
+        (item.referenceId || "").toLowerCase().includes(q)
+    );
+}
+
+function renderProcLibItems(items, query) {
+    const dropdown = document.getElementById("procLibDropdown");
+    if (!dropdown) return;
+    const createRow = `<div class="proc-lib-option proc-lib-create-opt" data-proc-lib-create="1"><span>+ Create new item</span></div>`;
+    if (!items.length) {
+        dropdown.innerHTML = `<div class="proc-lib-empty">No matches found.</div>${createRow}`;
+    } else {
+        dropdown.innerHTML = items.map(item => {
+            const meta = [item.brand, item.packSize || item.unitSize, item.unit].filter(Boolean).join(" · ");
+            const price = (item.sellPrice != null && item.sellPrice !== "") ? ` · ${Number(item.sellPrice).toFixed(2)} ${item.currency || ""}`.trimEnd() : "";
+            return `<div class="proc-lib-option" data-item-id="${escapeHtml(item.id)}" role="option" tabindex="-1">
+                <span class="proc-lib-option-name">${escapeHtml(item.name)}</span>
+                ${(meta || price) ? `<span class="proc-lib-option-meta">${escapeHtml(meta + price)}</span>` : ""}
+            </div>`;
+        }).join("") + createRow;
     }
+    dropdown.hidden = false;
+    document.getElementById("procLibSearchInput")?.setAttribute("aria-expanded", "true");
+}
+
+function openProcLibDropdown() {
+    const input = document.getElementById("procLibSearchInput");
+    renderProcLibItems(filterProcLibItems(input?.value || ""), input?.value || "");
+}
+
+function closeProcLibDropdown() {
+    const dropdown = document.getElementById("procLibDropdown");
+    if (dropdown) dropdown.hidden = true;
+    document.getElementById("procLibSearchInput")?.setAttribute("aria-expanded", "false");
+}
+
+function handleProcLibDropdownClick(event) {
+    const createOpt = event.target.closest("[data-proc-lib-create]");
+    if (createOpt) {
+        closeProcLibDropdown();
+        openCatalogItemModal({ returnToProcurement: true });
+        return;
+    }
+    const opt = event.target.closest("[data-item-id]");
+    if (!opt) return;
+    const item = state.catalogItems.find(i => i.id === opt.dataset.itemId);
+    if (item) {
+        insertLibraryItemIntoProcurement(item);
+        const input = document.getElementById("procLibSearchInput");
+        if (input) input.value = "";
+        closeProcLibDropdown();
+    }
+}
+
+// ── Row totals ─────────────────────────────────────────────────
+
+function refreshProcurementRowTotals() {
+    elements.procurementRowsContainer?.querySelectorAll(".procurement-row").forEach(row => {
+        const tbd = row.querySelector('[data-procurement-field="quantityTbd"]')?.checked;
+        const qty = Number.parseFloat(row.querySelector('[data-procurement-field="quantity"]')?.value) || 0;
+        const price = Number.parseFloat(row.querySelector('[data-procurement-field="unitPrice"]')?.value) || 0;
+        const totalEl = row.querySelector(".proc-row-total");
+        if (!totalEl) return;
+        if (tbd) {
+            totalEl.textContent = "TBD";
+            totalEl.classList.remove("has-value");
+        } else if (qty > 0 && price > 0) {
+            totalEl.textContent = (qty * price).toFixed(2);
+            totalEl.classList.add("has-value");
+        } else {
+            totalEl.textContent = "—";
+            totalEl.classList.remove("has-value");
+        }
+    });
+}
+
+// ── Notes icon ─────────────────────────────────────────────────
+
+function handleProcNotesIconClick(rowEl) {
+    const isOpen = rowEl.classList.toggle("proc-row-notes-open");
+    const btn = rowEl.querySelector(".proc-notes-btn");
+    if (btn) btn.classList.toggle("notes-open", isOpen);
+    if (isOpen) {
+        rowEl.querySelector('[data-procurement-field="notes"]')?.focus();
+    }
+}
+
+function updateProcNotesIconDot(rowEl) {
+    const notes = rowEl.querySelector('[data-procurement-field="notes"]')?.value.trim();
+    const btn = rowEl.querySelector(".proc-notes-btn");
+    const dot = rowEl.querySelector(".proc-notes-dot");
+    if (!btn || !dot) return;
+    btn.classList.toggle("has-notes", Boolean(notes));
+    dot.hidden = !notes;
 }
 
 // ── Translation panel ──────────────────────────────────────────
@@ -5659,6 +5788,12 @@ function syncProcurementLibrarySelect() {
     if (items.some(item => item.id === currentValue)) {
         elements.procurementLibrarySelect.value = currentValue;
     }
+    // Refresh combobox if open
+    const dropdown = document.getElementById("procLibDropdown");
+    const input = document.getElementById("procLibSearchInput");
+    if (dropdown && !dropdown.hidden) {
+        renderProcLibItems(filterProcLibItems(input?.value || ""), input?.value || "");
+    }
 }
 
 function syncDocumentLibrarySelect() {
@@ -5722,25 +5857,31 @@ function createProcurementSnapshotFromLibraryItem(item) {
 function getProcurementRowMarkup(row = {}) {
     const data = createProcurementRowData(row);
     const tbdClass = data.quantityTbd ? " procurement-row--tbd" : "";
-    const tbdTip = "TBD = To Be Determined. Use when the quantity is not yet confirmed. Pricing and supplier info can still be filled in, and you can convert this item to a quote later.";
+    const hasNotes = Boolean(data.notes);
+    const tbdTip = "TBD = To Be Determined. Use this when the quantity is not yet confirmed — it lets you price items before final quantities are known. Uncheck TBD once you have the actual quantity and enter it directly.";
+    const price = Number(data.unitPrice || 0);
+    const qty = data.quantityTbd ? 0 : (Number.parseFloat(data.quantity) || 0);
+    const lineTotal = qty > 0 && price > 0 ? (qty * price).toFixed(2) : null;
     return `
         <tr class="procurement-row${tbdClass}" data-procurement-row-id="${escapeHtml(data.id)}" data-library-item-id="${escapeHtml(data.libraryItemId)}">
             <td class="proc-select-col"><input type="checkbox" class="procurement-row-select" aria-label="Select row"></td>
             <td><span class="procurement-line-number">${escapeHtml(String(data.lineNumber))}</span></td>
-            <td><textarea data-procurement-field="description" rows="2" placeholder="Item description">${escapeHtml(data.description)}</textarea></td>
+            <td class="proc-td-desc"><textarea data-procurement-field="description" rows="2" placeholder="Item description">${escapeHtml(data.description)}</textarea></td>
             <td><input type="text" data-procurement-field="brand" value="${escapeHtml(data.brand)}"></td>
             <td><input type="text" data-procurement-field="packSize" value="${escapeHtml(data.packSize)}"></td>
             <td><input type="text" data-procurement-field="unit" value="${escapeHtml(data.unit)}"></td>
-            <td><input type="number" step="0.01" min="0" data-procurement-field="unitPrice" value="${escapeHtml(String(Number(data.unitPrice || 0).toFixed(2)))}"></td>
-            <td><input type="text" data-procurement-field="currency" value="${escapeHtml(data.currency)}"></td>
-            <td class="proc-internal-col"><input type="text" data-procurement-field="leadTime" value="${escapeHtml(data.leadTime)}"></td>
-            <td class="proc-internal-col"><input type="text" data-procurement-field="supplier" value="${escapeHtml(data.supplier)}"></td>
+            <td><input type="number" step="0.01" min="0" data-procurement-field="unitPrice" value="${escapeHtml(String(price.toFixed(2)))}"></td>
             <td class="proc-qty-cell">
                 <input type="text" data-procurement-field="quantity" value="${escapeHtml(data.quantity)}" ${data.quantityTbd ? "disabled" : ""} placeholder="Qty">
                 <label class="procurement-tbd-toggle" title="${escapeHtml(tbdTip)}"><input type="checkbox" data-procurement-field="quantityTbd" ${data.quantityTbd ? "checked" : ""}> TBD <span class="tbd-help" aria-hidden="true" title="${escapeHtml(tbdTip)}">?</span></label>
             </td>
-            <td><textarea data-procurement-field="notes" rows="2" placeholder="Row notes">${escapeHtml(data.notes)}</textarea></td>
+            <td class="proc-total-cell"><span class="proc-row-total${lineTotal ? " has-value" : ""}">${data.quantityTbd ? "TBD" : (lineTotal || "—")}</span></td>
+            <td class="proc-col-lead-time"><input type="text" data-procurement-field="leadTime" value="${escapeHtml(data.leadTime)}"></td>
+            <td class="proc-col-supplier"><input type="text" data-procurement-field="supplier" value="${escapeHtml(data.supplier)}"></td>
+            <td class="proc-col-currency"><input type="text" data-procurement-field="currency" value="${escapeHtml(data.currency)}"></td>
+            <td class="proc-col-notes"><textarea data-procurement-field="notes" rows="2" placeholder="Row notes">${escapeHtml(data.notes)}</textarea></td>
             <td class="procurement-row-actions">
+                <button type="button" class="proc-notes-btn${hasNotes ? " has-notes" : ""}" data-proc-notes="${escapeHtml(data.id)}" aria-label="Row notes" title="Row notes"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2" width="11" height="12" rx="1.5"/><line x1="5" y1="5.5" x2="11" y2="5.5"/><line x1="5" y1="8" x2="11" y2="8"/><line x1="5" y1="10.5" x2="8.5" y2="10.5"/></svg><span class="proc-notes-dot"${hasNotes ? "" : " hidden"}></span></button>
                 <button type="button" class="item-to-doc-btn" data-send-to-doc="${escapeHtml(data.id)}" aria-label="Add to open document" title="Add to open document"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2h7l3 3v9H3z"/><path d="M10 2v3h3"/><path d="M5.5 9l2 2 3-3"/></svg></button>
                 <button type="button" class="item-del-btn" data-remove-procurement-row="${escapeHtml(data.id)}" aria-label="Remove row" title="Remove row"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg></button>
             </td>
@@ -5777,6 +5918,7 @@ function handleProcurementRowsChange(event) {
             if (toggle.checked) quantityInput.value = "";
         }
         row?.classList.toggle("procurement-row--tbd", toggle.checked);
+        refreshProcurementRowTotals();
         return;
     }
 
@@ -5811,6 +5953,13 @@ function handleSelectAllProcurementRows(event) {
 }
 
 function handleProcurementRowsClick(event) {
+    const notesBtn = event.target.closest("[data-proc-notes]");
+    if (notesBtn) {
+        const rowEl = notesBtn.closest(".procurement-row");
+        if (rowEl) handleProcNotesIconClick(rowEl);
+        return;
+    }
+
     const sendToDocButton = event.target.closest("[data-send-to-doc]");
     if (sendToDocButton) {
         const rowEl = sendToDocButton.closest(".procurement-row");
@@ -5919,12 +6068,8 @@ function populateProcurementEditor(sheet = null, initialRows = null) {
     elements.procurementCurrencyInput.value = doc.currency || "USD";
     elements.procurementNotesInput.value = doc.notes || "";
     resetProcTranslatePanel();
-    const tableWrap = elements.procurementSheetModal?.querySelector(".procurement-table-wrap");
-    if (tableWrap) tableWrap.classList.remove("proc-show-internal");
-    if (elements.procInternalFieldsToggleBtn) {
-        elements.procInternalFieldsToggleBtn.textContent = "Show internal fields";
-        elements.procInternalFieldsToggleBtn.classList.remove("active");
-    }
+    initProcColumnsState();
+    closeProcLibDropdown();
     elements.procurementRowsContainer.innerHTML = "";
     const rows = initialRows || (Array.isArray(doc.procurementItems) ? doc.procurementItems : []);
     if (rows.length) {
@@ -5932,6 +6077,7 @@ function populateProcurementEditor(sheet = null, initialRows = null) {
     } else {
         addProcurementRow();
     }
+    refreshProcurementRowTotals();
     syncProcurementLibrarySelect();
     autoShowInternalFieldsIfNeeded();
 }
@@ -6313,8 +6459,9 @@ function toggleProcurementDropdown(dropdown) {
     }
 }
 
-function closeProcurementDropdowns() {
+function closeProcurementDropdowns(event) {
     document.querySelectorAll(".proc-dropdown.open").forEach(d => {
+        if (event && d.classList.contains("proc-dropdown-persist") && d.contains(event.target)) return;
         d.classList.remove("open");
         const trigger = d.querySelector(".proc-dropdown-trigger");
         if (trigger) trigger.setAttribute("aria-expanded", "false");
@@ -12368,14 +12515,14 @@ function updateModalTitle() {
 
     const saveButtonLabel = state.editingDocumentId !== null ? t("save_changes") : t("save_document");
     elements.saveBtn.innerHTML = getActionButtonMarkup(
-        '<svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 4v6h8V4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 17h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+        '<img src="/assets/icons/icon-calculator.png" alt="" class="btn-custom-icon">',
         saveButtonLabel
     );
     elements.saveBtn.removeAttribute("aria-label");
     elements.saveBtn.removeAttribute("title");
     elements.saveBtn.classList.remove("btn-icon-only");
     elements.exportPdfBtn.innerHTML = getActionButtonMarkup(
-        '<svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3v6h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 15h8M8 11h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+        '<img src="/assets/icons/icon-pdf.png" alt="" class="btn-custom-icon">',
         t("save_preview_pdf")
     );
     elements.exportPdfBtn.removeAttribute("title");
