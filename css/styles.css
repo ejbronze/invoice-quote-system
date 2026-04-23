@@ -1820,6 +1820,43 @@ body::after {
     height: auto;
 }
 
+/* ── Inline icon system ─────────────────────────────────────────── */
+/* SVGs directly inside .btn buttons */
+.btn > svg {
+    width: 1rem;
+    height: 1rem;
+    flex: 0 0 auto;
+}
+
+/* SVGs inside dropdown/tab/menu buttons */
+.doc-actions-menu-btn svg,
+.item-actions-menu-btn svg,
+.docs-new-menu-item svg,
+.notes-drawer-tab svg,
+.proc-dropdown-menu [role="menuitem"] svg {
+    width: 0.9rem;
+    height: 0.9rem;
+    flex: 0 0 auto;
+    opacity: 0.75;
+}
+
+/* Show icon at full opacity on hover */
+.doc-actions-menu-btn:hover svg,
+.item-actions-menu-btn:hover svg,
+.docs-new-menu-item:hover svg,
+.notes-drawer-tab:hover svg,
+.notes-drawer-tab.is-active svg,
+.proc-dropdown-menu [role="menuitem"]:hover svg {
+    opacity: 1;
+}
+
+/* Procurement dropdown menu item layout */
+.proc-dropdown-menu [role="menuitem"] {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .btn-icon-only {
     min-width: 2.9rem;
     padding-left: 0.85rem;
@@ -3129,6 +3166,9 @@ body::after {
     font-weight: 700;
     cursor: pointer;
     font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .doc-actions-menu-btn:hover,
@@ -11398,6 +11438,9 @@ body {
     font-weight: 600;
     text-align: left;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .docs-new-menu-item:hover {
@@ -13241,6 +13284,9 @@ body #procurementSheetModal:not([hidden]) {
     margin-bottom: -1px;
     transition: color 0.15s, border-color 0.15s;
     border-radius: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
 }
 .notes-drawer-tab:hover {
     color: var(--text);

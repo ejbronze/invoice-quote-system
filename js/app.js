@@ -123,6 +123,29 @@ const LANGUAGE_LOCALES = {
     fr: "fr-FR"
 };
 const APP_LAST_UPDATED = "2026-04-22T18:00:00";
+
+const ICONS = {
+    plus:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`,
+    trash:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 4h6M7 7l1 12h8l1-12M10 11v5M14 11v5"/></svg>`,
+    convert:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 16V4M7 4 3 8M7 4l4 4M17 8v12M17 20l4-4M17 20l-4-4"/></svg>`,
+    download:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M12 3v12M8 11l4 4 4-4"/></svg>`,
+    upload:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M12 21V9M16 13l-4-4-4 4"/></svg>`,
+    fileText:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h5"/></svg>`,
+    spreadsheet: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 10l4 4M13 10l-4 4"/></svg>`,
+    payment:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>`,
+    circle:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="10"/></svg>`,
+    checkCircle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+    clock:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    send:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`,
+    save:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v6h8V4"/><path d="M9 17h6"/></svg>`,
+    notepad:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 12h8M8 16h5"/></svg>`,
+    quote:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h8"/></svg>`,
+    invoice:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 7h10M7 12h6M7 17h4"/></svg>`,
+    procurement: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M2 8h20M2 14h20M8 2v20M14 2v20"/></svg>`,
+    library:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`,
+    insert:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M5 19h14"/></svg>`,
+};
+
 const BRAND = window.SANTO_BRAND || {
     name: "SantoSync",
     studioName: "Palmchat Innovations Lab",
@@ -1628,9 +1651,9 @@ function applyTranslations() {
     elements.topbarSignOutBtn.textContent = t("sign_out");
     if (elements.mobileDrawerSignOutBtn) elements.mobileDrawerSignOutBtn.textContent = t("sign_out");
     elements.newMenuBtn.textContent = `+ ${t("new_action")}`;
-    elements.newQuoteMenuBtn.textContent = t("new_quote");
-    elements.newInvoiceMenuBtn.textContent = t("new_invoice");
-    if (elements.newProcurementMenuBtn) elements.newProcurementMenuBtn.textContent = t("new_procurement_sheet");
+    elements.newQuoteMenuBtn.innerHTML = `${ICONS.quote}<span>${escapeHtml(t("new_quote"))}</span>`;
+    elements.newInvoiceMenuBtn.innerHTML = `${ICONS.invoice}<span>${escapeHtml(t("new_invoice"))}</span>`;
+    if (elements.newProcurementMenuBtn) elements.newProcurementMenuBtn.innerHTML = `${ICONS.procurement}<span>${escapeHtml(t("new_procurement_sheet"))}</span>`;
     elements.newStatementMenuBtn.textContent = t("open_statement_export");
     updateRuntimeModeBadge();
     elements.languageSelect.options[0].textContent = "🇺🇸 English";
@@ -1676,7 +1699,7 @@ function applyTranslations() {
     elements.totalValueHint.textContent = "";
     setElementText("#catalogHeading", t("catalog_heading"));
     setElementText("#catalogCopy", t("catalog_copy"));
-    setElementText("#openCatalogItemModalBtn", t("add_catalog_item"));
+    setElementHtml("#openCatalogItemModalBtn", `${ICONS.plus}<span>${escapeHtml(t("add_catalog_item"))}</span>`);
     setElementText("#catalogItemModalTitle", state.editingCatalogItemId ? t("update_catalog_item") : t("add_catalog_item"));
     setElementText("#catalogItemNameLabel", t("item_name"));
     setElementText("#catalogItemCostLabel", "Cost Price");
@@ -4615,7 +4638,7 @@ function showCatalogDocPicker() {
     }
     elements.catalogDetailsDocPicker.hidden = false;
     if (elements.catalogDetailsAddToDocBtn) {
-        elements.catalogDetailsAddToDocBtn.textContent = "Cancel";
+        elements.catalogDetailsAddToDocBtn.innerHTML = `${ICONS.circle}<span>Cancel</span>`;
         elements.catalogDetailsAddToDocBtn.dataset.pickerOpen = "1";
     }
 }
@@ -4624,7 +4647,7 @@ function hideCatalogDocPicker() {
     if (!elements.catalogDetailsDocPicker) return;
     elements.catalogDetailsDocPicker.hidden = true;
     if (elements.catalogDetailsAddToDocBtn) {
-        elements.catalogDetailsAddToDocBtn.textContent = "Add to Document";
+        elements.catalogDetailsAddToDocBtn.innerHTML = `${ICONS.insert}<span>Add to Document</span>`;
         delete elements.catalogDetailsAddToDocBtn.dataset.pickerOpen;
     }
 }
@@ -14780,14 +14803,14 @@ function getDocumentCardMarkup(doc) {
                         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg>
                     </button>
                     <div class="doc-actions-menu" data-document-menu="${escapeHtml(String(doc.id))}" hidden style="display:none;">
-                        ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="quick-payment" data-id="${escapeHtml(String(doc.id))}">Add Payment</button>` : ""}
-                        ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="unpaid" data-id="${escapeHtml(String(doc.id))}">${escapeHtml(t("mark_as_unpaid"))}</button>` : ""}
-                        ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="pending" data-id="${escapeHtml(String(doc.id))}">${escapeHtml(t("mark_as_pending"))}</button>` : ""}
-                        ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="paid" data-id="${escapeHtml(String(doc.id))}">${escapeHtml(t("mark_as_paid"))}</button>` : ""}
-                        ${isProcurement ? `<button type="button" class="doc-actions-menu-btn" data-action="export-csv" data-id="${escapeHtml(String(doc.id))}">Export CSV</button>` : ""}
-                        ${isProcurement ? `<button type="button" class="doc-actions-menu-btn" data-action="export-excel" data-id="${escapeHtml(String(doc.id))}">Export Excel</button>` : ""}
-                        <button type="button" class="doc-actions-menu-btn" data-action="convert" data-id="${escapeHtml(String(doc.id))}" data-target-type="${doc.type === "quote" ? "invoice" : "quote"}">${escapeHtml(isProcurement ? "Convert to Quote" : t(doc.type === "quote" ? "convert_to_invoice" : "convert_to_quote"))}</button>
-                        <button type="button" class="doc-actions-menu-btn doc-actions-menu-btn-danger" data-action="delete" data-id="${escapeHtml(String(doc.id))}">${escapeHtml(t("delete"))}</button>
+                        ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="quick-payment" data-id="${escapeHtml(String(doc.id))}">${ICONS.payment}<span>Add Payment</span></button>` : ""}
+                        ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="unpaid" data-id="${escapeHtml(String(doc.id))}">${ICONS.circle}<span>${escapeHtml(t("mark_as_unpaid"))}</span></button>` : ""}
+                        ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="pending" data-id="${escapeHtml(String(doc.id))}">${ICONS.clock}<span>${escapeHtml(t("mark_as_pending"))}</span></button>` : ""}
+                        ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="paid" data-id="${escapeHtml(String(doc.id))}">${ICONS.checkCircle}<span>${escapeHtml(t("mark_as_paid"))}</span></button>` : ""}
+                        ${isProcurement ? `<button type="button" class="doc-actions-menu-btn" data-action="export-csv" data-id="${escapeHtml(String(doc.id))}">${ICONS.fileText}<span>Export CSV</span></button>` : ""}
+                        ${isProcurement ? `<button type="button" class="doc-actions-menu-btn" data-action="export-excel" data-id="${escapeHtml(String(doc.id))}">${ICONS.spreadsheet}<span>Export Excel</span></button>` : ""}
+                        <button type="button" class="doc-actions-menu-btn" data-action="convert" data-id="${escapeHtml(String(doc.id))}" data-target-type="${doc.type === "quote" ? "invoice" : "quote"}">${ICONS.convert}<span>${escapeHtml(isProcurement ? "Convert to Quote" : t(doc.type === "quote" ? "convert_to_invoice" : "convert_to_quote"))}</span></button>
+                        <button type="button" class="doc-actions-menu-btn doc-actions-menu-btn-danger" data-action="delete" data-id="${escapeHtml(String(doc.id))}">${ICONS.trash}<span>${escapeHtml(t("delete"))}</span></button>
                     </div>
                 </div>
             </div>
