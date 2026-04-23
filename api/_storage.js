@@ -292,15 +292,29 @@ function normalizeCatalogItems(items) {
             .filter(item => item && typeof item === "object")
             .map(item => ({
                 id: String(item.id || `catalog-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+                referenceId: String(item.referenceId || item.internalReferenceId || "").trim(),
                 name: String(item.name || "").trim(),
                 details: String(item.details || "").trim(),
                 notes: String(item.notes || "").trim(),
-                price: Number.parseFloat(item.price) || 0,
+                costPrice: Number.parseFloat(item.costPrice) || 0,
+                price: Number.parseFloat(item.price ?? item.sellPrice) || 0,
+                sellPrice: Number.parseFloat(item.sellPrice ?? item.price) || 0,
+                currency: String(item.currency || "USD").trim() || "USD",
+                taxIncluded: Boolean(item.taxIncluded),
                 dateUpdated: String(item.dateUpdated || new Date().toISOString()),
                 category: String(item.category || "").trim(),
                 brand: String(item.brand || "").trim(),
-                unitSize: String(item.unitSize || "").trim(),
-                vendor: String(item.vendor || "").trim()
+                unitSize: String(item.unitSize || item.packSize || "").trim(),
+                packSize: String(item.packSize || item.unitSize || "").trim(),
+                unit: String(item.unit || item.unitOfMeasure || "").trim(),
+                vendor: String(item.vendor || item.supplier || "").trim(),
+                supplier: String(item.supplier || item.vendor || "").trim(),
+                leadTime: String(item.leadTime || "").trim(),
+                country: String(item.country || item.sourceCountry || item.source || "").trim(),
+                tags: Array.isArray(item.tags)
+                    ? item.tags.map(tag => String(tag || "").trim()).filter(Boolean)
+                    : String(item.tags || "").split(",").map(tag => tag.trim()).filter(Boolean),
+                archived: Boolean(item.archived)
             }))
             .filter(item => item.name)
         : [];

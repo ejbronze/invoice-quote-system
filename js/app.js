@@ -63,7 +63,11 @@ const state = {
     activeNotesTargetType: null,
     activeNotesTargetId: null,
     activeNotesRecordTargetType: null,
-    activeNotesRecordTargetId: null
+    activeNotesRecordTargetId: null,
+    pricingSearchQuery: "",
+    pricingCategoryFilter: "all",
+    pricingSupplierFilter: "all",
+    editingProcurementSheetId: null
 };
 
 const DOP_PER_USD = 59;
@@ -190,11 +194,11 @@ const TRANSLATIONS = {
         save_notes: "Save notes",
         issue_notes_saved: "Notes saved.",
         new_report: "New",
-        catalog: "Catalog",
-        catalog_heading: "Catalog",
-        catalog_copy: "Review every item captured from quotes, invoices, and the cart, and add manual catalog records for future use.",
-        add_catalog_item: "Add Catalog Item",
-        no_catalog_items: "No catalog items yet.",
+        catalog: "Pricing Library",
+        catalog_heading: "Pricing Library",
+        catalog_copy: "Maintain reusable sourced items with supplier, packaging, cost, sell price, and lead-time details.",
+        add_catalog_item: "Add Library Item",
+        no_catalog_items: "No pricing library items yet.",
         item_name: "Item Name",
         price: "Price",
         item_details: "Details",
@@ -202,14 +206,14 @@ const TRANSLATIONS = {
         date_updated: "Date Updated",
         category: "Category",
         brand: "Brand",
-        unit_size: "Unit Size",
-        vendor: "Vendor",
+        unit_size: "Pack Size",
+        vendor: "Supplier",
         source: "Source",
         source_manual: "Manual",
         source_cart: "Cart",
         source_document: "Document",
-        save_catalog_item: "Save Catalog Item",
-        update_catalog_item: "Update Catalog Item",
+        save_catalog_item: "Save Library Item",
+        update_catalog_item: "Update Library Item",
         report_submitted_success: "Report submitted successfully.",
         report_required_error: "Add a summary and details before submitting.",
         report_delete_confirm: "Delete this issue report?",
@@ -263,6 +267,7 @@ const TRANSLATIONS = {
         new_action: "New",
         new_quote: "New Quote",
         new_invoice: "New Invoice",
+        new_procurement_sheet: "New Procurement Sheet",
         invoice_reports: "Invoice Reports",
         statements: "Statements",
         statements_copy: "Open previously generated Statement of Account exports and keep them alongside the rest of your workspace output.",
@@ -666,11 +671,11 @@ const TRANSLATIONS = {
         save_notes: "Guardar notas",
         issue_notes_saved: "Notas guardadas.",
         new_report: "Nuevo",
-        catalog: "Catálogo",
-        catalog_heading: "Catálogo",
+        catalog: "Pricing Library",
+        catalog_heading: "Pricing Library",
         catalog_copy: "Revisa cada artículo capturado desde cotizaciones, facturas y el carrito, y agrega registros manuales para uso futuro.",
-        add_catalog_item: "Agregar Artículo al Catálogo",
-        no_catalog_items: "Aún no hay artículos en el catálogo.",
+        add_catalog_item: "Add Library Item",
+        no_catalog_items: "No pricing library items yet.",
         item_name: "Nombre del Artículo",
         price: "Precio",
         item_details: "Detalles",
@@ -684,8 +689,8 @@ const TRANSLATIONS = {
         source_manual: "Manual",
         source_cart: "Carrito",
         source_document: "Documento",
-        save_catalog_item: "Guardar Artículo del Catálogo",
-        update_catalog_item: "Actualizar Artículo del Catálogo",
+        save_catalog_item: "Save Library Item",
+        update_catalog_item: "Update Library Item",
         report_submitted_success: "Reporte enviado correctamente.",
         report_required_error: "Agrega un resumen y detalles antes de enviar.",
         report_delete_confirm: "¿Eliminar este reporte?",
@@ -739,6 +744,7 @@ const TRANSLATIONS = {
         new_action: "Nuevo",
         new_quote: "Nueva Cotización",
         new_invoice: "Nueva Factura",
+        new_procurement_sheet: "New Procurement Sheet",
         invoice_reports: "Reportes de Facturas",
         invoice_reports_copy: "Revisa los totales de facturas por cliente, cambia entre facturas no pagadas, pendientes y pagadas, y mantén la lista ordenada por cliente.",
         export_report_csv: "Exportar CSV",
@@ -1115,11 +1121,11 @@ const TRANSLATIONS = {
         save_notes: "Enregistrer les notes",
         issue_notes_saved: "Notes enregistrées.",
         new_report: "Nouveau",
-        catalog: "Catalogue",
-        catalog_heading: "Catalogue",
+        catalog: "Pricing Library",
+        catalog_heading: "Pricing Library",
         catalog_copy: "Consultez chaque article issu des devis, factures et du panier, et ajoutez des fiches catalogue manuelles pour plus tard.",
-        add_catalog_item: "Ajouter au Catalogue",
-        no_catalog_items: "Aucun article dans le catalogue pour le moment.",
+        add_catalog_item: "Add Library Item",
+        no_catalog_items: "No pricing library items yet.",
         item_name: "Nom de l’Article",
         price: "Prix",
         item_details: "Détails",
@@ -1133,8 +1139,8 @@ const TRANSLATIONS = {
         source_manual: "Manuel",
         source_cart: "Panier",
         source_document: "Document",
-        save_catalog_item: "Enregistrer l’Article",
-        update_catalog_item: "Mettre à Jour l’Article",
+        save_catalog_item: "Save Library Item",
+        update_catalog_item: "Update Library Item",
         report_submitted_success: "Rapport envoyé avec succès.",
         report_required_error: "Ajoutez un résumé et des détails avant l’envoi.",
         report_delete_confirm: "Supprimer ce rapport ?",
@@ -1188,6 +1194,7 @@ const TRANSLATIONS = {
         new_action: "Nouveau",
         new_quote: "Nouveau Devis",
         new_invoice: "Nouvelle Facture",
+        new_procurement_sheet: "New Procurement Sheet",
         invoice_reports: "Rapports de Factures",
         invoice_reports_copy: "Consultez les totaux de factures par client, basculez entre les factures impayees, en attente et payees, et gardez la liste triee par client.",
         export_report_csv: "Exporter CSV",
@@ -1621,6 +1628,7 @@ function applyTranslations() {
     elements.newMenuBtn.textContent = `+ ${t("new_action")}`;
     elements.newQuoteMenuBtn.textContent = t("new_quote");
     elements.newInvoiceMenuBtn.textContent = t("new_invoice");
+    if (elements.newProcurementMenuBtn) elements.newProcurementMenuBtn.textContent = t("new_procurement_sheet");
     elements.newStatementMenuBtn.textContent = t("open_statement_export");
     updateRuntimeModeBadge();
     elements.languageSelect.options[0].textContent = "🇺🇸 English";
@@ -1669,7 +1677,8 @@ function applyTranslations() {
     setElementText("#openCatalogItemModalBtn", t("add_catalog_item"));
     setElementText("#catalogItemModalTitle", state.editingCatalogItemId ? t("update_catalog_item") : t("add_catalog_item"));
     setElementText("#catalogItemNameLabel", t("item_name"));
-    setElementText("#catalogItemPriceLabel", t("unit_price_usd"));
+    setElementText("#catalogItemCostLabel", "Cost Price");
+    setElementText("#catalogItemPriceLabel", "Sell Price");
     setElementText("#catalogItemCategoryLabel", t("category"));
     setElementText("#catalogItemBrandLabel", t("brand"));
     setElementText("#catalogItemUnitSizeLabel", t("unit_size"));
@@ -1986,6 +1995,7 @@ function cacheElements() {
     elements.newMenu = document.getElementById("newMenu");
     elements.newQuoteMenuBtn = document.getElementById("newQuoteMenuBtn");
     elements.newInvoiceMenuBtn = document.getElementById("newInvoiceMenuBtn");
+    elements.newProcurementMenuBtn = document.getElementById("newProcurementMenuBtn");
     elements.newStatementMenuBtn = document.getElementById("newStatementMenuBtn");
     elements.topbarSignOutBtn = document.getElementById("topbarSignOutBtn");
     elements.mobileDrawerSignOutBtn = document.getElementById("mobileDrawerSignOutBtn");
@@ -2145,6 +2155,9 @@ function cacheElements() {
     elements.accountSessionLogList = document.getElementById("accountSessionLogList");
     elements.accountActivityLogList = document.getElementById("accountActivityLogList");
     elements.catalogGrid = document.getElementById("catalogGrid");
+    elements.pricingLibrarySearch = document.getElementById("pricingLibrarySearch");
+    elements.pricingLibraryCategoryFilter = document.getElementById("pricingLibraryCategoryFilter");
+    elements.pricingLibrarySupplierFilter = document.getElementById("pricingLibrarySupplierFilter");
     elements.openCatalogItemModalBtn = document.getElementById("openCatalogItemModalBtn");
     elements.catalogItemModal = document.getElementById("catalogItemModal");
     elements.closeCatalogItemModalBtn = document.getElementById("closeCatalogItemModalBtn");
@@ -2163,14 +2176,22 @@ function cacheElements() {
     elements.catalogDetailsText = document.getElementById("catalogDetailsText");
     elements.catalogDetailsNotes = document.getElementById("catalogDetailsNotes");
     elements.catalogItemNameInput = document.getElementById("catalogItemNameInput");
+    elements.catalogItemCostInput = document.getElementById("catalogItemCostInput");
     elements.catalogItemPriceInput = document.getElementById("catalogItemPriceInput");
+    elements.catalogItemCurrencyInput = document.getElementById("catalogItemCurrencyInput");
     elements.catalogItemCategoryInput = document.getElementById("catalogItemCategoryInput");
     elements.catalogItemBrandInput = document.getElementById("catalogItemBrandInput");
     elements.catalogItemUnitSizeInput = document.getElementById("catalogItemUnitSizeInput");
+    elements.catalogItemUnitInput = document.getElementById("catalogItemUnitInput");
     elements.catalogItemVendorInput = document.getElementById("catalogItemVendorInput");
+    elements.catalogItemLeadTimeInput = document.getElementById("catalogItemLeadTimeInput");
+    elements.catalogItemCountryInput = document.getElementById("catalogItemCountryInput");
+    elements.catalogItemTaxIncludedInput = document.getElementById("catalogItemTaxIncludedInput");
+    elements.catalogItemTagsInput = document.getElementById("catalogItemTagsInput");
     elements.catalogItemDetailsInput = document.getElementById("catalogItemDetailsInput");
     elements.catalogItemNotesInput = document.getElementById("catalogItemNotesInput");
     elements.saveCatalogItemBtn = document.getElementById("saveCatalogItemBtn");
+    elements.archiveCatalogItemBtn = document.getElementById("archiveCatalogItemBtn");
     elements.openSavedItemsBtn = document.getElementById("openSavedItemsBtn");
     elements.openSavedItemsInlineCount = document.getElementById("openSavedItemsInlineCount");
     elements.closeCompanyProfileModalBtn = document.getElementById("closeCompanyProfileModalBtn");
@@ -2283,6 +2304,9 @@ function cacheElements() {
     elements.addPaymentEntryBtn = document.getElementById("addPaymentEntryBtn");
     elements.includeSignature = document.getElementById("includeSignature");
     elements.includeStamp = document.getElementById("includeStamp");
+    elements.documentLibrarySelect = document.getElementById("documentLibrarySelect");
+    elements.insertDocumentLibraryItemBtn = document.getElementById("insertDocumentLibraryItemBtn");
+    elements.createDocumentLibraryItemBtn = document.getElementById("createDocumentLibraryItemBtn");
     elements.itemsContainer = document.getElementById("itemsContainer");
     elements.lineItemsPreviewContainer = document.getElementById("lineItemsPreviewContainer");
     elements.previewContainer = document.getElementById("previewContainer");
@@ -2294,7 +2318,25 @@ function cacheElements() {
     elements.overviewNewMenu = document.getElementById("overviewNewMenu");
     elements.overviewNewQuoteBtn = document.getElementById("overviewNewQuoteBtn");
     elements.overviewNewInvoiceBtn = document.getElementById("overviewNewInvoiceBtn");
+    elements.overviewNewProcurementBtn = document.getElementById("overviewNewProcurementBtn");
     elements.overviewNewStatementBtn = document.getElementById("overviewNewStatementBtn");
+    elements.procurementSheetModal = document.getElementById("procurementSheetModal");
+    elements.procurementSheetTitle = document.getElementById("procurementSheetTitle");
+    elements.closeProcurementSheetModalBtn = document.getElementById("closeProcurementSheetModalBtn");
+    elements.procurementRefNumberInput = document.getElementById("procurementRefNumberInput");
+    elements.procurementDateInput = document.getElementById("procurementDateInput");
+    elements.procurementClientInput = document.getElementById("procurementClientInput");
+    elements.procurementCurrencyInput = document.getElementById("procurementCurrencyInput");
+    elements.procurementNotesInput = document.getElementById("procurementNotesInput");
+    elements.procurementLibrarySelect = document.getElementById("procurementLibrarySelect");
+    elements.insertProcurementLibraryItemBtn = document.getElementById("insertProcurementLibraryItemBtn");
+    elements.createProcurementLibraryItemBtn = document.getElementById("createProcurementLibraryItemBtn");
+    elements.procurementRowsContainer = document.getElementById("procurementRowsContainer");
+    elements.addProcurementRowBtn = document.getElementById("addProcurementRowBtn");
+    elements.exportProcurementCsvBtn = document.getElementById("exportProcurementCsvBtn");
+    elements.exportProcurementExcelBtn = document.getElementById("exportProcurementExcelBtn");
+    elements.convertProcurementToQuoteBtn = document.getElementById("convertProcurementToQuoteBtn");
+    elements.saveProcurementSheetBtn = document.getElementById("saveProcurementSheetBtn");
     elements.viewAllDocumentsBtn = document.getElementById("viewAllDocumentsBtn");
     elements.overviewRecentDocuments = document.getElementById("overviewRecentDocuments");
     elements.overviewSummaryGrid = document.getElementById("overviewSummaryGrid");
@@ -2349,6 +2391,10 @@ function bindEvents() {
         prepareNewDocument("invoice");
         openModal("invoice");
     });
+    elements.overviewNewProcurementBtn?.addEventListener("click", () => {
+        closeOverviewNewMenu();
+        openProcurementSheetModal();
+    });
     elements.overviewNewStatementBtn?.addEventListener("click", () => {
         closeOverviewNewMenu();
         openInvoiceReportsModal();
@@ -2362,6 +2408,10 @@ function bindEvents() {
         closeNewMenu();
         prepareNewDocument("invoice");
         openModal("invoice");
+    });
+    elements.newProcurementMenuBtn?.addEventListener("click", () => {
+        closeNewMenu();
+        openProcurementSheetModal();
     });
     elements.newStatementMenuBtn?.addEventListener("click", () => {
         closeNewMenu();
@@ -2411,7 +2461,20 @@ function bindEvents() {
     elements.closeCatalogItemModalBtn.addEventListener("click", closeCatalogItemModal);
     elements.closeCatalogDetailsModalBtn.addEventListener("click", closeCatalogDetailsModal);
     elements.saveCatalogItemBtn.addEventListener("click", saveCatalogItemFromModal);
+    elements.archiveCatalogItemBtn?.addEventListener("click", archiveCatalogItemFromModal);
     elements.catalogGrid.addEventListener("click", handleCatalogGridClick);
+    elements.pricingLibrarySearch?.addEventListener("input", event => {
+        state.pricingSearchQuery = event.target.value.trim().toLowerCase();
+        renderCatalog();
+    });
+    elements.pricingLibraryCategoryFilter?.addEventListener("change", event => {
+        state.pricingCategoryFilter = event.target.value || "all";
+        renderCatalog();
+    });
+    elements.pricingLibrarySupplierFilter?.addEventListener("change", event => {
+        state.pricingSupplierFilter = event.target.value || "all";
+        renderCatalog();
+    });
     elements.statementExportsList?.addEventListener("click", handleStatementExportsListClick);
     elements.closeAboutModalBtn.addEventListener("click", closeAboutModal);
     elements.footerHelpBtn?.addEventListener("click", toggleHelpMenu);
@@ -2482,6 +2545,17 @@ function bindEvents() {
     elements.statementEditNoteInput?.addEventListener("input", syncStatementEditTotalsUi);
     elements.previewStatementEditBtn?.addEventListener("click", () => saveStatementEdit({ openPreview: true }));
     elements.saveStatementEditBtn?.addEventListener("click", () => saveStatementEdit({ openPreview: false }));
+    elements.closeProcurementSheetModalBtn?.addEventListener("click", closeProcurementSheetModal);
+    elements.addProcurementRowBtn?.addEventListener("click", () => addProcurementRow());
+    elements.procurementRowsContainer?.addEventListener("input", refreshProcurementRowOrdering);
+    elements.procurementRowsContainer?.addEventListener("change", handleProcurementRowsChange);
+    elements.procurementRowsContainer?.addEventListener("click", handleProcurementRowsClick);
+    elements.insertProcurementLibraryItemBtn?.addEventListener("click", insertSelectedLibraryItemIntoProcurement);
+    elements.createProcurementLibraryItemBtn?.addEventListener("click", () => openCatalogItemModal({ returnToProcurement: true }));
+    elements.saveProcurementSheetBtn?.addEventListener("click", () => saveProcurementSheet({ keepOpen: true }));
+    elements.exportProcurementCsvBtn?.addEventListener("click", exportOpenProcurementCsv);
+    elements.exportProcurementExcelBtn?.addEventListener("click", exportOpenProcurementExcel);
+    elements.convertProcurementToQuoteBtn?.addEventListener("click", convertOpenProcurementToQuote);
     elements.saveCompanyProfileBtn.addEventListener("click", saveCompanyProfile);
     elements.addSavedItemBtn.addEventListener("click", addSavedItemFromModal);
     elements.savedItemsList.addEventListener("click", handleSavedItemsListClick);
@@ -2492,7 +2566,12 @@ function bindEvents() {
             return;
         }
         setActivePage("documents");
-        editDocument(button.dataset.openOverviewDoc);
+        const doc = getDocumentById(button.dataset.openOverviewDoc);
+        if (doc?.type === "procurement") {
+            openProcurementSheetModal(doc);
+        } else {
+            editDocument(button.dataset.openOverviewDoc);
+        }
     });
     elements.overviewSummaryGrid?.addEventListener("click", event => {
         const button = event.target.closest("[data-summary-nav]");
@@ -2566,6 +2645,8 @@ function bindEvents() {
     elements.saveClientBtn.addEventListener("click", saveClient);
     elements.addItemBtn.addEventListener("click", addItem);
     elements.addAnotherItemBtn?.addEventListener("click", addItem);
+    elements.insertDocumentLibraryItemBtn?.addEventListener("click", insertSelectedLibraryItemIntoDocument);
+    elements.createDocumentLibraryItemBtn?.addEventListener("click", () => openCatalogItemModal({ returnToDocument: true }));
     elements.prevBtn.addEventListener("click", prevStep);
     elements.nextBtn.addEventListener("click", nextStep);
     elements.saveBtn.addEventListener("click", saveDocumentOnly);
@@ -3425,15 +3506,27 @@ function normalizeCatalogItems(items) {
             .filter(item => item && typeof item === "object")
             .map(item => ({
                 id: String(item.id || `catalog-${Date.now()}-${Math.random().toString(36).slice(2)}`),
+                referenceId: String(item.referenceId || item.internalReferenceId || "").trim(),
                 name: String(item.name || "").trim(),
                 details: String(item.details || "").trim(),
                 notes: String(item.notes || "").trim(),
-                price: Number.parseFloat(item.price) || 0,
+                costPrice: Number.parseFloat(item.costPrice) || 0,
+                price: Number.parseFloat(item.price ?? item.sellPrice) || 0,
+                sellPrice: Number.parseFloat(item.sellPrice ?? item.price) || 0,
+                currency: String(item.currency || "USD").trim() || "USD",
+                taxIncluded: Boolean(item.taxIncluded),
                 dateUpdated: item.dateUpdated || new Date().toISOString(),
                 category: String(item.category || "").trim(),
                 brand: String(item.brand || "").trim(),
-                unitSize: String(item.unitSize || "").trim(),
-                vendor: String(item.vendor || "").trim()
+                unitSize: String(item.unitSize || item.packSize || "").trim(),
+                packSize: String(item.packSize || item.unitSize || "").trim(),
+                unit: String(item.unit || item.unitOfMeasure || "").trim(),
+                vendor: String(item.vendor || item.supplier || "").trim(),
+                supplier: String(item.supplier || item.vendor || "").trim(),
+                leadTime: String(item.leadTime || "").trim(),
+                country: String(item.country || item.sourceCountry || item.source || "").trim(),
+                tags: parseTags(Array.isArray(item.tags) ? item.tags.join(", ") : item.tags || ""),
+                archived: Boolean(item.archived)
             }))
             .filter(item => item.name)
         : [];
@@ -4174,16 +4267,28 @@ function syncActivePreviewScale() {
     }
 }
 
-function openCatalogItemModal() {
+function openCatalogItemModal(options = {}) {
     state.editingCatalogItemId = null;
+    state.catalogModalReturnToProcurement = Boolean(options.returnToProcurement);
+    state.catalogModalReturnToDocument = Boolean(options.returnToDocument);
     elements.catalogItemNameInput.value = "";
+    elements.catalogItemCostInput.value = "0";
     elements.catalogItemPriceInput.value = "0";
+    elements.catalogItemCurrencyInput.value = "USD";
     elements.catalogItemCategoryInput.value = "";
     elements.catalogItemBrandInput.value = "";
     elements.catalogItemUnitSizeInput.value = "";
+    elements.catalogItemUnitInput.value = "";
     elements.catalogItemVendorInput.value = "";
+    elements.catalogItemLeadTimeInput.value = "";
+    elements.catalogItemCountryInput.value = "";
+    elements.catalogItemTaxIncludedInput.checked = false;
+    elements.catalogItemTagsInput.value = "";
     elements.catalogItemDetailsInput.value = "";
     elements.catalogItemNotesInput.value = "";
+    if (elements.archiveCatalogItemBtn) {
+        elements.archiveCatalogItemBtn.hidden = true;
+    }
     setModalState(elements.catalogItemModal, true);
     applyTranslations();
 }
@@ -4191,6 +4296,8 @@ function openCatalogItemModal() {
 function closeCatalogItemModal() {
     setModalState(elements.catalogItemModal, false);
     state.editingCatalogItemId = null;
+    state.catalogModalReturnToProcurement = false;
+    state.catalogModalReturnToDocument = false;
 }
 
 function openCatalogDetailsModal(item) {
@@ -4201,12 +4308,12 @@ function openCatalogDetailsModal(item) {
     const fallbackLabel = (item.name || "Item").trim().slice(0, 2).toUpperCase() || "IT";
     setElementText("#catalogDetailsTitle", item.name || "Catalog Item");
     setElementText("#catalogDetailsName", item.name || "Untitled item");
-    setElementText("#catalogDetailsMeta", `${t(`source_${item.sourceKey}`)} · ${formatDateTime(item.dateUpdated)}`);
-    setElementText("#catalogDetailsPrice", formatCurrency(item.price || 0));
+    setElementText("#catalogDetailsMeta", `${item.referenceId || t(`source_${item.sourceKey}`)} · ${formatDateTime(item.dateUpdated)}`);
+    setElementText("#catalogDetailsPrice", formatCurrency(item.sellPrice ?? item.price ?? 0));
     setElementText("#catalogDetailsCategory", item.category || "—");
     setElementText("#catalogDetailsBrand", item.brand || "—");
-    setElementText("#catalogDetailsUnitSize", item.unitSize || "—");
-    setElementText("#catalogDetailsVendor", item.vendor || "—");
+    setElementText("#catalogDetailsUnitSize", item.packSize || item.unitSize || "—");
+    setElementText("#catalogDetailsVendor", item.supplier || item.vendor || "—");
     setElementText("#catalogDetailsText", item.details || "—");
     setElementText("#catalogDetailsNotes", item.notes || "—");
     setElementText("#catalogDetailsFallback", fallbackLabel);
@@ -4235,38 +4342,67 @@ function getCatalogEntries() {
         sourceKey: "manual"
     }));
 
-    const cartEntries = state.savedItems.map(item => ({
-        id: `cart-${item.id}`,
-        name: item.description || "Untitled item",
-        details: item.description || "",
-        notes: "",
-        price: Number(item.unitPrice || 0),
-        dateUpdated: item.createdAt || new Date().toISOString(),
-        category: "",
-        brand: "",
-        unitSize: item.quantity ? `Qty ${formatAmount(item.quantity)}` : "",
-        vendor: "",
-        imageDataUrl: typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl : "",
-        sourceKey: "cart"
-    }));
-
-    const documentEntries = state.documents.flatMap(doc => (Array.isArray(doc.items) ? doc.items : []).map((item, index) => ({
-        id: `doc-${doc.id}-${index}`,
-        name: item.description || `Item ${index + 1}`,
-        details: item.description || "",
-        notes: doc.notes || "",
-        price: Number(item.unitPrice || item.price || 0),
-        dateUpdated: doc.printedAt || doc.date || new Date().toISOString(),
-        category: "",
-        brand: "",
-        unitSize: item.quantity ? `Qty ${formatAmount(item.quantity)}` : "",
-        vendor: doc.clientName || "",
-        imageDataUrl: typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl : "",
-        sourceKey: "document"
-    })));
-
-    return [...manualEntries, ...cartEntries, ...documentEntries]
+    return manualEntries
         .sort((left, right) => Date.parse(right.dateUpdated || 0) - Date.parse(left.dateUpdated || 0));
+}
+
+function getActiveLibraryItems() {
+    return state.catalogItems.filter(item => !item.archived);
+}
+
+function catalogItemMatchesSearch(item) {
+    const query = state.pricingSearchQuery;
+    if (!query) {
+        return true;
+    }
+
+    const haystack = [
+        item.name,
+        item.referenceId,
+        item.details,
+        item.category,
+        item.brand,
+        item.supplier || item.vendor,
+        item.packSize || item.unitSize,
+        item.unit,
+        item.country,
+        ...(Array.isArray(item.tags) ? item.tags : [])
+    ].join(" ").toLowerCase();
+    return haystack.includes(query);
+}
+
+function renderPricingLibraryFilters(entries) {
+    if (!elements.pricingLibraryCategoryFilter || !elements.pricingLibrarySupplierFilter) {
+        return;
+    }
+
+    const categories = [...new Set(entries.map(item => item.category).filter(Boolean))]
+        .sort((left, right) => left.localeCompare(right));
+    const suppliers = [...new Set(entries.map(item => item.supplier || item.vendor).filter(Boolean))]
+        .sort((left, right) => left.localeCompare(right));
+    const categoryValue = state.pricingCategoryFilter;
+    const supplierValue = state.pricingSupplierFilter;
+
+    elements.pricingLibraryCategoryFilter.innerHTML = `<option value="all">All categories</option>${categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join("")}`;
+    elements.pricingLibrarySupplierFilter.innerHTML = `<option value="all">All suppliers</option>${suppliers.map(supplier => `<option value="${escapeHtml(supplier)}">${escapeHtml(supplier)}</option>`).join("")}`;
+    elements.pricingLibraryCategoryFilter.value = categories.includes(categoryValue) ? categoryValue : "all";
+    elements.pricingLibrarySupplierFilter.value = suppliers.includes(supplierValue) ? supplierValue : "all";
+    state.pricingCategoryFilter = elements.pricingLibraryCategoryFilter.value;
+    state.pricingSupplierFilter = elements.pricingLibrarySupplierFilter.value;
+}
+
+function getFilteredCatalogEntries() {
+    const entries = getCatalogEntries();
+    renderPricingLibraryFilters(entries);
+    return entries.filter(item => {
+        if (item.archived) {
+            return false;
+        }
+        const supplier = item.supplier || item.vendor || "";
+        const matchesCategory = state.pricingCategoryFilter === "all" || item.category === state.pricingCategoryFilter;
+        const matchesSupplier = state.pricingSupplierFilter === "all" || supplier === state.pricingSupplierFilter;
+        return matchesCategory && matchesSupplier && catalogItemMatchesSearch(item);
+    });
 }
 
 function renderCatalog() {
@@ -4274,16 +4410,18 @@ function renderCatalog() {
         return;
     }
 
-    const entries = getCatalogEntries();
+    const entries = getFilteredCatalogEntries();
     if (!entries.length) {
         elements.catalogGrid.innerHTML = `
             <div class="empty-state">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h10"></path>
                 </svg>
-                <p>${escapeHtml(t("no_catalog_items"))}</p>
+                <p>No pricing library items match the current filters.</p>
             </div>
         `;
+        syncProcurementLibrarySelect();
+        syncDocumentLibrarySelect();
         return;
     }
 
@@ -4297,12 +4435,15 @@ function renderCatalog() {
                 </div>
                 <div class="catalog-card-copy">
                     <strong>${escapeHtml(item.name)}</strong>
-                    <span>${escapeHtml(t(`source_${item.sourceKey}`))}</span>
+                    <span>${escapeHtml([item.brand, item.supplier || item.vendor, item.packSize || item.unitSize].filter(Boolean).join(" · ") || item.referenceId || "Library item")}</span>
+                    <small>${escapeHtml(`${item.currency || "USD"} ${formatAmount(item.sellPrice ?? item.price ?? 0)}${item.leadTime ? ` · ${item.leadTime}` : ""}`)}</small>
                 </div>
             </button>
-            ${item.sourceKey === "manual" ? `<button class="catalog-edit-btn" type="button" data-catalog-action="edit" data-catalog-id="${escapeHtml(item.id)}">${escapeHtml(t("edit"))}</button>` : ""}
+            <button class="catalog-edit-btn" type="button" data-catalog-action="edit" data-catalog-id="${escapeHtml(item.id)}">${escapeHtml(t("edit"))}</button>
         </article>
     `).join("");
+    syncProcurementLibrarySelect();
+    syncDocumentLibrarySelect();
 }
 
 function merchantColorIndex(name) {
@@ -4857,13 +4998,23 @@ function handleCatalogGridClick(event) {
 
     state.editingCatalogItemId = item.id;
     elements.catalogItemNameInput.value = item.name || "";
-    elements.catalogItemPriceInput.value = String(item.price || 0);
+    elements.catalogItemCostInput.value = String(item.costPrice || 0);
+    elements.catalogItemPriceInput.value = String(item.sellPrice ?? item.price ?? 0);
+    elements.catalogItemCurrencyInput.value = item.currency || "USD";
     elements.catalogItemCategoryInput.value = item.category || "";
     elements.catalogItemBrandInput.value = item.brand || "";
-    elements.catalogItemUnitSizeInput.value = item.unitSize || "";
-    elements.catalogItemVendorInput.value = item.vendor || "";
+    elements.catalogItemUnitSizeInput.value = item.packSize || item.unitSize || "";
+    elements.catalogItemUnitInput.value = item.unit || "";
+    elements.catalogItemVendorInput.value = item.supplier || item.vendor || "";
+    elements.catalogItemLeadTimeInput.value = item.leadTime || "";
+    elements.catalogItemCountryInput.value = item.country || "";
+    elements.catalogItemTaxIncludedInput.checked = Boolean(item.taxIncluded);
+    elements.catalogItemTagsInput.value = Array.isArray(item.tags) ? item.tags.join(", ") : "";
     elements.catalogItemDetailsInput.value = item.details || "";
     elements.catalogItemNotesInput.value = item.notes || "";
+    if (elements.archiveCatalogItemBtn) {
+        elements.archiveCatalogItemBtn.hidden = false;
+    }
     closeCatalogDetailsModal();
     setModalState(elements.catalogItemModal, true);
     applyTranslations();
@@ -4878,15 +5029,29 @@ async function saveCatalogItemFromModal() {
 
     const item = {
         id: state.editingCatalogItemId || `catalog-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        referenceId: state.editingCatalogItemId
+            ? (state.catalogItems.find(entry => entry.id === state.editingCatalogItemId)?.referenceId || `PLI-${String(state.catalogItems.length + 1).padStart(4, "0")}`)
+            : `PLI-${String(state.catalogItems.length + 1).padStart(4, "0")}`,
         name,
         details: elements.catalogItemDetailsInput.value.trim(),
         notes: elements.catalogItemNotesInput.value.trim(),
+        costPrice: Number.parseFloat(elements.catalogItemCostInput.value) || 0,
         price: Number.parseFloat(elements.catalogItemPriceInput.value) || 0,
+        sellPrice: Number.parseFloat(elements.catalogItemPriceInput.value) || 0,
+        currency: elements.catalogItemCurrencyInput.value.trim() || "USD",
+        taxIncluded: elements.catalogItemTaxIncludedInput.checked,
         dateUpdated: new Date().toISOString(),
         category: elements.catalogItemCategoryInput.value.trim(),
         brand: elements.catalogItemBrandInput.value.trim(),
         unitSize: elements.catalogItemUnitSizeInput.value.trim(),
-        vendor: elements.catalogItemVendorInput.value.trim()
+        packSize: elements.catalogItemUnitSizeInput.value.trim(),
+        unit: elements.catalogItemUnitInput.value.trim(),
+        vendor: elements.catalogItemVendorInput.value.trim(),
+        supplier: elements.catalogItemVendorInput.value.trim(),
+        leadTime: elements.catalogItemLeadTimeInput.value.trim(),
+        country: elements.catalogItemCountryInput.value.trim(),
+        tags: parseTags(elements.catalogItemTagsInput.value),
+        archived: false
     };
 
     const nextItems = state.editingCatalogItemId
@@ -4894,8 +5059,478 @@ async function saveCatalogItemFromModal() {
         : [item, ...state.catalogItems];
 
     await saveCatalogItems(nextItems);
+    syncProcurementLibrarySelect();
+    syncDocumentLibrarySelect();
+    const shouldReturnToProcurement = Boolean(state.catalogModalReturnToProcurement);
+    const shouldReturnToDocument = Boolean(state.catalogModalReturnToDocument);
     closeCatalogItemModal();
-    setActivePage("catalog");
+    if (shouldReturnToProcurement && elements.procurementSheetModal?.classList.contains("active")) {
+        elements.procurementLibrarySelect.value = item.id;
+        insertLibraryItemIntoProcurement(item);
+    } else if (shouldReturnToDocument && elements.documentModal?.classList.contains("active")) {
+        elements.documentLibrarySelect.value = item.id;
+        insertLibraryItemIntoDocument(item);
+    } else {
+        setActivePage("catalog");
+    }
+}
+
+async function archiveCatalogItemFromModal() {
+    const item = state.catalogItems.find(entry => entry.id === state.editingCatalogItemId);
+    if (!item) {
+        return;
+    }
+
+    if (!window.confirm(`Archive "${item.name}" from the pricing library? Existing documents keep their snapshots.`)) {
+        return;
+    }
+
+    await saveCatalogItems(state.catalogItems.map(entry => (
+        entry.id === item.id
+            ? { ...entry, archived: true, dateUpdated: new Date().toISOString() }
+            : entry
+    )));
+    closeCatalogItemModal();
+    setImportStatus("Library item archived. Existing document line items were not changed.");
+}
+
+function syncProcurementLibrarySelect() {
+    if (!elements.procurementLibrarySelect) {
+        return;
+    }
+
+    const currentValue = elements.procurementLibrarySelect.value;
+    const items = getActiveLibraryItems();
+    elements.procurementLibrarySelect.innerHTML = `<option value="">Choose a library item</option>${items.map(item => {
+        const meta = [item.brand, item.supplier || item.vendor, item.packSize || item.unitSize].filter(Boolean).join(" · ");
+        return `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}${meta ? ` (${escapeHtml(meta)})` : ""}</option>`;
+    }).join("")}`;
+    if (items.some(item => item.id === currentValue)) {
+        elements.procurementLibrarySelect.value = currentValue;
+    }
+}
+
+function syncDocumentLibrarySelect() {
+    if (!elements.documentLibrarySelect) {
+        return;
+    }
+
+    const currentValue = elements.documentLibrarySelect.value;
+    const items = getActiveLibraryItems();
+    elements.documentLibrarySelect.innerHTML = `<option value="">Pricing Library</option>${items.map(item => {
+        const meta = [item.brand, item.supplier || item.vendor].filter(Boolean).join(" · ");
+        return `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}${meta ? ` (${escapeHtml(meta)})` : ""}</option>`;
+    }).join("")}`;
+    if (items.some(item => item.id === currentValue)) {
+        elements.documentLibrarySelect.value = currentValue;
+    }
+}
+
+function createProcurementReference(dateValue = getLocalDateInputValue()) {
+    return `${getRefPrefix(dateValue)}-${getNextRefSequence(dateValue)}`;
+}
+
+function createProcurementRowData(source = {}) {
+    const quantityValue = String(source.quantity ?? "").trim();
+    const quantityTbd = Boolean(source.quantityTbd) || !quantityValue || quantityValue.toLowerCase() === "tbd";
+    return {
+        id: String(source.id || `proc-row-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`),
+        lineNumber: Number.parseInt(source.lineNumber, 10) || 1,
+        libraryItemId: String(source.libraryItemId || ""),
+        libraryReferenceId: String(source.libraryReferenceId || ""),
+        description: String(source.description || source.name || "").trim(),
+        brand: String(source.brand || "").trim(),
+        packSize: String(source.packSize || source.unitSize || "").trim(),
+        unit: String(source.unit || "").trim(),
+        unitPrice: Number.parseFloat(source.unitPrice ?? source.sellPrice ?? source.price) || 0,
+        currency: String(source.currency || elements.procurementCurrencyInput?.value || "USD").trim() || "USD",
+        leadTime: String(source.leadTime || "").trim(),
+        supplier: String(source.supplier || source.vendor || "").trim(),
+        notes: String(source.notes || "").trim(),
+        quantity: quantityTbd ? "" : quantityValue,
+        quantityTbd
+    };
+}
+
+function createProcurementSnapshotFromLibraryItem(item) {
+    return createProcurementRowData({
+        libraryItemId: item.id,
+        libraryReferenceId: item.referenceId,
+        description: item.name,
+        brand: item.brand,
+        packSize: item.packSize || item.unitSize,
+        unit: item.unit,
+        unitPrice: item.sellPrice ?? item.price,
+        currency: item.currency,
+        leadTime: item.leadTime,
+        supplier: item.supplier || item.vendor,
+        notes: item.notes
+    });
+}
+
+function getProcurementRowMarkup(row = {}) {
+    const data = createProcurementRowData(row);
+    return `
+        <tr class="procurement-row" data-procurement-row-id="${escapeHtml(data.id)}" data-library-item-id="${escapeHtml(data.libraryItemId)}">
+            <td><span class="procurement-line-number">${escapeHtml(String(data.lineNumber))}</span></td>
+            <td><textarea data-procurement-field="description" rows="2" placeholder="Item description">${escapeHtml(data.description)}</textarea></td>
+            <td><input type="text" data-procurement-field="brand" value="${escapeHtml(data.brand)}"></td>
+            <td><input type="text" data-procurement-field="packSize" value="${escapeHtml(data.packSize)}"></td>
+            <td><input type="text" data-procurement-field="unit" value="${escapeHtml(data.unit)}"></td>
+            <td><input type="number" step="0.01" min="0" data-procurement-field="unitPrice" value="${escapeHtml(String(Number(data.unitPrice || 0).toFixed(2)))}"></td>
+            <td><input type="text" data-procurement-field="currency" value="${escapeHtml(data.currency)}"></td>
+            <td><input type="text" data-procurement-field="leadTime" value="${escapeHtml(data.leadTime)}"></td>
+            <td><input type="text" data-procurement-field="supplier" value="${escapeHtml(data.supplier)}"></td>
+            <td>
+                <input type="text" data-procurement-field="quantity" value="${escapeHtml(data.quantity)}" ${data.quantityTbd ? "disabled" : ""} placeholder="Qty">
+                <label class="procurement-tbd-toggle"><input type="checkbox" data-procurement-field="quantityTbd" ${data.quantityTbd ? "checked" : ""}> TBD</label>
+            </td>
+            <td><textarea data-procurement-field="notes" rows="2" placeholder="Row notes">${escapeHtml(data.notes)}</textarea></td>
+            <td><button type="button" class="item-del-btn" data-remove-procurement-row="${escapeHtml(data.id)}" aria-label="Remove row" title="Remove row"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg></button></td>
+        </tr>
+    `;
+}
+
+function addProcurementRow(row = {}) {
+    if (!elements.procurementRowsContainer) {
+        return;
+    }
+
+    const lineNumber = elements.procurementRowsContainer.querySelectorAll(".procurement-row").length + 1;
+    elements.procurementRowsContainer.insertAdjacentHTML("beforeend", getProcurementRowMarkup({ ...row, lineNumber }));
+    refreshProcurementRowOrdering();
+}
+
+function refreshProcurementRowOrdering() {
+    elements.procurementRowsContainer?.querySelectorAll(".procurement-row").forEach((row, index) => {
+        const number = row.querySelector(".procurement-line-number");
+        if (number) {
+            number.textContent = String(index + 1);
+        }
+    });
+}
+
+function handleProcurementRowsChange(event) {
+    const toggle = event.target.closest('[data-procurement-field="quantityTbd"]');
+    if (!toggle) {
+        return;
+    }
+    const row = toggle.closest(".procurement-row");
+    const quantityInput = row?.querySelector('[data-procurement-field="quantity"]');
+    if (quantityInput) {
+        quantityInput.disabled = toggle.checked;
+        if (toggle.checked) {
+            quantityInput.value = "";
+        }
+    }
+}
+
+function handleProcurementRowsClick(event) {
+    const removeButton = event.target.closest("[data-remove-procurement-row]");
+    if (!removeButton) {
+        return;
+    }
+
+    removeButton.closest(".procurement-row")?.remove();
+    refreshProcurementRowOrdering();
+}
+
+function collectProcurementRows() {
+    return Array.from(elements.procurementRowsContainer?.querySelectorAll(".procurement-row") || []).map((row, index) => {
+        const getValue = field => row.querySelector(`[data-procurement-field="${field}"]`)?.value || "";
+        const quantityTbd = row.querySelector('[data-procurement-field="quantityTbd"]')?.checked ?? false;
+        return createProcurementRowData({
+            id: row.dataset.procurementRowId,
+            lineNumber: index + 1,
+            libraryItemId: row.dataset.libraryItemId || "",
+            description: getValue("description"),
+            brand: getValue("brand"),
+            packSize: getValue("packSize"),
+            unit: getValue("unit"),
+            unitPrice: getValue("unitPrice"),
+            currency: getValue("currency"),
+            leadTime: getValue("leadTime"),
+            supplier: getValue("supplier"),
+            quantity: getValue("quantity"),
+            quantityTbd,
+            notes: getValue("notes")
+        });
+    }).filter(row => row.description || row.brand || row.supplier || row.unitPrice > 0);
+}
+
+function buildProcurementSheetFromEditor() {
+    const existing = state.editingProcurementSheetId ? getDocumentById(state.editingProcurementSheetId) : null;
+    const rows = collectProcurementRows();
+    const total = rows.reduce((sum, row) => {
+        const qty = row.quantityTbd ? 0 : Number.parseFloat(row.quantity) || 0;
+        return sum + (qty * (Number.parseFloat(row.unitPrice) || 0));
+    }, 0);
+    return {
+        ...(existing || {}),
+        id: state.editingProcurementSheetId || Date.now(),
+        type: "procurement",
+        status: "logged",
+        refNumber: elements.procurementRefNumberInput.value.trim() || createProcurementReference(elements.procurementDateInput.value || getLocalDateInputValue()),
+        date: elements.procurementDateInput.value || getLocalDateInputValue(),
+        clientName: elements.procurementClientInput.value.trim() || "Procurement Request",
+        clientAddress: "",
+        consigneeName: "",
+        consigneeAddress: "",
+        currency: elements.procurementCurrencyInput.value.trim() || "USD",
+        notes: elements.procurementNotesInput.value.trim(),
+        internalNotes: "",
+        tags: parseTags(`${elements.procurementClientInput.value}, procurement, bid`),
+        procurementItems: rows,
+        items: rows.map(row => ({
+            description: row.description,
+            quantity: row.quantityTbd ? "TBD" : row.quantity,
+            unitPrice: row.unitPrice,
+            price: row.unitPrice,
+            totalPrice: row.quantityTbd ? 0 : (Number.parseFloat(row.quantity) || 0) * row.unitPrice
+        })),
+        subtotal: total,
+        total,
+        printedAt: new Date().toISOString(),
+        createdBy: existing?.createdBy || (state.currentUser ? {
+            userId: state.currentUser.userId,
+            username: state.currentUser.username,
+            displayName: state.currentUser.displayName,
+            role: state.currentUser.role
+        } : null)
+    };
+}
+
+function populateProcurementEditor(sheet = null) {
+    const today = getLocalDateInputValue();
+    const doc = sheet || {};
+    state.editingProcurementSheetId = sheet?.id || null;
+    elements.procurementSheetTitle.textContent = sheet ? `Edit ${sheet.refNumber || "Procurement Sheet"}` : "New Procurement Sheet";
+    elements.procurementRefNumberInput.value = doc.refNumber || createProcurementReference(today);
+    elements.procurementDateInput.value = doc.date || today;
+    elements.procurementClientInput.value = doc.clientName || "";
+    elements.procurementCurrencyInput.value = doc.currency || "USD";
+    elements.procurementNotesInput.value = doc.notes || "";
+    elements.procurementRowsContainer.innerHTML = "";
+    const rows = Array.isArray(doc.procurementItems) ? doc.procurementItems : [];
+    if (rows.length) {
+        rows.forEach(row => addProcurementRow(row));
+    } else {
+        addProcurementRow();
+    }
+    syncProcurementLibrarySelect();
+}
+
+function openProcurementSheetModal(sheet = null) {
+    populateProcurementEditor(sheet);
+    setModalState(elements.procurementSheetModal, true);
+}
+
+function closeProcurementSheetModal() {
+    state.editingProcurementSheetId = null;
+    setModalState(elements.procurementSheetModal, false);
+}
+
+function insertLibraryItemIntoProcurement(item) {
+    if (!item) {
+        return;
+    }
+    addProcurementRow(createProcurementSnapshotFromLibraryItem(item));
+    setImportStatus(`Inserted "${item.name}" as a frozen procurement snapshot.`);
+}
+
+function insertSelectedLibraryItemIntoProcurement() {
+    const item = state.catalogItems.find(entry => entry.id === elements.procurementLibrarySelect.value);
+    if (!item) {
+        window.alert("Choose a pricing library item first.");
+        return;
+    }
+    insertLibraryItemIntoProcurement(item);
+}
+
+function insertLibraryItemIntoDocument(item) {
+    if (!item) {
+        return;
+    }
+
+    addItem();
+    const row = elements.itemsContainer.querySelector(".item-row:last-child");
+    if (!row) {
+        return;
+    }
+
+    const descriptionParts = [
+        item.name,
+        item.brand ? `Brand: ${item.brand}` : "",
+        item.packSize || item.unitSize ? `Pack: ${item.packSize || item.unitSize}` : "",
+        item.unit ? `Unit: ${item.unit}` : "",
+        item.leadTime ? `Lead time: ${item.leadTime}` : "",
+        item.supplier || item.vendor ? `Supplier: ${item.supplier || item.vendor}` : ""
+    ].filter(Boolean);
+    const unitPrice = Number.parseFloat(item.sellPrice ?? item.price) || 0;
+
+    row.dataset.libraryItemId = item.id;
+    row.dataset.libraryReferenceId = item.referenceId || "";
+    row.dataset.priceDriver = "unit";
+    row.querySelector(".item-description").value = descriptionParts.join("\n");
+    row.querySelector(".item-quantity").value = "1";
+    row.querySelector(".item-unit-price").value = unitPrice.toFixed(2);
+    row.querySelector(".item-total-price").value = unitPrice.toFixed(2);
+    row.querySelector(".item-internal-cost").value = String(Number.parseFloat(item.costPrice) || 0);
+    updateItemPricing(row, { sourceField: "unit" });
+    autoResizeTextarea(row.querySelector(".item-description"));
+    handleItemsChange({ target: row.querySelector(".item-unit-price"), type: "input" });
+    setImportStatus(`Inserted "${item.name}" as a frozen document snapshot.`);
+}
+
+function insertSelectedLibraryItemIntoDocument() {
+    const item = state.catalogItems.find(entry => entry.id === elements.documentLibrarySelect.value);
+    if (!item) {
+        window.alert("Choose a pricing library item first.");
+        return;
+    }
+    insertLibraryItemIntoDocument(item);
+}
+
+async function saveProcurementSheet(options = {}) {
+    const sheet = buildProcurementSheetFromEditor();
+    if (!sheet.refNumber || !sheet.date) {
+        window.alert("Add a reference number and date before saving.");
+        return null;
+    }
+    if (!sheet.procurementItems.length) {
+        window.alert("Add at least one procurement row before saving.");
+        return null;
+    }
+
+    const nextDocuments = state.editingProcurementSheetId
+        ? state.documents.map(doc => isSameDocumentId(doc.id, state.editingProcurementSheetId) ? sheet : doc)
+        : [sheet, ...state.documents];
+    await saveDocumentsToServer(nextDocuments);
+    state.editingProcurementSheetId = sheet.id;
+    renderDocuments();
+    setImportStatus(`Procurement sheet ${sheet.refNumber} saved.`);
+    if (!options.keepOpen) {
+        closeProcurementSheetModal();
+    }
+    return sheet;
+}
+
+function getOpenProcurementSheetSnapshot() {
+    return buildProcurementSheetFromEditor();
+}
+
+function getProcurementFileStem(sheet) {
+    const ref = String(sheet?.refNumber || createProcurementReference(sheet?.date || getLocalDateInputValue())).replace(/[^a-z0-9._-]+/gi, "-");
+    return `${ref}_ProcurementSheet`;
+}
+
+function buildProcurementCsv(sheet) {
+    const headers = ["Line Number", "Item Description", "Brand", "Pack Size", "Unit", "Unit Price", "Currency", "Lead Time", "Supplier", "Quantity", "Notes"];
+    const rows = (sheet.procurementItems || []).map(row => [
+        row.lineNumber,
+        row.description,
+        row.brand,
+        row.packSize,
+        row.unit,
+        Number(row.unitPrice || 0).toFixed(2),
+        row.currency,
+        row.leadTime,
+        row.supplier,
+        row.quantityTbd ? "TBD" : row.quantity,
+        row.notes
+    ]);
+    return [headers, ...rows].map(row => row.map(escapeCsvCell).join(",")).join("\n");
+}
+
+function exportOpenProcurementCsv() {
+    const sheet = getOpenProcurementSheetSnapshot();
+    downloadTextFile(`${getProcurementFileStem(sheet)}.csv`, `${buildProcurementCsv(sheet)}\n`, "text/csv;charset=utf-8");
+    setImportStatus("Procurement CSV exported.");
+}
+
+async function downloadProcurementExcel(sheet) {
+    const response = await fetch("/api/procurement-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sheet })
+    });
+    if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Unable to generate the procurement Excel file.");
+    }
+    const blob = await response.blob();
+    downloadBlobFile(`${getProcurementFileStem(sheet)}.xlsx`, blob);
+}
+
+async function exportOpenProcurementExcel() {
+    try {
+        await downloadProcurementExcel(getOpenProcurementSheetSnapshot());
+        setImportStatus("Procurement Excel exported.");
+    } catch (error) {
+        window.alert(error.message || "Unable to export procurement Excel.");
+    }
+}
+
+async function convertOpenProcurementToQuote() {
+    const sheet = await saveProcurementSheet({ keepOpen: true });
+    if (!sheet) {
+        return;
+    }
+
+    const quote = convertProcurementSheetToQuote(sheet);
+    await saveDocumentsToServer([quote, ...state.documents]);
+    closeProcurementSheetModal();
+    renderDocuments();
+    editDocument(quote.id);
+    setImportStatus(`Created quote ${quote.refNumber} from ${sheet.refNumber}.`);
+}
+
+function convertProcurementSheetToQuote(sheet) {
+    const date = getLocalDateInputValue();
+    const refNumber = createProcurementReference(date);
+    const items = (sheet.procurementItems || []).map(row => {
+        const quantity = row.quantityTbd ? 1 : (Number.parseFloat(row.quantity) || 1);
+        const unitPrice = Number.parseFloat(row.unitPrice) || 0;
+        return {
+            description: [row.description, row.brand ? `Brand: ${row.brand}` : "", row.packSize ? `Pack: ${row.packSize}` : "", row.leadTime ? `Lead time: ${row.leadTime}` : ""].filter(Boolean).join("\n"),
+            quantity,
+            price: unitPrice,
+            unitPrice,
+            totalPrice: quantity * unitPrice,
+            internalCost: 0,
+            upchargePercent: 0,
+            procurementSheetId: sheet.id,
+            procurementRowId: row.id
+        };
+    });
+    const total = items.reduce((sum, item) => sum + Number(item.totalPrice || 0), 0);
+    return {
+        id: `quote-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        type: "quote",
+        status: "logged",
+        refNumber,
+        date,
+        clientName: sheet.clientName || "Procurement Client",
+        clientAddress: "",
+        consigneeName: "",
+        consigneeAddress: "",
+        poNumber: sheet.refNumber || "",
+        tags: parseTags(`procurement, ${sheet.refNumber || ""}, ${sheet.clientName || ""}`),
+        notes: sheet.notes || "",
+        internalNotes: `Converted from procurement sheet ${sheet.refNumber || sheet.id}.`,
+        paymentTerms: DEFAULT_PAYMENT_TERMS,
+        paymentTermsMode: "net30",
+        paymentTermsDays: 30,
+        includeSignature: true,
+        includeStamp: false,
+        payments: [],
+        paymentStatus: null,
+        printedAt: new Date().toISOString(),
+        subtotal: total,
+        total,
+        sourceProcurementSheetId: sheet.id,
+        items
+    };
 }
 
 function syncItemActionMenus() {
@@ -10659,6 +11294,7 @@ function openModal(type = "quote") {
     state.currentDocType = type;
     elements.docType.value = type;
     updateModalTitle();
+    syncDocumentLibrarySelect();
     setModalState(elements.documentModal, true);
     goToStep(isPrefilledEditMode() ? getTotalSteps() : 1);
 }
@@ -10933,6 +11569,8 @@ function addItem() {
     itemRow.dataset.itemId = itemId;
     itemRow.dataset.priceDriver = "total";
     itemRow.dataset.itemImageDataUrl = "";
+    itemRow.dataset.libraryItemId = "";
+    itemRow.dataset.libraryReferenceId = "";
     itemRow.innerHTML = `
         <td class="it-num">
             <span class="item-drag-handle" title="Drag to reorder" aria-hidden="true">
@@ -11583,7 +12221,9 @@ function buildDocumentData() {
             upchargePercent: internalCost > 0 ? (((totalPrice - internalCost) / internalCost) * 100).toFixed(2) : "0.00",
             usesDopTotal: false,
             manualUnitPrice: row.dataset.priceDriver === "unit",
-            itemImageDataUrl: row.dataset.itemImageDataUrl || ""
+            itemImageDataUrl: row.dataset.itemImageDataUrl || "",
+            libraryItemId: row.dataset.libraryItemId || "",
+            libraryReferenceId: row.dataset.libraryReferenceId || ""
         });
     });
 
@@ -12074,7 +12714,9 @@ async function persistDocument(options = {}) {
             upchargePercent: internalCost > 0 ? (((totalPrice - internalCost) / internalCost) * 100) : 0,
             usesDopTotal: false,
             manualUnitPrice: row.dataset.priceDriver === "unit",
-            itemImageDataUrl: row.dataset.itemImageDataUrl || ""
+            itemImageDataUrl: row.dataset.itemImageDataUrl || "",
+            libraryItemId: row.dataset.libraryItemId || "",
+            libraryReferenceId: row.dataset.libraryReferenceId || ""
         });
     });
 
@@ -12726,7 +13368,8 @@ function getOverviewSummaryCardMarkup({ label, value, icon = "", tone = "default
 
 function getDocumentCardMarkup(doc) {
     const paymentStatus = doc.type === "invoice" ? getInvoiceDerivedPaymentStatus(doc) : "";
-    const canViewPdf = isUserSavedDocument(doc);
+    const isProcurement = doc.type === "procurement";
+    const canViewPdf = !isProcurement && isUserSavedDocument(doc);
     const statusBadges = [];
 
     if (doc.status === "draft") {
@@ -12735,6 +13378,8 @@ function getDocumentCardMarkup(doc) {
 
     if (doc.type === "invoice") {
         statusBadges.push(getStatusBadgeMarkup(getPaymentStatusLabel(paymentStatus), `is-${paymentStatus}`));
+    } else if (isProcurement) {
+        statusBadges.push(getStatusBadgeMarkup("Procurement", "is-draft"));
     }
 
     const statusMarkup = statusBadges.join("");
@@ -12767,6 +13412,10 @@ function getDocumentCardMarkup(doc) {
         : "";
     const isSelected = isDocumentSelected(doc.id);
 
+    const totalLabel = isProcurement
+        ? `${(doc.procurementItems || []).length} row${(doc.procurementItems || []).length === 1 ? "" : "s"}`
+        : formatCurrency(doc.total || 0);
+
     return `
         <article class="document-card document-card-${doc.type}" data-view-id="${escapeHtml(String(doc.id))}" tabindex="0" role="button" aria-label="${escapeHtml(`Open ${doc.type} ${doc.refNumber || ""}`.trim())}">
             <label class="document-card-selector" aria-label="${escapeHtml(`Select ${doc.refNumber || doc.type}`)}">
@@ -12781,7 +13430,7 @@ function getDocumentCardMarkup(doc) {
                 <div class="document-card-meta">
                     <span class="document-card-client">${escapeHtml(doc.clientName || "Unknown client")}</span>
                     <span class="document-card-date">${escapeHtml(formatDisplayDate(doc.date || ""))}</span>
-                    <strong class="document-card-total">${escapeHtml(formatCurrency(doc.total || 0))}</strong>
+                    <strong class="document-card-total">${escapeHtml(totalLabel)}</strong>
                 </div>
                 ${dueDateMarkup}
                 ${latestNoteMarkup}
@@ -12791,6 +13440,10 @@ function getDocumentCardMarkup(doc) {
                 ${canViewPdf ? `
                 <button type="button" class="statement-action-btn is-open" data-action="export-pdf" data-id="${escapeHtml(String(doc.id))}" aria-label="Download PDF" title="Download PDF">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="m8 11 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                </button>` : ""}
+                ${isProcurement ? `
+                <button type="button" class="statement-action-btn is-open" data-action="export-excel" data-id="${escapeHtml(String(doc.id))}" aria-label="Export Excel" title="Export Excel">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M14 3v4h4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="m9 10 4 4M13 10l-4 4M9 18h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>` : ""}
                 <button type="button" class="statement-action-btn is-edit" data-action="edit" data-id="${escapeHtml(String(doc.id))}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
@@ -12816,7 +13469,9 @@ function getDocumentCardMarkup(doc) {
                         ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="unpaid" data-id="${escapeHtml(String(doc.id))}">${escapeHtml(t("mark_as_unpaid"))}</button>` : ""}
                         ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="pending" data-id="${escapeHtml(String(doc.id))}">${escapeHtml(t("mark_as_pending"))}</button>` : ""}
                         ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="paid" data-id="${escapeHtml(String(doc.id))}">${escapeHtml(t("mark_as_paid"))}</button>` : ""}
-                        <button type="button" class="doc-actions-menu-btn" data-action="convert" data-id="${escapeHtml(String(doc.id))}" data-target-type="${doc.type === "quote" ? "invoice" : "quote"}">${escapeHtml(t(doc.type === "quote" ? "convert_to_invoice" : "convert_to_quote"))}</button>
+                        ${isProcurement ? `<button type="button" class="doc-actions-menu-btn" data-action="export-csv" data-id="${escapeHtml(String(doc.id))}">Export CSV</button>` : ""}
+                        ${isProcurement ? `<button type="button" class="doc-actions-menu-btn" data-action="export-excel" data-id="${escapeHtml(String(doc.id))}">Export Excel</button>` : ""}
+                        <button type="button" class="doc-actions-menu-btn" data-action="convert" data-id="${escapeHtml(String(doc.id))}" data-target-type="${doc.type === "quote" ? "invoice" : "quote"}">${escapeHtml(isProcurement ? "Convert to Quote" : t(doc.type === "quote" ? "convert_to_invoice" : "convert_to_quote"))}</button>
                         <button type="button" class="doc-actions-menu-btn doc-actions-menu-btn-danger" data-action="delete" data-id="${escapeHtml(String(doc.id))}">${escapeHtml(t("delete"))}</button>
                     </div>
                 </div>
@@ -12850,7 +13505,7 @@ function renderOverviewPanels() {
                 <button class="overview-document-link overview-document-link-${escapeHtml(doc.type || "quote")}" type="button" data-open-overview-doc="${escapeHtml(String(doc.id))}">
                     <span class="overview-document-ref">${escapeHtml(doc.refNumber || "Reference pending")}</span>
                     <span class="overview-document-meta">${escapeHtml(doc.clientName || "Unknown client")} · ${escapeHtml(formatDisplayDate(doc.date || ""))}</span>
-                    <strong class="overview-document-total">${escapeHtml(formatCurrency(doc.total || 0))}</strong>
+                    <strong class="overview-document-total">${escapeHtml(doc.type === "procurement" ? `${(doc.procurementItems || []).length} rows` : formatCurrency(doc.total || 0))}</strong>
                 </button>
             `).join("")
             : `<div class="empty-state compact-empty-state"><p>${escapeHtml(t("empty_documents"))}</p></div>`;
@@ -12873,6 +13528,14 @@ function renderOverviewPanels() {
                 targetPage: "documents",
                 targetFilter: "invoice",
                 icon: `<svg viewBox="0 0 20 20" fill="none"><rect x="4" y="3" width="12" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`
+            }),
+            getOverviewSummaryCardMarkup({
+                label: "Procurement",
+                value: String(state.documents.filter(doc => doc.type === "procurement").length),
+                tone: "statements",
+                targetPage: "documents",
+                targetFilter: "procurement",
+                icon: `<svg viewBox="0 0 20 20" fill="none"><path d="M3 4h14v12H3z" stroke="currentColor" stroke-width="1.6"/><path d="M3 8h14M7.5 4v12M12.5 4v12" stroke="currentColor" stroke-width="1.4"/></svg>`
             }),
             getOverviewSummaryCardMarkup({
                 label: t("clients"),
@@ -13093,7 +13756,12 @@ async function handleDocumentCardClick(event) {
         if (action === "notes") {
             openNotesDrawer(docId);
         } else if (action === "edit") {
-            editDocument(docId);
+            const doc = getDocumentById(docId);
+            if (doc?.type === "procurement") {
+                openProcurementSheetModal(doc);
+            } else {
+                editDocument(docId);
+            }
         } else if (action === "export-pdf") {
             const doc = getDocumentById(docId);
             if (doc) {
@@ -13105,6 +13773,22 @@ async function handleDocumentCardClick(event) {
                     window.alert(error.message || "Unable to download this PDF right now.");
                 }
             }
+        } else if (action === "export-csv") {
+            const doc = getDocumentById(docId);
+            if (doc?.type === "procurement") {
+                downloadTextFile(`${getProcurementFileStem(doc)}.csv`, `${buildProcurementCsv(doc)}\n`, "text/csv;charset=utf-8");
+                setImportStatus("Procurement CSV exported.");
+            }
+        } else if (action === "export-excel") {
+            const doc = getDocumentById(docId);
+            if (doc?.type === "procurement") {
+                try {
+                    await downloadProcurementExcel(doc);
+                    setImportStatus("Procurement Excel exported.");
+                } catch (error) {
+                    window.alert(error.message || "Unable to export procurement Excel.");
+                }
+            }
         } else if (action === "quick-payment") {
             openQuickPaymentModal(docId);
         } else if (action === "set-payment-status") {
@@ -13112,7 +13796,16 @@ async function handleDocumentCardClick(event) {
         } else if (action === "delete") {
             await deleteDocument(docId);
         } else if (action === "convert") {
-            convertDocumentType(docId, actionButton.dataset.targetType || "invoice");
+            const doc = getDocumentById(docId);
+            if (doc?.type === "procurement") {
+                const quote = convertProcurementSheetToQuote(doc);
+                await saveDocumentsToServer([quote, ...state.documents]);
+                renderDocuments();
+                editDocument(quote.id);
+                setImportStatus(`Created quote ${quote.refNumber} from ${doc.refNumber}.`);
+            } else {
+                convertDocumentType(docId, actionButton.dataset.targetType || "invoice");
+            }
         } else if (action === "view-pdf") {
             const doc = getDocumentById(docId);
             if (doc?.legacyPdfUrl) {
@@ -13127,7 +13820,12 @@ async function handleDocumentCardClick(event) {
         return;
     }
 
-    editDocument(card.dataset.viewId);
+    const doc = getDocumentById(card.dataset.viewId);
+    if (doc?.type === "procurement") {
+        openProcurementSheetModal(doc);
+    } else {
+        editDocument(card.dataset.viewId);
+    }
 }
 
 function handleDocumentCardKeydown(event) {
@@ -13340,6 +14038,8 @@ function populateFormFromDocument(doc) {
         lastItem.dataset.priceDriver = item.manualUnitPrice ? "unit" : "total";
         lastItem.querySelector(".item-internal-cost").value = item.internalCost ?? 0;
         lastItem.dataset.itemImageDataUrl = item.itemImageDataUrl || "";
+        lastItem.dataset.libraryItemId = item.libraryItemId || "";
+        lastItem.dataset.libraryReferenceId = item.libraryReferenceId || "";
         updateItemPricing(lastItem);
         syncItemImageUI(lastItem);
         updateItemSummary(lastItem);
@@ -13401,7 +14101,7 @@ async function deleteDocument(id) {
         return;
     }
 
-    const docLabel = doc.type === "quote" ? "quote" : "invoice";
+    const docLabel = doc.type === "procurement" ? "procurement sheet" : doc.type === "quote" ? "quote" : "invoice";
     if (!window.confirm(`Delete this ${docLabel} (${doc.refNumber})?`)) {
         return;
     }
