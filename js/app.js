@@ -69,7 +69,10 @@ const state = {
     pricingSupplierFilter: "all",
     editingProcurementSheetId: null,
     notesDrawerTab: "notes",
-    pendingCatalogInsertItem: null
+    pendingCatalogInsertItem: null,
+    pendingCatalogItemImageDataUrl: null,
+    pendingCatalogItemCropSrc: "",
+    selectedCatalogItemIds: []
 };
 
 const DOP_PER_USD = 59;
@@ -2190,7 +2193,12 @@ function cacheElements() {
     elements.closeCatalogDetailsModalBtn = document.getElementById("closeCatalogDetailsModalBtn");
     elements.catalogDetailsTitle = document.getElementById("catalogDetailsTitle");
     elements.catalogDetailsImage = document.getElementById("catalogDetailsImage");
+    elements.catalogDetailsExpandImageBtn = document.getElementById("catalogDetailsExpandImageBtn");
     elements.catalogDetailsFallback = document.getElementById("catalogDetailsFallback");
+    elements.catalogItemImageExpandModal = document.getElementById("catalogItemImageExpandModal");
+    elements.catalogItemImageExpandImg = document.getElementById("catalogItemImageExpandImg");
+    elements.catalogItemImageExpandTitle = document.getElementById("catalogItemImageExpandTitle");
+    elements.closeCatalogItemImageExpandModalBtn = document.getElementById("closeCatalogItemImageExpandModalBtn");
     elements.catalogDetailsName = document.getElementById("catalogDetailsName");
     elements.catalogDetailsMeta = document.getElementById("catalogDetailsMeta");
     elements.catalogDetailsPrice = document.getElementById("catalogDetailsPrice");
@@ -2231,6 +2239,22 @@ function cacheElements() {
     elements.catalogItemNotesInput = document.getElementById("catalogItemNotesInput");
     elements.saveCatalogItemBtn = document.getElementById("saveCatalogItemBtn");
     elements.archiveCatalogItemBtn = document.getElementById("archiveCatalogItemBtn");
+    elements.catalogItemImageInput = document.getElementById("catalogItemImageInput");
+    elements.catalogItemImageRemoveBtn = document.getElementById("catalogItemImageRemoveBtn");
+    elements.catalogItemImagePreview = document.getElementById("catalogItemImagePreview");
+    elements.catalogItemImagePreviewImg = document.getElementById("catalogItemImagePreviewImg");
+    elements.catalogItemImageStatus = document.getElementById("catalogItemImageStatus");
+    elements.catalogItemCropModal = document.getElementById("catalogItemCropModal");
+    elements.catalogItemCropCanvas = document.getElementById("catalogItemCropCanvas");
+    elements.catalogItemCropSelection = document.getElementById("catalogItemCropSelection");
+    elements.closeCatalogItemCropModalBtn = document.getElementById("closeCatalogItemCropModalBtn");
+    elements.cancelCatalogItemCropBtn = document.getElementById("cancelCatalogItemCropBtn");
+    elements.applyCatalogItemCropBtn = document.getElementById("applyCatalogItemCropBtn");
+    elements.catalogSelectionToolbar = document.getElementById("catalogSelectionToolbar");
+    elements.catalogSelectionTitle = document.getElementById("catalogSelectionTitle");
+    elements.exportCatalogReportBtn = document.getElementById("exportCatalogReportBtn");
+    elements.clearCatalogSelectionBtn = document.getElementById("clearCatalogSelectionBtn");
+    elements.toggleCatalogSelectionModeBtn = document.getElementById("toggleCatalogSelectionModeBtn");
     elements.openSavedItemsBtn = document.getElementById("openSavedItemsBtn");
     elements.openSavedItemsInlineCount = document.getElementById("openSavedItemsInlineCount");
     elements.closeCompanyProfileModalBtn = document.getElementById("closeCompanyProfileModalBtn");
@@ -2516,9 +2540,35 @@ function bindEvents() {
     elements.openCatalogItemModalBtn.addEventListener("click", openCatalogItemModal);
     elements.closeCatalogItemModalBtn.addEventListener("click", closeCatalogItemModal);
     elements.closeCatalogDetailsModalBtn.addEventListener("click", closeCatalogDetailsModal);
+    elements.closeCatalogItemImageExpandModalBtn?.addEventListener("click", closeCatalogItemImageExpand);
+    elements.catalogItemImageExpandModal?.addEventListener("click", event => {
+        if (event.target === elements.catalogItemImageExpandModal) closeCatalogItemImageExpand();
+    });
+    elements.catalogDetailsExpandImageBtn?.addEventListener("click", () => {
+        const src = elements.catalogDetailsExpandImageBtn.dataset.expandSrc;
+        const alt = elements.catalogDetailsExpandImageBtn.dataset.expandAlt;
+        if (src) openCatalogItemImageExpand(src, alt);
+    });
     elements.saveCatalogItemBtn.addEventListener("click", saveCatalogItemFromModal);
     elements.archiveCatalogItemBtn?.addEventListener("click", archiveCatalogItemFromModal);
+    elements.catalogItemImageInput?.addEventListener("change", handleCatalogItemImageInputChange);
+    elements.catalogItemImageRemoveBtn?.addEventListener("click", clearCatalogItemImage);
+    elements.closeCatalogItemCropModalBtn?.addEventListener("click", closeCatalogItemCropModal);
+    elements.cancelCatalogItemCropBtn?.addEventListener("click", skipCatalogItemCrop);
+    elements.applyCatalogItemCropBtn?.addEventListener("click", applyCatalogItemCrop);
     elements.catalogGrid.addEventListener("click", handleCatalogGridClick);
+    elements.catalogGrid.addEventListener("change", handleCatalogGridChange);
+    elements.clearCatalogSelectionBtn?.addEventListener("click", clearCatalogSelection);
+    elements.exportCatalogReportBtn?.addEventListener("click", () => { void exportCatalogItemReport(); });
+    elements.toggleCatalogSelectionModeBtn?.addEventListener("click", () => {
+        if (state.selectedCatalogItemIds.length > 0) {
+            clearCatalogSelection();
+        } else {
+            const toolbar = elements.catalogSelectionToolbar;
+            if (toolbar) toolbar.hidden = false;
+            syncCatalogSelectionToolbar();
+        }
+    });
     elements.pricingLibrarySearch?.addEventListener("input", event => {
         state.pricingSearchQuery = event.target.value.trim().toLowerCase();
         renderCatalog();
@@ -3666,7 +3716,8 @@ function normalizeCatalogItems(items) {
                 archived: Boolean(item.archived),
                 documentRefs: Array.isArray(item.documentRefs)
                     ? item.documentRefs.filter(r => r && r.docId)
-                    : []
+                    : [],
+                itemImageDataUrl: typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl : ""
             }))
             .filter(item => item.name)
         : [];
@@ -4531,6 +4582,8 @@ function openCatalogItemModal(options = {}) {
     if (elements.archiveCatalogItemBtn) {
         elements.archiveCatalogItemBtn.hidden = true;
     }
+    state.pendingCatalogItemImageDataUrl = null;
+    syncCatalogItemImageUI();
     setModalState(elements.catalogItemModal, true);
     applyTranslations();
 }
@@ -4538,6 +4591,7 @@ function openCatalogItemModal(options = {}) {
 function closeCatalogItemModal() {
     setModalState(elements.catalogItemModal, false);
     state.editingCatalogItemId = null;
+    state.pendingCatalogItemImageDataUrl = null;
     state.catalogModalReturnToProcurement = false;
     state.catalogModalReturnToDocument = false;
 }
@@ -4593,13 +4647,35 @@ function openCatalogDetailsModal(item) {
         elements.catalogDetailsImage.src = item.imageDataUrl;
         elements.catalogDetailsImage.hidden = false;
         elements.catalogDetailsFallback.hidden = true;
+        if (elements.catalogDetailsExpandImageBtn) {
+            elements.catalogDetailsExpandImageBtn.hidden = false;
+            elements.catalogDetailsExpandImageBtn.dataset.expandSrc = item.imageDataUrl;
+            elements.catalogDetailsExpandImageBtn.dataset.expandAlt = item.name || "Item image";
+        }
     } else {
         elements.catalogDetailsImage.hidden = true;
         elements.catalogDetailsImage.removeAttribute("src");
         elements.catalogDetailsFallback.hidden = false;
+        if (elements.catalogDetailsExpandImageBtn) {
+            elements.catalogDetailsExpandImageBtn.hidden = true;
+        }
     }
 
     setModalState(elements.catalogDetailsModal, true);
+}
+
+function openCatalogItemImageExpand(dataUrl, altText) {
+    if (!elements.catalogItemImageExpandModal || !elements.catalogItemImageExpandImg) return;
+    elements.catalogItemImageExpandImg.src = dataUrl;
+    elements.catalogItemImageExpandImg.alt = altText || "Item image";
+    if (elements.catalogItemImageExpandTitle) {
+        elements.catalogItemImageExpandTitle.textContent = altText || "Item Image";
+    }
+    setModalState(elements.catalogItemImageExpandModal, true);
+}
+
+function closeCatalogItemImageExpand() {
+    setModalState(elements.catalogItemImageExpandModal, false);
 }
 
 function closeCatalogDetailsModal() {
@@ -4815,12 +4891,17 @@ function renderCatalog() {
             }${overflow > 0 ? ` <span class="catalog-ref-overflow">+${overflow} more</span>` : ""}</span>`
             : "";
 
+        const isSelected = state.selectedCatalogItemIds.includes(item.id);
         return `
-        <article class="catalog-card">
+        <article class="catalog-card${isSelected ? " is-selected" : ""}">
+            <label class="catalog-card-selector" aria-label="Select ${escapeHtml(item.name)}">
+                <input type="checkbox" data-catalog-select="${escapeHtml(item.id)}"${isSelected ? " checked" : ""}>
+                <span class="catalog-card-selector-ui" aria-hidden="true"></span>
+            </label>
             <button class="catalog-card-trigger" type="button" data-catalog-action="open" data-catalog-id="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.name)}">
-                <div class="catalog-card-bubble" aria-hidden="true">
+                <div class="catalog-card-bubble${item.imageDataUrl ? " is-expandable" : ""}" ${item.imageDataUrl ? `data-catalog-action="expand-image" data-catalog-id="${escapeHtml(item.id)}" data-catalog-img-src="${escapeHtml(item.imageDataUrl)}" data-catalog-img-alt="${escapeHtml(item.name)}"` : ""} aria-hidden="true">
                     ${item.imageDataUrl
-                        ? `<img src="${escapeHtml(item.imageDataUrl)}" alt="${escapeHtml(item.name)}">`
+                        ? `<img src="${escapeHtml(item.imageDataUrl)}" alt="${escapeHtml(item.name)}" loading="lazy">`
                         : `<span>${escapeHtml((item.name || "Item").trim().slice(0, 2).toUpperCase() || "IT")}</span>`}
                 </div>
                 <div class="catalog-card-copy">
@@ -4836,6 +4917,7 @@ function renderCatalog() {
     }).join("");
     syncProcurementLibrarySelect();
     syncDocumentLibrarySelect();
+    syncCatalogSelectionToolbar();
 }
 
 function merchantColorIndex(name) {
@@ -5389,6 +5471,13 @@ function handleCatalogGridClick(event) {
         return;
     }
 
+    const expandBubble = event.target.closest("[data-catalog-action=\"expand-image\"]");
+    if (expandBubble && expandBubble.dataset.catalogImgSrc) {
+        event.stopPropagation();
+        openCatalogItemImageExpand(expandBubble.dataset.catalogImgSrc, expandBubble.dataset.catalogImgAlt || "");
+        return;
+    }
+
     const openButton = event.target.closest("[data-catalog-action=\"open\"]");
     if (openButton) {
         const item = getCatalogEntries().find(entry => entry.id === openButton.dataset.catalogId);
@@ -5427,6 +5516,8 @@ function handleCatalogGridClick(event) {
     if (elements.archiveCatalogItemBtn) {
         elements.archiveCatalogItemBtn.hidden = false;
     }
+    state.pendingCatalogItemImageDataUrl = item.itemImageDataUrl || null;
+    syncCatalogItemImageUI();
     closeCatalogDetailsModal();
     setModalState(elements.catalogItemModal, true);
     applyTranslations();
@@ -5463,7 +5554,12 @@ async function saveCatalogItemFromModal() {
         leadTime: elements.catalogItemLeadTimeInput.value.trim(),
         country: elements.catalogItemCountryInput.value.trim(),
         tags: parseTags(elements.catalogItemTagsInput.value),
-        archived: false
+        archived: false,
+        itemImageDataUrl: state.pendingCatalogItemImageDataUrl != null
+            ? state.pendingCatalogItemImageDataUrl
+            : (state.editingCatalogItemId
+                ? (state.catalogItems.find(e => e.id === state.editingCatalogItemId)?.itemImageDataUrl || "")
+                : "")
     };
 
     const nextItems = state.editingCatalogItemId
@@ -5504,6 +5600,377 @@ async function archiveCatalogItemFromModal() {
     )));
     closeCatalogItemModal();
     setImportStatus("Library item archived. Existing document line items were not changed.");
+}
+
+// ── Catalog item image upload ──────────────────────────────────
+
+function syncCatalogItemImageUI() {
+    const dataUrl = state.pendingCatalogItemImageDataUrl || "";
+    const preview = elements.catalogItemImagePreview;
+    const previewImg = elements.catalogItemImagePreviewImg;
+    const removeBtn = elements.catalogItemImageRemoveBtn;
+    const hint = document.getElementById("catalogItemImageUploadHint");
+
+    if (preview && previewImg) {
+        if (dataUrl) {
+            preview.hidden = false;
+            previewImg.src = dataUrl;
+        } else {
+            preview.hidden = true;
+            previewImg.removeAttribute("src");
+        }
+    }
+    if (removeBtn) removeBtn.hidden = !dataUrl;
+    if (hint) hint.textContent = dataUrl ? "Change image" : "Add image";
+    setCatalogItemImageStatus("");
+}
+
+function setCatalogItemImageStatus(message) {
+    const el = elements.catalogItemImageStatus;
+    if (!el) return;
+    el.textContent = message;
+    el.hidden = !message;
+}
+
+function clearCatalogItemImage() {
+    state.pendingCatalogItemImageDataUrl = null;
+    if (elements.catalogItemImageInput) elements.catalogItemImageInput.value = "";
+    syncCatalogItemImageUI();
+}
+
+async function handleCatalogItemImageInputChange() {
+    const file = elements.catalogItemImageInput?.files?.[0];
+    if (!file) return;
+
+    if (elements.catalogItemImageInput) elements.catalogItemImageInput.value = "";
+    setCatalogItemImageStatus("Optimizing…");
+
+    try {
+        const resizedDataUrl = await readImageFileAsDataUrl(file, { maxDimension: 600, quality: 0.85 });
+        setCatalogItemImageStatus("");
+        openCatalogItemCropModal(resizedDataUrl);
+    } catch {
+        setCatalogItemImageStatus("Could not read image. Try a different file.");
+    }
+}
+
+// ── Catalog item crop modal ────────────────────────────────────
+
+let _cropDragState = null;
+
+function openCatalogItemCropModal(imageDataUrl) {
+    if (!elements.catalogItemCropModal || !elements.catalogItemCropCanvas) return;
+
+    state.pendingCatalogItemCropSrc = imageDataUrl;
+    _cropDragState = null;
+
+    const canvas = elements.catalogItemCropCanvas;
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+
+    img.onload = () => {
+        const MAX_DISPLAY = 560;
+        const scale = img.naturalWidth > MAX_DISPLAY ? MAX_DISPLAY / img.naturalWidth : 1;
+        canvas.width = Math.round(img.naturalWidth * scale);
+        canvas.height = Math.round(img.naturalHeight * scale);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        initCatalogCropSelection(canvas.width, canvas.height);
+        setModalState(elements.catalogItemCropModal, true);
+    };
+    img.src = imageDataUrl;
+}
+
+function initCatalogCropSelection(cw, ch) {
+    const sel = elements.catalogItemCropSelection;
+    if (!sel) return;
+
+    const inset = Math.round(Math.min(cw, ch) * 0.1);
+    const x = inset;
+    const y = inset;
+    const w = cw - inset * 2;
+    const h = ch - inset * 2;
+
+    sel.style.left = x + "px";
+    sel.style.top = y + "px";
+    sel.style.width = w + "px";
+    sel.style.height = h + "px";
+
+    sel.innerHTML = "";
+    const handles = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
+    for (const pos of handles) {
+        const span = document.createElement("span");
+        span.className = "catalog-item-crop-handle";
+        span.dataset.handle = pos;
+        applyCropHandlePosition(span, pos);
+        sel.appendChild(span);
+    }
+
+    sel.addEventListener("mousedown", onCropMouseDown);
+}
+
+function applyCropHandlePosition(span, pos) {
+    const half = -5;
+    const mid = "calc(50% - 5px)";
+    const positions = {
+        nw: { top: half + "px", left: half + "px" },
+        n:  { top: half + "px", left: mid },
+        ne: { top: half + "px", right: half + "px" },
+        e:  { top: mid,         right: half + "px" },
+        se: { bottom: half + "px", right: half + "px" },
+        s:  { bottom: half + "px", left: mid },
+        sw: { bottom: half + "px", left: half + "px" },
+        w:  { top: mid,          left: half + "px" }
+    };
+    const p = positions[pos] || {};
+    Object.assign(span.style, p);
+}
+
+function onCropMouseDown(event) {
+    const canvas = elements.catalogItemCropCanvas;
+    const sel = elements.catalogItemCropSelection;
+    if (!canvas || !sel) return;
+
+    const canvasRect = canvas.getBoundingClientRect();
+    const selRect = sel.getBoundingClientRect();
+    const handle = event.target.dataset?.handle || null;
+
+    _cropDragState = {
+        handle,
+        startX: event.clientX,
+        startY: event.clientY,
+        origLeft: selRect.left - canvasRect.left,
+        origTop: selRect.top - canvasRect.top,
+        origWidth: selRect.width,
+        origHeight: selRect.height,
+        canvasW: canvasRect.width,
+        canvasH: canvasRect.height
+    };
+
+    event.preventDefault();
+    document.addEventListener("mousemove", onCropMouseMove);
+    document.addEventListener("mouseup", onCropMouseUp);
+}
+
+function onCropMouseMove(event) {
+    if (!_cropDragState) return;
+    const sel = elements.catalogItemCropSelection;
+    if (!sel) return;
+
+    const { handle, startX, startY, origLeft, origTop, origWidth, origHeight, canvasW, canvasH } = _cropDragState;
+    const dx = event.clientX - startX;
+    const dy = event.clientY - startY;
+    const MIN = 20;
+
+    let left = origLeft;
+    let top = origTop;
+    let width = origWidth;
+    let height = origHeight;
+
+    if (!handle) {
+        left = origLeft + dx;
+        top = origTop + dy;
+    } else {
+        if (handle.includes("e")) width = origWidth + dx;
+        if (handle.includes("s")) height = origHeight + dy;
+        if (handle.includes("w")) { left = origLeft + dx; width = origWidth - dx; }
+        if (handle.includes("n")) { top = origTop + dy; height = origHeight - dy; }
+    }
+
+    width = Math.max(MIN, width);
+    height = Math.max(MIN, height);
+    left = Math.max(0, Math.min(left, canvasW - width));
+    top = Math.max(0, Math.min(top, canvasH - height));
+    if (left + width > canvasW) width = canvasW - left;
+    if (top + height > canvasH) height = canvasH - top;
+
+    sel.style.left = left + "px";
+    sel.style.top = top + "px";
+    sel.style.width = width + "px";
+    sel.style.height = height + "px";
+}
+
+function onCropMouseUp() {
+    _cropDragState = null;
+    document.removeEventListener("mousemove", onCropMouseMove);
+    document.removeEventListener("mouseup", onCropMouseUp);
+}
+
+function closeCatalogItemCropModal() {
+    _cropDragState = null;
+    document.removeEventListener("mousemove", onCropMouseMove);
+    document.removeEventListener("mouseup", onCropMouseUp);
+    setModalState(elements.catalogItemCropModal, false);
+    state.pendingCatalogItemCropSrc = "";
+}
+
+function skipCatalogItemCrop() {
+    if (state.pendingCatalogItemCropSrc) {
+        state.pendingCatalogItemImageDataUrl = state.pendingCatalogItemCropSrc;
+    }
+    closeCatalogItemCropModal();
+    syncCatalogItemImageUI();
+    setCatalogItemImageStatus("Image ready");
+}
+
+function applyCatalogItemCrop() {
+    const canvas = elements.catalogItemCropCanvas;
+    const sel = elements.catalogItemCropSelection;
+    if (!canvas || !sel || !state.pendingCatalogItemCropSrc) {
+        skipCatalogItemCrop();
+        return;
+    }
+
+    const canvasRect = canvas.getBoundingClientRect();
+    const selRect = sel.getBoundingClientRect();
+
+    const scaleX = canvas.width / canvasRect.width;
+    const scaleY = canvas.height / canvasRect.height;
+    const sx = Math.round((selRect.left - canvasRect.left) * scaleX);
+    const sy = Math.round((selRect.top - canvasRect.top) * scaleY);
+    const sw = Math.max(1, Math.round(selRect.width * scaleX));
+    const sh = Math.max(1, Math.round(selRect.height * scaleY));
+
+    const out = document.createElement("canvas");
+    out.width = sw;
+    out.height = sh;
+    const outCtx = out.getContext("2d");
+    const img = new Image();
+
+    img.onload = () => {
+        outCtx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+        const finalDataUrl = out.toDataURL("image/jpeg", 0.85);
+        state.pendingCatalogItemImageDataUrl = finalDataUrl;
+        closeCatalogItemCropModal();
+        syncCatalogItemImageUI();
+        setCatalogItemImageStatus("Image ready");
+    };
+    img.onerror = () => {
+        skipCatalogItemCrop();
+    };
+    img.src = state.pendingCatalogItemCropSrc;
+}
+
+// ── Catalog item selection ────────────────────────────────────
+
+function syncCatalogSelectionToolbar() {
+    if (!elements.catalogSelectionToolbar || !elements.catalogSelectionTitle) return;
+    const count = state.selectedCatalogItemIds.length;
+    elements.catalogSelectionToolbar.hidden = count === 0;
+    elements.catalogSelectionTitle.textContent = `${count} item${count === 1 ? "" : "s"} selected`;
+    if (elements.exportCatalogReportBtn) elements.exportCatalogReportBtn.disabled = count === 0;
+}
+
+function handleCatalogGridChange(event) {
+    const checkbox = event.target.closest("[data-catalog-select]");
+    if (!checkbox) return;
+    const itemId = String(checkbox.dataset.catalogSelect || "");
+    const next = new Set(state.selectedCatalogItemIds);
+    if (checkbox.checked) {
+        next.add(itemId);
+    } else {
+        next.delete(itemId);
+    }
+    state.selectedCatalogItemIds = [...next];
+    const card = checkbox.closest(".catalog-card");
+    if (card) card.classList.toggle("is-selected", checkbox.checked);
+    syncCatalogSelectionToolbar();
+}
+
+function clearCatalogSelection() {
+    state.selectedCatalogItemIds = [];
+    renderCatalog();
+}
+
+// ── Catalog item report PDF export ───────────────────────────
+
+function buildCatalogReportNode(items) {
+    const shell = document.createElement("div");
+    shell.style.cssText = "position:fixed;left:-9999px;top:-9999px;pointer-events:none;";
+
+    const companyName = state.companyProfile?.companyName || "Pricing Library";
+    const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+
+    const itemsHtml = items.map(item => {
+        const initials = escapeHtml((item.name || "Item").trim().slice(0, 2).toUpperCase() || "IT");
+        const sellPrice = item.sellPrice ?? item.price ?? 0;
+        const metaParts = [item.brand, item.supplier || item.vendor, item.packSize || item.unitSize].filter(Boolean);
+        const meta = metaParts.length ? `<p class="catalog-report-item-meta">${escapeHtml(metaParts.join(" · "))}</p>` : "";
+        const detail = item.details
+            ? `<p class="catalog-report-item-meta">${escapeHtml(item.details.slice(0, 100))}</p>`
+            : "";
+        const thumbHtml = item.itemImageDataUrl
+            ? `<img src="${escapeHtml(item.itemImageDataUrl)}" alt="${escapeHtml(item.name)}">`
+            : `<div class="catalog-report-item-thumb-fallback">${initials}</div>`;
+
+        return `
+        <div class="catalog-report-item">
+            <div class="catalog-report-item-thumb">${thumbHtml}</div>
+            <div class="catalog-report-item-body">
+                <p class="catalog-report-item-name">${escapeHtml(item.name)}</p>
+                ${meta}${detail}
+                <p class="catalog-report-item-price">${escapeHtml(item.currency || "USD")} ${escapeHtml(formatAmount(sellPrice))}</p>
+            </div>
+        </div>`;
+    }).join("");
+
+    shell.innerHTML = `
+        <div data-pdf-export-page>
+            <div class="catalog-report-page">
+                <div class="catalog-report-header">
+                    <div>
+                        <h1 class="catalog-report-title">${escapeHtml(companyName)}</h1>
+                        <p class="catalog-report-subtitle">Pricing Library · ${escapeHtml(today)} · ${items.length} item${items.length === 1 ? "" : "s"}</p>
+                    </div>
+                </div>
+                <div class="catalog-report-grid">${itemsHtml}</div>
+            </div>
+        </div>`;
+    return shell;
+}
+
+async function exportCatalogItemReport() {
+    if (!window.html2pdf) {
+        window.alert("PDF export is unavailable. Please reload and try again.");
+        return;
+    }
+    const selectedItems = state.selectedCatalogItemIds
+        .map(id => state.catalogItems.find(item => item.id === id))
+        .filter(Boolean);
+    if (!selectedItems.length) {
+        window.alert("Select at least one item to export.");
+        return;
+    }
+
+    if (elements.exportCatalogReportBtn) elements.exportCatalogReportBtn.disabled = true;
+    setImportStatus("Generating item report…");
+
+    try {
+        const stamp = getTodayStamp();
+        const filename = `pricing-library-report-${stamp}.pdf`;
+        const node = buildCatalogReportNode(selectedItems);
+        document.body.appendChild(node);
+
+        const blob = await window.html2pdf()
+            .set({
+                filename,
+                margin: [0, 0, 0, 0],
+                pagebreak: { mode: ["avoid-all"] },
+                html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false },
+                jsPDF: { unit: "in", format: "letter", orientation: "portrait" }
+            })
+            .from(node.querySelector("[data-pdf-export-page]"))
+            .outputPdf("blob");
+
+        node.remove();
+        downloadBlobFile(filename, blob);
+        setImportStatus(`Item report exported — ${selectedItems.length} item${selectedItems.length === 1 ? "" : "s"}.`);
+    } catch (err) {
+        setImportStatus("Report export failed: " + (err?.message || "Unknown error"), true);
+    } finally {
+        if (elements.exportCatalogReportBtn) {
+            elements.exportCatalogReportBtn.disabled = state.selectedCatalogItemIds.length === 0;
+        }
+    }
 }
 
 // ── Column visibility (Columns dropdown) ──────────────────────

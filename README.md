@@ -2,7 +2,35 @@
 
 SantoSync is a focused document and operations workspace built for trade teams, freelancers, and logistics operators who need to generate, track, and deliver professional quotes and invoices without the overhead of enterprise billing software.
 
-Version: `1.8.0` — Last updated: April 22, 2026
+Version: `1.9.0` — Last updated: April 24, 2026
+
+## Version 1.9.0 Summary
+
+This release adds visual product management to the Pricing Library, full per-document change history, a substantially improved Procurement Sheet experience, and a catalog item PDF report generator.
+
+**Product images in the Pricing Library:** Catalog items now support uploaded product images. Users can upload a JPEG, PNG, or WebP file directly from the item add/edit modal. The image is automatically compressed and resized to a maximum of 600px on the longest side at JPEG quality 0.85 before it is saved — keeping stored images small while maintaining acceptable visual fidelity. After upload, an optional crop step lets users trim the image to exactly the area they want before committing. Cropping is optional and can be skipped with a single click. A status line shows "Optimizing…" while compression runs and "Image ready" once the image is committed. Images can be replaced or removed from the edit modal at any time. The stored image survives all normalize and load cycles so it persists reliably across reloads and workspace syncs.
+
+**Catalog card thumbnails:** When an item has an image, the card bubble renders the image instead of the two-letter initials placeholder. Items without images continue to show the colored initials bubble — no empty image placeholder is forced. Thumbnails use native lazy loading. Clicking the thumbnail on a catalog card opens the image in an expand modal without navigating away from the library. The item detail modal also shows the image in the hero section, and clicking it opens the same expand modal.
+
+**Image expand modal:** A shared full-size image viewer modal can be opened from both the card thumbnail and the item detail modal. The expand modal shows the image at its natural display size with a standard close button. It is keyboard-accessible and closes on backdrop click.
+
+**Catalog item selection and PDF report export:** A "Select Items" button in the Pricing Library toolbar activates selection mode. Checkboxes appear on every card. When one or more items are selected, a selection toolbar shows the selected count and an "Export Item Report" button. The exported PDF is a letter-size document with a 2-column grid layout — each item row shows the product image thumbnail (or an initials block for items without images), item name, supplier/brand/pack size metadata, details excerpt, and unit price. The export uses the existing html2pdf.js pipeline so it is consistent with the rest of SantoSync's PDF output.
+
+**Per-document change history:** Every confirmed document save (quotes, invoices, and procurement sheets) now appends a timestamped change record to `doc.changeHistory[]`. The notes drawer has been expanded with a History tab alongside the existing Notes tab. The History feed shows who saved the document, when, and what changed — including client name, date, PO number, payment status, type conversion, total value, and line-by-line item diffs (added, removed, price changed, quantity changed). Autosaves are excluded from the history feed. Procurement sheet saves generate comparable row-level diffs.
+
+**Procurement Sheet UX overhaul:** The Procurement Sheet modal has been significantly tightened and extended.
+
+The header has been condensed from a stacked 5-field form into a single-strip compact header with Reference Number, Date, Client/Bid, Currency, and Notes arranged in a single row — reducing vertical height from roughly 275px to about 50px.
+
+The item library selector has been replaced with a search combobox. Users now type to filter the library in real time by name, brand, or reference ID rather than scrolling a long dropdown. Selecting an item from the dropdown inserts it immediately. A "Create new item" option at the bottom of the dropdown opens the catalog modal and automatically inserts the newly created item.
+
+A Columns dropdown in the sheet toolbar controls which optional columns are visible — Lead Time, Supplier, Currency, and Notes can be shown or hidden independently. Lead Time and Supplier auto-reveal when existing row data is detected. Each row also has a per-row notes icon: when notes are entered for a row, a pulsing dot appears on the icon as a visual indicator.
+
+A Total column (quantity × unit price) is always visible and recalculates live as rows are edited. TBD rows show "TBD" in the total cell.
+
+A translation workflow has been added to the sheet. Clicking the globe icon reveals a panel with language radios (Spanish, French), a Preview mode that shows original and translated text side by side, a Duplicate as Translated option that creates a new translated copy of the sheet, and a Translate In Place option that replaces the current form values with translated text. Translation uses the MyMemory free API (no key required).
+
+**Help and FAQ updates:** All Help topics have been reviewed and updated to reflect the current UI. Procurement, Pricing Library, image management, and document history topics have been added or rewritten to match v1.9.0 behavior.
 
 ## Version 1.8.0 Summary
 
@@ -243,9 +271,21 @@ When the app is online with the API available, user accounts are stored in the s
 - Statement of Account Excel export with a branded single-sheet layout: title banner, header block (vendor, consignee, bill-to, currency, outstanding balance, project name), date band, column headers, and one row per invoice
 - Pending items cart with a dedicated create-item popup
 - Pending items cart with visual item cards, a header action pill, document-insert controls, compact cart item editing, and cart item image editing
-- Catalog page that aggregates items captured from quotes, invoices, and cart records, with support for manually added catalog entries
+- Pricing Library (catalog) that aggregates items from quotes, invoices, and cart records, with support for manually added entries
+- **Product image upload for Pricing Library items** — upload JPEG/PNG/WebP; auto-compressed to max 600px longest side, JPEG quality 0.85; optional crop step before saving; replace or delete from the edit modal at any time
+- **Loading states during image processing** — "Optimizing…" status while compressing, "Image ready" after crop or skip; prevent duplicate uploads while processing
+- **Catalog card thumbnails** — items with images show a thumbnail on the card instead of initials; items without images show the colored initials bubble; thumbnails use lazy loading
+- **Image expand modal** — clicking a catalog card thumbnail or the hero image in the item detail modal opens the image full-size in a lightbox; closes on the close button or backdrop click
+- **Catalog item selection and PDF report** — select multiple catalog items using per-card checkboxes; a selection toolbar shows the count and an Export Item Report button; the PDF report shows each item in a 2-column grid with product image (or initials fallback), name, metadata, and unit price
 - Line item image support inside the document editor with a visual add-image tile
 - Compact overflow menus for line-item editor actions instead of persistent inline action buttons
+- **Per-document change history** — every confirmed save generates a timestamped history entry in `doc.changeHistory[]` covering client, date, PO number, payment status, type conversion, total, and item-level diffs; visible in the History tab of the notes drawer; autosaves are excluded
+- **Procurement Sheet compact header** — condensed from a stacked 5-field form to a single-strip row (Reference No. · Date · Client/Bid · Currency · Notes)
+- **Procurement library combobox** — type-to-filter search replaces the static dropdown; selecting an item inserts it immediately; "Create new item" option opens the catalog modal
+- **Procurement column visibility** — Columns dropdown controls Lead Time, Supplier, Currency, and Notes independently; columns auto-reveal when existing row data is detected
+- **Procurement per-row notes** — notes icon on each row; pulsing dot appears when notes are entered; click to toggle inline
+- **Procurement total column** — quantity × unit price per row; recalculates live; TBD rows show "TBD"
+- **Procurement translation workflow** — globe icon opens a translate panel; supports Spanish and French via MyMemory API; Preview, Duplicate as Translated, and Translate In Place modes
 - Issue reporting with optional screenshot upload
 - Admin issue inbox with delete controls
 - Local fallback mode when the API is unavailable
@@ -269,7 +309,7 @@ When the app is online with the API available, user accounts are stored in the s
 - Mobile-tuned modal sizing for cart, issue reporting, and document preview/export flows
 - Branded splash, auth, session-loading, about, and dashboard identity
 - Branded print/PDF preview output with SantoSync company identity
-- Help & FAQ modal with live keyword search, a quick-jump section index, and inline visual button demos rendered using the app's own CSS; all topics reflect the current sidebar-based navigation and current line-item / payment workflows
+- Help & FAQ modal with live keyword search, a quick-jump section index, and inline visual button demos rendered using the app's own CSS; all topics reflect the current sidebar-based navigation and current line-item / payment / image / procurement workflows
 - The main search bar indexes both documents and statements — searching by client name, vendor, reference number, or date filters whichever tab is active with a single query
 
 ## Document Output Rules
@@ -300,7 +340,7 @@ Server-backed:
   - company profile
   - pending items cart
   - cart item images and related shared cart metadata
-  - catalog items and related catalog metadata
+  - catalog items and related catalog metadata, including product images (`itemImageDataUrl`)
 
 Browser-local:
 
@@ -435,11 +475,60 @@ LOCAL_SEED_FROM_BLOB=false npm run dev:sandbox
 - Local sandbox mode can safely emulate server-backed behavior without writing to production Blob
 - The bundled signature and stamp assets are served from `assets/` for PDF preview/export consistency
 - A future backend auth layer would still be needed for stronger account security and password management
+- Catalog item images are stored as compressed base64 data URLs inside the workspace dataset; images are capped at 600px on the longest side and JPEG quality 0.85, targeting under 150KB per image
+
+## FAQ
+
+**How do I add an image to a Pricing Library item?**
+Open the Pricing Library, click Edit on any item card, or click Add Library Item. At the top of the form you will see an "Item Image" upload area. Click it to pick a JPEG, PNG, or WebP file. The app compresses it to a maximum of 600px and then shows a crop modal. You can drag the selection handles to trim the image or click "Skip Crop" to accept it as-is. Once confirmed, a small preview thumbnail appears in the modal. Click Save Library Item to persist it.
+
+**Can I remove or replace a product image?**
+Yes. Open the item edit modal. If an image is already set, a remove (trash) button appears next to the upload label. Click the trash button to clear the image, or click the upload label again to replace it with a different file.
+
+**Why is there no image on my catalog card even though I uploaded one?**
+Make sure you clicked Save Library Item after the crop step. If you closed the modal without saving, the image was not committed. If you saved and the image disappears after a page reload, check that the workspace sync completed — look for any save-error banners at the top of the screen.
+
+**How do I view a product image at full size?**
+Click the thumbnail on any catalog card that has an image — it opens in a full-size expand modal. You can also open the item detail modal by clicking the card title area, and then click the hero image at the top of the detail modal to expand it.
+
+**How do I export a PDF report of selected Pricing Library items?**
+Click "Select Items" in the Pricing Library page header. Checkboxes appear on every card. Check the items you want to include, then click "Export Item Report" in the selection toolbar that appears at the top. A letter-size PDF will download with each selected item displayed in a two-column grid showing the product image, name, metadata, and unit price.
+
+**How do I see what changed in a document?**
+Open any quote, invoice, or procurement sheet from the documents list. In the editor, click the Notes icon in the toolbar to open the notes drawer, then switch to the History tab. Each entry shows who saved the document, when, and a summary of what changed — including item additions, removals, price and quantity changes, client name, date, total, and payment status changes. Autosaves do not create history entries.
+
+**How do I use the Procurement Sheet translation feature?**
+Open any Procurement Sheet. Click the globe icon in the modal header. Select a target language (Spanish or French), then click Preview to see how the row descriptions and notes would read in translation. From there you can either Duplicate as Translated (creates a new sheet with translated content) or Translate In Place (replaces the current form values with the translated text). Translation uses the MyMemory free API and requires an internet connection.
+
+**How do I control which columns show in the Procurement Sheet?**
+Click the Columns button in the sheet toolbar. A dropdown appears with toggles for Lead Time, Supplier, Currency, and Notes. Each can be turned on or off independently. The columns auto-reveal if any existing row already has data in those fields when you open the sheet.
+
+**Where are product images stored?**
+Images are stored as base64-encoded JPEG data URLs inside the catalog item record, which is part of the shared workspace dataset saved to Vercel Blob. They are not stored as separate files. The compression step (600px max / JPEG 0.85) keeps each image under approximately 150KB, so typical library sizes remain manageable.
+
+**How do I set payment terms on an invoice?**
+In Step 3 of the invoice editor (Terms & Notes), use the payment terms selector. Choose Due Immediately, Net 15, Net 30, or Other. Net 15 and Net 30 automatically set the invoice due date. Other unlocks a day count field and an optional custom terms sentence. The selected mode is saved with the document and shown on the invoice card's due-date line.
+
+**How do I add a client contact with a WhatsApp number?**
+Go to Clients in the sidebar. Click Add Client or edit an existing client. Inside the client modal, use the Contacts section to add one or more contacts — each with a name, email, phone number, and a WhatsApp toggle. Save the client. The contacts are visible when you expand the client card in the directory.
+
+**How do I record a payment against an invoice?**
+There are three ways: (1) Open the invoice in the editor, go to Step 5 (Payments), and add a payment entry there. (2) On the Statements page, click "+ Log Payment" in the Payment History panel and select the invoice from the picker. (3) Create a Statement of Account, add a deduction, and check "Mark as payment" — saving the statement writes the payment back to the matched invoice automatically.
+
+**How do I back up my workspace data?**
+Go to Settings in the sidebar, open the Data Export & Import panel, and click Export Workspace Backup. This downloads a full JSON file covering all documents, clients, user accounts, company profile, catalog items, saved items, and statement exports. You can import it back at any time using the Import option in the same panel.
+
+**What happens to my data when the API is unavailable?**
+SantoSync automatically switches to browser-local fallback mode. All reads and writes go to localStorage. When the API becomes available again on the next session, the app syncs the local copies back to the server. No data is lost during offline periods as long as you do not clear browser storage.
+
+**Can multiple people use SantoSync at the same time?**
+Yes, with some caveats. All workspace data (catalog, documents, clients, company profile) is stored in a shared Vercel Blob dataset. Multiple users with different accounts can sign in and work simultaneously. However, there is no real-time conflict resolution — if two users edit the same document at the same time, the last save wins. The current role model (Admin / User) is password-based and stored in the shared workspace rather than a dedicated auth service.
 
 ## Future Improvements
 
 - Move roles and auth to a stronger shared backend
 - Add a richer company profile page with logo upload and legal footer options
-- Add document activity history and admin reporting
 - Add configurable exchange rates and tax profiles
 - Add reusable brand themes per company/account
+- Touch/drag support for the catalog image crop modal (currently mouse-only)
+- Excel export for the Pricing Library item report with embedded images

@@ -393,7 +393,18 @@
                             <p class="dashboard-subtitle" id="catalogCopy">Maintain reusable sourced items with supplier, packaging, cost, sell price, and lead-time details.</p>
                         </div>
                         <div class="page-header-actions">
+                            <button class="btn btn-secondary" id="toggleCatalogSelectionModeBtn" type="button">Select Items</button>
                             <button class="btn btn-primary" id="openCatalogItemModalBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add Library Item</button>
+                        </div>
+                    </div>
+                    <div class="catalog-selection-toolbar" id="catalogSelectionToolbar" hidden>
+                        <div class="catalog-selection-copy">
+                            <strong id="catalogSelectionTitle">0 items selected</strong>
+                            <span>Select items to export a PDF report.</span>
+                        </div>
+                        <div class="catalog-selection-actions">
+                            <button class="btn btn-secondary" id="clearCatalogSelectionBtn" type="button">Clear</button>
+                            <button class="btn btn-primary" id="exportCatalogReportBtn" type="button">Export Item Report</button>
                         </div>
                     </div>
                     <div class="pricing-library-toolbar">
@@ -2114,6 +2125,20 @@
         </div>
     </div>
 
+    <div class="modal nested-modal" id="catalogItemImageExpandModal" aria-hidden="true" hidden>
+        <div class="modal-content nested-modal-content saved-item-image-modal-content">
+            <div class="modal-header">
+                <h3 id="catalogItemImageExpandTitle">Item Image</h3>
+                <button class="close-btn" id="closeCatalogItemImageExpandModalBtn" type="button" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body settings-modal-body">
+                <div class="saved-item-image-modal-stage">
+                    <img id="catalogItemImageExpandImg" alt="Item image">
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal settings-modal" id="catalogItemModal" aria-hidden="true" hidden>
         <div class="modal-content settings-modal-content">
             <div class="modal-header">
@@ -2121,6 +2146,35 @@
                 <button class="close-btn" id="closeCatalogItemModalBtn" type="button" aria-label="Close">x</button>
             </div>
             <div class="modal-body settings-modal-body">
+                <div class="catalog-item-image-section">
+                    <div class="catalog-item-image-uploader">
+                        <label class="catalog-item-image-upload-btn" for="catalogItemImageInput" aria-label="Upload item image" title="Upload item image">
+                            <input type="file" id="catalogItemImageInput" accept="image/jpeg,image/png,image/webp" hidden>
+                            <span class="catalog-item-image-upload-art" aria-hidden="true">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M5 7.5A2.5 2.5 0 0 1 7.5 5h9A2.5 2.5 0 0 1 19 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 16.5z" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                    <path d="M8 15l2.4-2.4a1 1 0 0 1 1.4 0l1.1 1.1 2.1-2.1a1 1 0 0 1 1.4 0L19 14.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <circle cx="10" cy="9.5" r="1.2" fill="currentColor"/>
+                                </svg>
+                            </span>
+                            <span class="catalog-item-image-upload-copy">
+                                <strong>Item Image</strong>
+                                <small id="catalogItemImageUploadHint">Add image</small>
+                            </span>
+                        </label>
+                        <button class="catalog-item-image-remove-btn" id="catalogItemImageRemoveBtn" type="button" hidden aria-label="Remove item image" title="Remove item image">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M6 7h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                <path d="M9.5 7V5.6c0-.4.3-.6.6-.6h3.8c.3 0 .6.2.6.6V7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                <path d="M8.2 7l.7 10.2c0 .4.3.8.8.8h4.6c.4 0 .7-.3.8-.8L16 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="catalog-item-image-preview" id="catalogItemImagePreview" hidden>
+                        <img id="catalogItemImagePreviewImg" alt="Item image preview">
+                    </div>
+                    <p class="catalog-item-image-status" id="catalogItemImageStatus" hidden></p>
+                </div>
                 <div class="settings-grid report-grid">
                     <label class="form-group">
                         <span id="catalogItemNameLabel">Item Name</span>
@@ -2191,6 +2245,28 @@
         </div>
     </div>
 
+    <div class="modal nested-modal" id="catalogItemCropModal" aria-hidden="true" hidden>
+        <div class="modal-content nested-modal-content catalog-item-crop-modal-content">
+            <div class="modal-header">
+                <h3>Crop Image</h3>
+                <button class="close-btn" id="closeCatalogItemCropModalBtn" type="button" aria-label="Close">x</button>
+            </div>
+            <div class="modal-body settings-modal-body">
+                <div class="catalog-item-crop-stage">
+                    <canvas id="catalogItemCropCanvas"></canvas>
+                    <div class="catalog-item-crop-handle-layer" id="catalogItemCropHandleLayer">
+                        <div class="catalog-item-crop-selection" id="catalogItemCropSelection"></div>
+                    </div>
+                </div>
+                <p class="catalog-item-crop-hint">Drag to move · Handles to resize · Crop is optional</p>
+            </div>
+            <div class="settings-actions">
+                <button class="btn btn-secondary" id="cancelCatalogItemCropBtn" type="button">Skip Crop</button>
+                <button class="btn btn-primary" id="applyCatalogItemCropBtn" type="button">Apply Crop</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal settings-modal" id="catalogDetailsModal" aria-hidden="true" hidden>
         <div class="modal-content settings-modal-content catalog-details-modal-content">
             <div class="modal-header">
@@ -2199,8 +2275,10 @@
             </div>
             <div class="modal-body settings-modal-body catalog-details-body">
                 <div class="catalog-details-hero">
-                    <div class="catalog-details-bubble" id="catalogDetailsBubble" aria-hidden="true">
-                        <img id="catalogDetailsImage" alt="Catalog item image" hidden>
+                    <div class="catalog-details-bubble" id="catalogDetailsBubble">
+                        <button class="catalog-details-expand-btn" id="catalogDetailsExpandImageBtn" type="button" hidden aria-label="View full image">
+                            <img id="catalogDetailsImage" alt="Catalog item image">
+                        </button>
                         <div class="catalog-details-bubble-fallback" id="catalogDetailsFallback">Item</div>
                     </div>
                     <div class="catalog-details-copy">

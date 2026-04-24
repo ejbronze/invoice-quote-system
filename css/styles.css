@@ -2673,11 +2673,27 @@ body::after {
     color: var(--blue-deep);
 }
 
+.catalog-details-expand-btn {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: zoom-in;
+    border-radius: inherit;
+    overflow: hidden;
+}
+
 .catalog-details-bubble img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+}
+
+.catalog-card-bubble.is-expandable {
+    cursor: zoom-in;
 }
 
 .catalog-details-bubble-fallback {
@@ -13519,4 +13535,373 @@ body #procurementSheetModal:not([hidden]) {
     text-align: center;
     padding: 0.75rem 0;
     margin: 0;
+}
+
+/* ── Catalog Item Image Uploader (inside catalogItemModal) ── */
+.catalog-item-image-section {
+    margin-bottom: 1rem;
+    display: grid;
+    gap: 0.5rem;
+}
+
+.catalog-item-image-uploader {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: nowrap;
+}
+
+.catalog-item-image-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    flex-direction: row;
+    gap: 0.65rem;
+    flex: 1;
+    padding: 0.65rem 0.85rem;
+    border-radius: 14px;
+    border: 1px solid rgba(66, 99, 235, 0.16);
+    background: linear-gradient(135deg, rgba(66, 99, 235, 0.08), rgba(29, 191, 140, 0.07));
+    color: var(--blue-deep);
+    box-shadow: 0 6px 18px rgba(28, 55, 90, 0.06);
+    cursor: pointer;
+}
+
+.catalog-item-image-upload-art {
+    width: 2rem;
+    height: 2rem;
+    flex: 0 0 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(232, 239, 250, 0.95));
+    color: #315fbc;
+    box-shadow: inset 0 0 0 1px rgba(66, 99, 235, 0.08);
+}
+
+.catalog-item-image-upload-art svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    display: block;
+}
+
+.catalog-item-image-upload-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.05rem;
+}
+
+.catalog-item-image-upload-copy strong {
+    font-size: 0.78rem;
+    line-height: 1.1;
+}
+
+.catalog-item-image-upload-copy small {
+    color: #5d738d;
+    font-size: 0.68rem;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.catalog-item-image-remove-btn {
+    width: 2.35rem;
+    height: 2.35rem;
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid rgba(214, 87, 87, 0.2);
+    background: rgba(236, 106, 106, 0.1);
+    color: #a53f3f;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}
+
+.catalog-item-image-remove-btn svg {
+    width: 1rem;
+    height: 1rem;
+    display: block;
+}
+
+.catalog-item-image-preview {
+    margin-top: 0.15rem;
+}
+
+.catalog-item-image-preview img {
+    display: block;
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 14px;
+    border: 1px solid rgba(66, 99, 235, 0.16);
+    box-shadow: 0 6px 18px rgba(28, 55, 90, 0.08);
+}
+
+.catalog-item-image-status {
+    margin: 0;
+    color: #335273;
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+/* ── Catalog Item Crop Modal ── */
+.catalog-item-crop-modal-content {
+    max-width: 640px;
+}
+
+.catalog-item-crop-stage {
+    position: relative;
+    width: 100%;
+    max-height: 440px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#catalogItemCropCanvas {
+    display: block;
+    max-width: 100%;
+    max-height: 440px;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.catalog-item-crop-handle-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.catalog-item-crop-selection {
+    position: absolute;
+    border: 2px solid rgba(66, 130, 235, 0.9);
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+    cursor: move;
+    pointer-events: auto;
+    box-sizing: border-box;
+}
+
+.catalog-item-crop-handle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    border: 1.5px solid #1c66f0;
+    border-radius: 2px;
+    pointer-events: auto;
+    box-sizing: border-box;
+}
+
+.catalog-item-crop-hint {
+    margin: 0.6rem 0 0;
+    color: var(--text-faint, #8da0b8);
+    font-size: 0.76rem;
+    text-align: center;
+}
+
+/* ── Catalog Selection Toolbar ── */
+.catalog-selection-toolbar {
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.95rem 1rem;
+    border: 1px solid rgba(112, 135, 176, 0.14);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 255, 0.96));
+    box-shadow: 0 12px 26px rgba(24, 47, 86, 0.06);
+}
+
+.catalog-selection-copy {
+    display: grid;
+    gap: 0.2rem;
+}
+
+.catalog-selection-copy strong {
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.catalog-selection-copy span {
+    color: var(--text-soft);
+    font-size: 0.84rem;
+}
+
+.catalog-selection-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.6rem;
+}
+
+/* ── Catalog card checkbox selector ── */
+.catalog-card {
+    position: relative;
+}
+
+.catalog-card-selector {
+    position: absolute;
+    top: 0.55rem;
+    left: 0.55rem;
+    z-index: 2;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.catalog-card-selector input[type="checkbox"] {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+
+.catalog-card-selector-ui {
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 0.3rem;
+    border: 1.4px solid rgba(112, 135, 176, 0.42);
+    background: rgba(255, 255, 255, 0.94);
+    transition: border-color 0.14s, background 0.14s;
+    pointer-events: none;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.catalog-card-selector input[type="checkbox"]:checked + .catalog-card-selector-ui {
+    border-color: #1459d9;
+    background: linear-gradient(180deg, #1c66f0, #1459d9);
+}
+
+.catalog-card-selector input[type="checkbox"]:checked + .catalog-card-selector-ui::after {
+    content: "";
+    position: absolute;
+    left: 0.22rem;
+    top: 0.08rem;
+    width: 0.28rem;
+    height: 0.5rem;
+    border-right: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    transform: rotate(40deg);
+}
+
+.catalog-card.is-selected {
+    outline: 2px solid rgba(20, 89, 217, 0.35);
+    outline-offset: 1px;
+}
+
+/* ── Catalog PDF Report (off-screen export node) ── */
+.catalog-report-page {
+    width: 8.5in;
+    padding: 0.55in 0.65in;
+    background: #ffffff;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    box-sizing: border-box;
+}
+
+.catalog-report-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 0.4in;
+    padding-bottom: 0.15in;
+    border-bottom: 1.5px solid #d8e3f0;
+}
+
+.catalog-report-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 0.15rem;
+    line-height: 1.2;
+}
+
+.catalog-report-subtitle {
+    font-size: 0.76rem;
+    color: #5d738d;
+    margin: 0;
+}
+
+.catalog-report-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.2in;
+}
+
+.catalog-report-item {
+    display: grid;
+    grid-template-columns: 68px minmax(0, 1fr);
+    gap: 0.12in;
+    align-items: start;
+    padding: 0.12in 0.14in;
+    border: 1px solid #e0e9f4;
+    border-radius: 9px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+
+.catalog-report-item-thumb {
+    width: 68px;
+    height: 68px;
+    border-radius: 7px;
+    overflow: hidden;
+    background: linear-gradient(180deg, #f3f7ff, #ecf2fb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 68px;
+}
+
+.catalog-report-item-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.catalog-report-item-thumb-fallback {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #2f5fd7;
+    text-align: center;
+    line-height: 1;
+}
+
+.catalog-report-item-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.05in;
+}
+
+.catalog-report-item-name {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.25;
+    margin: 0;
+}
+
+.catalog-report-item-meta {
+    font-size: 0.64rem;
+    color: #5d738d;
+    line-height: 1.35;
+    margin: 0;
+}
+
+.catalog-report-item-price {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #1c3a6e;
+    margin: 0.04in 0 0;
 }
