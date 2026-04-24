@@ -11614,14 +11614,24 @@ body {
 }
 
 .sidebar-utility-link {
-    width: 46px;
-    min-width: 46px;
+    width: 36px;
+    height: 36px;
     padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--text-soft);
+    font: inherit;
+    cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    text-align: center;
-    justify-self: start;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.sidebar-utility-link:hover {
+    background: rgba(20, 89, 217, 0.07);
+    border-color: rgba(20, 89, 217, 0.2);
 }
 
 .sidebar-calc-icon {
