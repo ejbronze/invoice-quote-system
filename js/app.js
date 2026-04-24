@@ -14660,21 +14660,7 @@ function getStatusBadgeMarkup(label, className = "") {
 }
 
 function getCalculatorButtonMarkup() {
-    return `
-        <span class="sidebar-utility-icon" aria-hidden="true">
-            <svg viewBox="0 0 20 20" fill="none">
-                <rect x="3.5" y="2.5" width="13" height="15" rx="3" stroke="currentColor" stroke-width="1.5"/>
-                <path d="M6.5 6.5h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                <circle cx="7" cy="10.5" r="1" fill="currentColor"/>
-                <circle cx="10" cy="10.5" r="1" fill="currentColor"/>
-                <circle cx="13" cy="10.5" r="1" fill="currentColor"/>
-                <circle cx="7" cy="13.5" r="1" fill="currentColor"/>
-                <circle cx="10" cy="13.5" r="1" fill="currentColor"/>
-                <path d="M12.3 12.8h1.4M13 12.1v1.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-            </svg>
-        </span>
-        <span class="visually-hidden">Calculator</span>
-    `;
+    return `<img src="/assets/icons/icon-calculator.png" alt="" class="sidebar-calc-icon"><span class="visually-hidden">Calculator</span>`;
 }
 
 function getOverviewSummaryCardMarkup({ label, value, icon = "", tone = "default", targetPage = "overview", targetFilter = "" }) {
