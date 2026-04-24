@@ -3587,7 +3587,11 @@ function normalizeCatalogItems(items) {
                 documentRefs: Array.isArray(item.documentRefs)
                     ? item.documentRefs.filter(r => r && r.docId)
                     : [],
-                itemImageDataUrl: typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl : ""
+                itemImageDataUrl: typeof item.itemImageDataUrl === "string"
+                    ? item.itemImageDataUrl
+                    : typeof item.imageDataUrl === "string"
+                        ? item.imageDataUrl
+                        : ""
             }))
             .filter(item => item.name)
         : [];
@@ -4466,13 +4470,14 @@ function openCatalogDetailsModal(item) {
         }).join("");
     }
 
-    if (item.imageDataUrl) {
-        elements.catalogDetailsImage.src = item.imageDataUrl;
+    const detailsImageUrl = item.imageDataUrl || item.itemImageDataUrl || "";
+    if (detailsImageUrl) {
+        elements.catalogDetailsImage.src = detailsImageUrl;
         elements.catalogDetailsImage.hidden = false;
         elements.catalogDetailsFallback.hidden = true;
         if (elements.catalogDetailsExpandImageBtn) {
             elements.catalogDetailsExpandImageBtn.hidden = false;
-            elements.catalogDetailsExpandImageBtn.dataset.expandSrc = item.imageDataUrl;
+            elements.catalogDetailsExpandImageBtn.dataset.expandSrc = detailsImageUrl;
             elements.catalogDetailsExpandImageBtn.dataset.expandAlt = item.name || "Item image";
         }
     } else {
@@ -4597,9 +4602,14 @@ function addCatalogItemToDocument(item, targetDocId) {
 function getCatalogEntries() {
     const manualEntries = state.catalogItems.map(item => {
         const createdAt = item.createdAt || item.dateUpdated || new Date().toISOString();
+        const imageDataUrl = typeof item.itemImageDataUrl === "string"
+            ? item.itemImageDataUrl
+            : typeof item.imageDataUrl === "string"
+                ? item.imageDataUrl
+                : "";
         return {
             ...item,
-            imageDataUrl: typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl : "",
+            imageDataUrl,
             createdAt,
             sourceKey: "manual"
         };
@@ -4742,9 +4752,9 @@ function renderCatalog() {
                 <span class="catalog-card-selector-ui" aria-hidden="true"></span>
             </label>
             <button class="catalog-card-trigger" type="button" data-catalog-action="open" data-catalog-id="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.name)}">
-                <div class="catalog-card-bubble${item.imageDataUrl ? " is-expandable" : ""}" ${item.imageDataUrl ? `data-catalog-action="expand-image" data-catalog-id="${escapeHtml(item.id)}" data-catalog-img-src="${escapeHtml(item.imageDataUrl)}" data-catalog-img-alt="${escapeHtml(item.name)}"` : ""} aria-hidden="true">
-                    ${item.imageDataUrl
-                        ? `<img src="${escapeHtml(item.imageDataUrl)}" alt="${escapeHtml(item.name)}" loading="lazy">`
+                <div class="catalog-card-bubble${(item.imageDataUrl || item.itemImageDataUrl) ? " is-expandable" : ""}" ${(item.imageDataUrl || item.itemImageDataUrl) ? `data-catalog-action="expand-image" data-catalog-id="${escapeHtml(item.id)}" data-catalog-img-src="${escapeHtml(item.imageDataUrl || item.itemImageDataUrl)}" data-catalog-img-alt="${escapeHtml(item.name)}"` : ""} aria-hidden="true">
+                    ${(item.imageDataUrl || item.itemImageDataUrl)
+                        ? `<img src="${escapeHtml(item.imageDataUrl || item.itemImageDataUrl)}" alt="${escapeHtml(item.name)}" loading="lazy">`
                         : `<span>${escapeHtml((item.name || "Item").trim().slice(0, 2).toUpperCase() || "IT")}</span>`}
                 </div>
                 <div class="catalog-card-copy">
@@ -5359,7 +5369,7 @@ function handleCatalogGridClick(event) {
     if (elements.archiveCatalogItemBtn) {
         elements.archiveCatalogItemBtn.hidden = false;
     }
-    state.pendingCatalogItemImageDataUrl = item.itemImageDataUrl || null;
+    state.pendingCatalogItemImageDataUrl = item.itemImageDataUrl || item.imageDataUrl || null;
     syncCatalogItemImageUI();
     closeCatalogDetailsModal();
     setModalState(elements.catalogItemModal, true);
@@ -5401,7 +5411,9 @@ async function saveCatalogItemFromModal() {
         itemImageDataUrl: state.pendingCatalogItemImageDataUrl != null
             ? state.pendingCatalogItemImageDataUrl
             : (state.editingCatalogItemId
-                ? (state.catalogItems.find(e => e.id === state.editingCatalogItemId)?.itemImageDataUrl || "")
+                ? (state.catalogItems.find(e => e.id === state.editingCatalogItemId)?.itemImageDataUrl
+                    || state.catalogItems.find(e => e.id === state.editingCatalogItemId)?.imageDataUrl
+                    || "")
                 : "")
     };
 
