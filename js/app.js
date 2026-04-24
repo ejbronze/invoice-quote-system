@@ -2403,6 +2403,8 @@ function cacheElements() {
     elements.importBackupInput = document.getElementById("importBackupInput");
     elements.importDocumentStatus = document.getElementById("importDocumentStatus");
     elements.closeModalBtn = document.getElementById("closeModalBtn");
+    elements.modalHelpBtn = document.getElementById("modalHelpBtn");
+    elements.modalHelpPanel = document.getElementById("modalHelpPanel");
     elements.saveClientBtn = document.getElementById("saveClientBtn");
     elements.addItemBtn = document.getElementById("addItemBtn");
     elements.addAnotherItemBtn = document.getElementById("addAnotherItemBtn");
@@ -2752,6 +2754,12 @@ function bindEvents() {
     });
     elements.importBackupInput.addEventListener("change", handleBackupImportSelect);
     elements.closeModalBtn.addEventListener("click", closeModal);
+    elements.modalHelpBtn?.addEventListener("click", () => {
+        const open = elements.modalHelpPanel.hidden;
+        elements.modalHelpPanel.hidden = !open;
+        elements.modalHelpPanel.setAttribute("aria-hidden", String(!open));
+        elements.modalHelpBtn.setAttribute("aria-expanded", String(open));
+    });
     elements.docType.addEventListener("change", updateModalTitle);
     elements.refNumber.addEventListener("input", handleRefNumberInput);
     elements.docDate.addEventListener("change", handleDocumentDateChange);
