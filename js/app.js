@@ -2117,6 +2117,7 @@ function cacheElements() {
     elements.catalogDetailsBrand = document.getElementById("catalogDetailsBrand");
     elements.catalogDetailsUnitSize = document.getElementById("catalogDetailsUnitSize");
     elements.catalogDetailsVendor = document.getElementById("catalogDetailsVendor");
+    elements.catalogDetailsEditItemBtn = document.getElementById("catalogDetailsEditItemBtn");
     elements.catalogDetailsText = document.getElementById("catalogDetailsText");
     elements.catalogDetailsNotes = document.getElementById("catalogDetailsNotes");
     elements.catalogDetailsRefId = document.getElementById("catalogDetailsRefId");
@@ -2437,6 +2438,11 @@ function bindEvents() {
         const src = elements.catalogDetailsExpandImageBtn.dataset.expandSrc;
         const alt = elements.catalogDetailsExpandImageBtn.dataset.expandAlt;
         if (src) openCatalogItemImageExpand(src, alt);
+    });
+    elements.catalogDetailsEditItemBtn?.addEventListener("click", () => {
+        if (!state.pendingCatalogInsertItem) return;
+        openCatalogItemModal({ item: state.pendingCatalogInsertItem });
+        closeCatalogDetailsModal();
     });
     elements.saveCatalogItemBtn.addEventListener("click", saveCatalogItemFromModal);
     elements.archiveCatalogItemBtn?.addEventListener("click", archiveCatalogItemFromModal);
@@ -4409,7 +4415,33 @@ function openCatalogItemModal(options = {}) {
     if (elements.archiveCatalogItemBtn) {
         elements.archiveCatalogItemBtn.hidden = true;
     }
-    state.pendingCatalogItemImageDataUrl = null;
+
+    if (options.item) {
+        const item = options.item;
+        state.editingCatalogItemId = item.id || null;
+        elements.catalogItemNameInput.value = item.name || "";
+        elements.catalogItemCostInput.value = String(item.costPrice || 0);
+        elements.catalogItemPriceInput.value = String(item.sellPrice ?? item.price ?? 0);
+        elements.catalogItemCurrencyInput.value = item.currency || "USD";
+        elements.catalogItemCategoryInput.value = item.category || "";
+        elements.catalogItemBrandInput.value = item.brand || "";
+        elements.catalogItemUnitSizeInput.value = item.packSize || item.unitSize || "";
+        elements.catalogItemUnitInput.value = item.unit || "";
+        elements.catalogItemVendorInput.value = item.supplier || item.vendor || "";
+        elements.catalogItemLeadTimeInput.value = item.leadTime || "";
+        elements.catalogItemCountryInput.value = item.country || "";
+        elements.catalogItemTaxIncludedInput.checked = Boolean(item.taxIncluded);
+        elements.catalogItemTagsInput.value = Array.isArray(item.tags) ? item.tags.join(", ") : "";
+        elements.catalogItemDetailsInput.value = item.details || "";
+        elements.catalogItemNotesInput.value = item.notes || "";
+        if (elements.archiveCatalogItemBtn) {
+            elements.archiveCatalogItemBtn.hidden = false;
+        }
+        state.pendingCatalogItemImageDataUrl = item.itemImageDataUrl || item.imageDataUrl || null;
+    } else {
+        state.pendingCatalogItemImageDataUrl = null;
+    }
+
     syncCatalogItemImageUI();
     setModalState(elements.catalogItemModal, true);
     applyTranslations();
@@ -6493,12 +6525,14 @@ function insertLibraryItemIntoDocument(item) {
     row.dataset.libraryItemId = item.id;
     row.dataset.libraryReferenceId = item.referenceId || "";
     row.dataset.priceDriver = "unit";
+    row.dataset.itemImageDataUrl = item.itemImageDataUrl || item.imageDataUrl || "";
     row.querySelector(".item-description").value = descriptionParts.join("\n");
     row.querySelector(".item-quantity").value = "1";
     row.querySelector(".item-unit-price").value = unitPrice.toFixed(2);
     row.querySelector(".item-total-price").value = unitPrice.toFixed(2);
     row.querySelector(".item-internal-cost").value = String(Number.parseFloat(item.costPrice) || 0);
     updateItemPricing(row, { sourceField: "unit" });
+    syncItemImageUI(row);
     autoResizeTextarea(row.querySelector(".item-description"));
     handleItemsChange({ target: row.querySelector(".item-unit-price"), type: "input" });
     setImportStatus(`Inserted "${item.name}" as a frozen document snapshot.`);
@@ -12662,6 +12696,34 @@ function addItem() {
         </td>
         <td class="it-desc">
             <textarea class="item-description" placeholder="Describe the item or service..."></textarea>
+            <div class="item-image-group">
+                <div class="item-image-uploader">
+                    <label class="item-image-upload-btn" for="itemImageInput-${itemId}" aria-label="Upload item image" title="Upload item image">
+                        <input type="file" id="itemImageInput-${itemId}" class="item-image-input" accept="image/jpeg,image/png,image/webp" hidden>
+                        <span class="item-image-upload-art" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M5 7.5A2.5 2.5 0 0 1 7.5 5h9A2.5 2.5 0 0 1 19 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 16.5z" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                <path d="M8 15l2.4-2.4a1 1 0 0 1 1.4 0l1.1 1.1 2.1-2.1a1 1 0 0 1 1.4 0L19 14.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="10" cy="9.5" r="1.2" fill="currentColor"/>
+                            </svg>
+                        </span>
+                        <span class="item-image-upload-copy">
+                            <strong>Item image</strong>
+                            <small>Add image</small>
+                        </span>
+                    </label>
+                    <button type="button" class="item-image-remove-btn" hidden aria-label="Remove item image" title="Remove item image">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M6 7h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            <path d="M9.5 7V5.6c0-.4.3-.6.6-.6h3.8c.3 0 .6.2.6.6V7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            <path d="M8.2 7l.7 10.2c0 .4.3.8.8.8h4.6c.4 0 .7-.3.8-.8L16 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="item-image-preview" hidden>
+                    <img class="item-image-preview-img" alt="Item image preview">
+                </div>
+            </div>
         </td>
         <td class="it-qty">
             <input type="number" class="item-quantity" value="1" min="0" step="1">
@@ -12692,6 +12754,7 @@ function addItem() {
     itemRow.querySelector(".it-cost").hidden = !state.showInternalPricing;
     itemRow.querySelector(".it-margin").hidden = !state.showInternalPricing;
     updateItemPricing(itemRow);
+    syncItemImageUI(itemRow);
     setExpandedItem(itemRow);
     focusItemPrimaryField(itemRow);
     queueDraftAutosave();
@@ -12976,7 +13039,7 @@ function updateItemSummary(row) {
 }
 
 function documentHasItemImages(doc) {
-    return Array.isArray(doc?.items) && doc.items.some(item => Boolean(item?.itemImageDataUrl));
+    return Array.isArray(doc?.items) && doc.items.some(item => Boolean(item?.itemImageDataUrl || item?.imageDataUrl));
 }
 
 function buildDocumentItemsTable(doc) {
@@ -12989,14 +13052,15 @@ function buildDocumentItemsTable(doc) {
             : "0.00");
         const formattedUnitPrice = `$${formatAmount(unitPrice)}`;
         const formattedLineTotal = formatAmount(lineTotal);
+        const itemImageUrl = item.itemImageDataUrl || item.imageDataUrl || "";
 
         return `
             <tr>
                 <td class="document-item-col-no">${escapeHtml(item.itemNo || index + 1)}</td>
                 ${hasItemImages ? `
                 <td class="document-item-col-image">
-                    ${item.itemImageDataUrl
-                        ? `<div class="document-item-thumb"><img src="${escapeHtml(item.itemImageDataUrl)}" alt="${escapeHtml(item.description || `Item ${index + 1}`)}"></div>`
+                    ${itemImageUrl
+                        ? `<div class="document-item-thumb"><img src="${escapeHtml(itemImageUrl)}" alt="${escapeHtml(item.description || `Item ${index + 1}`)}"></div>`
                         : `<div class="document-item-thumb document-item-thumb-empty" aria-hidden="true"></div>`}
                 </td>` : ""}
                 <td class="document-item-col-description">${escapeHtml(item.description || "")}</td>
@@ -15211,7 +15275,7 @@ function populateFormFromDocument(doc) {
         lastItem.querySelector(".item-unit-price").value = item.unitPrice ?? item.price ?? 0;
         lastItem.dataset.priceDriver = item.manualUnitPrice ? "unit" : "total";
         lastItem.querySelector(".item-internal-cost").value = item.internalCost ?? 0;
-        lastItem.dataset.itemImageDataUrl = item.itemImageDataUrl || "";
+        lastItem.dataset.itemImageDataUrl = item.itemImageDataUrl || item.imageDataUrl || "";
         lastItem.dataset.libraryItemId = item.libraryItemId || "";
         lastItem.dataset.libraryReferenceId = item.libraryReferenceId || "";
         updateItemPricing(lastItem);
