@@ -6137,6 +6137,80 @@ body::after {
     color: var(--brand-primary);
 }
 
+/* ── ? help button ────────────────────────────────── */
+.modal-help-btn {
+    font-size: 0.88rem;
+    font-weight: 800;
+    font-family: inherit;
+}
+
+/* ── Help panel ───────────────────────────────────── */
+.modal-help-panel {
+    border-bottom: 1px solid var(--line);
+    background: rgba(248, 250, 255, 0.98);
+    padding: 0.9rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.modal-help-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+}
+
+.modal-help-icon-img {
+    width: 1.4rem;
+    height: 1.4rem;
+    object-fit: contain;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.modal-help-text strong {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 0.18rem;
+}
+
+.modal-help-text p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--text-soft);
+    line-height: 1.45;
+}
+
+/* ── Hover tooltips (data-tooltip) ───────────────── */
+[data-tooltip] {
+    position: relative;
+}
+
+[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 7px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.28rem 0.6rem;
+    border-radius: 6px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 300;
+    letter-spacing: 0;
+}
+
+[data-tooltip]:hover::after {
+    opacity: 1;
+}
+
 .close-btn {
     background: rgba(255, 255, 255, 0.9);
     color: var(--text-soft);
@@ -13261,6 +13335,19 @@ body #procurementSheetModal:not([hidden]) {
 .statement-action-btn.is-notes {
     position: relative;
 }
+
+.statement-action-btn.is-notes.has-notes {
+    color: #92400e;
+    background: rgba(254, 243, 199, 0.65);
+    box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.3), 0 0 10px rgba(234, 179, 8, 0.22);
+    transition: box-shadow 0.2s, background 0.2s;
+}
+
+.statement-action-btn.is-notes.has-notes:hover {
+    background: rgba(254, 243, 199, 0.9);
+    box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.55), 0 0 16px rgba(234, 179, 8, 0.38);
+}
+
 .notes-count-badge {
     position: absolute;
     top: -3px;

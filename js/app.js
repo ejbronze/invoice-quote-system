@@ -12514,6 +12514,11 @@ function getActionButtonMarkup(icon, label) {
 function closeModal() {
     clearDraftAutosaveTimer();
     setModalState(elements.documentModal, false);
+    if (elements.modalHelpPanel) {
+        elements.modalHelpPanel.hidden = true;
+        elements.modalHelpPanel.setAttribute("aria-hidden", "true");
+        elements.modalHelpBtn?.setAttribute("aria-expanded", "false");
+    }
     elements.documentModal.classList.remove("review-mode");
     elements.documentModal.classList.remove("final-preview-mode");
     elements.documentModal.classList.remove("prefilled-edit-mode");
