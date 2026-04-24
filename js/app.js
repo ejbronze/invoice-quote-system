@@ -4939,7 +4939,7 @@ function renderStatementsPage() {
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M14 3v4h4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="m9 10 4 4M13 10l-4 4M9 18h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     <span class="visually-hidden">${escapeHtml(t("statement_generate_excel"))}</span>
                 </button>
-                <button class="statement-action-btn is-notes" type="button" data-statement-action="notes" data-statement-id="${escapeHtml(statement.id)}" aria-label="Notes" title="Notes">
+                <button class="statement-action-btn is-notes${noteCount > 0 ? " has-notes" : ""}" type="button" data-statement-action="notes" data-statement-id="${escapeHtml(statement.id)}" aria-label="Notes" title="Notes">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     ${noteBadge}
                     <span class="visually-hidden">Notes</span>
@@ -12539,17 +12539,18 @@ function updateModalTitle() {
     const saveButtonLabel = state.editingDocumentId !== null ? t("save_changes") : t("save_document");
     elements.saveBtn.innerHTML = getActionButtonMarkup(
         '<img src="/assets/icons/icon-calculator.png" alt="" class="btn-custom-icon">',
-        saveButtonLabel
+        null
     );
-    elements.saveBtn.removeAttribute("aria-label");
-    elements.saveBtn.removeAttribute("title");
-    elements.saveBtn.classList.remove("btn-icon-only");
+    elements.saveBtn.setAttribute("aria-label", saveButtonLabel);
+    elements.saveBtn.setAttribute("data-tooltip", saveButtonLabel);
+    elements.saveBtn.classList.add("btn-icon-only");
+    const pdfLabel = t("save_preview_pdf");
     elements.exportPdfBtn.innerHTML = getActionButtonMarkup(
         '<img src="/assets/icons/icon-pdf.png" alt="" class="btn-custom-icon">',
-        t("save_preview_pdf")
+        null
     );
-    elements.exportPdfBtn.removeAttribute("title");
-    elements.exportPdfBtn.removeAttribute("aria-label");
+    elements.exportPdfBtn.setAttribute("aria-label", pdfLabel);
+    elements.exportPdfBtn.setAttribute("data-tooltip", pdfLabel);
     syncPaymentLedgerVisibility();
     generateRefNumber();
 }
@@ -14772,7 +14773,7 @@ function getDocumentCardMarkup(doc) {
                 <button type="button" class="statement-action-btn is-edit" data-action="edit" data-id="${escapeHtml(String(doc.id))}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
                 </button>
-                <button type="button" class="statement-action-btn is-notes" data-action="notes" data-id="${escapeHtml(String(doc.id))}" aria-label="Notes" title="Notes">
+                <button type="button" class="statement-action-btn is-notes${noteCount > 0 ? " has-notes" : ""}" data-action="notes" data-id="${escapeHtml(String(doc.id))}" aria-label="Notes" title="Notes">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     ${noteBadge}
                 </button>
