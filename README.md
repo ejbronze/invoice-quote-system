@@ -72,11 +72,11 @@ This release focuses on workflow clarity, payment controls, responsive layout cl
 
 **Statements layout fit and rendering polish:** The Statements page now keeps its content inside the working column more reliably on laptop-sized screens. The statement export cards wrap their metric and action areas earlier, and the reports layout uses a dedicated width so Payment History, Client Aging, and saved statement rows stay visually contained instead of pushing past the viewport.
 
-**Line-item editor cleanup:** The cart trigger was removed from the quote and invoice line-items step. The table-style editor now stays focused on direct item entry with a single clear `Add Item` action, which avoids the glitchy cart interaction and reduces visual noise in the most frequently used part of the document flow.
+**Line-item editor cleanup:** The old cart flow was removed from the quote and invoice line-items step. The table-style editor now stays focused on direct item entry with a single clear `Add Item` action, while reusable pricing and sourced-item details live in the Pricing Library.
 
 **Safer payment deletion:** Logged payments can now be removed intentionally from the Statements page through a dedicated `Delete Payment` action. Deleting either a logged payment or an in-editor payment entry now opens a confirmation modal first, then refreshes balances and reporting immediately after removal so users are not left wondering whether the payment actually changed.
 
-**Help, FAQ, and about-copy alignment:** The in-app Help & FAQ, the About SantoSync copy, and this README now reflect the current behavior: documents save cleanly before print, the document list is more clickable, payment history has stronger controls, backups are broader, and the old Step 3 cart button is no longer part of the quote/invoice editor flow.
+**Help, FAQ, and about-copy alignment:** The in-app Help & FAQ, the About SantoSync copy, and this README now reflect the current behavior: documents save cleanly before print, the document list is more clickable, payment history has stronger controls, backups are broader, and reusable line-item management is consolidated into the Pricing Library.
 
 ## Version 1.5.0 Summary
 
@@ -146,7 +146,7 @@ The Help & FAQ modal has been fully upgraded: it now opens with a live search ba
 
 ## Version 1.0.0 Summary
 
-This version brought SantoSync into a more complete shared-workspace release. The app now supports server-backed shared workspace data for online use, invoice payment tracking, a three-state commercial snapshot card, stronger quote-versus-invoice card styling, compact overflow menus for document and line-item actions, a more refined pending-items cart flow, per-item image handling across the editor and cart, a dedicated catalog page, compact export thumbnails for imaged line items, admin issue inbox controls, stronger mobile modal behavior, and a cleaner branded dashboard shell. The quote/invoice workflow, cart behavior, catalog flow, document preview/export flow, and admin tooling all remain intact while the product identity and UI structure are more polished and easier to navigate.
+This version brought SantoSync into a more complete shared-workspace release. The app now supports server-backed shared workspace data for online use, invoice payment tracking, a three-state commercial snapshot card, stronger quote-versus-invoice card styling, compact overflow menus for document and line-item actions, per-item image handling across the editor and catalog, a dedicated catalog page, compact export thumbnails for imaged line items, admin issue inbox controls, stronger mobile modal behavior, and a cleaner branded dashboard shell. The quote/invoice workflow, catalog flow, document preview/export flow, and admin tooling all remain intact while the product identity and UI structure are more polished and easier to navigate.
 
 ## Brand Identity
 
@@ -189,9 +189,9 @@ This version brought SantoSync into a more complete shared-workspace release. Th
 ## Core Files
 
 - `index.html`: App shell, auth screens, dashboard, editor flow, admin tools, issue reporting, and company profile surface.
-- `css/styles.css`: SantoSync UI system, dashboard layout, catalog and cart layouts, document styling, modal patterns, and print/export presentation.
+- `css/styles.css`: SantoSync UI system, dashboard layout, catalog layouts, document styling, modal patterns, and print/export presentation.
 - `js/brand.js`: Centralized brand config, SantoSync logo SVG system, and theme token application.
-- `js/app.js`: Session handling, local roles, translations, document workflow, catalog/cart behavior, exports, client persistence, payment tracking, and admin utilities.
+- `js/app.js`: Session handling, local roles, translations, document workflow, catalog behavior, exports, client persistence, payment tracking, and admin utilities.
 - `js/statement-of-account.js`: Statement of Account PDF generation, normalization, and totals calculation.
 - `api/documents.js`: Vercel API route for saving and loading quotes and invoices.
 - `api/clients.js`: Vercel API route for saving and loading shared client records.
@@ -269,9 +269,7 @@ When the app is online with the API available, user accounts are stored in the s
 - "+ Log Payment" button in the Payment History panel lets you record payments against any open invoice without opening the document editor
 - Statement summary panel shows "Payments applied" and "Other deductions" as separate line items
 - Statement of Account Excel export with a branded single-sheet layout: title banner, header block (vendor, consignee, bill-to, currency, outstanding balance, project name), date band, column headers, and one row per invoice
-- Pending items cart with a dedicated create-item popup
-- Pending items cart with visual item cards, a header action pill, document-insert controls, compact cart item editing, and cart item image editing
-- Pricing Library (catalog) that aggregates items from quotes, invoices, and cart records, with support for manually added entries
+- Pricing Library (catalog) for reusable sourced items, supplier details, packaging, cost, sell price, and lead-time tracking
 - **Product image upload for Pricing Library items** — upload JPEG/PNG/WebP; auto-compressed to max 600px longest side, JPEG quality 0.85; optional crop step before saving; replace or delete from the edit modal at any time
 - **Loading states during image processing** — "Optimizing…" status while compressing, "Image ready" after crop or skip; prevent duplicate uploads while processing
 - **Catalog card thumbnails** — items with images show a thumbnail on the card instead of initials; items without images show the colored initials bubble; thumbnails use lazy loading
@@ -306,7 +304,7 @@ When the app is online with the API available, user accounts are stored in the s
 - The PDF preview popup window's Edit button correctly navigates back to the editor with the document loaded
 - The Statements tab renders inline within the main dashboard — the filter tab bar stays visible while browsing statements
 - Statement rows show the same open/edit/delete icon buttons as document cards for a unified control language
-- Mobile-tuned modal sizing for cart, issue reporting, and document preview/export flows
+- Mobile-tuned modal sizing for issue reporting, catalog, and document preview/export flows
 - Branded splash, auth, session-loading, about, and dashboard identity
 - Branded print/PDF preview output with SantoSync company identity
 - Help & FAQ modal with live keyword search, a quick-jump section index, and inline visual button demos rendered using the app's own CSS; all topics reflect the current sidebar-based navigation and current line-item / payment / image / procurement workflows
@@ -338,8 +336,6 @@ Server-backed:
   - user accounts and roles
   - issue inbox/reporting
   - company profile
-  - pending items cart
-  - cart item images and related shared cart metadata
   - catalog items and related catalog metadata, including product images (`itemImageDataUrl`)
 
 Browser-local:

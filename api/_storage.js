@@ -264,28 +264,6 @@ function normalizeActivityLogs(logs) {
         : [];
 }
 
-function normalizeSavedItems(items) {
-    return Array.isArray(items)
-        ? items
-            .filter(item => item && typeof item === "object")
-            .map(item => {
-                const quantity = Number.parseFloat(item.quantity) || 0;
-                const unitPrice = Number.parseFloat(item.unitPrice) || 0;
-                const total = Number.parseFloat(item.total) || (quantity * unitPrice);
-                return {
-                    id: String(item.id || `saved-item-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
-                    description: String(item.description || "").trim(),
-                    quantity,
-                    unitPrice,
-                    total,
-                    itemImageDataUrl: typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl : "",
-                    createdAt: String(item.createdAt || new Date().toISOString())
-                };
-            })
-            .filter(item => item.description)
-        : [];
-}
-
 function normalizeCatalogItems(items) {
     return Array.isArray(items)
         ? items
@@ -343,7 +321,6 @@ function normalizeWorkspaceState(payload) {
         userAccounts: normalizeUserAccounts(payload?.userAccounts || []),
         issueReports: normalizeIssueReports(payload?.issueReports || []),
         companyProfile: normalizeCompanyProfile(payload?.companyProfile || DEFAULT_COMPANY_PROFILE),
-        savedItems: normalizeSavedItems(payload?.savedItems || []),
         catalogItems: normalizeCatalogItems(payload?.catalogItems || []),
         statementExports: normalizeStatementExports(payload?.statementExports || []),
         sessionLogs: normalizeSessionLogs(payload?.sessionLogs || []),
@@ -597,7 +574,6 @@ module.exports = {
     normalizeIssueReports,
     normalizeCatalogItems,
     normalizeStatementExports,
-    normalizeSavedItems,
     normalizeUserAccounts,
     normalizeWorkspaceState,
     readLegacyPdfBuffer,

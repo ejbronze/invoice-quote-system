@@ -597,7 +597,6 @@ export const DEMO_WORKSPACE = {
         signatureDataUrl: "",
         stampDataUrl: ""
     },
-    savedItems: [],
     catalogItems: [
         {
             id: "cat-001",

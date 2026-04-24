@@ -33,22 +33,18 @@ const state = {
     issueReports: [],
     companyProfile: null,
     exchangeRateUsdToDop: 59,
-    savedItems: [],
     catalogItems: [],
     statementExports: [],
     sessionLogs: [],
     activityLogs: [],
-    editingSavedItemId: null,
     editingCatalogItemId: null,
     editingStatementExportId: null,
-    pendingSavedItemImageUploadId: null,
     openItemMenuId: null,
     openDocumentMenuId: null,
     statementStatusFilter: "pending",
     editingClientId: null,
     draftAutosaveTimerId: null,
     editingManagedUserId: null,
-    highlightedSavedItemId: null,
     documentEditorBaseline: "",
     documentEditorDirty: false,
     mobileOverviewCollapsed: true,
@@ -105,7 +101,6 @@ const USER_ACCOUNTS_STORAGE_KEY = "todosUserAccounts";
 const CURRENT_SESSION_STORAGE_KEY = "todosCurrentSession";
 const ISSUE_REPORTS_STORAGE_KEY = "todosIssueReports";
 const COMPANY_PROFILE_STORAGE_KEY = "santosyncCompanyProfile";
-const SAVED_ITEMS_STORAGE_KEY = "santosyncSavedItems";
 const CATALOG_ITEMS_STORAGE_KEY = "santosyncCatalogItems";
 const STATEMENT_EXPORTS_STORAGE_KEY = "santosyncStatementExports";
 const SESSION_LOGS_STORAGE_KEY = "santosyncSessionLogs";
@@ -238,7 +233,6 @@ const TRANSLATIONS = {
         vendor: "Supplier",
         source: "Source",
         source_manual: "Manual",
-        source_cart: "Cart",
         source_document: "Document",
         save_catalog_item: "Save Library Item",
         update_catalog_item: "Update Library Item",
@@ -262,26 +256,7 @@ const TRANSLATIONS = {
         company_tax_id: "Tax / Registration",
         save_company_profile: "Save Company Profile",
         company_profile_saved: "Company profile saved.",
-        saved_items: "Pending Items Cart",
-        saved_items_copy: "Keep requested items here until you are ready to pull them into a quote or invoice.",
-        add_saved_item: "Add To Cart",
-        add_saved_item_copy: "Capture items that are not yet tied to a quote or invoice.",
-        saved_items_library: "Cart Items",
-        saved_items_library_copy: "Add an item to the open document, or remove it from the cart if it is no longer pending.",
-        item_description: "Item Description",
-        unit_price_usd: "Unit Price (USD)",
-        total_usd: "Total (USD)",
-        save_item: "Create Cart Item",
-        add_cart_item: "Add New Item To Cart",
-        update_cart_item: "Update Cart Item",
         use_item: "Add To Document",
-        save_for_later: "Move Line Item to Cart",
-        no_saved_items: "No items in the cart yet.",
-        saved_item_added: "Item moved to the cart.",
-        saved_item_updated: "Cart item updated.",
-        saved_item_used: "Cart item added to this document.",
-        save_item_before_remove: "Move this line item to the cart before removing it?",
-        open_pending_cart: "Open pending items cart",
         item_image: "Item Image",
         upload_item_image: "Upload item image",
         remove_item_image: "Remove image",
@@ -608,7 +583,7 @@ const TRANSLATIONS = {
         help_vl_pdf_preview: "Download PDF",
         help_vc_preview_pdf: "Download PDF",
         help_q_reuse_items: "Can I save line items to reuse later?",
-        help_a_reuse_items: "Yes. Reusable items now live in the <strong>Catalog</strong> and <strong>Pending Items Cart</strong> tools outside the Step 3 editor header. Keep the quote or invoice line-item table focused on direct entry, then manage reusable items from the Catalog or cart library when needed. The Catalog page still aggregates all captured items across documents.",
+        help_a_reuse_items: "Yes. Reusable items now live in the <strong>Catalog</strong>. Keep the quote or invoice line-item table focused on direct entry, then manage reusable sourced items, pricing, supplier details, packaging, and lead-time data from the Catalog when needed.",
         help_q_payment_terms: "How do I set payment terms on an invoice?",
         help_a_payment_terms: "Scroll to the <strong>Document Notes &amp; Terms</strong> panel at the bottom of Step 3. The <strong>Terms of Payment</strong> selector offers four options: <strong>Due Immediately</strong> (disables other options and prints \u201cPayment is due immediately upon receipt\u201d), <strong>Net 15</strong> (due date auto-set to 15 days from invoice date), <strong>Net 30</strong> (due date auto-set to 30 days), or <strong>Other</strong> \u2014 enter a custom day count and optional terms text. Invoice cards show the calculated due date and an overdue indicator when applicable.",
         help_q_backup: "How do I back up or restore my data?",
@@ -640,7 +615,7 @@ const TRANSLATIONS = {
         help_q_snapshot: "What is the auto-cycling card on the dashboard?",
         help_a_snapshot: "The snapshot card in the top-right of the dashboard automatically rotates every 3 seconds between three metrics: <strong>Pipeline Value</strong> (blue \u2014 total value of all quotes and invoices), <strong>Amount Invoiced</strong> (green \u2014 total billed), and <strong>Income Received</strong> (amber \u2014 payments collected). Click the card at any time to advance manually; the 3-second timer resets from that point.",
         help_q_catalog: "How do I use the Catalog?",
-        help_a_catalog: "Click <strong>Catalog</strong> in the sidebar navigation. It shows every line item captured from quotes, invoices, and the cart. You can also add manual catalog entries. Items in the catalog can be inserted into new documents quickly from the cart.",
+        help_a_catalog: "Click <strong>Catalog</strong> in the sidebar navigation. It shows reusable pricing-library items, including entries captured from documents and manually added sourced items. Catalog entries can be inserted into quotes or invoices from the line-item editor.",
         help_q_client_contacts: "How do I add contact information to a client?",
         help_a_client_contacts: "Go to the <strong>Clients</strong> page in the sidebar. Click <strong>Add Client</strong> to create a new client, or click the <strong>edit icon</strong> on an existing client card to open the client modal. Inside, you can add multiple contacts — each with a name, email, phone number, and a WhatsApp flag. Click a client card to expand it and see their address, consignee, and all saved contacts at a glance.",
         help_q_record_payment: "How do I record a payment against an invoice?",
@@ -701,7 +676,7 @@ const TRANSLATIONS = {
         new_report: "Nuevo",
         catalog: "Pricing Library",
         catalog_heading: "Pricing Library",
-        catalog_copy: "Revisa cada artículo capturado desde cotizaciones, facturas y el carrito, y agrega registros manuales para uso futuro.",
+        catalog_copy: "Mantén artículos reutilizables con proveedor, empaque, costo, precio de venta y tiempos de entrega.",
         add_catalog_item: "Add Library Item",
         no_catalog_items: "No pricing library items yet.",
         item_name: "Nombre del Artículo",
@@ -715,7 +690,6 @@ const TRANSLATIONS = {
         vendor: "Proveedor",
         source: "Origen",
         source_manual: "Manual",
-        source_cart: "Carrito",
         source_document: "Documento",
         save_catalog_item: "Save Library Item",
         update_catalog_item: "Update Library Item",
@@ -739,26 +713,7 @@ const TRANSLATIONS = {
         company_tax_id: "Fiscal / Registro",
         save_company_profile: "Guardar Perfil de Empresa",
         company_profile_saved: "Perfil de empresa guardado.",
-        saved_items: "Carrito de Artículos Pendientes",
-        saved_items_copy: "Mantén aquí los artículos solicitados hasta que estés listo para agregarlos a una cotización o factura.",
-        add_saved_item: "Agregar al Carrito",
-        add_saved_item_copy: "Guarda artículos que todavía no estén ligados a un documento.",
-        saved_items_library: "Artículos del Carrito",
-        saved_items_library_copy: "Agrega un artículo al documento abierto, o quítalo del carrito si ya no está pendiente.",
-        item_description: "Descripción del Artículo",
-        unit_price_usd: "Precio Unitario (USD)",
-        total_usd: "Total (USD)",
-        save_item: "Crear Artículo del Carrito",
-        add_cart_item: "Agregar Nuevo Artículo al Carrito",
-        update_cart_item: "Actualizar Artículo del Carrito",
         use_item: "Agregar al Documento",
-        save_for_later: "Mover Línea al Carrito",
-        no_saved_items: "Todavía no hay artículos en el carrito.",
-        saved_item_added: "Artículo movido al carrito.",
-        saved_item_updated: "Artículo del carrito actualizado.",
-        saved_item_used: "Artículo del carrito agregado a este documento.",
-        save_item_before_remove: "¿Mover esta línea al carrito antes de quitarla?",
-        open_pending_cart: "Abrir carrito de artículos pendientes",
         item_image: "Imagen del Artículo",
         upload_item_image: "Subir imagen del artículo",
         remove_item_image: "Quitar imagen",
@@ -1058,7 +1013,7 @@ const TRANSLATIONS = {
         help_vl_pdf_preview: "Descargar PDF",
         help_vc_preview_pdf: "Descargar PDF",
         help_q_reuse_items: "\u00bfPuedo guardar l\u00edneas de art\u00edculos para reutilizarlas?",
-        help_a_reuse_items: "S\u00ed. Los art\u00edculos reutilizables ahora viven en las herramientas de <strong>Cat\u00e1logo</strong> y <strong>Carrito de Art\u00edculos Pendientes</strong>, fuera del encabezado del Paso 3. Mant\u00e9n la tabla de l\u00edneas enfocada en entrada directa y gestiona los art\u00edculos reutilizables desde el Cat\u00e1logo o la biblioteca del carrito cuando lo necesites. La p\u00e1gina de Cat\u00e1logo sigue agrupando todos los art\u00edculos capturados.",
+        help_a_reuse_items: "S\u00ed. Los art\u00edculos reutilizables ahora viven en el <strong>Cat\u00e1logo</strong>. Mant\u00e9n la tabla de l\u00edneas enfocada en entrada directa y gestiona art\u00edculos reutilizables, precios, proveedores, empaques y tiempos de entrega desde el Cat\u00e1logo cuando lo necesites.",
         help_q_payment_terms: "\u00bfC\u00f3mo configuro los t\u00e9rminos de pago en una factura?",
         help_a_payment_terms: "Baja hasta el panel de <strong>Notas y T\u00e9rminos del Documento</strong> al final del Paso 3. El selector de <strong>Condiciones de Pago</strong> ofrece cuatro opciones: <strong>Vencimiento Inmediato</strong> (desactiva las dem\u00e1s opciones e imprime \u201cEl pago vence inmediatamente al recibir\u201d), <strong>Net 15</strong> (fecha de vencimiento autom\u00e1tica a 15 d\u00edas desde la fecha de factura), <strong>Net 30</strong> (30 d\u00edas), u <strong>Otro</strong> \u2014 ingresa un n\u00famero de d\u00edas personalizado y texto opcional. Las tarjetas de factura muestran la fecha de vencimiento calculada e indicador de vencido cuando aplica.",
         help_q_backup: "\u00bfC\u00f3mo respaldo o restauro mis datos?",
@@ -1090,7 +1045,7 @@ const TRANSLATIONS = {
         help_q_snapshot: "\u00bfQu\u00e9 es la tarjeta de rotaci\u00f3n en el panel principal?",
         help_a_snapshot: "La tarjeta de resumen en la esquina superior derecha del panel rota autom\u00e1ticamente cada 3 segundos entre tres m\u00e9tricas: <strong>Valor en Proceso</strong> (azul), <strong>Monto Facturado</strong> (verde) e <strong>Ingresos Recibidos</strong> (ambar). Haz clic en la tarjeta para avanzar manualmente; el temporizador se reinicia desde ese punto.",
         help_q_catalog: "\u00bfC\u00f3mo uso el Cat\u00e1logo?",
-        help_a_catalog: "Haz clic en <strong>Cat\u00e1logo</strong> en la barra lateral. Muestra cada l\u00ednea de art\u00edculo capturada desde cotizaciones, facturas y el carrito. Tambi\u00e9n puedes agregar entradas manuales. Los art\u00edculos del cat\u00e1logo se pueden insertar r\u00e1pidamente desde el carrito.",
+        help_a_catalog: "Haz clic en <strong>Cat\u00e1logo</strong> en la barra lateral. Muestra art\u00edculos reutilizables de la biblioteca de precios, incluyendo entradas capturadas desde documentos y art\u00edculos agregados manualmente. Las entradas del cat\u00e1logo se pueden insertar en cotizaciones o facturas desde el editor de l\u00edneas.",
         help_q_client_contacts: "\u00bfC\u00f3mo agrego informaci\u00f3n de contacto a un cliente?",
         help_a_client_contacts: "Ve a la p\u00e1gina de <strong>Clientes</strong> en la barra lateral. Haz clic en <strong>Agregar Cliente</strong> o en el \u00edcono de edici\u00f3n de una tarjeta existente. Puedes agregar m\u00faltiples contactos con nombre, correo, tel\u00e9fono y opci\u00f3n de WhatsApp. Haz clic en una tarjeta para expandirla y ver direcci\u00f3n, consignatario y contactos.",
         help_q_record_payment: "\u00bfC\u00f3mo registro un pago en una factura?",
@@ -1151,7 +1106,7 @@ const TRANSLATIONS = {
         new_report: "Nouveau",
         catalog: "Pricing Library",
         catalog_heading: "Pricing Library",
-        catalog_copy: "Consultez chaque article issu des devis, factures et du panier, et ajoutez des fiches catalogue manuelles pour plus tard.",
+        catalog_copy: "G\u00e9rez les articles r\u00e9utilisables avec fournisseur, emballage, co\u00fbt, prix de vente et d\u00e9lais.",
         add_catalog_item: "Add Library Item",
         no_catalog_items: "No pricing library items yet.",
         item_name: "Nom de l’Article",
@@ -1165,7 +1120,6 @@ const TRANSLATIONS = {
         vendor: "Fournisseur",
         source: "Source",
         source_manual: "Manuel",
-        source_cart: "Panier",
         source_document: "Document",
         save_catalog_item: "Save Library Item",
         update_catalog_item: "Update Library Item",
@@ -1189,26 +1143,7 @@ const TRANSLATIONS = {
         company_tax_id: "Fiscal / Enregistrement",
         save_company_profile: "Enregistrer le Profil Société",
         company_profile_saved: "Profil société enregistré.",
-        saved_items: "Panier d’Articles en Attente",
-        saved_items_copy: "Gardez ici les articles demandés jusqu’au moment de les ajouter à un devis ou une facture.",
-        add_saved_item: "Ajouter au Panier",
-        add_saved_item_copy: "Conservez ici les articles qui ne sont pas encore liés à un document.",
-        saved_items_library: "Articles du Panier",
-        saved_items_library_copy: "Ajoutez un article au document ouvert, ou retirez-le du panier s’il n’est plus en attente.",
-        item_description: "Description de l’Article",
-        unit_price_usd: "Prix Unitaire (USD)",
-        total_usd: "Total (USD)",
-        save_item: "Créer un Article du Panier",
-        add_cart_item: "Ajouter un Nouvel Article au Panier",
-        update_cart_item: "Mettre à Jour l’Article du Panier",
         use_item: "Ajouter au Document",
-        save_for_later: "Déplacer la Ligne vers le Panier",
-        no_saved_items: "Aucun article dans le panier pour le moment.",
-        saved_item_added: "Article déplacé vers le panier.",
-        saved_item_updated: "Article du panier mis à jour.",
-        saved_item_used: "Article du panier ajouté à ce document.",
-        save_item_before_remove: "Déplacer cette ligne vers le panier avant de la supprimer ?",
-        open_pending_cart: "Ouvrir le panier d’articles en attente",
         item_image: "Image de l’Article",
         upload_item_image: "Téléverser l’image de l’article",
         remove_item_image: "Retirer l’image",
@@ -1506,7 +1441,7 @@ const TRANSLATIONS = {
         help_vl_pdf_preview: "T\u00e9l\u00e9charger le PDF",
         help_vc_preview_pdf: "T\u00e9l\u00e9charger le PDF",
         help_q_reuse_items: "Puis-je enregistrer des lignes d\u2019articles pour les r\u00e9utiliser\u00a0?",
-        help_a_reuse_items: "Oui. Les articles r\u00e9utilisables se g\u00e8rent maintenant depuis le <strong>Catalogue</strong> et le <strong>Panier d\u2019articles en attente</strong>, en dehors de l\u2019en-t\u00eate de l\u2019\u00e9tape\u00a03. Gardez le tableau des lignes concentr\u00e9 sur la saisie directe, puis g\u00e9rez les articles r\u00e9utilisables depuis le Catalogue ou la biblioth\u00e8que du panier quand n\u00e9cessaire. Le Catalogue continue de regrouper tous les articles captur\u00e9s.",
+        help_a_reuse_items: "Oui. Les articles r\u00e9utilisables se g\u00e8rent maintenant depuis le <strong>Catalogue</strong>. Gardez le tableau des lignes concentr\u00e9 sur la saisie directe, puis g\u00e9rez les articles r\u00e9utilisables, les prix, les fournisseurs, les emballages et les d\u00e9lais depuis le Catalogue quand n\u00e9cessaire.",
         help_q_payment_terms: "Comment configurer les conditions de paiement sur une facture\u00a0?",
         help_a_payment_terms: "Faites d\u00e9filer jusqu\u2019au panneau <strong>Notes et conditions du document</strong> en bas de l\u2019\u00e9tape\u00a03. Le s\u00e9lecteur <strong>Conditions de paiement</strong> propose quatre options\u00a0: <strong>D\u00fb imm\u00e9diatement</strong> (d\u00e9sactive les autres options et imprime \u201cLe paiement est d\u00fb imm\u00e9diatement \u00e0 la r\u00e9ception\u201d), <strong>Net\u00a015</strong> (\u00e9ch\u00e9ance fix\u00e9e automatiquement \u00e0 15\u00a0jours), <strong>Net\u00a030</strong> (30\u00a0jours), ou <strong>Autre</strong> \u2014 saisissez un nombre de jours personnalis\u00e9 et un texte optionnel. Les cartes de facture affichent la date d\u2019\u00e9ch\u00e9ance calcul\u00e9e et un indicateur de retard le cas \u00e9ch\u00e9ant.",
         help_q_backup: "Comment sauvegarder ou restaurer mes donn\u00e9es\u00a0?",
@@ -1538,7 +1473,7 @@ const TRANSLATIONS = {
         help_q_snapshot: "Qu\u2019est-ce que la carte rotative sur le tableau de bord\u00a0?",
         help_a_snapshot: "La carte de synth\u00e8se en haut \u00e0 droite du tableau de bord bascule automatiquement toutes les 3\u00a0secondes entre trois indicateurs\u00a0: <strong>Valeur pipeline</strong> (bleu), <strong>Montant factur\u00e9</strong> (vert) et <strong>Revenus re\u00e7us</strong> (ambre). Cliquez sur la carte pour avancer manuellement\u00a0; le minuteur repart de z\u00e9ro.",
         help_q_catalog: "Comment utiliser le Catalogue\u00a0?",
-        help_a_catalog: "Cliquez sur <strong>Catalogue</strong> dans la barre lat\u00e9rale. Il affiche chaque article issu des devis, factures et du panier. Vous pouvez aussi ajouter des entr\u00e9es manuelles et les ins\u00e9rer rapidement dans de nouveaux documents.",
+        help_a_catalog: "Cliquez sur <strong>Catalogue</strong> dans la barre lat\u00e9rale. Il affiche les articles r\u00e9utilisables de la biblioth\u00e8que de prix, y compris les entr\u00e9es captur\u00e9es depuis les documents et les articles ajout\u00e9s manuellement. Les entr\u00e9es du catalogue peuvent \u00eatre ins\u00e9r\u00e9es dans les devis ou factures depuis l\u2019\u00e9diteur de lignes.",
         help_q_client_contacts: "Comment ajouter des contacts à un client\u00a0?",
         help_a_client_contacts: "Allez sur la page <strong>Clients</strong> dans la barre lat\u00e9rale. Cliquez sur <strong>Ajouter un client</strong> ou sur l\u2019ic\u00f4ne de modification d\u2019une fiche existante. Ajoutez autant de contacts que n\u00e9cessaire avec nom, e-mail, t\u00e9l\u00e9phone et option WhatsApp. Cliquez sur une fiche pour d\u00e9velopper les d\u00e9tails.",
         help_q_record_payment: "Comment enregistrer un paiement sur une facture\u00a0?",
@@ -1842,30 +1777,6 @@ function applyTranslations() {
     elements.companyWebsiteInput.placeholder = t("company_website_placeholder");
     elements.companyTaxIdInput.placeholder = t("company_tax_id_placeholder");
     elements.saveCompanyProfileBtn.textContent = t("save_company_profile");
-    setElementText("#savedItemsTitle", t("saved_items"));
-    setElementText("#savedItemsCopy", t("saved_items_copy"));
-    setElementText("#savedItemsAddTitle", t("add_saved_item"));
-    setElementText("#savedItemsAddCopy", t("add_saved_item_copy"));
-    setElementText("#savedItemCreateTitle", state.editingSavedItemId ? t("edit") : t("save_item"));
-    setElementText("#savedItemCreateCopy", t("add_saved_item_copy"));
-    setElementText("#savedItemsLibraryTitle", t("saved_items_library"));
-    setElementText("#savedItemsLibraryCopy", t("saved_items_library_copy"));
-    setElementText("#savedItemDescriptionLabel", t("item_description"));
-    setElementText("#savedItemQuantityLabel", t("quantity"));
-    setElementText("#savedItemUnitPriceLabel", t("unit_price_usd"));
-    setElementText("#savedItemTotalLabel", t("total_usd"));
-    setElementText(".saved-item-image-upload-copy strong", t("item_image"));
-    elements.addSavedItemBtn.textContent = state.editingSavedItemId ? t("update_cart_item") : t("save_item");
-    const savedItemsToggleText = elements.toggleSavedItemsFormBtn.querySelector(".saved-items-toggle-text");
-    if (savedItemsToggleText) {
-        savedItemsToggleText.textContent = t("add_cart_item");
-    }
-    elements.toggleSavedItemsFormBtn.setAttribute("aria-label", t("add_cart_item"));
-    elements.toggleSavedItemsFormBtn.setAttribute("title", t("add_cart_item"));
-    if (elements.openSavedItemsBtn) {
-        elements.openSavedItemsBtn.setAttribute("aria-label", t("open_pending_cart"));
-        elements.openSavedItemsBtn.setAttribute("title", t("open_pending_cart"));
-    }
     setElementText("#aboutModalTitle", t("about_veloris"));
     setElementText("#aboutBrandName", BRAND.name);
     setElementText("#aboutBrandMeaning", t("about_brand_meaning"));
@@ -1930,7 +1841,6 @@ function applyTranslations() {
     renderInvoiceReport();
     updateInboxBadge();
     renderExportSelectionList();
-    renderSavedItemsList();
     renderDocuments();
     renderCatalog();
     updateHelpTranslations();
@@ -2133,14 +2043,11 @@ function cacheElements() {
     elements.previewStatementEditBtn = document.getElementById("previewStatementEditBtn");
     elements.saveStatementEditBtn = document.getElementById("saveStatementEditBtn");
     elements.companyProfileModal = document.getElementById("companyProfileModal");
-    elements.savedItemsModal = document.getElementById("savedItemsModal");
     elements.paymentDeleteConfirmModal = document.getElementById("paymentDeleteConfirmModal");
     elements.closePaymentDeleteConfirmModalBtn = document.getElementById("closePaymentDeleteConfirmModalBtn");
     elements.cancelPaymentDeleteConfirmBtn = document.getElementById("cancelPaymentDeleteConfirmBtn");
     elements.confirmPaymentDeleteConfirmBtn = document.getElementById("confirmPaymentDeleteConfirmBtn");
     elements.paymentDeleteConfirmSummary = document.getElementById("paymentDeleteConfirmSummary");
-    elements.savedItemCreateModal = document.getElementById("savedItemCreateModal");
-    elements.savedItemImageModal = document.getElementById("savedItemImageModal");
     elements.catalogPage = document.getElementById("catalogPage");
     elements.statementsPage = document.getElementById("statementsPage");
     elements.statementExportsList = document.getElementById("statementExportsList");
@@ -2255,13 +2162,7 @@ function cacheElements() {
     elements.exportCatalogReportBtn = document.getElementById("exportCatalogReportBtn");
     elements.clearCatalogSelectionBtn = document.getElementById("clearCatalogSelectionBtn");
     elements.toggleCatalogSelectionModeBtn = document.getElementById("toggleCatalogSelectionModeBtn");
-    elements.openSavedItemsBtn = document.getElementById("openSavedItemsBtn");
-    elements.openSavedItemsInlineCount = document.getElementById("openSavedItemsInlineCount");
     elements.closeCompanyProfileModalBtn = document.getElementById("closeCompanyProfileModalBtn");
-    elements.closeSavedItemsModalBtn = document.getElementById("closeSavedItemsModalBtn");
-    elements.toggleSavedItemsFormBtn = document.getElementById("toggleSavedItemsFormBtn");
-    elements.closeSavedItemCreateModalBtn = document.getElementById("closeSavedItemCreateModalBtn");
-    elements.closeSavedItemImageModalBtn = document.getElementById("closeSavedItemImageModalBtn");
     elements.companyNameInput = document.getElementById("companyNameInput");
     elements.companyTaglineInput = document.getElementById("companyTaglineInput");
     elements.companyAddressInput = document.getElementById("companyAddressInput");
@@ -2270,17 +2171,6 @@ function cacheElements() {
     elements.companyWebsiteInput = document.getElementById("companyWebsiteInput");
     elements.companyTaxIdInput = document.getElementById("companyTaxIdInput");
     elements.saveCompanyProfileBtn = document.getElementById("saveCompanyProfileBtn");
-    elements.savedItemsList = document.getElementById("savedItemsList");
-    elements.savedItemDescriptionInput = document.getElementById("savedItemDescriptionInput");
-    elements.savedItemImageInput = document.getElementById("savedItemImageInput");
-    elements.savedItemImagePreview = document.getElementById("savedItemImagePreview");
-    elements.savedItemImagePreviewImg = document.getElementById("savedItemImagePreviewImg");
-    elements.savedItemImageModalImg = document.getElementById("savedItemImageModalImg");
-    elements.savedItemImageRemoveBtn = document.getElementById("savedItemImageRemoveBtn");
-    elements.savedItemQuantityInput = document.getElementById("savedItemQuantityInput");
-    elements.savedItemUnitPriceInput = document.getElementById("savedItemUnitPriceInput");
-    elements.savedItemTotalInput = document.getElementById("savedItemTotalInput");
-    elements.addSavedItemBtn = document.getElementById("addSavedItemBtn");
     elements.aboutModal = document.getElementById("aboutModal");
     elements.aboutBrandLogo = document.getElementById("aboutBrandLogo");
     elements.closeAboutModalBtn = document.getElementById("closeAboutModalBtn");
@@ -2522,7 +2412,6 @@ function bindEvents() {
     elements.selectAllExportsToggle.addEventListener("change", handleSelectAllExportsToggle);
     elements.exportSelectedJsonBtn.addEventListener("click", exportSelectedDocuments);
     elements.openIssueReportBtn.addEventListener("click", openIssueReportModal);
-    elements.openSavedItemsBtn?.addEventListener("click", openSavedItemsModal);
     elements.closePaymentDeleteConfirmModalBtn?.addEventListener("click", closePaymentDeleteConfirmModal);
     elements.cancelPaymentDeleteConfirmBtn?.addEventListener("click", closePaymentDeleteConfirmModal);
     elements.confirmPaymentDeleteConfirmBtn?.addEventListener("click", () => {
@@ -2531,10 +2420,6 @@ function bindEvents() {
     elements.openAboutBtn.addEventListener("click", openAboutModal);
     elements.closeIssueReportModalBtn.addEventListener("click", closeIssueReportModal);
     elements.closeCompanyProfileModalBtn.addEventListener("click", closeCompanyProfileModal);
-    elements.closeSavedItemsModalBtn.addEventListener("click", closeSavedItemsModal);
-    elements.closeSavedItemCreateModalBtn.addEventListener("click", closeSavedItemCreateModal);
-    elements.closeSavedItemImageModalBtn?.addEventListener("click", closeSavedItemImageModal);
-    elements.toggleSavedItemsFormBtn.addEventListener("click", openSavedItemCreateModal);
     elements.accountAdminWorkspaceBtn?.addEventListener("click", () => setActivePage("overview"));
     elements.accountAdminCatalogBtn?.addEventListener("click", openCatalogPage);
     elements.openCatalogItemModalBtn.addEventListener("click", openCatalogItemModal);
@@ -2723,9 +2608,6 @@ function bindEvents() {
         if (wrap && !wrap.contains(e.target)) closeProcLibDropdown();
     });
     elements.saveCompanyProfileBtn.addEventListener("click", saveCompanyProfile);
-    elements.addSavedItemBtn.addEventListener("click", addSavedItemFromModal);
-    elements.savedItemsList.addEventListener("click", handleSavedItemsListClick);
-    elements.savedItemsList.addEventListener("keydown", handleSavedItemsListKeydown);
     elements.overviewRecentDocuments?.addEventListener("click", event => {
         const button = event.target.closest("[data-open-overview-doc]");
         if (!button) {
@@ -2754,10 +2636,6 @@ function bindEvents() {
         closeMobileDrawer();
     });
     document.addEventListener("click", handleImageUploadTriggerClick);
-    elements.savedItemImageInput.addEventListener("change", handleSavedItemImageInputChange);
-    elements.savedItemImageRemoveBtn.addEventListener("click", clearSavedItemImageSelection);
-    elements.savedItemQuantityInput.addEventListener("input", syncSavedItemsTotal);
-    elements.savedItemUnitPriceInput.addEventListener("input", syncSavedItemsTotal);
     elements.clearLocalTestDataBtn.addEventListener("click", clearLocalTestData);
     elements.accountAdminSaveBtn?.addEventListener("click", handleAccountAdminSaveUser);
     elements.accountAdminCancelEditBtn?.addEventListener("click", resetAccountAdminForm);
@@ -2994,21 +2872,6 @@ function bindEvents() {
         }
     });
 
-    elements.savedItemsModal.addEventListener("click", event => {
-        if (event.target === elements.savedItemsModal) {
-            closeSavedItemsModal();
-        }
-    });
-    elements.savedItemCreateModal.addEventListener("click", event => {
-        if (event.target === elements.savedItemCreateModal) {
-            closeSavedItemCreateModal();
-        }
-    });
-    elements.savedItemImageModal?.addEventListener("click", event => {
-        if (event.target === elements.savedItemImageModal) {
-            closeSavedItemImageModal();
-        }
-    });
     elements.catalogItemModal.addEventListener("click", event => {
         if (event.target === elements.catalogItemModal) {
             closeCatalogItemModal();
@@ -3418,7 +3281,6 @@ function loadLocalWorkspaceState() {
     state.userAccounts = loadUserAccounts();
     state.issueReports = loadIssueReports();
     state.companyProfile = loadCompanyProfile();
-    state.savedItems = loadSavedItems();
     state.catalogItems = loadCatalogItems();
     state.statementExports = loadStatementExports();
     state.sessionLogs = loadSessionLogs();
@@ -3430,7 +3292,6 @@ function cacheWorkspaceStateLocally() {
     writeLocalDataset(USER_ACCOUNTS_STORAGE_KEY, state.userAccounts);
     writeLocalDataset(ISSUE_REPORTS_STORAGE_KEY, state.issueReports);
     writeLocalDataset(COMPANY_PROFILE_STORAGE_KEY, state.companyProfile);
-    writeLocalDataset(SAVED_ITEMS_STORAGE_KEY, state.savedItems);
     writeLocalDataset(CATALOG_ITEMS_STORAGE_KEY, state.catalogItems);
     writeLocalDataset(STATEMENT_EXPORTS_STORAGE_KEY, state.statementExports);
     writeLocalDataset(SESSION_LOGS_STORAGE_KEY, state.sessionLogs);
@@ -3441,7 +3302,6 @@ function applyWorkspaceState(payload) {
     state.userAccounts = normalizeUserAccounts(payload?.userAccounts || []);
     state.issueReports = normalizeIssueReports(payload?.issueReports || []);
     state.companyProfile = normalizeCompanyProfile(payload?.companyProfile || DEFAULT_COMPANY_PROFILE);
-    state.savedItems = normalizeSavedItems(payload?.savedItems || []);
     state.catalogItems = normalizeCatalogItems(payload?.catalogItems || []);
     state.statementExports = normalizeStatementExports(payload?.statementExports || []);
     state.sessionLogs = normalizeSessionLogs(payload?.sessionLogs || []);
@@ -3451,7 +3311,6 @@ function applyWorkspaceState(payload) {
     renderUserManagementList();
     renderIssueInbox();
     updateInboxBadge();
-    renderSavedItemsList();
     renderCatalog();
     renderStatementsPage();
     renderAccountAdminPage();
@@ -3484,7 +3343,6 @@ async function persistSharedWorkspaceData() {
                 userAccounts: state.userAccounts,
                 issueReports: state.issueReports,
                 companyProfile: state.companyProfile,
-                savedItems: state.savedItems,
                 catalogItems: state.catalogItems,
                 statementExports: state.statementExports,
                 sessionLogs: state.sessionLogs,
@@ -3944,53 +3802,6 @@ async function upsertItemsIntoCatalog(items, docRef) {
 
     if (changed) {
         await saveCatalogItems(catalog);
-    }
-}
-
-function normalizeSavedItems(items) {
-    return Array.isArray(items)
-        ? items
-            .filter(item => item && typeof item === "object")
-            .map(item => {
-                const quantity = Number.parseFloat(item.quantity) || 0;
-                const unitPrice = Number.parseFloat(item.unitPrice) || 0;
-                const total = Number.parseFloat(item.total) || (quantity * unitPrice);
-                return {
-                    id: String(item.id || `saved-item-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
-                    description: String(item.description || "").trim(),
-                    quantity,
-                    unitPrice,
-                    total,
-                    itemImageDataUrl: typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl : "",
-                    createdAt: String(item.createdAt || new Date().toISOString())
-                };
-            })
-            .filter(item => item.description)
-        : [];
-}
-
-function loadSavedItems() {
-    const items = normalizeSavedItems(readLocalDataset(SAVED_ITEMS_STORAGE_KEY, []));
-    writeLocalDataset(SAVED_ITEMS_STORAGE_KEY, items);
-    return items;
-}
-
-async function saveSavedItemsState(items) {
-    state.savedItems = normalizeSavedItems(items);
-    cacheWorkspaceStateLocally();
-    renderSavedItemsList();
-    renderCatalog();
-    await persistSharedWorkspaceData();
-}
-
-function updateSavedItemsCountBadge() {
-    const count = state.savedItems.length;
-    if (elements.savedItemsCountBadge) {
-        elements.savedItemsCountBadge.textContent = String(count);
-    }
-    if (elements.openSavedItemsInlineCount) {
-        elements.openSavedItemsInlineCount.textContent = String(count);
-        elements.openSavedItemsInlineCount.hidden = count === 0;
     }
 }
 
@@ -9231,100 +9042,6 @@ async function saveCompanyProfile() {
     window.alert(t("company_profile_saved"));
 }
 
-function syncSavedItemsTotal() {
-    const quantity = Number.parseFloat(elements.savedItemQuantityInput.value) || 0;
-    const unitPrice = Number.parseFloat(elements.savedItemUnitPriceInput.value) || 0;
-    elements.savedItemTotalInput.value = formatAmount(quantity * unitPrice);
-}
-
-function syncSavedItemImageUI() {
-    if (!elements.savedItemCreateModal) {
-        return;
-    }
-
-    const imageDataUrl = elements.savedItemCreateModal.dataset.itemImageDataUrl || "";
-    const preview = elements.savedItemImagePreview;
-    const previewImg = elements.savedItemImagePreviewImg;
-    const removeBtn = elements.savedItemImageRemoveBtn;
-    const uploadCopy = document.querySelector(".saved-item-image-upload-copy small");
-
-    if (preview && previewImg) {
-        if (imageDataUrl) {
-            preview.hidden = false;
-            previewImg.src = imageDataUrl;
-        } else {
-            preview.hidden = true;
-            previewImg.removeAttribute("src");
-        }
-    }
-
-    if (removeBtn) {
-        removeBtn.hidden = !imageDataUrl;
-    }
-
-    if (uploadCopy) {
-        uploadCopy.textContent = imageDataUrl ? "Change image" : "Add image";
-    }
-}
-
-function clearSavedItemImageSelection() {
-    if (!elements.savedItemCreateModal) {
-        return;
-    }
-
-    state.pendingSavedItemImageUploadId = null;
-    elements.savedItemCreateModal.dataset.itemImageDataUrl = "";
-    if (elements.savedItemImageInput) {
-        elements.savedItemImageInput.value = "";
-    }
-    syncSavedItemImageUI();
-}
-
-async function handleSavedItemImageInputChange() {
-    const file = elements.savedItemImageInput?.files?.[0] || null;
-    if (!elements.savedItemCreateModal) {
-        return;
-    }
-
-    if (state.pendingSavedItemImageUploadId) {
-        if (!file) {
-            state.pendingSavedItemImageUploadId = null;
-            return;
-        }
-
-        try {
-            const itemImageDataUrl = await readImageFileAsDataUrl(file);
-            await saveSavedItemsState(state.savedItems.map(item =>
-                item.id === state.pendingSavedItemImageUploadId
-                    ? { ...item, itemImageDataUrl }
-                    : item
-            ));
-            setImportStatus("Cart item image updated.");
-        } catch (error) {
-            window.alert(error.message || "Unable to read image.");
-        } finally {
-            state.pendingSavedItemImageUploadId = null;
-            if (elements.savedItemImageInput) {
-                elements.savedItemImageInput.value = "";
-            }
-        }
-        return;
-    }
-
-    if (!file) {
-        clearSavedItemImageSelection();
-        return;
-    }
-
-    try {
-        elements.savedItemCreateModal.dataset.itemImageDataUrl = await readImageFileAsDataUrl(file);
-        syncSavedItemImageUI();
-    } catch (error) {
-        clearSavedItemImageSelection();
-        window.alert(error.message || "Unable to read image.");
-    }
-}
-
 function handleImageUploadTriggerClick(event) {
     const itemUploadTrigger = event.target.closest(".item-image-upload-btn");
     if (itemUploadTrigger) {
@@ -9335,358 +9052,6 @@ function handleImageUploadTriggerClick(event) {
             fileInput.click();
         }
     }
-}
-
-function openSavedItemsModal() {
-    renderSavedItemsList();
-    syncSavedItemsTotal();
-    setModalState(elements.savedItemsModal, true);
-}
-
-function closeSavedItemsModal() {
-    setModalState(elements.savedItemsModal, false);
-    closeSavedItemCreateModal();
-}
-
-function openSavedItemCreateModal() {
-    if (!elements.savedItemCreateModal) {
-        return;
-    }
-    state.editingSavedItemId = null;
-    elements.savedItemDescriptionInput.value = "";
-    elements.savedItemCreateModal.dataset.itemImageDataUrl = "";
-    if (elements.savedItemImageInput) {
-        elements.savedItemImageInput.value = "";
-    }
-    elements.savedItemQuantityInput.value = "1";
-    elements.savedItemUnitPriceInput.value = "0";
-    elements.savedItemTotalInput.value = "0";
-    applyTranslations();
-    syncSavedItemImageUI();
-    setModalState(elements.savedItemCreateModal, true);
-    elements.savedItemDescriptionInput.focus();
-}
-
-function openSavedItemEditModal(item) {
-    if (!elements.savedItemCreateModal || !item) {
-        return;
-    }
-    state.editingSavedItemId = item.id;
-    elements.savedItemDescriptionInput.value = item.description || "";
-    elements.savedItemCreateModal.dataset.itemImageDataUrl = item.itemImageDataUrl || "";
-    if (elements.savedItemImageInput) {
-        elements.savedItemImageInput.value = "";
-    }
-    elements.savedItemQuantityInput.value = formatAmount(item.quantity || 0);
-    elements.savedItemUnitPriceInput.value = formatAmount(item.unitPrice || 0);
-    elements.savedItemTotalInput.value = formatAmount(item.total || 0);
-    applyTranslations();
-    syncSavedItemImageUI();
-    setModalState(elements.savedItemCreateModal, true);
-    elements.savedItemDescriptionInput.focus();
-}
-
-function closeSavedItemCreateModal() {
-    if (!elements.savedItemCreateModal) {
-        return;
-    }
-    state.editingSavedItemId = null;
-    elements.savedItemCreateModal.dataset.itemImageDataUrl = "";
-    setModalState(elements.savedItemCreateModal, false);
-}
-
-function openSavedItemImageModal(imageUrl) {
-    if (!elements.savedItemImageModal || !elements.savedItemImageModalImg || !imageUrl) {
-        return;
-    }
-
-    elements.savedItemImageModalImg.src = imageUrl;
-    elements.savedItemImageModal.classList.add("active");
-    elements.savedItemImageModal.setAttribute("aria-hidden", "false");
-}
-
-function closeSavedItemImageModal() {
-    if (!elements.savedItemImageModal || !elements.savedItemImageModalImg) {
-        return;
-    }
-
-    elements.savedItemImageModal.classList.remove("active");
-    elements.savedItemImageModal.setAttribute("aria-hidden", "true");
-    elements.savedItemImageModalImg.removeAttribute("src");
-}
-
-function renderSavedItemsList() {
-    if (!elements.savedItemsList) {
-        return;
-    }
-
-    updateSavedItemsCountBadge();
-
-    if (!state.savedItems.length) {
-        elements.savedItemsList.innerHTML = `<p class="client-list-empty">${escapeHtml(t("no_saved_items"))}</p>`;
-        return;
-    }
-
-    const sortedItems = [...state.savedItems].sort((left, right) => Date.parse(right.createdAt || 0) - Date.parse(left.createdAt || 0));
-    const canUseInCurrentDocument = canInsertCartItemIntoEditor();
-    elements.savedItemsList.innerHTML = sortedItems.map(item => `
-        <article class="saved-item-card${state.highlightedSavedItemId === item.id ? " saved-item-card-highlighted" : ""}" data-saved-item-card="${escapeHtml(item.id)}">
-            <div class="saved-item-card-layout">
-                <div class="saved-item-thumb${item.itemImageDataUrl ? " is-clickable" : ""}" ${item.itemImageDataUrl ? `data-saved-item-action="preview-image" data-saved-item-id="${escapeHtml(item.id)}" role="button" tabindex="0" aria-label="Preview item image"` : 'aria-hidden="true"'}>
-                    ${item.itemImageDataUrl
-                        ? `<img src="${escapeHtml(item.itemImageDataUrl)}" alt="${escapeHtml(item.description)}">`
-                        : `<div class="saved-item-thumb-placeholder">
-                            <div class="saved-item-thumb-icon">
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <rect x="4.5" y="5" width="15" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/>
-                                    <circle cx="9" cy="10" r="1.4" fill="currentColor"/>
-                                    <path d="M6.8 16l3.6-3.5 2.5 2.2 2.4-2 1.9 3.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                            <span>No Image</span>
-                        </div>`}
-                </div>
-                <div class="saved-item-card-main">
-                    <div class="saved-item-card-top">
-                        <strong>${escapeHtml(item.description)}</strong>
-                        <span class="saved-item-card-date">${escapeHtml(formatDateTime(item.createdAt))}</span>
-                    </div>
-                    <p class="saved-item-card-copy">${escapeHtml(item.description)}</p>
-                    <div class="saved-item-card-metrics">
-                        <div class="saved-item-metric">
-                            <span class="saved-item-metric-label">Qty</span>
-                            <strong>${escapeHtml(formatAmount(item.quantity))}</strong>
-                        </div>
-                        <div class="saved-item-metric">
-                            <span class="saved-item-metric-label">Price</span>
-                            <strong>${escapeHtml(formatCurrency(item.unitPrice))}</strong>
-                        </div>
-                        <div class="saved-item-metric saved-item-metric-total">
-                            <span class="saved-item-metric-label">Total</span>
-                            <strong>${escapeHtml(formatCurrency(item.total))}</strong>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="client-row-actions saved-item-card-actions">
-                <div class="saved-item-card-toolbar">
-                    <button
-                        class="saved-item-icon-action"
-                        type="button"
-                        data-saved-item-action="edit"
-                        data-saved-item-id="${escapeHtml(item.id)}"
-                        aria-label="${escapeHtml(t("edit"))}"
-                        title="${escapeHtml(t("edit"))}"
-                    >
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M7.2 16.8l1.1-3.6L15.7 5.8a1.4 1.4 0 0 1 2 0l.5.5a1.4 1.4 0 0 1 0 2l-7.4 7.4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                            <path d="M6.8 17.2l3.8-.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                    <button
-                        class="saved-item-icon-action"
-                        type="button"
-                        data-saved-item-action="image"
-                        data-saved-item-id="${escapeHtml(item.id)}"
-                        aria-label="${escapeHtml(t("upload_item_image"))}"
-                        title="${escapeHtml(t("upload_item_image"))}"
-                    >
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <rect x="4.5" y="5" width="15" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/>
-                            <circle cx="9" cy="10" r="1.4" fill="currentColor"/>
-                            <path d="M6.8 16l3.6-3.5 2.5 2.2 2.4-2 1.9 3.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="saved-item-card-cta-row">
-                    ${canUseInCurrentDocument ? `<button class="btn btn-secondary" type="button" data-saved-item-action="use" data-saved-item-id="${escapeHtml(item.id)}">${escapeHtml(t("use_item"))}</button>` : ""}
-                    <button class="btn btn-secondary" type="button" data-saved-item-action="delete" data-saved-item-id="${escapeHtml(item.id)}">${escapeHtml(t("delete"))}</button>
-                </div>
-            </div>
-        </article>
-    `).join("");
-
-    if (state.highlightedSavedItemId) {
-        const highlightedCard = elements.savedItemsList.querySelector(`[data-saved-item-card="${CSS.escape(state.highlightedSavedItemId)}"]`);
-        if (highlightedCard) {
-            highlightedCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
-            window.setTimeout(() => {
-                state.highlightedSavedItemId = null;
-                highlightedCard.classList.remove("saved-item-card-highlighted");
-            }, 2200);
-        }
-    }
-}
-
-function createSavedItem(payload) {
-    const quantity = Number.parseFloat(payload.quantity) || 0;
-    const unitPrice = Number.parseFloat(payload.unitPrice) || 0;
-    const total = Number.parseFloat(payload.total) || (quantity * unitPrice);
-
-    return {
-        id: `saved-item-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        description: String(payload.description || "").trim(),
-        quantity,
-        unitPrice,
-        total,
-        itemImageDataUrl: typeof payload.itemImageDataUrl === "string" ? payload.itemImageDataUrl : "",
-        createdAt: new Date().toISOString()
-    };
-}
-
-async function addSavedItem(item) {
-    const nextItem = createSavedItem(item);
-    await saveSavedItemsState([nextItem, ...state.savedItems]);
-    return nextItem;
-}
-
-async function addSavedItemFromModal() {
-    const isEditingSavedItem = Boolean(state.editingSavedItemId);
-    const description = elements.savedItemDescriptionInput.value.trim();
-    const quantity = Number.parseFloat(elements.savedItemQuantityInput.value) || 0;
-    const unitPrice = Number.parseFloat(elements.savedItemUnitPriceInput.value) || 0;
-    const total = Number.parseFloat(elements.savedItemTotalInput.value) || (quantity * unitPrice);
-    const itemImageDataUrl = elements.savedItemCreateModal?.dataset?.itemImageDataUrl || "";
-
-    if (!description) {
-        window.alert("Enter an item description before adding it to the cart.");
-        return;
-    }
-
-    if (state.editingSavedItemId) {
-        const editedId = state.editingSavedItemId;
-        await saveSavedItemsState(state.savedItems.map(item =>
-            item.id === state.editingSavedItemId
-                ? {
-                    ...item,
-                    description,
-                    quantity,
-                    unitPrice,
-                    total,
-                    itemImageDataUrl
-                }
-                : item
-        ));
-        state.highlightedSavedItemId = editedId;
-    } else {
-        const savedItem = await addSavedItem({ description, quantity, unitPrice, total, itemImageDataUrl });
-        state.highlightedSavedItemId = savedItem.id;
-    }
-    elements.savedItemDescriptionInput.value = "";
-    elements.savedItemQuantityInput.value = "1";
-    elements.savedItemUnitPriceInput.value = "0";
-    elements.savedItemTotalInput.value = "0";
-    clearSavedItemImageSelection();
-    closeSavedItemCreateModal();
-    openSavedItemsModal();
-    setImportStatus(isEditingSavedItem ? t("saved_item_updated") : t("saved_item_added"));
-}
-
-async function removeSavedItem(itemId) {
-    await saveSavedItemsState(state.savedItems.filter(item => item.id !== itemId));
-}
-
-function canInsertCartItemIntoEditor() {
-    return Boolean(elements.documentModal?.classList.contains("active"));
-}
-
-function addSavedItemToEditor(item) {
-    if (!canInsertCartItemIntoEditor()) {
-        return false;
-    }
-
-    addItem();
-    const lastItem = elements.itemsContainer.querySelector(".item-row:last-child");
-    if (!lastItem) {
-        return false;
-    }
-
-    lastItem.querySelector(".item-description").value = item.description;
-    lastItem.querySelector(".item-quantity").value = formatAmount(item.quantity);
-    lastItem.querySelector(".item-unit-price").value = formatAmount(item.unitPrice);
-    lastItem.querySelector(".item-total-price").value = formatAmount(item.total);
-    lastItem.dataset.priceDriver = "unit";
-    lastItem.dataset.itemImageDataUrl = item.itemImageDataUrl || "";
-    updateItemPricing(lastItem);
-    syncItemImageUI(lastItem);
-    updateItemSummary(lastItem);
-    setExpandedItem(lastItem);
-    updateEditorSummary();
-    return true;
-}
-
-async function handleSavedItemsListClick(event) {
-    const button = event.target.closest("[data-saved-item-action]");
-    if (!button) {
-        return;
-    }
-
-    const item = state.savedItems.find(entry => entry.id === button.dataset.savedItemId);
-    if (!item) {
-        return;
-    }
-
-    if (button.dataset.savedItemAction === "edit") {
-        openSavedItemEditModal(item);
-        return;
-    }
-
-    if (button.dataset.savedItemAction === "image") {
-        state.pendingSavedItemImageUploadId = item.id;
-        if (elements.savedItemImageInput) {
-            elements.savedItemImageInput.value = "";
-            elements.savedItemImageInput.click();
-        }
-        return;
-    }
-
-    if (button.dataset.savedItemAction === "preview-image") {
-        if (item.itemImageDataUrl) {
-            openSavedItemImageModal(item.itemImageDataUrl);
-        }
-        return;
-    }
-
-    if (button.dataset.savedItemAction === "use") {
-        if (!canInsertCartItemIntoEditor()) {
-            setImportStatus("Open a quote or invoice first, then add cart items into that document.", true);
-            window.alert("Open a quote or invoice first, then add cart items into that document.");
-            return;
-        }
-
-        const wasInserted = addSavedItemToEditor(item);
-        if (!wasInserted) {
-            setImportStatus("Unable to add that cart item into the current document.", true);
-            window.alert("Unable to add that cart item into the current document.");
-            return;
-        }
-
-        await removeSavedItem(item.id);
-        setImportStatus(t("saved_item_used"));
-        closeSavedItemsModal();
-        return;
-    }
-
-    if (button.dataset.savedItemAction === "delete") {
-        if (!window.confirm(`Delete saved item "${item.description}"?`)) {
-            return;
-        }
-        await removeSavedItem(item.id);
-    }
-}
-
-function handleSavedItemsListKeydown(event) {
-    if (event.key !== "Enter" && event.key !== " ") {
-        return;
-    }
-
-    const previewTarget = event.target.closest('[data-saved-item-action="preview-image"]');
-    if (!previewTarget) {
-        return;
-    }
-
-    event.preventDefault();
-    previewTarget.click();
 }
 
 function openAboutModal() {
@@ -11886,7 +11251,6 @@ function clearLocalTestData() {
     clearLocalDataset(USER_ACCOUNTS_STORAGE_KEY);
     clearLocalDataset(ISSUE_REPORTS_STORAGE_KEY);
     clearLocalDataset(COMPANY_PROFILE_STORAGE_KEY);
-    clearLocalDataset(SAVED_ITEMS_STORAGE_KEY);
     loadLocalWorkspaceState();
     loadLocalAppData();
     closeSettingsModal();
@@ -12016,7 +11380,6 @@ function exportSystemBackup() {
             userAccounts: state.userAccounts,
             issueReports: state.issueReports,
             companyProfile: state.companyProfile,
-            savedItems: state.savedItems,
             catalogItems: state.catalogItems,
             statementExports: state.statementExports,
             sessionLogs: state.sessionLogs,
@@ -12532,7 +11895,6 @@ async function handleBackupImportSelect(event) {
             payload.userAccounts,
             payload.issueReports,
             payload.companyProfile,
-            payload.savedItems,
             payload.catalogItems,
             payload.statementExports,
             payload.sessionLogs,
@@ -12543,7 +11905,6 @@ async function handleBackupImportSelect(event) {
                 userAccounts: payload.userAccounts,
                 issueReports: payload.issueReports,
                 companyProfile: payload.companyProfile,
-                savedItems: payload.savedItems,
                 catalogItems: payload.catalogItems,
                 statementExports: payload.statementExports,
                 sessionLogs: payload.sessionLogs,
@@ -13328,34 +12689,6 @@ function removeItem(id) {
     }
 }
 
-function saveEditorItemForLater(id) {
-    const item = elements.itemsContainer.querySelector(`[data-item-id="${id}"]`);
-    if (!item) {
-        return;
-    }
-
-    const description = item.querySelector(".item-description").value.trim();
-    const quantity = Number.parseFloat(item.querySelector(".item-quantity").value) || 0;
-    const total = Number.parseFloat(item.querySelector(".item-total-price").value) || 0;
-    const unitPrice = parseDecimalInput(item.querySelector(".item-unit-price").value) || 0;
-
-    if (!description) {
-        window.alert("Add an item description before moving it to the cart.");
-        return;
-    }
-
-    addSavedItem({
-        description,
-        quantity,
-        unitPrice,
-        total,
-        itemImageDataUrl: item.dataset.itemImageDataUrl || ""
-    });
-    removeItem(id);
-    setImportStatus(t("saved_item_added"));
-    queueDraftAutosave();
-}
-
 async function handleItemContainerClick(event) {
     const menuToggleButton = event.target.closest("[data-toggle-item-menu]");
     if (menuToggleButton) {
@@ -13373,14 +12706,6 @@ async function handleItemContainerClick(event) {
     const sendToProcButton = event.target.closest("[data-send-to-proc]");
     if (sendToProcButton) {
         showProcSheetPicker(sendToProcButton.dataset.sendToProc, sendToProcButton);
-        return;
-    }
-
-    const saveForLaterButton = event.target.closest("[data-save-item-later]");
-    if (saveForLaterButton) {
-        state.openItemMenuId = null;
-        syncItemActionMenus();
-        saveEditorItemForLater(saveForLaterButton.dataset.saveItemLater);
         return;
     }
 
