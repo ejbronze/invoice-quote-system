@@ -63,6 +63,8 @@ const state = {
     pricingSearchQuery: "",
     pricingCategoryFilter: "all",
     pricingSupplierFilter: "all",
+    pricingSortOrder: "date_desc",
+    pricingImageFilter: "all",
     editingProcurementSheetId: null,
     notesDrawerTab: "notes",
     pendingCatalogInsertItem: null,
@@ -2093,6 +2095,8 @@ function cacheElements() {
     elements.pricingLibrarySearch = document.getElementById("pricingLibrarySearch");
     elements.pricingLibraryCategoryFilter = document.getElementById("pricingLibraryCategoryFilter");
     elements.pricingLibrarySupplierFilter = document.getElementById("pricingLibrarySupplierFilter");
+    elements.pricingLibrarySortOrder = document.getElementById("pricingLibrarySortOrder");
+    elements.pricingLibraryImageFilter = document.getElementById("pricingLibraryImageFilter");
     elements.openCatalogItemModalBtn = document.getElementById("openCatalogItemModalBtn");
     elements.catalogItemModal = document.getElementById("catalogItemModal");
     elements.closeCatalogItemModalBtn = document.getElementById("closeCatalogItemModalBtn");
@@ -2464,6 +2468,14 @@ function bindEvents() {
     });
     elements.pricingLibrarySupplierFilter?.addEventListener("change", event => {
         state.pricingSupplierFilter = event.target.value || "all";
+        renderCatalog();
+    });
+    elements.pricingLibrarySortOrder?.addEventListener("change", event => {
+        state.pricingSortOrder = event.target.value || "date_desc";
+        renderCatalog();
+    });
+    elements.pricingLibraryImageFilter?.addEventListener("change", event => {
+        state.pricingImageFilter = event.target.value || "all";
         renderCatalog();
     });
     elements.statementExportsList?.addEventListener("click", handleStatementExportsListClick);
@@ -4583,14 +4595,18 @@ function addCatalogItemToDocument(item, targetDocId) {
 }
 
 function getCatalogEntries() {
-    const manualEntries = state.catalogItems.map(item => ({
-        ...item,
-        imageDataUrl: typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl : "",
-        sourceKey: "manual"
-    }));
+    const manualEntries = state.catalogItems.map(item => {
+        const createdAt = item.createdAt || item.dateUpdated || new Date().toISOString();
+        return {
+            ...item,
+            imageDataUrl: typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl : "",
+            createdAt,
+            sourceKey: "manual"
+        };
+    });
 
     return manualEntries
-        .sort((left, right) => Date.parse(right.dateUpdated || 0) - Date.parse(left.dateUpdated || 0));
+        .sort((left, right) => Date.parse(right.createdAt || right.dateUpdated || 0) - Date.parse(left.createdAt || left.dateUpdated || 0));
 }
 
 function getActiveLibraryItems() {
@@ -4641,15 +4657,31 @@ function renderPricingLibraryFilters(entries) {
 function getFilteredCatalogEntries() {
     const entries = getCatalogEntries();
     renderPricingLibraryFilters(entries);
-    return entries.filter(item => {
-        if (item.archived) {
-            return false;
-        }
-        const supplier = item.supplier || item.vendor || "";
-        const matchesCategory = state.pricingCategoryFilter === "all" || item.category === state.pricingCategoryFilter;
-        const matchesSupplier = state.pricingSupplierFilter === "all" || supplier === state.pricingSupplierFilter;
-        return matchesCategory && matchesSupplier && catalogItemMatchesSearch(item);
-    });
+    return entries
+        .filter(item => {
+            if (item.archived) {
+                return false;
+            }
+            const supplier = item.supplier || item.vendor || "";
+            const matchesCategory = state.pricingCategoryFilter === "all" || item.category === state.pricingCategoryFilter;
+            const matchesSupplier = state.pricingSupplierFilter === "all" || supplier === state.pricingSupplierFilter;
+            const hasImage = Boolean(item.imageDataUrl?.trim());
+            const matchesImage = state.pricingImageFilter === "all"
+                || (state.pricingImageFilter === "has_image" && hasImage)
+                || (state.pricingImageFilter === "no_image" && !hasImage);
+            return matchesCategory && matchesSupplier && matchesImage && catalogItemMatchesSearch(item);
+        })
+        .sort((left, right) => {
+            if (state.pricingSortOrder === "name_asc" || state.pricingSortOrder === "name_desc") {
+                const comparison = String(left.name || "").localeCompare(String(right.name || ""), undefined, { sensitivity: "base" });
+                return state.pricingSortOrder === "name_desc" ? -comparison : comparison;
+            }
+
+            const leftTimestamp = Date.parse(left.createdAt || left.dateUpdated || 0) || 0;
+            const rightTimestamp = Date.parse(right.createdAt || right.dateUpdated || 0) || 0;
+            const direction = state.pricingSortOrder === "date_asc" ? 1 : -1;
+            return (leftTimestamp - rightTimestamp) * direction;
+        });
 }
 
 function renderCatalog() {
@@ -4676,7 +4708,7 @@ function renderCatalog() {
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
-                    <p>No items match your search or filters.</p>
+                    <p>No pricing library items match these filters.</p>
                 </div>
             `;
         }

@@ -424,6 +424,23 @@
                                 <option value="all">All suppliers</option>
                             </select>
                         </label>
+                        <label class="sort-field">
+                            <span class="search-label">Sort</span>
+                            <select id="pricingLibrarySortOrder">
+                                <option value="date_desc">Newest first</option>
+                                <option value="date_asc">Oldest first</option>
+                                <option value="name_asc">A to Z</option>
+                                <option value="name_desc">Z to A</option>
+                            </select>
+                        </label>
+                        <label class="sort-field">
+                            <span class="search-label">Image</span>
+                            <select id="pricingLibraryImageFilter">
+                                <option value="all">All items</option>
+                                <option value="has_image">Has image</option>
+                                <option value="no_image">No image</option>
+                            </select>
+                        </label>
                     </div>
                     <div class="catalog-grid" id="catalogGrid">
                         <div class="empty-state">
@@ -1818,10 +1835,7 @@
                 <div class="proc-modal-header-actions">
                     <div class="proc-translate-tooltip-wrap">
                         <button class="proc-translate-btn" id="procurementTranslateBtn" type="button" aria-label="Translate sheet">
-                            <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1.5 3.5h7M5 3.5V2M7.5 3.5c-.4 1.8-1.8 3.2-3.5 4.2M6 6c.6.9 1.8 1.7 3 2.2"/>
-                                <path d="M8.5 10l2-5 2 5m-3.4-1.5h2.8"/>
-                            </svg>
+                            <img src="/assets/icons/icon-translate.png" alt="" aria-hidden="true" width="18" height="18">
                         </button>
                         <div class="proc-translate-tooltip" role="tooltip">
                             <strong class="proc-translate-tooltip-title">Translation Tools</strong>
