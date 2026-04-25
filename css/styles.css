@@ -3514,25 +3514,28 @@ body::after {
 
 .client-row {
     border-radius: 14px;
-    background:
-        linear-gradient(135deg, rgba(109, 40, 217, 0.06) 0%, rgba(255, 255, 255, 0.97) 55%),
-        rgba(255, 255, 255, 0.98);
-    border: 1px solid rgba(109, 40, 217, 0.13);
-    border-left: 3px solid #7c3aed;
-    box-shadow: 0 4px 14px rgba(24, 47, 86, 0.05);
-    transition: box-shadow 0.15s ease;
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(109, 40, 217, 0.1);
+    box-shadow: 0 2px 8px rgba(24, 47, 86, 0.04);
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
     overflow: hidden;
 }
 
+.client-row:hover {
+    box-shadow: 0 4px 16px rgba(24, 47, 86, 0.07);
+    border-color: rgba(109, 40, 217, 0.18);
+}
+
 .client-row.is-expanded {
-    box-shadow: 0 8px 22px rgba(109, 40, 217, 0.1);
+    box-shadow: 0 6px 18px rgba(109, 40, 217, 0.08);
+    border-color: rgba(109, 40, 217, 0.2);
 }
 
 .client-row-header {
     display: flex;
     align-items: center;
-    gap: 0.55rem;
-    padding: 0.65rem 0.75rem 0.65rem 0.7rem;
+    gap: 0.6rem;
+    padding: 0.6rem 0.7rem;
     cursor: pointer;
     user-select: none;
 }
@@ -3543,18 +3546,55 @@ body::after {
     border-radius: 12px;
 }
 
-.client-row-chevron {
-    width: 1.1rem;
-    height: 1.1rem;
+/* Avatar — logo image or initials fallback */
+.client-card-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 10px;
     flex-shrink: 0;
+    overflow: hidden;
+    background: rgba(109, 40, 217, 0.1);
+    border: 1px solid rgba(109, 40, 217, 0.12);
+}
+
+.client-card-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.client-card-avatar-initials {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
     color: #7c3aed;
-    opacity: 0.6;
+}
+
+/* Right-side wrapper: actions + chevron */
+.client-row-right {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.client-row-chevron {
+    width: 0.95rem;
+    height: 0.95rem;
+    flex-shrink: 0;
+    color: var(--text-faint);
+    opacity: 0.5;
     transition: transform 0.2s ease;
 }
 
 .client-row.is-expanded .client-row-chevron {
     transform: rotate(-180deg);
-    opacity: 1;
+    opacity: 0.85;
 }
 
 .client-row-headline {
@@ -3562,18 +3602,68 @@ body::after {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 0.18rem;
 }
 
 .client-row-name {
     display: block;
     color: var(--text);
-    font-size: 0.9rem;
-    font-weight: 800;
+    font-size: 0.88rem;
+    font-weight: 700;
     letter-spacing: -0.01em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* Compact client action buttons */
+.client-row-actions {
+    display: flex;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+.client-action-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    min-width: 1.75rem;
+    border-radius: 7px;
+    border: 1px solid rgba(120, 144, 180, 0.15);
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.14s, border-color 0.14s, color 0.14s;
+    padding: 0;
+    color: var(--text-soft);
+}
+
+.client-action-btn svg {
+    width: 0.82rem;
+    height: 0.82rem;
+    display: block;
+    pointer-events: none;
+}
+
+.client-action-btn.is-edit:hover,
+.client-action-btn.is-edit:focus-visible {
+    background: rgba(20, 89, 217, 0.08);
+    border-color: rgba(20, 89, 217, 0.2);
+    color: #1459d9;
+}
+
+.client-action-btn.is-delete:hover,
+.client-action-btn.is-delete:focus-visible {
+    background: rgba(212, 57, 57, 0.08);
+    border-color: rgba(212, 57, 57, 0.22);
+    color: #c0392b;
+}
+
+.client-action-btn:focus-visible {
+    outline: 2px solid var(--brand-primary);
+    outline-offset: 2px;
 }
 
 .client-row-badges {
@@ -3725,20 +3815,9 @@ body::after {
     }
 }
 
-.client-row-actions {
-    display: flex;
-    gap: 0.35rem;
-    flex-shrink: 0;
-}
-
-.client-row-actions .btn {
-    width: auto;
-    min-width: 0;
-}
-
-/* Expanded body */
+/* Expanded body — indent aligns with avatar + gap */
 .client-row-body {
-    padding: 0 0.85rem 0.85rem 2.35rem;
+    padding: 0 0.85rem 0.85rem 3.7rem;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
@@ -3875,6 +3954,66 @@ body::after {
 /* ── Client modal ─────────────────────────────────────────────────── */
 .client-modal-content {
     max-width: 540px;
+}
+
+/* Client logo upload section */
+.client-modal-logo-section {
+    margin-bottom: 1.25rem;
+}
+
+.client-modal-logo-row {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+}
+
+.client-modal-logo-preview {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.6rem;
+    height: 3.6rem;
+    border-radius: 12px;
+    background: rgba(109, 40, 217, 0.08);
+    border: 1px solid rgba(109, 40, 217, 0.14);
+    flex-shrink: 0;
+    overflow: hidden;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #7c3aed;
+}
+
+.client-modal-logo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.client-modal-logo-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.client-modal-logo-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-soft);
+}
+
+.client-modal-logo-actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.client-logo-upload-label {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
 }
 
 .client-modal-section {

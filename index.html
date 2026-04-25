@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SantoSync</title>
-    <link rel="stylesheet" href="css/styles.css?v=28">
+    <link rel="stylesheet" href="css/styles.css?v=29">
 </head>
 <body>
     <div class="brand-splash" id="brandSplash" aria-hidden="true" hidden>
@@ -2288,6 +2288,21 @@
             </div>
             <div class="modal-body settings-modal-body">
                 <form id="clientModalForm" autocomplete="off" onsubmit="return false;">
+                    <section class="client-modal-section client-modal-logo-section">
+                        <div class="client-modal-logo-row">
+                            <div class="client-modal-logo-preview" id="clientModalLogoPreview" aria-hidden="true">
+                                <span>?</span>
+                            </div>
+                            <div class="client-modal-logo-copy">
+                                <span class="client-modal-logo-label">Client Logo <span class="client-modal-section-optional">(optional)</span></span>
+                                <div class="client-modal-logo-actions">
+                                    <label for="clientModalLogoInput" class="btn btn-secondary client-logo-upload-label">Upload Logo</label>
+                                    <input type="file" id="clientModalLogoInput" accept="image/*" hidden aria-label="Upload client logo">
+                                    <button type="button" id="clientModalLogoRemoveBtn" class="btn btn-secondary" hidden>Remove</button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                     <section class="client-modal-section">
                         <h4 class="client-modal-section-label">Bill To</h4>
                         <div class="form-group">
@@ -2333,6 +2348,6 @@
     <script src="js/vendor/html2pdf.bundle.min.js"></script>
     <script src="js/brand.js?v=2"></script>
     <script src="js/statement-of-account.js?v=2"></script>
-    <script src="js/app.js?v=20"></script>
+    <script src="js/app.js?v=21"></script>
 </body>
 </html>

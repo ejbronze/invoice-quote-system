@@ -105,7 +105,9 @@ function normalizeClients(clients) {
             name: client?.name || "",
             address: client?.address || "",
             consigneeName: client?.consigneeName || "",
-            consigneeAddress: client?.consigneeAddress || ""
+            consigneeAddress: client?.consigneeAddress || "",
+            contacts: Array.isArray(client?.contacts) ? client.contacts : [],
+            logoDataUrl: typeof client?.logoDataUrl === "string" ? client.logoDataUrl : ""
         }))
         .filter(client => client.name && client.address);
 

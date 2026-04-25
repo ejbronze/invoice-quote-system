@@ -2198,6 +2198,9 @@ function cacheElements() {
     elements.clientModalConsigneeName = document.getElementById("clientModalConsigneeName");
     elements.clientModalConsigneeAddress = document.getElementById("clientModalConsigneeAddress");
     elements.clientModalContactsList = document.getElementById("clientModalContactsList");
+    elements.clientModalLogoInput = document.getElementById("clientModalLogoInput");
+    elements.clientModalLogoPreview = document.getElementById("clientModalLogoPreview");
+    elements.clientModalLogoRemoveBtn = document.getElementById("clientModalLogoRemoveBtn");
     elements.addClientContactBtn = document.getElementById("addClientContactBtn");
     elements.saveClientModalBtn = document.getElementById("saveClientModalBtn");
     elements.cancelClientModalBtn = document.getElementById("cancelClientModalBtn");
@@ -2708,6 +2711,8 @@ function bindEvents() {
     elements.saveClientModalBtn?.addEventListener("click", saveClientFromModal);
     elements.cancelClientModalBtn?.addEventListener("click", closeClientModal);
     elements.closeClientModalBtn?.addEventListener("click", closeClientModal);
+    elements.clientModalLogoInput?.addEventListener("change", handleClientLogoInputChange);
+    elements.clientModalLogoRemoveBtn?.addEventListener("click", clearClientLogo);
     elements.closeClientActivityModalBtn?.addEventListener("click", closeClientActivityModal);
     elements.clientActivityModalList?.addEventListener("click", handleClientActivityModalClick);
     elements.closeNotesRecordModalBtn?.addEventListener("click", closeNotesRecordModal);
@@ -2950,6 +2955,18 @@ function bindEvents() {
         }
     });
     elements.catalogDetailsModal.addEventListener("click", event => {
+        const refRow = event.target.closest(".catalog-ref-row[data-open-doc-id]");
+        if (refRow) {
+            const docId = refRow.dataset.openDocId;
+            const doc = state.documents.find(d => isSameDocumentId(d.id, docId));
+            closeCatalogDetailsModal();
+            if (doc?.type === "procurement") {
+                openProcurementSheetModal(doc);
+            } else if (doc) {
+                editDocument(docId);
+            }
+            return;
+        }
         if (event.target === elements.catalogDetailsModal) {
             closeCatalogDetailsModal();
         }
@@ -5794,9 +5811,8 @@ function handleCatalogGridClick(event) {
         event.stopPropagation();
         const docId = refLink.dataset.openDocId;
         const doc = state.documents.find(d => isSameDocumentId(d.id, docId));
-        if (doc && doc.isProcurement) {
-            const sheet = doc;
-            openProcurementSheetModal(sheet);
+        if (doc?.type === "procurement") {
+            openProcurementSheetModal(doc);
         } else if (doc) {
             editDocument(docId);
         }
@@ -10173,23 +10189,31 @@ function renderClientManagementList() {
                 </div>
             </div>` : "";
 
+        const initials = (client.name || "?").trim().split(/\s+/).map(w => w[0] || "").slice(0, 2).join("").toUpperCase() || "?";
+        const avatarHtml = client.logoDataUrl
+            ? `<span class="client-card-avatar"><img src="${escapeHtml(client.logoDataUrl)}" alt="" loading="lazy"></span>`
+            : `<span class="client-card-avatar client-card-avatar-initials">${escapeHtml(initials)}</span>`;
+
         return `
         <article class="client-row" data-client-id="${escapeHtml(client.id)}">
             <div class="client-row-header" data-toggle-client="${escapeHtml(client.id)}" role="button" tabindex="0" aria-expanded="false">
-                <svg class="client-row-chevron" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 8 10 12 14 8"/></svg>
+                ${avatarHtml}
                 <div class="client-row-headline">
                     <strong class="client-row-name">${escapeHtml(client.name)}</strong>
                     <div class="client-row-badges">${badges}</div>
                     ${clientStatsSummary}
                 </div>
-                ${admin ? `<div class="client-row-actions" role="group">
-                    <button class="statement-action-btn is-edit" type="button" data-client-action="edit-client" data-client-id="${escapeHtml(client.id)}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
-                    </button>
-                    <button class="statement-action-btn is-delete" type="button" data-client-action="delete-client" data-client-id="${escapeHtml(client.id)}" aria-label="${escapeHtml(t("delete"))}" title="${escapeHtml(t("delete"))}">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M9 4h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M7 7l1 12h8l1-12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v5M14 11v5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
-                    </button>
-                </div>` : ""}
+                <div class="client-row-right">
+                    ${admin ? `<div class="client-row-actions" role="group">
+                        <button class="client-action-btn is-edit" type="button" data-client-action="edit-client" data-client-id="${escapeHtml(client.id)}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                        </button>
+                        <button class="client-action-btn is-delete" type="button" data-client-action="delete-client" data-client-id="${escapeHtml(client.id)}" aria-label="${escapeHtml(t("delete"))}" title="${escapeHtml(t("delete"))}">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M9 4h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M7 7l1 12h8l1-12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v5M14 11v5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                        </button>
+                    </div>` : ""}
+                    <svg class="client-row-chevron" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 8 10 12 14 8"/></svg>
+                </div>
             </div>
             <div class="client-row-body" hidden>
                 ${clientStatsDetail}
@@ -10473,6 +10497,38 @@ async function handleClientManagementClick(event) {
 
 // ── Client modal ──────────────────────────────────────────────────
 
+let _pendingClientLogoDataUrl = "";
+
+function updateClientLogoPreview() {
+    const preview = elements.clientModalLogoPreview;
+    if (!preview) return;
+    if (_pendingClientLogoDataUrl) {
+        preview.innerHTML = `<img src="${escapeHtml(_pendingClientLogoDataUrl)}" alt="Client logo">`;
+        if (elements.clientModalLogoRemoveBtn) elements.clientModalLogoRemoveBtn.hidden = false;
+    } else {
+        const initials = (elements.clientModalName?.value || "?").trim().split(/\s+/).map(w => w[0] || "").slice(0, 2).join("").toUpperCase() || "?";
+        preview.innerHTML = `<span>${escapeHtml(initials)}</span>`;
+        if (elements.clientModalLogoRemoveBtn) elements.clientModalLogoRemoveBtn.hidden = true;
+    }
+}
+
+async function handleClientLogoInputChange() {
+    const file = elements.clientModalLogoInput?.files?.[0];
+    if (!file) return;
+    if (elements.clientModalLogoInput) elements.clientModalLogoInput.value = "";
+    try {
+        _pendingClientLogoDataUrl = await readImageFileAsDataUrl(file, { maxDimension: 200, quality: 0.82 });
+        updateClientLogoPreview();
+    } catch {
+        // silent — leave existing preview
+    }
+}
+
+function clearClientLogo() {
+    _pendingClientLogoDataUrl = "";
+    updateClientLogoPreview();
+}
+
 function openClientModal(clientId) {
     state.editingClientId = clientId || null;
     const client = clientId ? state.clients.find(c => isSameDocumentId(c.id, clientId)) : null;
@@ -10482,11 +10538,13 @@ function openClientModal(clientId) {
     elements.clientModalAddress.value = client?.address || "";
     elements.clientModalConsigneeName.value = client?.consigneeName || "";
     elements.clientModalConsigneeAddress.value = client?.consigneeAddress || "";
+    _pendingClientLogoDataUrl = client?.logoDataUrl || "";
 
     const contacts = Array.isArray(client?.contacts) ? client.contacts : [];
     elements.clientModalContactsList.innerHTML = "";
     contacts.forEach(c => appendClientContactRow(c));
 
+    updateClientLogoPreview();
     setModalState(elements.clientModal, true);
     elements.clientModalName.focus();
 }
@@ -10582,7 +10640,8 @@ async function saveClientFromModal() {
         address,
         consigneeName: elements.clientModalConsigneeName.value.trim(),
         consigneeAddress: elements.clientModalConsigneeAddress.value.trim(),
-        contacts: collectContactsFromModal()
+        contacts: collectContactsFromModal(),
+        logoDataUrl: _pendingClientLogoDataUrl || ""
     };
 
     let updatedList;
@@ -11743,7 +11802,8 @@ function normalizeClients(clients) {
             address: client?.address || "",
             consigneeName: client?.consigneeName || "",
             consigneeAddress: client?.consigneeAddress || "",
-            contacts: normalizeClientContacts(client?.contacts)
+            contacts: normalizeClientContacts(client?.contacts),
+            logoDataUrl: typeof client?.logoDataUrl === "string" ? client.logoDataUrl : ""
         }))
         .filter(client => client.name && client.address);
 
