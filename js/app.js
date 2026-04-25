@@ -3324,7 +3324,7 @@ function applyWorkspaceState(payload) {
     state.statementExports = normalizeStatementExports(payload?.statementExports || []);
     state.sessionLogs = normalizeSessionLogs(payload?.sessionLogs || []);
     state.activityLogs = normalizeActivityLogs(payload?.activityLogs || []);
-    cacheWorkspaceStateLocally();
+    try { cacheWorkspaceStateLocally(); } catch (_) { /* localStorage quota — state is valid, continue */ }
     updateRuntimeModeBadge();
     renderUserManagementList();
     renderIssueInbox();
@@ -3342,6 +3342,12 @@ async function bootstrapSharedWorkspaceData() {
     } catch (error) {
         state.workspaceDataMode = "local";
         loadLocalWorkspaceState();
+        renderCatalog();
+        renderStatementsPage();
+        renderAccountAdminPage();
+        renderUserManagementList();
+        renderIssueInbox();
+        updateInboxBadge();
     }
     updateRuntimeModeBadge();
 }
@@ -3724,7 +3730,7 @@ function loadCatalogItems() {
 
 async function saveCatalogItems(items) {
     state.catalogItems = normalizeCatalogItems(items);
-    cacheWorkspaceStateLocally();
+    try { cacheWorkspaceStateLocally(); } catch (_) { /* localStorage quota — state is valid, continue */ }
     renderCatalog();
     await persistSharedWorkspaceData();
 }
