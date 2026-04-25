@@ -3307,13 +3307,35 @@ function loadLocalWorkspaceState() {
 }
 
 function cacheWorkspaceStateLocally() {
-    writeLocalDataset(USER_ACCOUNTS_STORAGE_KEY, state.userAccounts);
-    writeLocalDataset(ISSUE_REPORTS_STORAGE_KEY, state.issueReports);
-    writeLocalDataset(COMPANY_PROFILE_STORAGE_KEY, state.companyProfile);
-    writeLocalDataset(CATALOG_ITEMS_STORAGE_KEY, state.catalogItems);
-    writeLocalDataset(STATEMENT_EXPORTS_STORAGE_KEY, state.statementExports);
-    writeLocalDataset(SESSION_LOGS_STORAGE_KEY, state.sessionLogs);
-    writeLocalDataset(ACTIVITY_LOGS_STORAGE_KEY, state.activityLogs);
+    // Strip images before caching — server is source of truth; localStorage is a lightweight perf cache
+    const catalogItemsForCache = state.catalogItems.map(item => ({ ...item, itemImageDataUrl: "" }));
+
+    // Size guard: skip entirely if stripped payload would exceed ~4MB
+    const sizeCheckPayload = JSON.stringify({
+        userAccounts: state.userAccounts,
+        issueReports: state.issueReports,
+        companyProfile: state.companyProfile,
+        catalogItems: catalogItemsForCache,
+        statementExports: state.statementExports,
+        sessionLogs: state.sessionLogs,
+        activityLogs: state.activityLogs
+    });
+    if (new Blob([sizeCheckPayload]).size > 4 * 1024 * 1024) {
+        console.warn("Workspace too large to cache locally — skipping local cache");
+        return;
+    }
+
+    try {
+        writeLocalDataset(USER_ACCOUNTS_STORAGE_KEY, state.userAccounts);
+        writeLocalDataset(ISSUE_REPORTS_STORAGE_KEY, state.issueReports);
+        writeLocalDataset(COMPANY_PROFILE_STORAGE_KEY, state.companyProfile);
+        writeLocalDataset(CATALOG_ITEMS_STORAGE_KEY, catalogItemsForCache);
+        writeLocalDataset(STATEMENT_EXPORTS_STORAGE_KEY, state.statementExports);
+        writeLocalDataset(SESSION_LOGS_STORAGE_KEY, state.sessionLogs);
+        writeLocalDataset(ACTIVITY_LOGS_STORAGE_KEY, state.activityLogs);
+    } catch (_) {
+        console.warn("Local cache failed — continuing without caching");
+    }
 }
 
 function applyWorkspaceState(payload) {
@@ -3337,11 +3359,15 @@ function applyWorkspaceState(payload) {
 async function bootstrapSharedWorkspaceData() {
     try {
         const payload = await requestJSON("/api/workspace");
+        console.log("[catalog-debug] workspace catalogItems from server:", payload.catalogItems?.length ?? "undefined");
         state.workspaceDataMode = "server";
         applyWorkspaceState(payload);
+        console.log("[catalog-debug] state.catalogItems after applyWorkspaceState:", state.catalogItems.length);
     } catch (error) {
+        console.log("[catalog-debug] bootstrapSharedWorkspaceData FAILED — falling back to local. Error:", error?.message);
         state.workspaceDataMode = "local";
         loadLocalWorkspaceState();
+        console.log("[catalog-debug] state.catalogItems from local fallback:", state.catalogItems.length);
         renderCatalog();
         renderStatementsPage();
         renderAccountAdminPage();
@@ -4737,6 +4763,8 @@ function renderCatalog() {
         return;
     }
 
+    console.log("[catalog-debug] catalog entries before filters:", getCatalogEntries().length);
+    console.log("[catalog-debug] catalog entries after filters:", getFilteredCatalogEntries().length);
     const allActive = getCatalogEntries().filter(item => !item.archived);
     const entries = getFilteredCatalogEntries();
     if (!entries.length) {
@@ -11302,11 +11330,8 @@ function readLocalDataset(storageKey, fallbackValue) {
 function writeLocalDataset(storageKey, value) {
     try {
         window.localStorage.setItem(storageKey, JSON.stringify(value));
-    } catch (error) {
-        if (error?.name === "QuotaExceededError") {
-            throw new Error("Local storage is full. Try a smaller image.");
-        }
-        throw error;
+    } catch (_) {
+        console.warn("Local cache failed — continuing without caching");
     }
 }
 
@@ -11391,10 +11416,17 @@ async function bootstrapAppData() {
     }
 }
 
+function stripDocumentImagesForCache(docs) {
+    return docs.map(doc => ({
+        ...doc,
+        items: (doc.items || []).map(item => ({ ...item, itemImageDataUrl: "" }))
+    }));
+}
+
 async function saveDocumentsToServer(documents) {
     if (state.dataMode === "local") {
         state.documents = normalizeDocuments(documents);
-        writeLocalDataset(LOCAL_DOCUMENTS_STORAGE_KEY, state.documents);
+        writeLocalDataset(LOCAL_DOCUMENTS_STORAGE_KEY, stripDocumentImagesForCache(state.documents));
         updateRuntimeModeBadge();
         return;
     }
@@ -11412,7 +11444,7 @@ async function saveDocumentsToServer(documents) {
         state.dataMode = "local";
         updateRuntimeModeBadge();
         state.documents = normalizeDocuments(documents);
-        writeLocalDataset(LOCAL_DOCUMENTS_STORAGE_KEY, state.documents);
+        writeLocalDataset(LOCAL_DOCUMENTS_STORAGE_KEY, stripDocumentImagesForCache(state.documents));
         setImportStatus("Server save failed, so changes were saved locally in this browser instead.");
     }
 }
