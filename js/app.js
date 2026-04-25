@@ -3414,8 +3414,24 @@ function applyWorkspaceState(payload) {
 async function bootstrapSharedWorkspaceData() {
     try {
         const payload = await requestJSON("/api/workspace");
-        state.workspaceDataMode = "server";
-        applyWorkspaceState(payload);
+
+        // Guard against Blob token failures where the server returns an empty catalog.
+        // When the Blob token expires/rotates, list() returns [] and the server returns
+        // a normalized workspace with default users but no catalog items. Preserve the
+        // local catalog in that case rather than wiping it — a legitimate "delete all
+        // catalog items" action is far less likely than a Blob credential problem.
+        const serverHasNoCatalog =
+            !Array.isArray(payload?.catalogItems) || payload.catalogItems.length === 0;
+        const localHasCatalog = state.catalogItems.length > 0;
+
+        if (serverHasNoCatalog && localHasCatalog) {
+            console.warn("[bootstrap] Server returned empty catalog while local cache has items — preserving local catalog (possible Blob token issue)");
+            state.workspaceDataMode = "server";
+            applyWorkspaceState({ ...payload, catalogItems: state.catalogItems });
+        } else {
+            state.workspaceDataMode = "server";
+            applyWorkspaceState(payload);
+        }
     } catch (error) {
         state.workspaceDataMode = "local";
         loadLocalWorkspaceState();
@@ -11820,10 +11836,15 @@ async function bootstrapAppData() {
             requestJSON("/api/clients")
         ]);
 
+        const incomingDocs = Array.isArray(documentsResponse?.documents) ? documentsResponse.documents : [];
+        const incomingClients = Array.isArray(clientsResponse?.clients) ? clientsResponse.clients : [];
+        if (incomingDocs.length === 0 && incomingClients.length === 0) {
+            console.warn("[bootstrap] Server returned empty documents and clients — possible Blob token issue");
+        }
         state.dataMode = "server";
         updateRuntimeModeBadge();
-        state.documents = normalizeDocuments(documentsResponse.documents);
-        state.clients = normalizeClients(clientsResponse.clients);
+        state.documents = normalizeDocuments(incomingDocs);
+        state.clients = normalizeClients(incomingClients);
 
         // Check for local data migration
         await migrateLocalDataToServer();
