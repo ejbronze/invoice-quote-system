@@ -12929,9 +12929,13 @@ async function handleItemImageInputChange(event) {
         return;
     }
 
+    const statusCopy = itemRow.querySelector(".item-image-upload-copy small");
+    if (statusCopy) statusCopy.textContent = "Optimizing…";
+
     try {
-        itemRow.dataset.itemImageDataUrl = await readFileAsDataUrl(file);
+        itemRow.dataset.itemImageDataUrl = await readImageFileAsDataUrl(file, { maxDimension: 600, quality: 0.85 });
         syncItemImageUI(itemRow);
+        if (statusCopy) statusCopy.textContent = "Image ready";
         queueDraftAutosave();
     } catch (error) {
         itemRow.dataset.itemImageDataUrl = "";
@@ -14025,7 +14029,8 @@ async function persistDocument(options = {}) {
                 }));
             upsertItemsIntoCatalog(docCatalogItems, docRef).catch(() => {});
             const docLabel = doc.type === "quote" ? "Quote" : "Invoice";
-            setImportStatus(`${docLabel} ${doc.refNumber} saved and Pricing Library updated.`);
+            const hasRowImages = (doc.items || []).some(item => Boolean(item.itemImageDataUrl));
+            setImportStatus(`${docLabel} ${doc.refNumber} saved and Pricing Library updated.${hasRowImages ? " Images saved." : ""}`);
         }
     } catch (error) {
         if (!silent) {
