@@ -240,6 +240,27 @@
                         </div>
                     </div>
 
+                    <section class="overview-attention-section" id="overviewAttentionSection" hidden>
+                        <div class="overview-attention-grid">
+                            <article class="overview-attention-card is-overdue" id="overdueInvoicesCard">
+                                <div class="overview-attention-head">
+                                    <span class="overview-attention-badge is-red">Overdue</span>
+                                    <h3>Past Due Invoices</h3>
+                                </div>
+                                <div class="overview-attention-list" id="overdueInvoicesList"></div>
+                                <button class="overview-attention-viewall" id="viewAllOverdueBtn" type="button" hidden>View all overdue</button>
+                            </article>
+                            <article class="overview-attention-card is-due-soon" id="dueSoonInvoicesCard">
+                                <div class="overview-attention-head">
+                                    <span class="overview-attention-badge is-amber">Due Soon</span>
+                                    <h3>Coming Due</h3>
+                                </div>
+                                <div class="overview-attention-list" id="dueSoonInvoicesList"></div>
+                                <button class="overview-attention-viewall" id="viewAllDueSoonBtn" type="button" hidden>View all due soon</button>
+                            </article>
+                        </div>
+                    </section>
+
                     <section class="overview-secondary-grid">
                         <article class="overview-card">
                             <div class="page-section-heading">
@@ -441,14 +462,6 @@
                                 <option value="no_image">No image</option>
                             </select>
                         </label>
-                        <label class="sort-field">
-                            <span class="search-label">Per page</span>
-                            <select id="pricingLibraryPerPage">
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                                <option value="100">100</option>
-                            </select>
-                        </label>
                         <div class="pricing-view-toggle" id="pricingLibraryViewToggle" role="group" aria-label="Pricing Library view">
                             <button class="pricing-view-btn is-active" type="button" data-pricing-view="card">Card view</button>
                             <button class="pricing-view-btn" type="button" data-pricing-view="row">Row view</button>
@@ -555,27 +568,17 @@
                     <div class="settings-grid">
                         <div class="settings-panel">
                             <div class="settings-panel-header">
-                                <h4>Service Reports</h4>
+                                <h4>Tech Tickets</h4>
                                 <p>Bug reports and service logs appear here for admins to review, annotate, and close when resolved.</p>
                             </div>
                             <div class="settings-actions">
-                                <button class="btn btn-secondary" id="settingsIssueInboxBtn" type="button">Open Service Reports</button>
+                                <button class="btn btn-secondary" id="settingsIssueInboxBtn" type="button">Open Tech Tickets</button>
                             </div>
-                        </div>
-                        <div class="settings-panel">
-                            <div class="settings-panel-header">
-                                <h4>Editor Preferences</h4>
-                                <p>Choose which optional fields should appear while your team prepares documents.</p>
-                            </div>
-                            <label class="checkbox-row checkbox-row-block settings-toggle-row">
-                                <input type="checkbox" id="showInternalPricingToggle">
-                                <span>Show internal pricing fields in line items</span>
-                            </label>
                         </div>
                         <div class="settings-panel" id="dataTransferPanel">
                             <div class="settings-panel-header">
-                                <h4 id="dataTransferPanelTitle">Data Export &amp; Import</h4>
-                                <p id="dataTransferPanelCopy">Open a smaller data tools menu when you need templates, backups, imports, or selective export.</p>
+                                <h4 id="dataTransferPanelTitle">Download Backup / Upload Recovery File</h4>
+                                <p id="dataTransferPanelCopy">Export a full JSON backup of your data, or restore from a previously saved backup file.</p>
                             </div>
                             <div class="settings-actions">
                                 <button class="btn btn-secondary" id="openDataToolsBtn" type="button">Open Data Tools</button>
@@ -583,12 +586,12 @@
                         </div>
                         <div class="settings-panel" id="snapshotsPanel">
                             <div class="settings-panel-header">
-                                <h4>Local Snapshots</h4>
-                                <p>The app saves a local backup after every manual save. Use these to recover if server data is lost.</p>
+                                <h4>Auto-Saved Snapshots</h4>
+                                <p>The app automatically saves a local backup after every manual save. Restore a snapshot here if you need to recover a previous version.</p>
                             </div>
                             <div id="snapshotsList" class="snapshots-list"></div>
                         </div>
-                        <div class="settings-panel settings-panel-danger">
+                        <div class="settings-panel settings-panel-danger" id="localTestingPanel">
                             <div class="settings-panel-header">
                                 <h4>Local Testing</h4>
                                 <p>Clear browser-only test data without affecting any server data.</p>
@@ -597,6 +600,7 @@
                                 <button class="btn btn-secondary" id="clearLocalTestDataBtn" type="button">Clear Local Test Data</button>
                             </div>
                         </div>
+                        <input type="checkbox" id="showInternalPricingToggle" hidden aria-hidden="true">
                     </div>
                 </section>
 
@@ -755,6 +759,7 @@
                         <strong class="footer-brand-name">SantoSync</strong>
                         <span class="footer-updated" id="footerUpdated">Updated —</span>
                     </div>
+                    <p class="app-footer-attribution">Icons by <a href="https://www.flaticon.com/free-icons/calculator" title="calculator icons" target="_blank" rel="noopener">Smashicons</a>, <a href="https://www.flaticon.com/free-icons/pdf" title="pdf icons" target="_blank" rel="noopener">Dimitry Miroliubov</a>, <a href="https://www.flaticon.com/free-icons/excel" title="excel icons" target="_blank" rel="noopener">Freepik</a>, <a href="https://www.flaticon.com/free-icons/translate" title="translate icons" target="_blank" rel="noopener">Freepik</a>, <a href="https://www.flaticon.com/free-icons/floppy-disk" title="save icons" target="_blank" rel="noopener">Freepik</a>, <a href="https://www.flaticon.com/free-icons/question" title="help icons" target="_blank" rel="noopener">Freepik</a>, <a href="https://www.flaticon.com/free-icons/trash-can" title="trash-can icons" target="_blank" rel="noopener">lalawidi</a>, <a href="https://www.flaticon.com/free-icons/send" title="send icons" target="_blank" rel="noopener">Pixel perfect</a> — Flaticon</p>
                     <div class="app-footer-actions">
                         <div class="footer-help-wrap" id="footerHelpWrap">
                             <button class="footer-secondary-btn footer-help-btn" id="footerHelpBtn" type="button" aria-haspopup="true" aria-expanded="false">
@@ -1263,7 +1268,7 @@
         <div class="notes-drawer-compose" id="notesDrawerCompose">
             <textarea id="notesDrawerInput" rows="3" placeholder="Add an internal note… (Ctrl+Enter to post)"></textarea>
             <div class="notes-drawer-compose-actions">
-                <button class="btn btn-primary" id="notesDrawerSubmitBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Post Note</button>
+                <button class="btn btn-primary" id="notesDrawerSubmitBtn" type="button"><img src="/assets/icons/icon-paper-plane.png" alt="" class="btn-custom-icon">Post Note</button>
             </div>
         </div>
     </aside>
@@ -1507,7 +1512,7 @@
             </div>
             <div class="modal-help-panel" id="modalHelpPanel" hidden aria-hidden="true">
                 <div class="modal-help-row">
-                    <img src="/assets/icons/icon-calculator.png" alt="" class="modal-help-icon-img">
+                    <img src="/assets/icons/icon-help.png" alt="" class="modal-help-icon-img">
                     <div class="modal-help-text">
                         <strong>Save Document / Save Changes</strong>
                         <p>Logs and saves this document to your records. Fill in all required fields before saving.</p>

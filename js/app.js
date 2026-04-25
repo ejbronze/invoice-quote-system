@@ -66,7 +66,7 @@ const state = {
     pricingSortOrder: "date_desc",
     pricingImageFilter: "all",
     pricingViewMode: "card",
-    pricingItemsPerPage: 25,
+    pricingItemsPerPage: 20,
     pricingCurrentPage: 1,
     editingProcurementSheetId: null,
     notesDrawerTab: "notes",
@@ -131,7 +131,7 @@ const APP_LAST_UPDATED = "2026-04-25T02:00:00";
 
 const ICONS = {
     plus:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`,
-    trash:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 4h6M7 7l1 12h8l1-12M10 11v5M14 11v5"/></svg>`,
+    trash:       `<img src="/assets/icons/icon-trash.png" alt="" class="btn-custom-icon">`,
     convert:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 16V4M7 4 3 8M7 4l4 4M17 8v12M17 20l4-4M17 20l-4-4"/></svg>`,
     download:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M12 3v12M8 11l4 4 4-4"/></svg>`,
     upload:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M12 21V9M16 13l-4-4-4 4"/></svg>`,
@@ -200,7 +200,7 @@ const TRANSLATIONS = {
         end_session: "End Session",
         sign_out: "Sign out",
         settings: "Settings",
-        issue_inbox: "Service Reports",
+        issue_inbox: "Tech Tickets",
         report_issue: "Report an Issue",
         issue_report_copy: "Share a bug, broken workflow, or visual issue and attach a screenshot if it helps explain the problem.",
         issue_summary: "Issue Summary",
@@ -308,7 +308,7 @@ const TRANSLATIONS = {
         statement_popup_error: "Please allow pop-ups to export the statement PDF.",
         statement_select_first_error: "Select at least one invoice before exporting a statement.",
         statement_csv_success: "Selected invoices exported as CSV.",
-        open_service_reports: "Open Service Reports",
+        open_service_reports: "Open Tech Tickets",
         report_select: "Select",
         report_print_title: "Invoice Report",
         report_print_selected_empty: "Select at least one invoice from the invoice reports list before printing.",
@@ -2496,11 +2496,6 @@ function bindEvents() {
         resetCatalogPagination();
         renderCatalog();
     });
-    elements.pricingLibraryPerPage?.addEventListener("change", event => {
-        state.pricingItemsPerPage = Number.parseInt(event.target.value, 10) || 25;
-        resetCatalogPagination();
-        renderCatalog();
-    });
     elements.pricingLibraryViewToggle?.addEventListener("click", event => {
         const button = event.target.closest("[data-pricing-view]");
         if (!button) return;
@@ -2508,10 +2503,18 @@ function bindEvents() {
         renderCatalog();
     });
     elements.catalogPagination?.addEventListener("click", event => {
-        const button = event.target.closest("[data-catalog-page]");
-        if (!button) return;
-        state.pricingCurrentPage = Number.parseInt(button.dataset.catalogPage, 10) || 1;
-        renderCatalog();
+        const pageBtn = event.target.closest("[data-catalog-page]");
+        if (pageBtn) {
+            state.pricingCurrentPage = Number.parseInt(pageBtn.dataset.catalogPage, 10) || 1;
+            renderCatalog();
+            return;
+        }
+        const perPageBtn = event.target.closest("[data-catalog-perpage]");
+        if (perPageBtn) {
+            state.pricingItemsPerPage = Number.parseInt(perPageBtn.dataset.catalogPerpage, 10) || 20;
+            resetCatalogPagination();
+            renderCatalog();
+        }
     });
     elements.statementExportsList?.addEventListener("click", handleStatementExportsListClick);
     elements.closeAboutModalBtn.addEventListener("click", closeAboutModal);
@@ -2723,6 +2726,22 @@ function bindEvents() {
     elements.valueToggleCard.addEventListener("click", () => toggleValueView(true));
     elements.overviewMobileToggle?.addEventListener("click", toggleMobileOverview);
     elements.viewAllDocumentsBtn?.addEventListener("click", () => setActivePage("documents"));
+    document.getElementById("viewAllOverdueBtn")?.addEventListener("click", () => setActivePage("documents"));
+    document.getElementById("viewAllDueSoonBtn")?.addEventListener("click", () => setActivePage("documents"));
+    document.getElementById("overviewAttentionSection")?.addEventListener("click", event => {
+        const notesBtn = event.target.closest(".attention-invoice-notes-btn");
+        if (notesBtn) {
+            event.stopPropagation();
+            const docId = notesBtn.dataset.openNotes;
+            if (docId) openNotesDrawer(docId, "document");
+            return;
+        }
+        const mainBtn = event.target.closest(".attention-invoice-main");
+        if (mainBtn) {
+            const docId = mainBtn.dataset.openDoc;
+            if (docId) editDocument(docId);
+        }
+    });
     elements.showInternalPricingToggle.addEventListener("change", handleInternalPricingToggleChange);
     elements.importBackupBtn.addEventListener("click", () => {
         elements.importBackupInput.click();
@@ -3672,6 +3691,7 @@ function normalizeNoteLog(notes) {
             text: String(note.text || "").trim(),
             author: String(note.author || "Unknown").trim() || "Unknown",
             userId: String(note.userId || "").trim(),
+            isSystem: note.isSystem === true,
             createdAt: String(note.createdAt || new Date().toISOString()),
             editedAt: note.editedAt ? String(note.editedAt) : null
         }));
@@ -4035,12 +4055,17 @@ function updateRuntimeModeBadge() {
         elements.runtimeModeBadge.hidden = false;
         elements.runtimeModeBadge.textContent = t("test_mode");
         elements.runtimeModeBadge.classList.add("is-test-mirror");
+        const localPanel = document.getElementById("localTestingPanel");
+        if (localPanel) localPanel.hidden = false;
         return;
     }
 
     const isLocalMode = state.dataMode === "local" || state.workspaceDataMode === "local" || state.runtimeMode === "local-sandbox";
     elements.runtimeModeBadge.hidden = !isLocalMode;
     elements.runtimeModeBadge.textContent = t("local_mode");
+
+    const localPanel = document.getElementById("localTestingPanel");
+    if (localPanel) localPanel.hidden = !isLocalMode;
 }
 
 function getStoredSessionUser() {
@@ -4975,7 +5000,7 @@ function resetCatalogPagination() {
 }
 
 function getCatalogPageItems(entries) {
-    const perPage = Math.max(1, Number.parseInt(state.pricingItemsPerPage, 10) || 25);
+    const perPage = Math.max(1, Number.parseInt(state.pricingItemsPerPage, 10) || 20);
     const totalPages = Math.max(1, Math.ceil(entries.length / perPage));
     state.pricingCurrentPage = Math.min(Math.max(1, state.pricingCurrentPage || 1), totalPages);
     const startIndex = (state.pricingCurrentPage - 1) * perPage;
@@ -5001,13 +5026,22 @@ function renderCatalogPagination(totalCount, pageInfo) {
     const start = pageInfo.startIndex + 1;
     const end = pageInfo.endIndex;
     const current = state.pricingCurrentPage;
+    const perPage = pageInfo.perPage;
+    const perPageOptions = [20, 50, 100];
+    const perPageLinks = perPageOptions.map(n =>
+        `<button class="catalog-perpage-btn${perPage === n ? " is-active" : ""}" type="button" data-catalog-perpage="${n}" aria-pressed="${perPage === n}">${n}</button>`
+    ).join(`<span class="catalog-perpage-sep">/</span>`);
+
     elements.catalogPagination.hidden = false;
     elements.catalogPagination.innerHTML = `
-        <span class="catalog-pagination-range">${escapeHtml(`${start}-${end} of ${totalCount}`)}</span>
         <div class="catalog-pagination-actions">
             <button class="btn btn-secondary btn-sm" type="button" data-catalog-page="${current - 1}" ${current <= 1 ? "disabled" : ""}>Previous</button>
-            <span class="catalog-pagination-page">${escapeHtml(`Page ${current} of ${pageInfo.totalPages}`)}</span>
+            <span class="catalog-pagination-page">${escapeHtml(`${start}–${end} of ${totalCount}`)}</span>
             <button class="btn btn-secondary btn-sm" type="button" data-catalog-page="${current + 1}" ${current >= pageInfo.totalPages ? "disabled" : ""}>Next</button>
+        </div>
+        <div class="catalog-perpage-row" aria-label="Items per page">
+            <span class="catalog-perpage-label">Show:</span>
+            ${perPageLinks}
         </div>
     `;
 }
@@ -5091,9 +5125,6 @@ function renderCatalog() {
         return;
     }
 
-    if (elements.pricingLibraryPerPage) {
-        elements.pricingLibraryPerPage.value = String(state.pricingItemsPerPage || 25);
-    }
     elements.pricingLibraryViewToggle?.querySelectorAll("[data-pricing-view]").forEach(button => {
         button.classList.toggle("is-active", button.dataset.pricingView === state.pricingViewMode);
     });
@@ -7654,7 +7685,9 @@ function getNotesTargetTypeLabel(target, targetType) {
     if (targetType === "statement") {
         return "Statement";
     }
-    return target?.type === "invoice" ? "Invoice" : "Quote";
+    if (target?.type === "invoice") return "Invoice";
+    if (target?.type === "procurement") return "Procurement";
+    return "Quote";
 }
 
 function openNotesDrawer(targetId, targetType = "document") {
@@ -7747,23 +7780,41 @@ function closeNotesDrawer() {
 function renderNotesFeed(target, targetType = "document") {
     if (!elements.notesDrawerFeed) return;
     const notes = Array.isArray(target?.noteLog) ? target.noteLog : [];
+    const submissionNotes = target?.type === "procurement" && target?.notes ? String(target.notes).trim() : "";
+    const pinnedBanner = submissionNotes
+        ? `<div class="note-item note-item--pinned"><div class="note-item-header"><span class="note-item-system-badge">Submission Notes</span></div><div class="note-item-text">${escapeHtml(submissionNotes)}</div></div>`
+        : "";
     if (notes.length === 0) {
-        elements.notesDrawerFeed.innerHTML = `<p class="notes-empty">No notes yet. Add one below.</p>`;
+        elements.notesDrawerFeed.innerHTML = `${pinnedBanner}<p class="notes-empty">No notes yet. Add one below.</p>`;
         return;
     }
     const currentUserId = state.currentUser?.userId;
-    elements.notesDrawerFeed.innerHTML = notes.map(note => {
-        const canEdit = note.userId === currentUserId;
+    const notesHtml = notes.map(note => {
+        const isSystem = note.isSystem === true;
+        const canEdit = !isSystem && note.userId && note.userId === currentUserId;
         const timeLabel = note.editedAt
             ? `${formatNoteTimestamp(note.createdAt)} (edited)`
             : formatNoteTimestamp(note.createdAt);
+        const noteTextHtml = escapeHtml(note.text).replace(/\n/g, "<br>");
+        if (isSystem) {
+            return `
+                <div class="note-item note-item--system" data-note-id="${escapeHtml(String(note.id))}">
+                    <div class="note-item-header">
+                        <span class="note-item-system-badge">System</span>
+                        <span class="note-item-author">${escapeHtml(note.author || "System")}</span>
+                        <span class="note-item-time">${escapeHtml(timeLabel)}</span>
+                    </div>
+                    <div class="note-item-text">${noteTextHtml}</div>
+                </div>
+            `;
+        }
         return `
             <div class="note-item" data-note-id="${escapeHtml(String(note.id))}">
                 <div class="note-item-header">
                     <span class="note-item-author">${escapeHtml(note.author || "Unknown")}</span>
                     <span class="note-item-time">${escapeHtml(timeLabel)}</span>
                 </div>
-                <div class="note-item-text">${escapeHtml(note.text)}</div>
+                <div class="note-item-text">${noteTextHtml}</div>
                 ${canEdit ? `
                 <div class="note-item-actions">
                     <button type="button" class="note-action-btn" data-note-action="edit" data-note-id="${escapeHtml(String(note.id))}" title="Edit note" aria-label="Edit note">
@@ -7776,6 +7827,7 @@ function renderNotesFeed(target, targetType = "document") {
             </div>
         `;
     }).join("");
+    elements.notesDrawerFeed.innerHTML = pinnedBanner + notesHtml;
     elements.notesDrawerFeed.scrollTop = elements.notesDrawerFeed.scrollHeight;
 }
 
@@ -7917,7 +7969,7 @@ function getAllSystemNotes() {
         normalizeNoteLog(doc.noteLog).map(note => ({
             ...note,
             targetType: "document",
-            documentType: doc.type === "invoice" ? "invoice" : "quote",
+            documentType: doc.type === "invoice" ? "invoice" : doc.type === "procurement" ? "procurement" : "quote",
             targetId: String(doc.id),
             documentReference: doc.refNumber || "Reference pending",
             clientName: doc.clientName || t("unknown_client"),
@@ -14209,15 +14261,36 @@ function generateDocumentDiff(oldDoc, newDoc) {
 function appendDocumentChangeHistory(doc, oldDoc, overrideChanges = null) {
     const changes = overrideChanges ?? generateDocumentDiff(oldDoc, doc);
     if (!changes.length) return doc;
+    const now = new Date().toISOString();
     const entry = {
         id: `hist-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        timestamp: new Date().toISOString(),
+        timestamp: now,
         userId: state.currentUser?.userId || "",
         user: state.currentUser?.displayName || "System",
         changes
     };
     const existing = Array.isArray(doc.changeHistory) ? doc.changeHistory : [];
     doc.changeHistory = [...existing, entry];
+
+    const timeLabel = new Date(now).toLocaleString(undefined, {
+        month: "short", day: "numeric", year: "numeric",
+        hour: "numeric", minute: "2-digit"
+    });
+    const systemNoteText = changes.length === 1
+        ? `${changes[0]} – ${timeLabel}`
+        : `${changes.length} changes – ${timeLabel}\n${changes.map(c => `• ${c}`).join("\n")}`;
+    const systemNote = {
+        id: `sys-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        text: systemNoteText,
+        author: state.currentUser?.displayName || "System",
+        userId: "",
+        isSystem: true,
+        createdAt: now,
+        editedAt: null
+    };
+    const existingNotes = Array.isArray(doc.noteLog) ? doc.noteLog : [];
+    doc.noteLog = [...existingNotes, systemNote];
+
     return doc;
 }
 
@@ -15154,9 +15227,86 @@ function syncDocumentsSelectionToolbar() {
     elements.downloadSelectedDocumentsZipBtn.disabled = selectedCount === 0;
 }
 
+function renderDashboardAttention() {
+    const attentionSection = document.getElementById("overviewAttentionSection");
+    const overdueList = document.getElementById("overdueInvoicesList");
+    const dueSoonList = document.getElementById("dueSoonInvoicesList");
+    const viewAllOverdueBtn = document.getElementById("viewAllOverdueBtn");
+    const viewAllDueSoonBtn = document.getElementById("viewAllDueSoonBtn");
+    if (!attentionSection || !overdueList || !dueSoonList) return;
+
+    const today = new Date();
+    const invoices = state.documents.filter(doc =>
+        doc.type === "invoice" && doc.status === "logged" &&
+        doc.paymentStatus !== "paid" && getInvoiceOutstandingBalance(doc) > 0
+    );
+
+    const overdue = invoices
+        .map(inv => ({ inv, days: getInvoiceDaysPastDue(inv) }))
+        .filter(({ days }) => days > 0)
+        .sort((a, b) => b.days - a.days);
+
+    const sevenDays = new Date(today);
+    sevenDays.setDate(sevenDays.getDate() + 7);
+    const dueSoon = invoices
+        .map(inv => {
+            const due = calculateInvoiceDueDate(inv);
+            const diffMs = due.getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+            const daysLeft = Math.ceil(diffMs / 86400000);
+            return { inv, daysLeft };
+        })
+        .filter(({ daysLeft }) => daysLeft >= 0 && daysLeft <= 7)
+        .sort((a, b) => a.daysLeft - b.daysLeft);
+
+    const hasContent = overdue.length > 0 || dueSoon.length > 0;
+    attentionSection.hidden = !hasContent;
+    if (!hasContent) return;
+
+    const MAX_SHOWN = 5;
+    const notesIconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 12h8M8 16h5"/></svg>`;
+    function buildRow(inv, labelText) {
+        const balance = getInvoiceOutstandingBalance(inv);
+        const safeId = escapeHtml(String(inv.id));
+        const safeRef = escapeHtml(inv.refNumber || "No ref");
+        return `<div class="attention-invoice-row">
+            <button class="attention-invoice-main" type="button" data-open-doc="${safeId}" aria-label="Open invoice ${safeRef}">
+                <span class="attention-invoice-left">
+                    <span class="attention-invoice-ref">${safeRef}</span>
+                    <span class="attention-invoice-client">${escapeHtml(inv.clientName || "Unknown client")}</span>
+                </span>
+                <span class="attention-invoice-right">
+                    <span class="attention-invoice-amount">${escapeHtml(`${inv.currency || "USD"} ${formatAmount(balance)}`)}</span>
+                    <span class="attention-invoice-days">${escapeHtml(labelText)}</span>
+                </span>
+            </button>
+            <button class="attention-invoice-notes-btn" type="button" data-open-notes="${safeId}" aria-label="Open notes for ${safeRef}" title="Notes">${notesIconSvg}</button>
+        </div>`;
+    }
+
+    overdueList.innerHTML = overdue.length === 0
+        ? `<p class="attention-empty">No overdue invoices.</p>`
+        : overdue.slice(0, MAX_SHOWN).map(({ inv, days }) => buildRow(inv, `${days}d overdue`)).join("");
+
+    dueSoonList.innerHTML = dueSoon.length === 0
+        ? `<p class="attention-empty">Nothing due in the next 7 days.</p>`
+        : dueSoon.slice(0, MAX_SHOWN).map(({ inv, daysLeft }) =>
+            buildRow(inv, daysLeft === 0 ? "Due today" : daysLeft === 1 ? "Due tomorrow" : `Due in ${daysLeft}d`)
+        ).join("");
+
+    if (viewAllOverdueBtn) {
+        viewAllOverdueBtn.hidden = overdue.length <= MAX_SHOWN;
+        viewAllOverdueBtn.textContent = `View all ${overdue.length} overdue`;
+    }
+    if (viewAllDueSoonBtn) {
+        viewAllDueSoonBtn.hidden = dueSoon.length <= MAX_SHOWN;
+        viewAllDueSoonBtn.textContent = `View all ${dueSoon.length} due soon`;
+    }
+}
+
 function renderDocuments() {
     updateOverviewStats();
     renderOverviewPanels();
+    renderDashboardAttention();
     renderCatalog();
     renderInvoiceReport();
     renderNotesPage();

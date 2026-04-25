@@ -2,7 +2,27 @@
 
 SantoSync is a focused document and operations workspace built for trade teams, freelancers, and logistics operators who need to generate, track, and deliver professional quotes and invoices without the overhead of enterprise billing software.
 
-Version: `1.10.0` — Last updated: April 25, 2026
+Version: `1.11.0` — Last updated: April 25, 2026
+
+## Version 1.11.0 Summary
+
+This release adds a dashboard attention section, improves icon consistency and attribution, fixes procurement notes visibility, introduces automatic system notes on document edits, cleans up the Settings page, and makes the Pricing Library toolbar fully responsive.
+
+**Dashboard Attention Required section:** The overview dashboard now surfaces an "Attention Required" section above the secondary grid whenever there are overdue or soon-due invoices. The section renders two cards — Past Due Invoices and Coming Due — each listing up to five unpaid invoices sorted by urgency. Each row shows the reference number, client name, balance, and a colored label (e.g., "3d overdue" in red, "Due in 2d" in amber). Clicking a row opens the invoice directly in the document editor. A small notes icon on the right edge of each row opens the notes drawer for that invoice as a secondary action. "View all" buttons appear when more than five invoices qualify, linking to the full Documents page. The section hides itself entirely when no invoices require attention.
+
+**Pricing Library pagination UI:** The per-page selector has moved from the toolbar to the bottom of the list, centered below the results. The dropdown has been replaced with `20 / 50 / 100` quick-link buttons. The active selection is highlighted. The previous/next navigation and the item range label ("1–20 of 143") sit above the per-page row in a single centered strip.
+
+**Automatic system notes on document edits:** When a document is saved with changes, a system-generated note is automatically appended to the document's note log. The note summarizes what changed (single-line for one change, bulleted for multiple) and timestamps the entry. System notes are labeled with a "System" badge in the Notes drawer, appear in a distinct muted style, and cannot be edited or deleted by users.
+
+**Procurement notes visibility fix:** Opening the notes drawer for a Procurement Sheet now correctly labels the target as "Procurement" instead of "Quote." The submission notes field (`doc.notes`) is displayed as a pinned "Submission Notes" banner at the top of the notes feed whenever it contains content.
+
+**Icon standardization:** Document delete actions now use `icon-trash.png` from the asset library. The Post Note button in the notes drawer now uses `icon-paper-plane.png`. The "Save Document" row in the Help modal now shows `icon-help.png`. All icon uses follow the same `<img class="btn-custom-icon">` pattern used for the save icon.
+
+**Flaticon icon attribution:** A Flaticon attribution line has been added to the app footer crediting Smashicons, lalawidi, and Pixel perfect for the icons used throughout the interface.
+
+**Responsive Pricing Library toolbar:** The library toolbar has been converted from a fixed seven-column CSS grid to a flexbox layout with `flex-wrap: wrap`. Search, filter, and sort fields resize proportionally and wrap cleanly on narrower viewports. The view toggle stays aligned to the end of the row and never clips.
+
+**Settings page cleanup:** "Service Reports" has been renamed to "Tech Tickets" throughout the settings page and related labels. "Data Export & Import" has been renamed to "Download Backup / Upload Recovery File." The "Editor Preferences" panel (internal pricing toggle) is now hidden from the settings UI while keeping the underlying toggle element functional in the DOM. The "Local Testing" panel is now visibility-controlled by runtime mode — it only renders when the app is running in local or sandbox mode, hiding itself in production.
 
 ## Version 1.10.0 Summary
 
