@@ -1664,10 +1664,13 @@
                                 <div class="line-items-header">
                                     <label>Line Items</label>
                                     <div class="line-items-header-actions">
-                                        <select id="documentLibrarySelect" aria-label="Insert item from pricing library">
-                                            <option value="">Pricing Library</option>
-                                        </select>
-                                        <button type="button" class="btn btn-secondary" id="insertDocumentLibraryItemBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M5 19h14"/></svg>Insert</button>
+                                        <div class="doc-lib-combobox">
+                                            <svg class="proc-lib-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                                            <input type="text" id="documentLibrarySearch" class="proc-lib-search" placeholder="Search Pricing Library…" autocomplete="off" aria-label="Search pricing library items" aria-expanded="false">
+                                            <div class="proc-lib-dropdown" id="docLibDropdown" role="listbox" hidden></div>
+                                        </div>
+                                        <input type="hidden" id="documentLibrarySelect">
+                                        <button type="button" class="btn btn-secondary" id="insertDocumentLibraryItemBtn" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M5 19h14"/></svg>Insert</button>
                                         <button type="button" class="btn btn-secondary" id="createDocumentLibraryItemBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Create Library Item</button>
                                         <button type="button" class="btn btn-secondary" id="addItemBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add Item</button>
                                     </div>
@@ -2024,7 +2027,7 @@
                         <span id="notesRecordModalClient">Unknown client</span>
                     </div>
                     <div class="notes-record-modal-actions">
-                        <button class="btn btn-secondary" id="notesRecordOpenClientBtn" type="button">Client Profile</button>
+                        <button class="btn btn-secondary btn-tertiary" id="notesRecordOpenClientBtn" type="button">Client Profile</button>
                         <button class="btn btn-secondary" id="notesRecordManageNotesBtn" type="button">Manage Notes</button>
                         <button class="btn btn-primary" id="notesRecordOpenDocumentBtn" type="button">Open Document</button>
                     </div>
@@ -2223,10 +2226,6 @@
                 </div>
                 <div class="catalog-details-grid" id="catalogDetailsStats"></div>
                 <div class="catalog-details-long-fields" id="catalogDetailsLongFields"></div>
-                <div class="catalog-details-section" id="catalogDetailsDocRefsSection" hidden>
-                    <span>Used In</span>
-                    <div id="catalogDetailsDocRefs" class="catalog-details-doc-refs"></div>
-                </div>
                 <div class="catalog-details-actions">
                     <button class="btn btn-secondary" type="button" id="catalogDetailsEditItemBtn">Edit Item</button>
                     <button class="btn btn-primary" type="button" id="catalogDetailsAddToDocBtn">Add to Document</button>
@@ -2234,6 +2233,10 @@
                 <div class="catalog-details-doc-picker" id="catalogDetailsDocPicker" hidden>
                     <p class="catalog-doc-picker-label">Choose a document to add this item to:</p>
                     <div id="catalogDetailsDocPickerList" class="catalog-doc-picker-list"></div>
+                </div>
+                <div class="catalog-details-used-in" id="catalogDetailsDocRefsSection" hidden>
+                    <span class="catalog-details-used-in-label">Used In</span>
+                    <div id="catalogDetailsDocRefs" class="catalog-details-doc-refs"></div>
                 </div>
             </div>
         </div>

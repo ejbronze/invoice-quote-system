@@ -2763,6 +2763,13 @@ function bindEvents() {
     elements.addAnotherItemBtn?.addEventListener("click", addItem);
     elements.insertDocumentLibraryItemBtn?.addEventListener("click", insertSelectedLibraryItemIntoDocument);
     elements.createDocumentLibraryItemBtn?.addEventListener("click", () => openCatalogItemModal({ returnToDocument: true }));
+    document.getElementById("documentLibrarySearch")?.addEventListener("focus", openDocLibDropdown);
+    document.getElementById("documentLibrarySearch")?.addEventListener("input", e => renderDocLibItems(filterDocLibItems(e.target.value)));
+    document.getElementById("docLibDropdown")?.addEventListener("click", handleDocLibDropdownClick);
+    document.addEventListener("click", e => {
+        const wrap = document.getElementById("docLibDropdown")?.closest(".doc-lib-combobox");
+        if (wrap && !wrap.contains(e.target)) closeDocLibDropdown();
+    });
     elements.prevBtn.addEventListener("click", prevStep);
     elements.nextBtn.addEventListener("click", nextStep);
     elements.saveBtn.addEventListener("click", saveDocumentOnly);
@@ -4694,10 +4701,18 @@ function renderCatalogDetailsStats(item) {
 
     const sellPrice = item.sellPrice ?? item.price;
     const costPrice = item.costPrice;
-    const stats = [
-        { label: "Sell Price", value: isMeaningfulCatalogValue(sellPrice) ? formatCurrency(Number(sellPrice) || 0) : "" },
-        { label: "Cost Price", value: isMeaningfulCatalogValue(costPrice) ? formatCurrency(Number(costPrice) || 0) : "" },
-        { label: "Currency", value: item.currency },
+    const hasSell = isMeaningfulCatalogValue(sellPrice);
+    const hasCost = isMeaningfulCatalogValue(costPrice);
+
+    const priceHtml = (hasSell || hasCost) ? `
+        <div class="catalog-details-price-row">
+            ${hasSell ? `<div class="cdp-item"><span class="cdp-label">Sell Price</span><strong class="cdp-value">${escapeHtml(formatCurrency(Number(sellPrice) || 0))}</strong></div>` : ""}
+            ${hasSell && hasCost ? `<div class="cdp-sep"></div>` : ""}
+            ${hasCost ? `<div class="cdp-item"><span class="cdp-label">Cost Price</span><strong class="cdp-value">${escapeHtml(formatCurrency(Number(costPrice) || 0))}</strong></div>` : ""}
+        </div>
+    ` : "";
+
+    const chips = [
         { label: "Category", value: item.category },
         { label: "Brand", value: item.brand },
         { label: "Pack Size", value: item.packSize || item.unitSize },
@@ -4708,13 +4723,16 @@ function renderCatalogDetailsStats(item) {
         { label: "Tax", value: item.taxIncluded ? "Included" : "" }
     ].filter(stat => isMeaningfulCatalogValue(stat.value));
 
-    elements.catalogDetailsStats.hidden = stats.length === 0;
-    elements.catalogDetailsStats.innerHTML = stats.map(stat => `
-        <div class="catalog-details-stat">
-            <span>${escapeHtml(stat.label)}</span>
-            <strong>${escapeHtml(String(stat.value))}</strong>
-        </div>
-    `).join("");
+    const chipsHtml = chips.length
+        ? `<div class="catalog-details-chips">${chips.map(stat => `
+            <div class="catalog-details-stat">
+                <span>${escapeHtml(stat.label)}</span>
+                <strong>${escapeHtml(String(stat.value))}</strong>
+            </div>`).join("")}</div>`
+        : "";
+
+    elements.catalogDetailsStats.hidden = !priceHtml && !chipsHtml;
+    elements.catalogDetailsStats.innerHTML = priceHtml + chipsHtml;
 }
 
 function renderCatalogDetailsLongFields(item) {
@@ -4759,15 +4777,27 @@ function openCatalogDetailsModal(item) {
     renderCatalogDetailsStats(item);
     renderCatalogDetailsLongFields(item);
 
-    // Document references
-    const docRefs = Array.isArray(item.documentRefs) ? item.documentRefs : [];
+    // Document references — scan live documents for this item's id
+    const usedInDocs = state.documents
+        .filter(doc => {
+            const lineItems = Array.isArray(doc.items) ? doc.items : [];
+            const procItems = Array.isArray(doc.procurementItems) ? doc.procurementItems : [];
+            return [...lineItems, ...procItems].some(row => row.libraryItemId && row.libraryItemId === item.id);
+        })
+        .sort((a, b) => {
+            const dA = a.date || a.createdAt || "";
+            const dB = b.date || b.createdAt || "";
+            return dB.localeCompare(dA);
+        });
     if (elements.catalogDetailsDocRefsSection) {
-        elements.catalogDetailsDocRefsSection.hidden = docRefs.length === 0;
+        elements.catalogDetailsDocRefsSection.hidden = usedInDocs.length === 0;
     }
-    if (elements.catalogDetailsDocRefs && docRefs.length) {
-        elements.catalogDetailsDocRefs.innerHTML = docRefs.map(r => {
-            const label = `${r.docRefNumber || r.docId} ${r.clientName ? `· ${r.clientName}` : ""}`.trim();
-            return `<button class="catalog-ref-link" type="button" data-open-doc-id="${escapeHtml(String(r.docId))}">${escapeHtml(label)}</button>`;
+    if (elements.catalogDetailsDocRefs) {
+        elements.catalogDetailsDocRefs.innerHTML = usedInDocs.map(doc => {
+            const typeTag = doc.type === "procurement" ? "Proc" : doc.type === "invoice" ? "Inv" : "Quote";
+            const label = `${typeTag} ${doc.refNumber || doc.id}`;
+            const client = doc.clientName ? ` · ${doc.clientName}` : "";
+            return `<button class="catalog-ref-link" type="button" data-open-doc-id="${escapeHtml(String(doc.id))}" title="${escapeHtml(doc.clientName || "")}">${escapeHtml(label + client)}</button>`;
         }).join("");
     }
 
@@ -5086,7 +5116,6 @@ function renderCatalogCard(item) {
                     <strong>${escapeHtml(item.name)}</strong>
                     <span>${escapeHtml([item.brand, item.supplier || item.vendor, item.packSize || item.unitSize].filter(Boolean).join(" · ") || item.referenceId || "Library item")}</span>
                     <small>${escapeHtml(`${item.currency || "USD"} ${formatAmount(item.sellPrice ?? item.price ?? 0)}${item.leadTime ? ` · ${item.leadTime}` : ""}`)}</small>
-                    ${renderCatalogRefs(item)}
                 </div>
             </button>
         </article>
@@ -6529,18 +6558,65 @@ function syncProcurementLibrarySelect() {
 }
 
 function syncDocumentLibrarySelect() {
-    if (!elements.documentLibrarySelect) {
-        return;
+    // Combobox filters live from state.catalogItems — no pre-population needed.
+    // If the dropdown is already open, refresh it.
+    const dropdown = document.getElementById("docLibDropdown");
+    const input = document.getElementById("documentLibrarySearch");
+    if (dropdown && !dropdown.hidden && input) {
+        renderDocLibItems(filterDocLibItems(input.value || ""));
     }
+}
 
-    const currentValue = elements.documentLibrarySelect.value;
-    const items = getActiveLibraryItems();
-    elements.documentLibrarySelect.innerHTML = `<option value="">Pricing Library</option>${items.map(item => {
-        const meta = [item.brand, item.supplier || item.vendor].filter(Boolean).join(" · ");
-        return `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}${meta ? ` (${escapeHtml(meta)})` : ""}</option>`;
-    }).join("")}`;
-    if (items.some(item => item.id === currentValue)) {
-        elements.documentLibrarySelect.value = currentValue;
+// ── Document-editor library search combobox ────────────────────
+
+function filterDocLibItems(query) {
+    const q = query.toLowerCase().trim();
+    const all = getActiveLibraryItems();
+    if (!q) return all;
+    return all.filter(item =>
+        (item.name || "").toLowerCase().includes(q) ||
+        (item.brand || "").toLowerCase().includes(q) ||
+        (item.referenceId || "").toLowerCase().includes(q)
+    );
+}
+
+function renderDocLibItems(items) {
+    const dropdown = document.getElementById("docLibDropdown");
+    if (!dropdown) return;
+    if (!items.length) {
+        dropdown.innerHTML = `<div class="proc-lib-empty">No matches found.</div>`;
+    } else {
+        dropdown.innerHTML = items.map(item => {
+            const meta = [item.brand, item.packSize || item.unitSize, item.unit].filter(Boolean).join(" · ");
+            const price = (item.sellPrice != null && item.sellPrice !== "") ? ` · ${Number(item.sellPrice).toFixed(2)} ${item.currency || ""}`.trimEnd() : "";
+            return `<div class="proc-lib-option" data-doc-lib-item-id="${escapeHtml(item.id)}" role="option" tabindex="-1">
+                <span class="proc-lib-option-name">${escapeHtml(item.name)}</span>
+                ${(meta || price) ? `<span class="proc-lib-option-meta">${escapeHtml(meta + price)}</span>` : ""}
+            </div>`;
+        }).join("");
+    }
+    dropdown.hidden = false;
+}
+
+function openDocLibDropdown() {
+    const input = document.getElementById("documentLibrarySearch");
+    renderDocLibItems(filterDocLibItems(input?.value || ""));
+}
+
+function closeDocLibDropdown() {
+    const dropdown = document.getElementById("docLibDropdown");
+    if (dropdown) dropdown.hidden = true;
+}
+
+function handleDocLibDropdownClick(event) {
+    const opt = event.target.closest("[data-doc-lib-item-id]");
+    if (!opt) return;
+    const item = state.catalogItems.find(i => i.id === opt.dataset.docLibItemId);
+    if (item) {
+        insertLibraryItemIntoDocument(item);
+        const input = document.getElementById("documentLibrarySearch");
+        if (input) input.value = "";
+        closeDocLibDropdown();
     }
 }
 
@@ -6892,12 +6968,14 @@ function insertLibraryItemIntoDocument(item) {
 }
 
 function insertSelectedLibraryItemIntoDocument() {
-    const item = state.catalogItems.find(entry => entry.id === elements.documentLibrarySelect.value);
+    const hiddenInput = document.getElementById("documentLibrarySelect");
+    const item = state.catalogItems.find(entry => entry.id === (hiddenInput?.value || ""));
     if (!item) {
-        window.alert("Choose a pricing library item first.");
+        window.alert("Search and select a pricing library item first.");
         return;
     }
     insertLibraryItemIntoDocument(item);
+    if (hiddenInput) hiddenInput.value = "";
 }
 
 function showProcSheetPicker(itemId, anchorElement) {
