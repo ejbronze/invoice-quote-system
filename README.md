@@ -2,7 +2,19 @@
 
 SantoSync is a focused document and operations workspace built for trade teams, freelancers, and logistics operators who need to generate, track, and deliver professional quotes and invoices without the overhead of enterprise billing software.
 
-Version: `1.9.0` — Last updated: April 24, 2026
+Version: `1.10.0` — Last updated: April 25, 2026
+
+## Version 1.10.0 Summary
+
+This release refines the Pricing Library browsing experience, standardizes save actions, and fixes client outstanding balances when invoice payment status changes.
+
+**Pricing Library browsing and edit flow:** The library now supports Card and List views, instant search/filter/sort updates, and pagination with 25, 50, or 100 items per page. Clicking an item opens a detail modal first; item edits now start only from the modal's **Edit Item** action, reducing accidental inline changes from cards or rows.
+
+**Compact item detail modal:** Empty fields are hidden instead of rendered as placeholder boxes. Item details now flow in tighter grouped sections, keeping visible pricing, supplier, packaging, document reference, detail, and note data easier to scan.
+
+**Save icon standardization:** Explicit save actions now use the shared `/assets/icons/icon-save.png` asset across document saves, item modals, settings/profile forms, payments, notes, procurement sheets, and client/profile actions while preserving existing button styling.
+
+**Client balance recalculation fix:** Client Directory outstanding balances now recalculate immediately when invoice status changes in either direction. Marking an invoice Paid removes its remaining balance; moving it back to Pending or Unpaid adds the unpaid amount back without requiring a refresh. Statements, payment history, and invoice reporting use the same outstanding-balance path.
 
 ## Version 1.9.0 Summary
 
@@ -476,7 +488,13 @@ LOCAL_SEED_FROM_BLOB=false npm run dev:sandbox
 ## FAQ
 
 **How do I add an image to a Pricing Library item?**
-Open the Pricing Library, click Edit on any item card, or click Add Library Item. At the top of the form you will see an "Item Image" upload area. Click it to pick a JPEG, PNG, or WebP file. The app compresses it to a maximum of 600px and then shows a crop modal. You can drag the selection handles to trim the image or click "Skip Crop" to accept it as-is. Once confirmed, a small preview thumbnail appears in the modal. Click Save Library Item to persist it.
+Open the Pricing Library and click the item you want to review. The detail modal opens first. Click **Edit Item** inside that modal, then use the "Item Image" upload area to pick a JPEG, PNG, or WebP file. The app compresses it to a maximum of 600px and then shows a crop modal. You can drag the selection handles to trim the image or click "Skip Crop" to accept it as-is. Once confirmed, a small preview thumbnail appears in the modal. Click Save Library Item to persist it.
+
+**How do I browse Pricing Library items?**
+Use the Pricing Library search box, category filter, supplier filter, image filter, and sort menu to narrow the list. Switch between Card view and List view from the toolbar. The library shows 25 items per page by default, with 50 and 100 item options, and shows the current range such as "1-25 of 143" below the results.
+
+**How do I edit a Pricing Library item?**
+Click any card or list row to open the item detail modal. Review the visible fields, then click **Edit Item** inside the modal. Direct inline editing from cards and rows is intentionally disabled so browsing and editing are separate actions.
 
 **Can I remove or replace a product image?**
 Yes. Open the item edit modal. If an image is already set, a remove (trash) button appears next to the upload label. Click the trash button to clear the image, or click the upload label again to replace it with a different file.
@@ -510,6 +528,9 @@ Go to Clients in the sidebar. Click Add Client or edit an existing client. Insid
 
 **How do I record a payment against an invoice?**
 There are three ways: (1) Open the invoice in the editor, go to Step 5 (Payments), and add a payment entry there. (2) On the Statements page, click "+ Log Payment" in the Payment History panel and select the invoice from the picker. (3) Create a Statement of Account, add a deduction, and check "Mark as payment" — saving the statement writes the payment back to the matched invoice automatically.
+
+**How are client outstanding balances calculated?**
+Client balances come from invoices for that client. Paid invoices contribute $0 outstanding. Pending Payment and Unpaid invoices contribute the remaining invoice total after logged payments. Changing an invoice from Pending to Paid lowers the balance immediately; changing it from Paid back to Pending or Unpaid adds the unpaid amount back immediately across the Client Directory, Statements, Payment History, and reporting views.
 
 **How do I back up my workspace data?**
 Go to Settings in the sidebar, open the Data Export & Import panel, and click Export Workspace Backup. This downloads a full JSON file covering all documents, clients, user accounts, company profile, catalog items, saved items, and statement exports. You can import it back at any time using the Import option in the same panel.

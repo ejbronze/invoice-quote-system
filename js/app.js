@@ -65,12 +65,16 @@ const state = {
     pricingSupplierFilter: "all",
     pricingSortOrder: "date_desc",
     pricingImageFilter: "all",
+    pricingViewMode: "card",
+    pricingItemsPerPage: 25,
+    pricingCurrentPage: 1,
     editingProcurementSheetId: null,
     notesDrawerTab: "notes",
     pendingCatalogInsertItem: null,
     pendingCatalogItemImageDataUrl: null,
     pendingCatalogItemCropSrc: "",
     selectedCatalogItemIds: [],
+    catalogSelectionMode: false,
     catalogRecoveryAttempted: false
 };
 
@@ -123,7 +127,7 @@ const LANGUAGE_LOCALES = {
     es: "es-DO",
     fr: "fr-FR"
 };
-const APP_LAST_UPDATED = "2026-04-22T18:00:00";
+const APP_LAST_UPDATED = "2026-04-25T02:00:00";
 
 const ICONS = {
     plus:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`,
@@ -138,7 +142,7 @@ const ICONS = {
     checkCircle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
     clock:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
     send:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`,
-    save:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v6h8V4"/><path d="M9 17h6"/></svg>`,
+    save:        `<img src="/assets/icons/icon-save.png" alt="" class="btn-custom-icon">`,
     notepad:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 12h8M8 16h5"/></svg>`,
     quote:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h8"/></svg>`,
     invoice:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 7h10M7 12h6M7 17h4"/></svg>`,
@@ -586,7 +590,7 @@ const TRANSLATIONS = {
         help_vl_pdf_preview: "Download PDF",
         help_vc_preview_pdf: "Download PDF",
         help_q_reuse_items: "Can I save line items to reuse later?",
-        help_a_reuse_items: "Yes. Reusable items now live in the <strong>Catalog</strong>. Keep the quote or invoice line-item table focused on direct entry, then manage reusable sourced items, pricing, supplier details, packaging, and lead-time data from the Catalog when needed.",
+        help_a_reuse_items: "Yes. Reusable items live in the <strong>Pricing Library</strong>. Click an item to review its details, then use <strong>Edit Item</strong> inside the detail modal when you need to update pricing, supplier, packaging, image, or notes. The quote and invoice line-item table stays focused on direct entry.",
         help_q_payment_terms: "How do I set payment terms on an invoice?",
         help_a_payment_terms: "Scroll to the <strong>Document Notes &amp; Terms</strong> panel at the bottom of Step 3. The <strong>Terms of Payment</strong> selector offers four options: <strong>Due Immediately</strong> (disables other options and prints \u201cPayment is due immediately upon receipt\u201d), <strong>Net 15</strong> (due date auto-set to 15 days from invoice date), <strong>Net 30</strong> (due date auto-set to 30 days), or <strong>Other</strong> \u2014 enter a custom day count and optional terms text. Invoice cards show the calculated due date and an overdue indicator when applicable.",
         help_q_backup: "How do I back up or restore my data?",
@@ -617,8 +621,12 @@ const TRANSLATIONS = {
         help_a_search: "Use the search bar at the top of the Documents page. You can search by client name, reference number, date, or any keyword added in Step 4 of the editor. The same query simultaneously filters whichever tab is active \u2014 including the Statements tab, which matches by client name, vendor, reference number, and date.",
         help_q_snapshot: "What is the auto-cycling card on the dashboard?",
         help_a_snapshot: "The snapshot card in the top-right of the dashboard automatically rotates every 3 seconds between three metrics: <strong>Pipeline Value</strong> (blue \u2014 total value of all quotes and invoices), <strong>Amount Invoiced</strong> (green \u2014 total billed), and <strong>Income Received</strong> (amber \u2014 payments collected). Click the card at any time to advance manually; the 3-second timer resets from that point.",
-        help_q_catalog: "How do I use the Catalog?",
-        help_a_catalog: "Click <strong>Catalog</strong> in the sidebar navigation. It shows reusable pricing-library items, including entries captured from documents and manually added sourced items. Catalog entries can be inserted into quotes or invoices from the line-item editor.",
+        help_q_catalog: "How do I use the Pricing Library?",
+        help_a_catalog: "Click <strong>Pricing Library</strong> in the sidebar. Use search, category, supplier, image filters, sorting, and the Card/List toggle to browse reusable items captured from quotes, invoices, and procurement rows. The page shows 25 items per page by default, with 50 and 100 item options. Click any item to open its detail modal; editing starts only from the <strong>Edit Item</strong> action inside that modal.",
+        help_q_catalog_pagination: "How does Pricing Library pagination work?",
+        help_a_catalog_pagination: "The Pricing Library shows a range such as <strong>1-25 of 143</strong> and page controls below the results. Choose 25, 50, or 100 items per page. Search or filter changes reset back to page 1 so the results stay predictable.",
+        help_q_client_balances: "How are client outstanding balances calculated?",
+        help_a_client_balances: "Client balances come from that client's invoices. Paid invoices count as 0 outstanding, while Pending or Unpaid invoices count the remaining invoice total after logged payments. Changing an invoice from Pending to Paid reduces the client balance immediately; changing it back to Pending or Unpaid adds the unpaid amount back immediately.",
         help_q_client_contacts: "How do I add contact information to a client?",
         help_a_client_contacts: "Go to the <strong>Clients</strong> page in the sidebar. Click <strong>Add Client</strong> to create a new client, or click the <strong>edit icon</strong> on an existing client card to open the client modal. Inside, you can add multiple contacts — each with a name, email, phone number, and a WhatsApp flag. Click a client card to expand it and see their address, consignee, and all saved contacts at a glance.",
         help_q_record_payment: "How do I record a payment against an invoice?",
@@ -1016,7 +1024,7 @@ const TRANSLATIONS = {
         help_vl_pdf_preview: "Descargar PDF",
         help_vc_preview_pdf: "Descargar PDF",
         help_q_reuse_items: "\u00bfPuedo guardar l\u00edneas de art\u00edculos para reutilizarlas?",
-        help_a_reuse_items: "S\u00ed. Los art\u00edculos reutilizables ahora viven en el <strong>Cat\u00e1logo</strong>. Mant\u00e9n la tabla de l\u00edneas enfocada en entrada directa y gestiona art\u00edculos reutilizables, precios, proveedores, empaques y tiempos de entrega desde el Cat\u00e1logo cuando lo necesites.",
+        help_a_reuse_items: "S\u00ed. Los art\u00edculos reutilizables viven en la <strong>Biblioteca de Precios</strong>. Haz clic en un art\u00edculo para revisar sus detalles y usa <strong>Editar Art\u00edculo</strong> dentro del modal de detalle para actualizar precios, proveedor, empaque, imagen o notas. La tabla de l\u00edneas de cotizaciones y facturas se mantiene enfocada en entrada directa.",
         help_q_payment_terms: "\u00bfC\u00f3mo configuro los t\u00e9rminos de pago en una factura?",
         help_a_payment_terms: "Baja hasta el panel de <strong>Notas y T\u00e9rminos del Documento</strong> al final del Paso 3. El selector de <strong>Condiciones de Pago</strong> ofrece cuatro opciones: <strong>Vencimiento Inmediato</strong> (desactiva las dem\u00e1s opciones e imprime \u201cEl pago vence inmediatamente al recibir\u201d), <strong>Net 15</strong> (fecha de vencimiento autom\u00e1tica a 15 d\u00edas desde la fecha de factura), <strong>Net 30</strong> (30 d\u00edas), u <strong>Otro</strong> \u2014 ingresa un n\u00famero de d\u00edas personalizado y texto opcional. Las tarjetas de factura muestran la fecha de vencimiento calculada e indicador de vencido cuando aplica.",
         help_q_backup: "\u00bfC\u00f3mo respaldo o restauro mis datos?",
@@ -1047,8 +1055,12 @@ const TRANSLATIONS = {
         help_a_search: "Usa la barra de b\u00fasqueda en la parte superior de la p\u00e1gina de Documentos. Puedes buscar por nombre de cliente, n\u00famero de referencia, fecha o cualquier palabra clave. La misma b\u00fasqueda filtra simult\u00e1neamente la pesta\u00f1a activa, incluida la pesta\u00f1a de Estados, que se indexa por cliente, proveedor, referencia y fecha.",
         help_q_snapshot: "\u00bfQu\u00e9 es la tarjeta de rotaci\u00f3n en el panel principal?",
         help_a_snapshot: "La tarjeta de resumen en la esquina superior derecha del panel rota autom\u00e1ticamente cada 3 segundos entre tres m\u00e9tricas: <strong>Valor en Proceso</strong> (azul), <strong>Monto Facturado</strong> (verde) e <strong>Ingresos Recibidos</strong> (ambar). Haz clic en la tarjeta para avanzar manualmente; el temporizador se reinicia desde ese punto.",
-        help_q_catalog: "\u00bfC\u00f3mo uso el Cat\u00e1logo?",
-        help_a_catalog: "Haz clic en <strong>Cat\u00e1logo</strong> en la barra lateral. Muestra art\u00edculos reutilizables de la biblioteca de precios, incluyendo entradas capturadas desde documentos y art\u00edculos agregados manualmente. Las entradas del cat\u00e1logo se pueden insertar en cotizaciones o facturas desde el editor de l\u00edneas.",
+        help_q_catalog: "\u00bfC\u00f3mo uso la Biblioteca de Precios?",
+        help_a_catalog: "Haz clic en <strong>Biblioteca de Precios</strong> en la barra lateral. Usa b\u00fasqueda, categor\u00eda, proveedor, filtro de imagen, ordenamiento y el cambio Tarjetas/Lista para explorar art\u00edculos capturados desde cotizaciones, facturas y compras. La p\u00e1gina muestra 25 art\u00edculos por defecto, con opciones de 50 y 100. Haz clic en cualquier art\u00edculo para abrir el modal de detalle; la edici\u00f3n comienza solo desde <strong>Editar Art\u00edculo</strong> dentro de ese modal.",
+        help_q_catalog_pagination: "\u00bfC\u00f3mo funciona la paginaci\u00f3n de la Biblioteca de Precios?",
+        help_a_catalog_pagination: "La Biblioteca de Precios muestra un rango como <strong>1-25 de 143</strong> y controles de p\u00e1gina debajo de los resultados. Elige 25, 50 o 100 art\u00edculos por p\u00e1gina. Cambiar b\u00fasqueda o filtros vuelve a la p\u00e1gina 1 para mantener resultados predecibles.",
+        help_q_client_balances: "\u00bfC\u00f3mo se calculan los saldos pendientes de clientes?",
+        help_a_client_balances: "Los saldos de clientes vienen de sus facturas. Las facturas Pagadas cuentan como 0 pendiente; las Pendientes o No Pagadas cuentan el total restante despu\u00e9s de pagos registrados. Cambiar una factura de Pendiente a Pagada reduce el saldo inmediatamente; cambiarla de nuevo a Pendiente o No Pagada agrega el monto pendiente de inmediato.",
         help_q_client_contacts: "\u00bfC\u00f3mo agrego informaci\u00f3n de contacto a un cliente?",
         help_a_client_contacts: "Ve a la p\u00e1gina de <strong>Clientes</strong> en la barra lateral. Haz clic en <strong>Agregar Cliente</strong> o en el \u00edcono de edici\u00f3n de una tarjeta existente. Puedes agregar m\u00faltiples contactos con nombre, correo, tel\u00e9fono y opci\u00f3n de WhatsApp. Haz clic en una tarjeta para expandirla y ver direcci\u00f3n, consignatario y contactos.",
         help_q_record_payment: "\u00bfC\u00f3mo registro un pago en una factura?",
@@ -1444,7 +1456,7 @@ const TRANSLATIONS = {
         help_vl_pdf_preview: "T\u00e9l\u00e9charger le PDF",
         help_vc_preview_pdf: "T\u00e9l\u00e9charger le PDF",
         help_q_reuse_items: "Puis-je enregistrer des lignes d\u2019articles pour les r\u00e9utiliser\u00a0?",
-        help_a_reuse_items: "Oui. Les articles r\u00e9utilisables se g\u00e8rent maintenant depuis le <strong>Catalogue</strong>. Gardez le tableau des lignes concentr\u00e9 sur la saisie directe, puis g\u00e9rez les articles r\u00e9utilisables, les prix, les fournisseurs, les emballages et les d\u00e9lais depuis le Catalogue quand n\u00e9cessaire.",
+        help_a_reuse_items: "Oui. Les articles r\u00e9utilisables se g\u00e8rent dans la <strong>Biblioth\u00e8que de prix</strong>. Cliquez sur un article pour consulter ses d\u00e9tails, puis utilisez <strong>Modifier l'article</strong> dans la modale de d\u00e9tail pour mettre \u00e0 jour les prix, fournisseur, emballage, image ou notes. Le tableau des lignes reste concentr\u00e9 sur la saisie directe.",
         help_q_payment_terms: "Comment configurer les conditions de paiement sur une facture\u00a0?",
         help_a_payment_terms: "Faites d\u00e9filer jusqu\u2019au panneau <strong>Notes et conditions du document</strong> en bas de l\u2019\u00e9tape\u00a03. Le s\u00e9lecteur <strong>Conditions de paiement</strong> propose quatre options\u00a0: <strong>D\u00fb imm\u00e9diatement</strong> (d\u00e9sactive les autres options et imprime \u201cLe paiement est d\u00fb imm\u00e9diatement \u00e0 la r\u00e9ception\u201d), <strong>Net\u00a015</strong> (\u00e9ch\u00e9ance fix\u00e9e automatiquement \u00e0 15\u00a0jours), <strong>Net\u00a030</strong> (30\u00a0jours), ou <strong>Autre</strong> \u2014 saisissez un nombre de jours personnalis\u00e9 et un texte optionnel. Les cartes de facture affichent la date d\u2019\u00e9ch\u00e9ance calcul\u00e9e et un indicateur de retard le cas \u00e9ch\u00e9ant.",
         help_q_backup: "Comment sauvegarder ou restaurer mes donn\u00e9es\u00a0?",
@@ -1475,8 +1487,12 @@ const TRANSLATIONS = {
         help_a_search: "Utilisez la barre de recherche en haut de la page Documents. Vous pouvez rechercher par nom de client, num\u00e9ro de r\u00e9f\u00e9rence, date ou mot-cl\u00e9. La m\u00eame requ\u00eate filtre simultan\u00e9ment l\u2019onglet actif \u2014 y compris l\u2019onglet Relev\u00e9s, index\u00e9 par client, fournisseur, r\u00e9f\u00e9rence et date.",
         help_q_snapshot: "Qu\u2019est-ce que la carte rotative sur le tableau de bord\u00a0?",
         help_a_snapshot: "La carte de synth\u00e8se en haut \u00e0 droite du tableau de bord bascule automatiquement toutes les 3\u00a0secondes entre trois indicateurs\u00a0: <strong>Valeur pipeline</strong> (bleu), <strong>Montant factur\u00e9</strong> (vert) et <strong>Revenus re\u00e7us</strong> (ambre). Cliquez sur la carte pour avancer manuellement\u00a0; le minuteur repart de z\u00e9ro.",
-        help_q_catalog: "Comment utiliser le Catalogue\u00a0?",
-        help_a_catalog: "Cliquez sur <strong>Catalogue</strong> dans la barre lat\u00e9rale. Il affiche les articles r\u00e9utilisables de la biblioth\u00e8que de prix, y compris les entr\u00e9es captur\u00e9es depuis les documents et les articles ajout\u00e9s manuellement. Les entr\u00e9es du catalogue peuvent \u00eatre ins\u00e9r\u00e9es dans les devis ou factures depuis l\u2019\u00e9diteur de lignes.",
+        help_q_catalog: "Comment utiliser la Biblioth\u00e8que de prix\u00a0?",
+        help_a_catalog: "Cliquez sur <strong>Biblioth\u00e8que de prix</strong> dans la barre lat\u00e9rale. Utilisez la recherche, les filtres de cat\u00e9gorie, fournisseur et image, le tri et le bouton Cartes/Liste pour parcourir les articles captur\u00e9s depuis devis, factures et achats. La page affiche 25 articles par d\u00e9faut, avec options 50 et 100. Cliquez sur un article pour ouvrir la modale de d\u00e9tail; la modification se fait seulement depuis <strong>Modifier l'article</strong> dans cette modale.",
+        help_q_catalog_pagination: "Comment fonctionne la pagination de la Biblioth\u00e8que de prix\u00a0?",
+        help_a_catalog_pagination: "La Biblioth\u00e8que de prix affiche une plage comme <strong>1-25 sur 143</strong> avec des contr\u00f4les sous les r\u00e9sultats. Choisissez 25, 50 ou 100 articles par page. Toute recherche ou modification de filtre revient \u00e0 la page 1.",
+        help_q_client_balances: "Comment les soldes clients impay\u00e9s sont-ils calcul\u00e9s\u00a0?",
+        help_a_client_balances: "Les soldes clients viennent des factures du client. Les factures Pay\u00e9es comptent comme 0 impay\u00e9; les factures En attente ou Impay\u00e9es comptent le total restant apr\u00e8s paiements enregistr\u00e9s. Passer une facture de En attente \u00e0 Pay\u00e9e r\u00e9duit le solde imm\u00e9diatement; la remettre en En attente ou Impay\u00e9e ajoute aussit\u00f4t le montant restant.",
         help_q_client_contacts: "Comment ajouter des contacts à un client\u00a0?",
         help_a_client_contacts: "Allez sur la page <strong>Clients</strong> dans la barre lat\u00e9rale. Cliquez sur <strong>Ajouter un client</strong> ou sur l\u2019ic\u00f4ne de modification d\u2019une fiche existante. Ajoutez autant de contacts que n\u00e9cessaire avec nom, e-mail, t\u00e9l\u00e9phone et option WhatsApp. Cliquez sur une fiche pour d\u00e9velopper les d\u00e9tails.",
         help_q_record_payment: "Comment enregistrer un paiement sur une facture\u00a0?",
@@ -1651,7 +1667,7 @@ function applyTranslations() {
     setElementText("#catalogItemVendorLabel", t("vendor"));
     setElementText("#catalogItemDetailsLabel", t("item_details"));
     setElementText("#catalogItemNotesLabel", t("item_notes"));
-    elements.saveCatalogItemBtn.textContent = state.editingCatalogItemId ? t("update_catalog_item") : t("save_catalog_item");
+    elements.saveCatalogItemBtn.innerHTML = getSaveButtonMarkup(state.editingCatalogItemId ? t("update_catalog_item") : t("save_catalog_item"));
     setElementText(document.querySelector('.sort-field .search-label'), t("sort"));
     setElementText(document.querySelector('.search-field .search-label'), t("search"));
     elements.documentSearch.placeholder = t("search_placeholder");
@@ -1779,7 +1795,7 @@ function applyTranslations() {
     elements.companyPhoneInput.placeholder = t("company_phone_placeholder");
     elements.companyWebsiteInput.placeholder = t("company_website_placeholder");
     elements.companyTaxIdInput.placeholder = t("company_tax_id_placeholder");
-    elements.saveCompanyProfileBtn.textContent = t("save_company_profile");
+    elements.saveCompanyProfileBtn.innerHTML = getSaveButtonMarkup(t("save_company_profile"));
     setElementText("#aboutModalTitle", t("about_veloris"));
     setElementText("#aboutBrandName", BRAND.name);
     setElementText("#aboutBrandMeaning", t("about_brand_meaning"));
@@ -1820,7 +1836,7 @@ function applyTranslations() {
     setElementText(elements.accountAdminParentSelect?.closest(".form-group")?.querySelector("span"), t("parent_account"));
     elements.accountAdminParentSelect.options[0].textContent = t("direct_account_for_workspace");
     setElementText("#accountAdminCancelEditBtn", t("cancel_edit"));
-    setElementText("#saveBrandAssetsBtn", t("save_brand_assets"));
+    setElementHtml("#saveBrandAssetsBtn", getSaveButtonMarkup(t("save_brand_assets")));
     setElementText("#clearSignatureAssetBtn", t("clear_signature"));
     setElementText("#clearStampAssetBtn", t("clear_stamp"));
     document.querySelector('label[for="accountSignatureInput"]')?.replaceChildren(document.createTextNode(t("upload_signature")));
@@ -2093,11 +2109,14 @@ function cacheElements() {
     elements.accountSessionLogList = document.getElementById("accountSessionLogList");
     elements.accountActivityLogList = document.getElementById("accountActivityLogList");
     elements.catalogGrid = document.getElementById("catalogGrid");
+    elements.catalogPagination = document.getElementById("catalogPagination");
     elements.pricingLibrarySearch = document.getElementById("pricingLibrarySearch");
     elements.pricingLibraryCategoryFilter = document.getElementById("pricingLibraryCategoryFilter");
     elements.pricingLibrarySupplierFilter = document.getElementById("pricingLibrarySupplierFilter");
     elements.pricingLibrarySortOrder = document.getElementById("pricingLibrarySortOrder");
     elements.pricingLibraryImageFilter = document.getElementById("pricingLibraryImageFilter");
+    elements.pricingLibraryPerPage = document.getElementById("pricingLibraryPerPage");
+    elements.pricingLibraryViewToggle = document.getElementById("pricingLibraryViewToggle");
     elements.openCatalogItemModalBtn = document.getElementById("openCatalogItemModalBtn");
     elements.catalogItemModal = document.getElementById("catalogItemModal");
     elements.closeCatalogItemModalBtn = document.getElementById("closeCatalogItemModalBtn");
@@ -2113,21 +2132,10 @@ function cacheElements() {
     elements.closeCatalogItemImageExpandModalBtn = document.getElementById("closeCatalogItemImageExpandModalBtn");
     elements.catalogDetailsName = document.getElementById("catalogDetailsName");
     elements.catalogDetailsMeta = document.getElementById("catalogDetailsMeta");
-    elements.catalogDetailsPrice = document.getElementById("catalogDetailsPrice");
-    elements.catalogDetailsCategory = document.getElementById("catalogDetailsCategory");
-    elements.catalogDetailsBrand = document.getElementById("catalogDetailsBrand");
-    elements.catalogDetailsUnitSize = document.getElementById("catalogDetailsUnitSize");
-    elements.catalogDetailsVendor = document.getElementById("catalogDetailsVendor");
+    elements.catalogDetailsStats = document.getElementById("catalogDetailsStats");
+    elements.catalogDetailsLongFields = document.getElementById("catalogDetailsLongFields");
     elements.catalogDetailsEditItemBtn = document.getElementById("catalogDetailsEditItemBtn");
-    elements.catalogDetailsText = document.getElementById("catalogDetailsText");
-    elements.catalogDetailsNotes = document.getElementById("catalogDetailsNotes");
     elements.catalogDetailsRefId = document.getElementById("catalogDetailsRefId");
-    elements.catalogDetailsCostPrice = document.getElementById("catalogDetailsCostPrice");
-    elements.catalogDetailsCurrency = document.getElementById("catalogDetailsCurrency");
-    elements.catalogDetailsUnit = document.getElementById("catalogDetailsUnit");
-    elements.catalogDetailsLeadTime = document.getElementById("catalogDetailsLeadTime");
-    elements.catalogDetailsCountry = document.getElementById("catalogDetailsCountry");
-    elements.catalogDetailsTax = document.getElementById("catalogDetailsTax");
     elements.catalogDetailsDocRefsSection = document.getElementById("catalogDetailsDocRefsSection");
     elements.catalogDetailsDocRefs = document.getElementById("catalogDetailsDocRefs");
     elements.catalogDetailsAddToDocBtn = document.getElementById("catalogDetailsAddToDocBtn");
@@ -2457,32 +2465,52 @@ function bindEvents() {
     elements.clearCatalogSelectionBtn?.addEventListener("click", clearCatalogSelection);
     elements.exportCatalogReportBtn?.addEventListener("click", () => { void exportCatalogItemReport(); });
     elements.toggleCatalogSelectionModeBtn?.addEventListener("click", () => {
-        if (state.selectedCatalogItemIds.length > 0) {
-            clearCatalogSelection();
-        } else {
-            const toolbar = elements.catalogSelectionToolbar;
-            if (toolbar) toolbar.hidden = false;
-            syncCatalogSelectionToolbar();
+        state.catalogSelectionMode = !state.catalogSelectionMode;
+        if (!state.catalogSelectionMode) {
+            state.selectedCatalogItemIds = [];
         }
+        renderCatalog();
     });
     elements.pricingLibrarySearch?.addEventListener("input", event => {
         state.pricingSearchQuery = event.target.value.trim().toLowerCase();
+        resetCatalogPagination();
         renderCatalog();
     });
     elements.pricingLibraryCategoryFilter?.addEventListener("change", event => {
         state.pricingCategoryFilter = event.target.value || "all";
+        resetCatalogPagination();
         renderCatalog();
     });
     elements.pricingLibrarySupplierFilter?.addEventListener("change", event => {
         state.pricingSupplierFilter = event.target.value || "all";
+        resetCatalogPagination();
         renderCatalog();
     });
     elements.pricingLibrarySortOrder?.addEventListener("change", event => {
         state.pricingSortOrder = event.target.value || "date_desc";
+        resetCatalogPagination();
         renderCatalog();
     });
     elements.pricingLibraryImageFilter?.addEventListener("change", event => {
         state.pricingImageFilter = event.target.value || "all";
+        resetCatalogPagination();
+        renderCatalog();
+    });
+    elements.pricingLibraryPerPage?.addEventListener("change", event => {
+        state.pricingItemsPerPage = Number.parseInt(event.target.value, 10) || 25;
+        resetCatalogPagination();
+        renderCatalog();
+    });
+    elements.pricingLibraryViewToggle?.addEventListener("click", event => {
+        const button = event.target.closest("[data-pricing-view]");
+        if (!button) return;
+        state.pricingViewMode = button.dataset.pricingView === "row" ? "row" : "card";
+        renderCatalog();
+    });
+    elements.catalogPagination?.addEventListener("click", event => {
+        const button = event.target.closest("[data-catalog-page]");
+        if (!button) return;
+        state.pricingCurrentPage = Number.parseInt(button.dataset.catalogPage, 10) || 1;
         renderCatalog();
     });
     elements.statementExportsList?.addEventListener("click", handleStatementExportsListClick);
@@ -4624,6 +4652,66 @@ function closeCatalogItemModal() {
     state.catalogModalReturnToDocument = false;
 }
 
+function isMeaningfulCatalogValue(value) {
+    if (value === null || value === undefined) {
+        return false;
+    }
+    if (typeof value === "string") {
+        return value.trim().length > 0;
+    }
+    return true;
+}
+
+function renderCatalogDetailsStats(item) {
+    if (!elements.catalogDetailsStats) {
+        return;
+    }
+
+    const sellPrice = item.sellPrice ?? item.price;
+    const costPrice = item.costPrice;
+    const stats = [
+        { label: "Sell Price", value: isMeaningfulCatalogValue(sellPrice) ? formatCurrency(Number(sellPrice) || 0) : "" },
+        { label: "Cost Price", value: isMeaningfulCatalogValue(costPrice) ? formatCurrency(Number(costPrice) || 0) : "" },
+        { label: "Currency", value: item.currency },
+        { label: "Category", value: item.category },
+        { label: "Brand", value: item.brand },
+        { label: "Pack Size", value: item.packSize || item.unitSize },
+        { label: "Unit", value: item.unit },
+        { label: "Vendor / Supplier", value: item.supplier || item.vendor },
+        { label: "Lead Time", value: item.leadTime },
+        { label: "Country", value: item.country },
+        { label: "Tax", value: item.taxIncluded ? "Included" : "" }
+    ].filter(stat => isMeaningfulCatalogValue(stat.value));
+
+    elements.catalogDetailsStats.hidden = stats.length === 0;
+    elements.catalogDetailsStats.innerHTML = stats.map(stat => `
+        <div class="catalog-details-stat">
+            <span>${escapeHtml(stat.label)}</span>
+            <strong>${escapeHtml(String(stat.value))}</strong>
+        </div>
+    `).join("");
+}
+
+function renderCatalogDetailsLongFields(item) {
+    if (!elements.catalogDetailsLongFields) {
+        return;
+    }
+
+    const sections = [
+        { label: "Details", value: item.details },
+        { label: "Notes", value: item.notes },
+        { label: "Tags", value: Array.isArray(item.tags) ? item.tags.join(", ") : item.tags }
+    ].filter(section => isMeaningfulCatalogValue(section.value));
+
+    elements.catalogDetailsLongFields.hidden = sections.length === 0;
+    elements.catalogDetailsLongFields.innerHTML = sections.map(section => `
+        <div class="catalog-details-section">
+            <span>${escapeHtml(section.label)}</span>
+            <p>${escapeHtml(String(section.value))}</p>
+        </div>
+    `).join("");
+}
+
 function openCatalogDetailsModal(item) {
     if (!item || !elements.catalogDetailsModal) {
         return;
@@ -4643,21 +4731,8 @@ function openCatalogDetailsModal(item) {
         elements.catalogDetailsRefId.hidden = !item.referenceId;
     }
 
-    const sellPrice = item.sellPrice ?? item.price ?? 0;
-    const costPrice = item.costPrice ?? null;
-    setElementText("#catalogDetailsPrice", formatCurrency(sellPrice));
-    setElementText("#catalogDetailsCostPrice", costPrice != null ? formatCurrency(costPrice) : "—");
-    setElementText("#catalogDetailsCurrency", item.currency || "—");
-    setElementText("#catalogDetailsCategory", item.category || "—");
-    setElementText("#catalogDetailsBrand", item.brand || "—");
-    setElementText("#catalogDetailsUnitSize", item.packSize || item.unitSize || "—");
-    setElementText("#catalogDetailsUnit", item.unit || "—");
-    setElementText("#catalogDetailsVendor", item.supplier || item.vendor || "—");
-    setElementText("#catalogDetailsLeadTime", item.leadTime || "—");
-    setElementText("#catalogDetailsCountry", item.country || "—");
-    setElementText("#catalogDetailsTax", item.taxIncluded ? "Included" : "—");
-    setElementText("#catalogDetailsText", item.details || "—");
-    setElementText("#catalogDetailsNotes", item.notes || "—");
+    renderCatalogDetailsStats(item);
+    renderCatalogDetailsLongFields(item);
 
     // Document references
     const docRefs = Array.isArray(item.documentRefs) ? item.documentRefs : [];
@@ -4895,14 +4970,139 @@ function getFilteredCatalogEntries() {
         });
 }
 
+function resetCatalogPagination() {
+    state.pricingCurrentPage = 1;
+}
+
+function getCatalogPageItems(entries) {
+    const perPage = Math.max(1, Number.parseInt(state.pricingItemsPerPage, 10) || 25);
+    const totalPages = Math.max(1, Math.ceil(entries.length / perPage));
+    state.pricingCurrentPage = Math.min(Math.max(1, state.pricingCurrentPage || 1), totalPages);
+    const startIndex = (state.pricingCurrentPage - 1) * perPage;
+    return {
+        items: entries.slice(startIndex, startIndex + perPage),
+        startIndex,
+        endIndex: Math.min(entries.length, startIndex + perPage),
+        totalPages,
+        perPage
+    };
+}
+
+function renderCatalogPagination(totalCount, pageInfo) {
+    if (!elements.catalogPagination) {
+        return;
+    }
+    if (!totalCount) {
+        elements.catalogPagination.hidden = true;
+        elements.catalogPagination.innerHTML = "";
+        return;
+    }
+
+    const start = pageInfo.startIndex + 1;
+    const end = pageInfo.endIndex;
+    const current = state.pricingCurrentPage;
+    elements.catalogPagination.hidden = false;
+    elements.catalogPagination.innerHTML = `
+        <span class="catalog-pagination-range">${escapeHtml(`${start}-${end} of ${totalCount}`)}</span>
+        <div class="catalog-pagination-actions">
+            <button class="btn btn-secondary btn-sm" type="button" data-catalog-page="${current - 1}" ${current <= 1 ? "disabled" : ""}>Previous</button>
+            <span class="catalog-pagination-page">${escapeHtml(`Page ${current} of ${pageInfo.totalPages}`)}</span>
+            <button class="btn btn-secondary btn-sm" type="button" data-catalog-page="${current + 1}" ${current >= pageInfo.totalPages ? "disabled" : ""}>Next</button>
+        </div>
+    `;
+}
+
+function renderCatalogRefs(item) {
+    const refs = Array.isArray(item.documentRefs) ? item.documentRefs : [];
+    const visibleRefs = refs.slice(0, 4);
+    const overflow = refs.length - visibleRefs.length;
+    if (!visibleRefs.length) {
+        return "";
+    }
+
+    return `<span class="catalog-card-used-in">Used in: ${
+        visibleRefs.map(r => {
+            const typeTag = r.docType === "procurement" ? "Proc" : r.docType === "invoice" ? "Inv" : "Quote";
+            const label = `${typeTag} ${escapeHtml(r.docRefNumber || "")}`;
+            const title = [r.clientName, r.date].filter(Boolean).join(" · ");
+            return `<button class="catalog-ref-link" type="button" data-open-doc-id="${escapeHtml(r.docId)}"${title ? ` title="${escapeHtml(title)}"` : ""}>${label}</button>`;
+        }).join(", ")
+    }${overflow > 0 ? ` <span class="catalog-ref-overflow">+${overflow} more</span>` : ""}</span>`;
+}
+
+function renderCatalogCard(item) {
+    const isSelected = state.selectedCatalogItemIds.includes(item.id);
+    const imageUrl = item.imageDataUrl || item.itemImageDataUrl || "";
+    const selectorHtml = state.catalogSelectionMode
+        ? `<label class="catalog-card-selector" aria-label="Select ${escapeHtml(item.name)}">
+                <input type="checkbox" data-catalog-select="${escapeHtml(item.id)}"${isSelected ? " checked" : ""}>
+                <span class="catalog-card-selector-ui" aria-hidden="true"></span>
+            </label>`
+        : "";
+    return `
+        <article class="catalog-card${isSelected ? " is-selected" : ""}">
+            ${selectorHtml}
+            <button class="catalog-card-trigger" type="button" data-catalog-action="open" data-catalog-id="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.name)}">
+                <div class="catalog-card-bubble${imageUrl ? " is-expandable" : ""}" ${imageUrl ? `data-catalog-action="expand-image" data-catalog-id="${escapeHtml(item.id)}" data-catalog-img-src="${escapeHtml(imageUrl)}" data-catalog-img-alt="${escapeHtml(item.name)}"` : ""} aria-hidden="true">
+                    ${imageUrl
+                        ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(item.name)}" loading="lazy">`
+                        : `<span>${escapeHtml((item.name || "Item").trim().slice(0, 2).toUpperCase() || "IT")}</span>`}
+                </div>
+                <div class="catalog-card-copy">
+                    <strong>${escapeHtml(item.name)}</strong>
+                    <span>${escapeHtml([item.brand, item.supplier || item.vendor, item.packSize || item.unitSize].filter(Boolean).join(" · ") || item.referenceId || "Library item")}</span>
+                    <small>${escapeHtml(`${item.currency || "USD"} ${formatAmount(item.sellPrice ?? item.price ?? 0)}${item.leadTime ? ` · ${item.leadTime}` : ""}`)}</small>
+                    ${renderCatalogRefs(item)}
+                </div>
+            </button>
+        </article>
+    `;
+}
+
+function renderCatalogRow(item) {
+    const isSelected = state.selectedCatalogItemIds.includes(item.id);
+    const imageUrl = item.imageDataUrl || item.itemImageDataUrl || "";
+    const selectorHtml = state.catalogSelectionMode
+        ? `<label class="catalog-card-selector catalog-row-selector" aria-label="Select ${escapeHtml(item.name)}">
+                <input type="checkbox" data-catalog-select="${escapeHtml(item.id)}"${isSelected ? " checked" : ""}>
+                <span class="catalog-card-selector-ui" aria-hidden="true"></span>
+            </label>`
+        : "";
+    return `
+        <article class="catalog-row${state.catalogSelectionMode ? " has-selector" : ""}${isSelected ? " is-selected" : ""}">
+            ${selectorHtml}
+            <button class="catalog-row-trigger" type="button" data-catalog-action="open" data-catalog-id="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.name)}">
+                <span class="catalog-row-thumb${imageUrl ? " is-expandable" : ""}" ${imageUrl ? `data-catalog-action="expand-image" data-catalog-id="${escapeHtml(item.id)}" data-catalog-img-src="${escapeHtml(imageUrl)}" data-catalog-img-alt="${escapeHtml(item.name)}"` : ""}>
+                    ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(item.name)}" loading="lazy">` : escapeHtml((item.name || "Item").trim().slice(0, 2).toUpperCase() || "IT")}
+                </span>
+                <span class="catalog-row-main">
+                    <strong>${escapeHtml(item.name)}</strong>
+                    <small>${escapeHtml([item.referenceId, item.brand, item.packSize || item.unitSize].filter(Boolean).join(" · ") || "Library item")}</small>
+                </span>
+                <span class="catalog-row-meta">${escapeHtml(item.supplier || item.vendor || "—")}</span>
+                <span class="catalog-row-price">${escapeHtml(`${item.currency || "USD"} ${formatAmount(item.sellPrice ?? item.price ?? 0)}`)}</span>
+            </button>
+        </article>
+    `;
+}
+
 function renderCatalog() {
     if (!elements.catalogGrid) {
         return;
     }
 
+    if (elements.pricingLibraryPerPage) {
+        elements.pricingLibraryPerPage.value = String(state.pricingItemsPerPage || 25);
+    }
+    elements.pricingLibraryViewToggle?.querySelectorAll("[data-pricing-view]").forEach(button => {
+        button.classList.toggle("is-active", button.dataset.pricingView === state.pricingViewMode);
+    });
+
     const allActive = getCatalogEntries().filter(item => !item.archived);
     const entries = getFilteredCatalogEntries();
     if (!entries.length) {
+        elements.catalogGrid.classList.remove("catalog-grid--rows");
+        renderCatalogPagination(0, { startIndex: 0, endIndex: 0, totalPages: 1 });
         if (allActive.length === 0) {
             elements.catalogGrid.innerHTML = `
                 <div class="empty-state">
@@ -4925,50 +5125,15 @@ function renderCatalog() {
         }
         syncProcurementLibrarySelect();
         syncDocumentLibrarySelect();
+        syncCatalogSelectionToolbar();
         return;
     }
 
-    elements.catalogGrid.innerHTML = entries.map(item => {
-        const refs = Array.isArray(item.documentRefs) ? item.documentRefs : [];
-        const SHOW_MAX = 4;
-        const visibleRefs = refs.slice(0, SHOW_MAX);
-        const overflow = refs.length - SHOW_MAX;
-
-        const refsHtml = visibleRefs.length
-            ? `<span class="catalog-card-used-in">Used in: ${
-                visibleRefs.map(r => {
-                    const typeTag = r.docType === "procurement" ? "Proc" : r.docType === "invoice" ? "Inv" : "Quote";
-                    const label = `${typeTag} ${escapeHtml(r.docRefNumber || "")}`;
-                    const title = [r.clientName, r.date].filter(Boolean).join(" · ");
-                    return `<button class="catalog-ref-link" type="button" data-open-doc-id="${escapeHtml(r.docId)}"${title ? ` title="${escapeHtml(title)}"` : ""}>${label}</button>`;
-                }).join(", ")
-            }${overflow > 0 ? ` <span class="catalog-ref-overflow">+${overflow} more</span>` : ""}</span>`
-            : "";
-
-        const isSelected = state.selectedCatalogItemIds.includes(item.id);
-        return `
-        <article class="catalog-card${isSelected ? " is-selected" : ""}">
-            <label class="catalog-card-selector" aria-label="Select ${escapeHtml(item.name)}">
-                <input type="checkbox" data-catalog-select="${escapeHtml(item.id)}"${isSelected ? " checked" : ""}>
-                <span class="catalog-card-selector-ui" aria-hidden="true"></span>
-            </label>
-            <button class="catalog-card-trigger" type="button" data-catalog-action="open" data-catalog-id="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.name)}">
-                <div class="catalog-card-bubble${(item.imageDataUrl || item.itemImageDataUrl) ? " is-expandable" : ""}" ${(item.imageDataUrl || item.itemImageDataUrl) ? `data-catalog-action="expand-image" data-catalog-id="${escapeHtml(item.id)}" data-catalog-img-src="${escapeHtml(item.imageDataUrl || item.itemImageDataUrl)}" data-catalog-img-alt="${escapeHtml(item.name)}"` : ""} aria-hidden="true">
-                    ${(item.imageDataUrl || item.itemImageDataUrl)
-                        ? `<img src="${escapeHtml(item.imageDataUrl || item.itemImageDataUrl)}" alt="${escapeHtml(item.name)}" loading="lazy">`
-                        : `<span>${escapeHtml((item.name || "Item").trim().slice(0, 2).toUpperCase() || "IT")}</span>`}
-                </div>
-                <div class="catalog-card-copy">
-                    <strong>${escapeHtml(item.name)}</strong>
-                    <span>${escapeHtml([item.brand, item.supplier || item.vendor, item.packSize || item.unitSize].filter(Boolean).join(" · ") || item.referenceId || "Library item")}</span>
-                    <small>${escapeHtml(`${item.currency || "USD"} ${formatAmount(item.sellPrice ?? item.price ?? 0)}${item.leadTime ? ` · ${item.leadTime}` : ""}`)}</small>
-                    ${refsHtml}
-                </div>
-            </button>
-            <button class="catalog-edit-btn" type="button" data-catalog-action="edit" data-catalog-id="${escapeHtml(item.id)}">${escapeHtml(t("edit"))}</button>
-        </article>
-    `;
-    }).join("");
+    const pageInfo = getCatalogPageItems(entries);
+    const isRowView = state.pricingViewMode === "row";
+    elements.catalogGrid.classList.toggle("catalog-grid--rows", isRowView);
+    elements.catalogGrid.innerHTML = pageInfo.items.map(item => isRowView ? renderCatalogRow(item) : renderCatalogCard(item)).join("");
+    renderCatalogPagination(entries.length, pageInfo);
     syncProcurementLibrarySelect();
     syncDocumentLibrarySelect();
     syncCatalogSelectionToolbar();
@@ -5542,39 +5707,9 @@ function handleCatalogGridClick(event) {
     }
 
     const editButton = event.target.closest("[data-catalog-action=\"edit\"]");
-    if (!editButton) {
+    if (editButton) {
         return;
     }
-
-    const item = state.catalogItems.find(entry => entry.id === editButton.dataset.catalogId);
-    if (!item) {
-        return;
-    }
-
-    state.editingCatalogItemId = item.id;
-    elements.catalogItemNameInput.value = item.name || "";
-    elements.catalogItemCostInput.value = String(item.costPrice || 0);
-    elements.catalogItemPriceInput.value = String(item.sellPrice ?? item.price ?? 0);
-    elements.catalogItemCurrencyInput.value = item.currency || "USD";
-    elements.catalogItemCategoryInput.value = item.category || "";
-    elements.catalogItemBrandInput.value = item.brand || "";
-    elements.catalogItemUnitSizeInput.value = item.packSize || item.unitSize || "";
-    elements.catalogItemUnitInput.value = item.unit || "";
-    elements.catalogItemVendorInput.value = item.supplier || item.vendor || "";
-    elements.catalogItemLeadTimeInput.value = item.leadTime || "";
-    elements.catalogItemCountryInput.value = item.country || "";
-    elements.catalogItemTaxIncludedInput.checked = Boolean(item.taxIncluded);
-    elements.catalogItemTagsInput.value = Array.isArray(item.tags) ? item.tags.join(", ") : "";
-    elements.catalogItemDetailsInput.value = item.details || "";
-    elements.catalogItemNotesInput.value = item.notes || "";
-    if (elements.archiveCatalogItemBtn) {
-        elements.archiveCatalogItemBtn.hidden = false;
-    }
-    state.pendingCatalogItemImageDataUrl = item.itemImageDataUrl || item.imageDataUrl || null;
-    syncCatalogItemImageUI();
-    closeCatalogDetailsModal();
-    setModalState(elements.catalogItemModal, true);
-    applyTranslations();
 }
 
 async function saveCatalogItemFromModal() {
@@ -5921,12 +6056,13 @@ function applyCatalogItemCrop() {
 function syncCatalogSelectionToolbar() {
     if (!elements.catalogSelectionToolbar || !elements.catalogSelectionTitle) return;
     const count = state.selectedCatalogItemIds.length;
-    elements.catalogSelectionToolbar.hidden = count === 0;
+    elements.catalogSelectionToolbar.hidden = !state.catalogSelectionMode;
     elements.catalogSelectionTitle.textContent = `${count} item${count === 1 ? "" : "s"} selected`;
     if (elements.exportCatalogReportBtn) elements.exportCatalogReportBtn.disabled = count === 0;
 }
 
 function handleCatalogGridChange(event) {
+    if (!state.catalogSelectionMode) return;
     const checkbox = event.target.closest("[data-catalog-select]");
     if (!checkbox) return;
     const itemId = String(checkbox.dataset.catalogSelect || "");
@@ -5944,6 +6080,7 @@ function handleCatalogGridChange(event) {
 
 function clearCatalogSelection() {
     state.selectedCatalogItemIds = [];
+    state.catalogSelectionMode = false;
     renderCatalog();
 }
 
@@ -7721,7 +7858,7 @@ function startEditNote(noteId) {
         <textarea class="note-edit-textarea" rows="3">${escapeHtml(note.text)}</textarea>
         <div class="note-edit-actions">
             <button type="button" class="btn btn-sm" data-note-action="cancel-edit" data-note-id="${escapeHtml(String(noteId))}">Cancel</button>
-            <button type="button" class="btn btn-primary btn-sm" data-note-action="save-edit" data-note-id="${escapeHtml(String(noteId))}">Save</button>
+            <button type="button" class="btn btn-primary btn-sm" data-note-action="save-edit" data-note-id="${escapeHtml(String(noteId))}">${getSaveButtonMarkup("Save")}</button>
         </div>
     `;
     const actionsEl = noteEl.querySelector(".note-item-actions");
@@ -8238,6 +8375,7 @@ async function saveQuickPaymentEntry() {
         try {
             await saveDocumentsToServer(nextDocuments);
             renderDocuments();
+            renderClientManagementList();
             renderStatementsPage();
             setImportStatus(`Payment of ${formatCurrency(amount)} applied to statement ${stmt.referenceNumber || ""}.`);
             closeQuickPaymentModal();
@@ -8265,6 +8403,7 @@ async function saveQuickPaymentEntry() {
         if (!elements.invoiceReportsModal.hidden) {
             renderInvoiceReport();
         }
+        renderClientManagementList();
         renderStatementsPage();
         setImportStatus(`Payment saved for ${invoice.refNumber || "invoice"}.`);
         recordActivity("recorded invoice payment", `Payment of ${formatCurrency(amount)} logged for ${invoice.refNumber || "invoice"}.`);
@@ -10344,7 +10483,7 @@ function renderIssueInbox() {
                 <textarea class="issue-notes-input" id="issueNotes-${escapeHtml(report.id)}" data-issue-notes="${escapeHtml(report.id)}" placeholder="${escapeHtml(t("issue_admin_notes_placeholder"))}" rows="3">${escapeHtml(report.adminNotes || "")}</textarea>
             </div>`}
             <div class="issue-card-actions">
-                ${report.status === "closed" ? "" : `<button class="issue-action-btn" type="button" data-issue-action="save-notes" data-issue-id="${escapeHtml(report.id)}">${escapeHtml(t("save_notes"))}</button>`}
+                ${report.status === "closed" ? "" : `<button class="issue-action-btn" type="button" data-issue-action="save-notes" data-issue-id="${escapeHtml(report.id)}">${getSaveButtonMarkup(t("save_notes"))}</button>`}
                 <button class="issue-action-btn issue-action-btn-secondary" type="button" data-issue-action="${report.status === "closed" ? "reopen" : "close"}" data-issue-id="${escapeHtml(report.id)}">${escapeHtml(report.status === "closed" ? t("reopen_report") : t("close_report"))}</button>
                 <button class="issue-action-btn issue-action-btn-danger" type="button" data-issue-action="delete" data-issue-id="${escapeHtml(report.id)}">${escapeHtml(t("delete_report"))}</button>
             </div>
@@ -10689,13 +10828,20 @@ function getInvoicePaymentsTotal(doc) {
 
 function getInvoiceOutstandingBalance(doc) {
     const total = Number(doc?.total || 0);
+    if (normalizePaymentStatus(doc?.paymentStatus) === "paid") {
+        return 0;
+    }
     return Math.max(0, total - getInvoicePaymentsTotal(doc));
 }
 
 function getInvoiceDerivedPaymentStatus(doc) {
+    const storedStatus = normalizePaymentStatus(doc?.paymentStatus);
+    if (storedStatus === "paid") {
+        return "paid";
+    }
     const payments = getInvoicePayments(doc);
     if (!payments.length) {
-        return normalizePaymentStatus(doc?.paymentStatus);
+        return storedStatus;
     }
 
     const total = Number(doc?.total || 0);
@@ -12607,6 +12753,10 @@ function getActionButtonMarkup(icon, label) {
     return `<span class="btn-icon" aria-hidden="true">${icon}</span><span>${label}</span>`;
 }
 
+function getSaveButtonMarkup(label) {
+    return `<img src="/assets/icons/icon-save.png" alt="" class="btn-custom-icon"><span>${escapeHtml(label)}</span>`;
+}
+
 function closeModal() {
     clearDraftAutosaveTimer();
     setModalState(elements.documentModal, false);
@@ -12647,7 +12797,7 @@ function updateModalTitle() {
 
     const saveButtonLabel = state.editingDocumentId !== null ? t("save_changes") : t("save_document");
     elements.saveBtn.innerHTML = getActionButtonMarkup(
-        '<img src="/assets/icons/icon-calculator.png" alt="" class="btn-custom-icon">',
+        '<img src="/assets/icons/icon-save.png" alt="" class="btn-custom-icon">',
         null
     );
     elements.saveBtn.setAttribute("aria-label", saveButtonLabel);
@@ -15361,6 +15511,7 @@ async function updateDocumentPaymentStatus(id, status) {
         state.openDocumentMenuId = null;
         renderDocuments();
         renderPaymentHistoryPanel();
+        renderClientManagementList();
         renderStatementsPage();
     } catch (error) {
         alert(`Unable to update invoice payment status.\n\n${error.message}`);
@@ -15434,6 +15585,7 @@ async function markStatementAsPaid(statementId) {
         await saveDocumentsToServer(nextDocuments);
         renderDocuments();
         renderPaymentHistoryPanel();
+        renderClientManagementList();
         renderStatementsPage();
         setImportStatus(`${unpaidInvoices.length} invoice${unpaidInvoices.length === 1 ? "" : "s"} marked as paid.`);
     } catch (error) {

@@ -441,6 +441,18 @@
                                 <option value="no_image">No image</option>
                             </select>
                         </label>
+                        <label class="sort-field">
+                            <span class="search-label">Per page</span>
+                            <select id="pricingLibraryPerPage">
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </label>
+                        <div class="pricing-view-toggle" id="pricingLibraryViewToggle" role="group" aria-label="Pricing Library view">
+                            <button class="pricing-view-btn is-active" type="button" data-pricing-view="card">Card view</button>
+                            <button class="pricing-view-btn" type="button" data-pricing-view="row">Row view</button>
+                        </div>
                     </div>
                     <div class="catalog-grid" id="catalogGrid">
                         <div class="empty-state">
@@ -451,6 +463,7 @@
                             <button class="btn btn-primary" type="button" data-catalog-action="add-new">Add Your First Item</button>
                         </div>
                     </div>
+                    <div class="catalog-pagination" id="catalogPagination" hidden></div>
                 </section>
 
                 <section class="app-page reports-page" id="reportsPage" hidden>
@@ -684,7 +697,7 @@
                         </label>
                     </div>
                     <div class="settings-actions">
-                        <button class="btn btn-primary" id="accountAdminSaveBtn" type="button">Save Account</button>
+                    <button class="btn btn-primary" id="accountAdminSaveBtn" type="button"><img src="/assets/icons/icon-save.png" alt="" class="btn-custom-icon">Save Account</button>
                         <button class="btn btn-secondary" id="accountAdminCancelEditBtn" type="button" hidden>Cancel Edit</button>
                     </div>
                 </section>
@@ -715,7 +728,7 @@
                         </div>
                     </div>
                     <div class="settings-actions">
-                        <button class="btn btn-primary" id="saveBrandAssetsBtn" type="button">Save Branding Assets</button>
+                        <button class="btn btn-primary" id="saveBrandAssetsBtn" type="button"><img src="/assets/icons/icon-save.png" alt="" class="btn-custom-icon">Save Branding Assets</button>
                     </div>
                 </section>
 
@@ -804,7 +817,7 @@
                     </label>
                 </div>
                 <div class="settings-actions">
-                    <button class="btn btn-secondary" id="saveCompanyProfileBtn" type="button">Save Company Profile</button>
+                    <button class="btn btn-secondary" id="saveCompanyProfileBtn" type="button"><img src="/assets/icons/icon-save.png" alt="" class="btn-custom-icon">Save Company Profile</button>
                 </div>
             </div>
         </div>
@@ -938,7 +951,7 @@
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_reuse_items">Can I save line items to reuse later?</summary>
-                        <p data-i18n-html="help_a_reuse_items">Yes. Reusable items now live in the <strong>Catalog</strong>. Keep the quote or invoice line-item table focused on direct entry, then manage reusable sourced items, pricing, supplier details, packaging, and lead-time data from the Catalog when needed.</p>
+                        <p data-i18n-html="help_a_reuse_items">Yes. Reusable items live in the <strong>Pricing Library</strong>. Click an item to review its details, then use <strong>Edit Item</strong> inside the detail modal when you need to update pricing, supplier, packaging, image, or notes. The quote and invoice line-item table stays focused on direct entry.</p>
                     </details>
                     <details class="help-item">
                         <summary>What are Internal Notes and how are they different from regular Notes?</summary>
@@ -1000,6 +1013,10 @@
                         <p data-i18n-html="help_a_statement">A Statement of Account is a branded PDF summary of selected invoices for a specific client — useful for reconciliation and payment follow-up. Access it from the <strong>Invoice Reports</strong> section. Generated statements are saved and appear under the <strong>Statements</strong> tab on the home screen.</p>
                     </details>
                     <details class="help-item">
+                        <summary data-i18n="help_q_client_balances">How are client outstanding balances calculated?</summary>
+                        <p data-i18n-html="help_a_client_balances">Client balances come from that client's invoices. Paid invoices count as 0 outstanding, while Pending or Unpaid invoices count the remaining invoice total after logged payments. Changing an invoice from Pending to Paid reduces the client balance immediately; changing it back to Pending or Unpaid adds the unpaid amount back immediately.</p>
+                    </details>
+                    <details class="help-item">
                         <summary data-i18n="help_q_statement_icons">What do the action icons on statement rows do?</summary>
                         <p data-i18n-html="help_a_statement_icons">Each saved statement has three action buttons. The <strong>eye icon</strong> reopens the PDF export. The <strong>pencil icon</strong> opens the statement editor so you can adjust it. The <strong>trash icon</strong> permanently deletes the saved statement.</p>
                         <div class="help-visual" aria-hidden="true">
@@ -1046,7 +1063,11 @@
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_catalog">How do I use the Catalog?</summary>
-                        <p data-i18n-html="help_a_catalog">Click <strong>Catalog</strong> in the sidebar navigation. It shows reusable pricing-library items, including entries captured from documents and manually added sourced items. Catalog entries can be inserted into quotes or invoices from the line-item editor.</p>
+                        <p data-i18n-html="help_a_catalog">Click <strong>Pricing Library</strong> in the sidebar. Use search, category, supplier, image filters, sorting, and the Card/List toggle to browse reusable items captured from quotes, invoices, and procurement rows. The page shows 25 items per page by default, with 50 and 100 item options. Click any item to open its detail modal; editing starts only from the <strong>Edit Item</strong> action inside that modal.</p>
+                    </details>
+                    <details class="help-item">
+                        <summary data-i18n="help_q_catalog_pagination">How does Pricing Library pagination work?</summary>
+                        <p data-i18n-html="help_a_catalog_pagination">The Pricing Library shows a range such as <strong>1-25 of 143</strong> and page controls below the results. Choose 25, 50, or 100 items per page. Search or filter changes reset back to page 1 so the results stay predictable.</p>
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_snapshot">What is the auto-cycling card on the dashboard?</summary>
@@ -1219,7 +1240,7 @@
                 </div>
                 <div class="quick-payment-history" id="quickPaymentHistory"></div>
                 <div class="settings-actions">
-                    <button class="btn btn-primary" id="saveQuickPaymentBtn" type="button">Save Payment</button>
+                    <button class="btn btn-primary" id="saveQuickPaymentBtn" type="button"><img src="/assets/icons/icon-save.png" alt="" class="btn-custom-icon">Save Payment</button>
                 </div>
             </div>
         </div>
@@ -1465,8 +1486,8 @@
                     </aside>
                 </div>
                 <div class="settings-actions statement-edit-actions">
-                    <button class="btn btn-secondary" id="previewStatementEditBtn" type="button">Save & Open PDF</button>
-                    <button class="btn btn-primary" id="saveStatementEditBtn" type="button">Save Changes</button>
+                    <button class="btn btn-secondary" id="previewStatementEditBtn" type="button"><img src="/assets/icons/icon-save.png" alt="" class="btn-custom-icon">Save & Open PDF</button>
+                    <button class="btn btn-primary" id="saveStatementEditBtn" type="button"><img src="/assets/icons/icon-save.png" alt="" class="btn-custom-icon">Save Changes</button>
                 </div>
             </div>
         </div>
@@ -1624,7 +1645,7 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <button type="button" class="btn btn-success" id="saveClientBtn">Save Client</button>
+                                <button type="button" class="btn btn-success" id="saveClientBtn"><img src="/assets/icons/icon-save.png" alt="" class="btn-custom-icon">Save Client</button>
                             </div>
                         </div>
 
@@ -1962,7 +1983,7 @@
 
                     <button class="btn btn-secondary" id="convertSelectedToQuoteBtn" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 16V4M7 4 3 8M7 4l4 4M17 8v12M17 20l4-4M17 20l-4-4"/></svg>Convert Selected to Quote</button>
                     <button class="btn btn-secondary" id="convertProcurementToQuoteBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 16V4M7 4 3 8M7 4l4 4M17 8v12M17 20l4-4M17 20l-4-4"/></svg>Convert All to Quote</button>
-                    <button class="btn btn-primary" id="saveProcurementSheetBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v6h8V4"/><path d="M9 17h6"/></svg>Save Sheet</button>
+                    <button class="btn btn-primary" id="saveProcurementSheetBtn" type="button"><img src="/assets/icons/icon-save.png" alt="" class="btn-custom-icon">Save Sheet</button>
                 </div>
             </div>
         </div>
@@ -2147,7 +2168,7 @@
                 </div>
                 <div class="settings-actions">
                     <button class="btn btn-secondary" id="archiveCatalogItemBtn" type="button" hidden>Archive Item</button>
-                    <button class="btn btn-primary" id="saveCatalogItemBtn" type="button">Save Library Item</button>
+                    <button class="btn btn-primary" id="saveCatalogItemBtn" type="button"><img src="/assets/icons/icon-save.png" alt="" class="btn-custom-icon">Save Library Item</button>
                 </div>
             </div>
         </div>
@@ -2195,60 +2216,8 @@
                         <span class="catalog-details-ref-badge" id="catalogDetailsRefId"></span>
                     </div>
                 </div>
-                <div class="catalog-details-grid">
-                    <div class="catalog-details-stat">
-                        <span>Sell Price</span>
-                        <strong id="catalogDetailsPrice">$0.00</strong>
-                    </div>
-                    <div class="catalog-details-stat">
-                        <span>Cost Price</span>
-                        <strong id="catalogDetailsCostPrice">—</strong>
-                    </div>
-                    <div class="catalog-details-stat">
-                        <span>Currency</span>
-                        <strong id="catalogDetailsCurrency">—</strong>
-                    </div>
-                    <div class="catalog-details-stat">
-                        <span>Category</span>
-                        <strong id="catalogDetailsCategory">—</strong>
-                    </div>
-                    <div class="catalog-details-stat">
-                        <span>Brand</span>
-                        <strong id="catalogDetailsBrand">—</strong>
-                    </div>
-                    <div class="catalog-details-stat">
-                        <span>Pack Size</span>
-                        <strong id="catalogDetailsUnitSize">—</strong>
-                    </div>
-                    <div class="catalog-details-stat">
-                        <span>Unit</span>
-                        <strong id="catalogDetailsUnit">—</strong>
-                    </div>
-                    <div class="catalog-details-stat">
-                        <span>Vendor / Supplier</span>
-                        <strong id="catalogDetailsVendor">—</strong>
-                    </div>
-                    <div class="catalog-details-stat">
-                        <span>Lead Time</span>
-                        <strong id="catalogDetailsLeadTime">—</strong>
-                    </div>
-                    <div class="catalog-details-stat">
-                        <span>Country</span>
-                        <strong id="catalogDetailsCountry">—</strong>
-                    </div>
-                    <div class="catalog-details-stat">
-                        <span>Tax</span>
-                        <strong id="catalogDetailsTax">—</strong>
-                    </div>
-                </div>
-                <div class="catalog-details-section">
-                    <span>Details</span>
-                    <p id="catalogDetailsText">—</p>
-                </div>
-                <div class="catalog-details-section">
-                    <span>Notes</span>
-                    <p id="catalogDetailsNotes">—</p>
-                </div>
+                <div class="catalog-details-grid" id="catalogDetailsStats"></div>
+                <div class="catalog-details-long-fields" id="catalogDetailsLongFields"></div>
                 <div class="catalog-details-section" id="catalogDetailsDocRefsSection" hidden>
                     <span>Used In</span>
                     <div id="catalogDetailsDocRefs" class="catalog-details-doc-refs"></div>
@@ -2347,7 +2316,7 @@
             </div>
             <div class="modal-footer client-modal-footer">
                 <button class="btn btn-secondary" id="cancelClientModalBtn" type="button">Cancel</button>
-                <button class="btn btn-primary" id="saveClientModalBtn" type="button">Save Client</button>
+                <button class="btn btn-primary" id="saveClientModalBtn" type="button"><img src="/assets/icons/icon-save.png" alt="" class="btn-custom-icon">Save Client</button>
             </div>
         </div>
     </div>
