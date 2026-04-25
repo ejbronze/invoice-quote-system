@@ -1603,7 +1603,7 @@ function applyTranslations() {
     setElementText("#brandSplashTagline", BRAND.tagline);
     setElementText("#accessBrandName", BRAND.name);
     setElementText("#accessBrandTagline", BRAND.tagline);
-    document.getElementById("languagePickerLabel").textContent = t("language");
+    setElementText("#languagePickerLabel", t("language"));
     elements.navMenuBtn.setAttribute("aria-label", t("menu"));
     elements.topbarSignOutBtn.textContent = t("sign_out");
     if (elements.mobileDrawerSignOutBtn) elements.mobileDrawerSignOutBtn.textContent = t("sign_out");
@@ -1707,34 +1707,33 @@ function applyTranslations() {
     setElementText("#settingsModal h2", t("settings_heading"));
     setElementText("#settingsModal .dashboard-subtitle", t("settings_subtitle"));
 
-    const settingsPanels = elements.settingsModal.querySelectorAll(".settings-panel");
-    settingsPanels[0].querySelector("h4").textContent = t("issue_inbox");
-    settingsPanels[0].querySelector(".settings-panel-header p").textContent = t("issue_inbox_copy");
-    elements.settingsIssueInboxBtn.textContent = t("open_service_reports");
-    settingsPanels[1].querySelector("h4").textContent = t("editor_preferences");
-    settingsPanels[1].querySelector(".settings-panel-header p").textContent = t("editor_preferences_copy");
-    settingsPanels[1].querySelector("span").textContent = t("show_internal_pricing");
-    settingsPanels[2].querySelector("h4").textContent = t("data_transfer_title");
-    settingsPanels[2].querySelector(".settings-panel-header p").textContent = t("data_transfer_copy");
+    // settingsModal panels (order in HTML): [0] issue inbox, [1] data transfer, [2] snapshots, [3] local testing
+    // "Editor Preferences" panel was removed from the settings page — its toggle lives elsewhere.
+    const settingsPanels = elements.settingsModal?.querySelectorAll(".settings-panel") ?? [];
+    settingsPanels[0]?.querySelector("h4") && (settingsPanels[0].querySelector("h4").textContent = t("issue_inbox"));
+    settingsPanels[0]?.querySelector(".settings-panel-header p") && (settingsPanels[0].querySelector(".settings-panel-header p").textContent = t("issue_inbox_copy"));
+    if (elements.settingsIssueInboxBtn) elements.settingsIssueInboxBtn.textContent = t("open_service_reports");
+    settingsPanels[1]?.querySelector("h4") && (settingsPanels[1].querySelector("h4").textContent = t("data_transfer_title"));
+    settingsPanels[1]?.querySelector(".settings-panel-header p") && (settingsPanels[1].querySelector(".settings-panel-header p").textContent = t("data_transfer_copy"));
     setElementText("#openDataToolsBtn", t("open_data_tools"));
     setElementText("#dataToolsTitle", t("data_tools_title"));
     setElementText("#dataToolsCopy", t("data_tools_copy"));
     setElementText("#csvToolsTitle", t("csv_tools"));
     setElementText("#csvToolsCopy", t("csv_tools_copy"));
-    elements.exportCsvTemplateBtn.textContent = t("export_csv_template");
-    elements.importCsvBtn.textContent = t("import_csv");
+    if (elements.exportCsvTemplateBtn) elements.exportCsvTemplateBtn.textContent = t("export_csv_template");
+    if (elements.importCsvBtn) elements.importCsvBtn.textContent = t("import_csv");
     setElementText("#jsonBackupTitle", t("json_backup"));
     setElementText("#jsonBackupCopy", t("json_backup_copy"));
-    elements.exportBackupBtn.textContent = t("export_backup");
-    elements.importBackupBtn.textContent = t("import_backup");
+    if (elements.exportBackupBtn) elements.exportBackupBtn.textContent = t("export_backup");
+    if (elements.importBackupBtn) elements.importBackupBtn.textContent = t("import_backup");
     setElementText("#selectiveExportTitle", t("selective_export"));
     setElementText("#selectiveExportCopy", t("selective_export_copy"));
-    elements.openExportSelectionBtn.textContent = t("export_selected_json");
-    settingsPanels[3].querySelector("h4").textContent = t("snapshots_title");
-    settingsPanels[3].querySelector(".settings-panel-header p").textContent = t("snapshots_copy");
-    settingsPanels[4].querySelector("h4").textContent = t("local_testing");
-    settingsPanels[4].querySelector(".settings-panel-header p").textContent = t("local_testing_copy");
-    elements.clearLocalTestDataBtn.textContent = t("clear_local_test_data");
+    if (elements.openExportSelectionBtn) elements.openExportSelectionBtn.textContent = t("export_selected_json");
+    settingsPanels[2]?.querySelector("h4") && (settingsPanels[2].querySelector("h4").textContent = t("snapshots_title"));
+    settingsPanels[2]?.querySelector(".settings-panel-header p") && (settingsPanels[2].querySelector(".settings-panel-header p").textContent = t("snapshots_copy"));
+    settingsPanels[3]?.querySelector("h4") && (settingsPanels[3].querySelector("h4").textContent = t("local_testing"));
+    settingsPanels[3]?.querySelector(".settings-panel-header p") && (settingsPanels[3].querySelector(".settings-panel-header p").textContent = t("local_testing_copy"));
+    if (elements.clearLocalTestDataBtn) elements.clearLocalTestDataBtn.textContent = t("clear_local_test_data");
 
     setElementText("#exportModal h3", t("export_json_title"));
     setElementText("#exportModal .settings-copy", t("export_json_copy"));
