@@ -12428,11 +12428,11 @@ body {
 
 .notes-record-summary-card {
     display: grid;
-    gap: 0.18rem;
-    padding: 0.55rem 0.75rem;
-    border: 1px solid rgba(112, 135, 176, 0.14);
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.92);
+    gap: 0.14rem;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid rgba(112, 135, 176, 0.13);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.88);
     text-align: left;
     cursor: pointer;
     transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
@@ -12441,13 +12441,13 @@ body {
 .notes-record-summary-card:hover,
 .notes-record-summary-card:focus-visible {
     transform: translateY(-1px);
-    box-shadow: 0 12px 24px rgba(24, 47, 86, 0.08);
-    border-color: rgba(20, 89, 217, 0.22);
+    box-shadow: 0 8px 18px rgba(24, 47, 86, 0.07);
+    border-color: rgba(20, 89, 217, 0.2);
 }
 
 .notes-record-summary-card span {
     color: var(--text-faint);
-    font-size: 0.74rem;
+    font-size: 0.68rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -12455,17 +12455,17 @@ body {
 
 .notes-record-summary-card strong {
     color: var(--text);
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     line-height: 1.3;
 }
 
 .notes-record-notes-section {
     display: grid;
     gap: 0.75rem;
-    background: rgba(244, 247, 253, 0.7);
-    border: 1px solid rgba(112, 135, 176, 0.1);
+    background: rgba(241, 245, 253, 0.75);
+    border: 1px solid rgba(112, 135, 176, 0.15);
     border-radius: 16px;
-    padding: 0.85rem 0.9rem;
+    padding: 1rem 1rem;
 }
 
 .notes-record-section-head {
@@ -12476,18 +12476,21 @@ body {
 }
 
 .notes-record-section-head h4 {
-    font-size: 1rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
 }
 
 .notes-record-section-head span {
     color: var(--text-soft);
-    font-size: 0.84rem;
+    font-size: 0.8rem;
     font-weight: 600;
 }
 
 .notes-record-notes-list {
     display: grid;
-    gap: 0.75rem;
+    gap: 0.55rem;
     max-height: 48vh;
     overflow: auto;
     padding-right: 0.1rem;
@@ -12495,33 +12498,55 @@ body {
 
 .notes-record-note-item {
     display: grid;
-    gap: 0.45rem;
-    padding: 0.9rem 1rem;
+    gap: 0.4rem;
+    padding: 0.75rem 0.9rem;
     border: 1px solid rgba(112, 135, 176, 0.12);
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.92);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 1px 4px rgba(24, 47, 86, 0.04);
+}
+
+.notes-record-note-item--system {
+    background: rgba(247, 249, 253, 0.96);
+    border-color: rgba(112, 135, 176, 0.2);
+    border-left: 3px solid rgba(112, 135, 176, 0.35);
 }
 
 .notes-record-note-head {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    font-size: 0.8rem;
+    gap: 0.55rem;
+    font-size: 0.79rem;
 }
 
 .notes-record-note-head strong {
     color: var(--text);
+    font-weight: 700;
 }
 
-.notes-record-note-head span {
+.notes-record-note-head .notes-record-note-time {
     color: var(--text-soft);
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+.notes-record-note-system-badge {
+    font-size: 0.63rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    background: rgba(100, 116, 139, 0.1);
+    border: 1px solid rgba(100, 116, 139, 0.18);
+    border-radius: 4px;
+    padding: 0.07rem 0.35rem;
+    flex-shrink: 0;
 }
 
 .notes-record-note-item p {
     margin: 0;
     color: var(--text);
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     line-height: 1.55;
     white-space: pre-wrap;
     word-break: break-word;
@@ -13353,7 +13378,10 @@ body #procurementSheetModal:not([hidden]) {
 .notes-drawer-feed {
     flex: 1;
     overflow-y: auto;
-    padding: 0.5rem 0;
+    padding: 0.65rem 0.7rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
 }
 .notes-empty {
     text-align: center;
@@ -13362,8 +13390,11 @@ body #procurementSheetModal:not([hidden]) {
     padding: 2.5rem 1rem;
 }
 .note-item {
-    padding: 0.75rem 1.1rem;
-    border-bottom: 1px solid var(--border-subtle, #f3f4f6);
+    padding: 0.7rem 0.85rem;
+    border: 1px solid rgba(112, 135, 176, 0.13);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 1px 4px rgba(24, 47, 86, 0.04);
 }
 .note-item-header {
     display: flex;
@@ -13377,14 +13408,14 @@ body #procurementSheetModal:not([hidden]) {
     color: var(--text);
 }
 .note-item-time {
-    font-size: 0.74rem;
+    font-size: 0.72rem;
     color: var(--text-soft);
     margin-left: auto;
     white-space: nowrap;
 }
 .note-item-text {
-    font-size: 0.85rem;
-    line-height: 1.5;
+    font-size: 0.84rem;
+    line-height: 1.55;
     white-space: pre-wrap;
     word-break: break-word;
     color: var(--text);
@@ -13539,24 +13570,27 @@ body #procurementSheetModal:not([hidden]) {
 
 /* ── History Feed Entries ──────────────────────────────── */
 .note-item--system {
-    background: var(--surface-alt, rgba(248, 250, 253, 0.9));
-    border-left: 3px solid var(--border);
+    background: rgba(247, 249, 253, 0.95);
+    border-color: rgba(112, 135, 176, 0.2);
+    border-left: 3px solid rgba(112, 135, 176, 0.35);
 }
 .note-item--pinned {
     background: rgba(240, 246, 255, 0.9);
+    border-color: rgba(59, 111, 212, 0.2);
     border-left: 3px solid var(--brand-primary, #3b6fd4);
-    margin-bottom: 0.5rem;
 }
 .note-item-system-badge {
-    font-size: 0.68rem;
+    font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--text-faint, #94a3b8);
-    background: rgba(148, 163, 184, 0.12);
+    color: #64748b;
+    background: rgba(100, 116, 139, 0.1);
+    border: 1px solid rgba(100, 116, 139, 0.18);
     border-radius: 4px;
-    padding: 0.1rem 0.4rem;
+    padding: 0.08rem 0.38rem;
     margin-right: 0.15rem;
+    flex-shrink: 0;
 }
 .note-item-history-list {
     margin: 0.35rem 0 0;

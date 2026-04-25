@@ -8339,15 +8339,28 @@ function renderNotesRecordModal(record) {
     `).join("");
     elements.notesRecordNotesCount.textContent = `${notes.length} note${notes.length === 1 ? "" : "s"}`;
     elements.notesRecordNotesList.innerHTML = notes.length
-        ? notes.slice().reverse().map(note => `
-            <article class="notes-record-note-item">
-                <div class="notes-record-note-head">
-                    <strong>${escapeHtml(note.author || "Unknown")}</strong>
-                    <span>${escapeHtml(note.editedAt ? `${formatNoteTimestamp(note.createdAt)} · edited` : formatNoteTimestamp(note.createdAt))}</span>
-                </div>
-                <p>${escapeHtml(note.text)}</p>
-            </article>
-        `).join("")
+        ? notes.slice().reverse().map(note => {
+            const isSystem = note.isSystem === true;
+            const timeLabel = note.editedAt
+                ? `${formatNoteTimestamp(note.createdAt)} · edited`
+                : formatNoteTimestamp(note.createdAt);
+            const badgeHtml = isSystem
+                ? `<span class="notes-record-note-system-badge">System</span>`
+                : "";
+            const itemClass = isSystem
+                ? "notes-record-note-item notes-record-note-item--system"
+                : "notes-record-note-item";
+            return `
+                <article class="${itemClass}">
+                    <div class="notes-record-note-head">
+                        ${badgeHtml}
+                        <strong>${escapeHtml(note.author || "Unknown")}</strong>
+                        <span class="notes-record-note-time">${escapeHtml(timeLabel)}</span>
+                    </div>
+                    <p>${escapeHtml(note.text)}</p>
+                </article>
+            `;
+        }).join("")
         : `<div class="empty-state compact-empty-state"><p>No notes yet for this record.</p></div>`;
 }
 
