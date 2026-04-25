@@ -4819,12 +4819,23 @@ function openCatalogDetailsModal(item) {
     renderCatalogDetailsStats(item);
     renderCatalogDetailsLongFields(item);
 
-    // Document references — scan live documents for this item's id
+    // Document references — scan live documents using all available identifiers.
+    // Items created from document rows (auto-recovered) may only have name matches;
+    // items inserted from the library may have libraryItemId or libraryReferenceId.
+    const normalizedItemName = String(item.name || "").trim().toLowerCase().replace(/\s+/g, " ");
     const usedInDocs = state.documents
         .filter(doc => {
             const lineItems = Array.isArray(doc.items) ? doc.items : [];
             const procItems = Array.isArray(doc.procurementItems) ? doc.procurementItems : [];
-            return [...lineItems, ...procItems].some(row => row.libraryItemId && row.libraryItemId === item.id);
+            return [...lineItems, ...procItems].some(row => {
+                if (row.libraryItemId && row.libraryItemId === item.id) return true;
+                if (item.referenceId && row.libraryReferenceId && row.libraryReferenceId === item.referenceId) return true;
+                if (normalizedItemName) {
+                    const rowDesc = String(row.description || "").trim().toLowerCase().replace(/\s+/g, " ");
+                    if (rowDesc && rowDesc === normalizedItemName) return true;
+                }
+                return false;
+            });
         })
         .sort((a, b) => {
             const dA = a.date || a.createdAt || "";
@@ -4836,10 +4847,16 @@ function openCatalogDetailsModal(item) {
     }
     if (elements.catalogDetailsDocRefs) {
         elements.catalogDetailsDocRefs.innerHTML = usedInDocs.map(doc => {
-            const typeTag = doc.type === "procurement" ? "Proc" : doc.type === "invoice" ? "Inv" : "Quote";
-            const label = `${typeTag} ${doc.refNumber || doc.id}`;
-            const client = doc.clientName ? ` · ${doc.clientName}` : "";
-            return `<button class="catalog-ref-link" type="button" data-open-doc-id="${escapeHtml(String(doc.id))}" title="${escapeHtml(doc.clientName || "")}">${escapeHtml(label + client)}</button>`;
+            const typeLabel = doc.type === "procurement" ? "Proc" : doc.type === "invoice" ? "Invoice" : "Quote";
+            const typeMod = escapeHtml(doc.type || "quote");
+            const refText = escapeHtml(doc.refNumber || "—");
+            const clientText = doc.clientName ? `<span class="catalog-ref-row-client">${escapeHtml(doc.clientName)}</span>` : "";
+            const dateText = doc.date ? `<span class="catalog-ref-row-date">${escapeHtml(formatDisplayDate(doc.date))}</span>` : "";
+            return `<button class="catalog-ref-row" type="button" data-open-doc-id="${escapeHtml(String(doc.id))}">
+                <span class="catalog-ref-row-type catalog-ref-row-type-${typeMod}">${escapeHtml(typeLabel)}</span>
+                <span class="catalog-ref-row-ref">${refText}</span>
+                ${clientText}${dateText}
+            </button>`;
         }).join("");
     }
 
