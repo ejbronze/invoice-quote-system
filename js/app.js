@@ -4077,7 +4077,16 @@ function updateRuntimeModeBadge() {
 
 function getStoredSessionUser() {
     try {
-        const rawValue = localStorage.getItem(CURRENT_SESSION_STORAGE_KEY);
+        let rawValue = localStorage.getItem(CURRENT_SESSION_STORAGE_KEY);
+        // One-time migration: move any legacy sessionStorage session into localStorage.
+        if (!rawValue) {
+            const legacy = sessionStorage.getItem(CURRENT_SESSION_STORAGE_KEY);
+            if (legacy) {
+                localStorage.setItem(CURRENT_SESSION_STORAGE_KEY, legacy);
+                sessionStorage.removeItem(CURRENT_SESSION_STORAGE_KEY);
+                rawValue = legacy;
+            }
+        }
         if (!rawValue) {
             return null;
         }
@@ -4088,18 +4097,22 @@ function getStoredSessionUser() {
         }
 
         const user = state.userAccounts.find(entry => entry.id === session.userId);
-        if (!user) {
+
+        // If userAccounts is populated but doesn't contain this user, the session is stale.
+        // If userAccounts is empty (workspace fetch failed before accounts loaded), trust the
+        // stored session rather than force a sign-out on every failed-workspace refresh.
+        if (!user && state.userAccounts.length > 0) {
             return null;
         }
 
         return {
-            userId: user.id,
-            username: user.username,
-            displayName: user.displayName,
-            role: user.role,
-            language: TRANSLATIONS[user.language] ? user.language : "en",
-            email: user.email || "",
-            accessLevel: user.accessLevel || "workspace",
+            userId: user?.id || session.userId,
+            username: user?.username || session.username || "",
+            displayName: user?.displayName || session.displayName || "",
+            role: user?.role || session.role || "user",
+            language: TRANSLATIONS[user?.language || session.language] ? (user?.language || session.language) : "en",
+            email: user?.email || session.email || "",
+            accessLevel: user?.accessLevel || session.accessLevel || "workspace",
             sessionLogId: String(session.sessionLogId || "")
         };
     } catch (error) {
