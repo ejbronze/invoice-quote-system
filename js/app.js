@@ -15861,11 +15861,12 @@ async function updateDocumentPaymentStatus(id, status) {
         }]);
     }
 
-    const updatedDoc = {
+    let updatedDoc = {
         ...doc,
         paymentStatus: nextStatus,
         payments: nextPayments
     };
+    appendDocumentChangeHistory(updatedDoc, doc);
 
     const nextDocuments = state.documents.map(entry =>
         isSameDocumentId(entry.id, id) ? updatedDoc : entry
