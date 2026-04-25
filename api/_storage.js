@@ -306,6 +306,131 @@ function normalizeCatalogItems(items) {
         : [];
 }
 
+function makeCatalogDocumentRef(doc) {
+    if (!doc) {
+        return null;
+    }
+
+    return {
+        docId: String(doc.id || ""),
+        docRefNumber: String(doc.refNumber || ""),
+        docType: String(doc.type || "document"),
+        date: String(doc.date || ""),
+        clientName: String(doc.clientName || "")
+    };
+}
+
+function mergeCatalogDocumentRefs(existingRefs, nextRef) {
+    const refs = Array.isArray(existingRefs) ? [...existingRefs] : [];
+    if (!nextRef || !nextRef.docId) {
+        return refs;
+    }
+
+    const existingIndex = refs.findIndex(ref => String(ref.docId) === nextRef.docId);
+    if (existingIndex >= 0) {
+        refs[existingIndex] = { ...refs[existingIndex], ...nextRef };
+    } else {
+        refs.push(nextRef);
+    }
+
+    return refs.sort((left, right) => String(right.date || "").localeCompare(String(left.date || "")));
+}
+
+function getCatalogRecoveryRowsFromDocument(doc) {
+    const ref = makeCatalogDocumentRef(doc);
+    const rows = doc?.type === "procurement"
+        ? (doc.procurementItems || []).map(row => ({
+            name: row.description,
+            brand: row.brand,
+            packSize: row.packSize,
+            unit: row.unit,
+            unitPrice: Number.parseFloat(row.unitPrice) || 0,
+            currency: row.currency || doc.currency || "USD",
+            leadTime: row.leadTime,
+            supplier: row.supplier,
+            notes: row.notes,
+            itemImageDataUrl: row.itemImageDataUrl || "",
+            docDate: doc.date || doc.printedAt || "",
+            ref
+        }))
+        : (doc.items || []).map(row => ({
+            name: row.description,
+            unitPrice: Number.parseFloat(row.unitPrice ?? row.price) || 0,
+            currency: doc.currency || "USD",
+            itemImageDataUrl: row.itemImageDataUrl || row.imageDataUrl || "",
+            docDate: doc.date || doc.printedAt || "",
+            ref
+        }));
+
+    return rows.filter(row => String(row.name || "").trim());
+}
+
+function recoverCatalogItemsFromDocuments(documents) {
+    const catalogByName = new Map();
+
+    normalizeDocuments(documents)
+        .filter(doc => doc && typeof doc === "object")
+        .forEach(doc => {
+            getCatalogRecoveryRowsFromDocument(doc).forEach(row => {
+                const name = String(row.name || "").trim();
+                const key = name.toLowerCase().replace(/\s+/g, " ");
+                const existing = catalogByName.get(key);
+                const docDate = String(row.docDate || new Date().toISOString());
+                const nextItem = existing || {
+                    id: `catalog-recovered-${catalogByName.size + 1}-${Math.random().toString(36).slice(2, 8)}`,
+                    referenceId: `PLI-${String(catalogByName.size + 1).padStart(4, "0")}`,
+                    name,
+                    details: String(row.notes || "").trim(),
+                    notes: "",
+                    costPrice: 0,
+                    price: 0,
+                    sellPrice: 0,
+                    currency: row.currency || "USD",
+                    taxIncluded: false,
+                    dateUpdated: docDate || new Date().toISOString(),
+                    category: "",
+                    brand: "",
+                    unitSize: "",
+                    packSize: "",
+                    unit: "",
+                    vendor: "",
+                    supplier: "",
+                    leadTime: "",
+                    country: "",
+                    tags: [],
+                    archived: false,
+                    documentRefs: [],
+                    itemImageDataUrl: ""
+                };
+                const unitPrice = Number.parseFloat(row.unitPrice) || 0;
+
+                catalogByName.set(key, {
+                    ...nextItem,
+                    ...(unitPrice > 0 ? { price: unitPrice, sellPrice: unitPrice } : {}),
+                    ...(row.currency ? { currency: row.currency } : {}),
+                    ...(row.brand ? { brand: String(row.brand).trim() } : {}),
+                    ...(row.packSize ? {
+                        packSize: String(row.packSize).trim(),
+                        unitSize: String(row.packSize).trim()
+                    } : {}),
+                    ...(row.unit ? { unit: String(row.unit).trim() } : {}),
+                    ...(row.supplier ? {
+                        supplier: String(row.supplier).trim(),
+                        vendor: String(row.supplier).trim()
+                    } : {}),
+                    ...(row.leadTime ? { leadTime: String(row.leadTime).trim() } : {}),
+                    ...(row.itemImageDataUrl && !nextItem.itemImageDataUrl ? { itemImageDataUrl: row.itemImageDataUrl } : {}),
+                    documentRefs: mergeCatalogDocumentRefs(nextItem.documentRefs, row.ref),
+                    dateUpdated: String(docDate || "").localeCompare(String(nextItem.dateUpdated || "")) > 0
+                        ? docDate
+                        : (nextItem.dateUpdated || docDate || new Date().toISOString())
+                });
+            });
+        });
+
+    return normalizeCatalogItems([...catalogByName.values()]);
+}
+
 function normalizeStatementExports(items) {
     return Array.isArray(items)
         ? items
@@ -581,6 +706,7 @@ module.exports = {
     normalizeDocuments,
     normalizeIssueReports,
     normalizeCatalogItems,
+    recoverCatalogItemsFromDocuments,
     normalizeStatementExports,
     normalizeUserAccounts,
     normalizeWorkspaceState,
