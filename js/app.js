@@ -3011,33 +3011,47 @@ function bindEvents() {
 }
 
 async function init() {
+    // Critical path — always runs, each already has internal error handling
     await bootstrapRuntimeMode();
     loadLocalWorkspaceState();
     await bootstrapSharedWorkspaceData();
     state.currentUser = getStoredSessionUser();
     state.currentLanguage = state.currentUser?.language || "en";
-    applyAccessState(hasActiveSession());
-    setAccessLoading(false);
-    setSessionLoader(false);
-    applyTranslations();
-    hydrateEditorPreferences();
-    updateCalculatorDisplay();
-    syncMobileOverviewState();
+
+    // Non-critical UI setup — failures here must never block data loading
+    try {
+        applyAccessState(hasActiveSession());
+        setAccessLoading(false);
+        setSessionLoader(false);
+        applyTranslations();
+        hydrateEditorPreferences();
+        updateCalculatorDisplay();
+        syncMobileOverviewState();
+    } catch (uiError) {
+        console.warn("[init] UI setup error (non-critical, continuing init):", uiError);
+    }
+
     void refreshExchangeRate();
+
     if (!hasActiveSession()) {
         return;
     }
 
-    setSessionLoader(true);
+    // Critical path — data load for authenticated session
+    try { setSessionLoader(true); } catch (_) {}
     await bootstrapAppData();
-    if (isOwnerSession()) {
-        resetAccountAdminForm();
+
+    // Non-critical post-load UI — failures here must not hide loaded data
+    try {
+        if (isOwnerSession()) resetAccountAdminForm();
+        setActivePage("overview");
+        applyRoleAccess();
+        applyAccessState(true);
+        setSessionLoader(false);
+        revealBrandSplash();
+    } catch (uiError) {
+        console.warn("[init] Post-load UI error (non-critical, data loaded):", uiError);
     }
-    setActivePage("overview");
-    applyRoleAccess();
-    applyAccessState(true);
-    setSessionLoader(false);
-    revealBrandSplash();
 }
 
 async function bootstrapRuntimeMode() {
