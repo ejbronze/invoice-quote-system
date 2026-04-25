@@ -4707,7 +4707,7 @@ function getFilteredCatalogEntries() {
             const supplier = item.supplier || item.vendor || "";
             const matchesCategory = state.pricingCategoryFilter === "all" || item.category === state.pricingCategoryFilter;
             const matchesSupplier = state.pricingSupplierFilter === "all" || supplier === state.pricingSupplierFilter;
-            const hasImage = Boolean(item.imageDataUrl?.trim());
+            const hasImage = Boolean((item.itemImageDataUrl || item.imageDataUrl)?.trim());
             const matchesImage = state.pricingImageFilter === "all"
                 || (state.pricingImageFilter === "has_image" && hasImage)
                 || (state.pricingImageFilter === "no_image" && !hasImage);
@@ -5456,17 +5456,21 @@ async function saveCatalogItemFromModal() {
     await saveCatalogItems(nextItems);
     syncProcurementLibrarySelect();
     syncDocumentLibrarySelect();
+    const hadImage = Boolean(item.itemImageDataUrl);
     const shouldReturnToProcurement = Boolean(state.catalogModalReturnToProcurement);
     const shouldReturnToDocument = Boolean(state.catalogModalReturnToDocument);
     closeCatalogItemModal();
     if (shouldReturnToProcurement && elements.procurementSheetModal?.classList.contains("active")) {
         elements.procurementLibrarySelect.value = item.id;
         insertLibraryItemIntoProcurement(item);
+        if (hadImage) setImportStatus("Image saved to Pricing Library and added to procurement row.");
     } else if (shouldReturnToDocument && elements.documentModal?.classList.contains("active")) {
         elements.documentLibrarySelect.value = item.id;
         insertLibraryItemIntoDocument(item);
+        if (hadImage) setImportStatus("Image saved to Pricing Library and added to document row.");
     } else {
         setActivePage("catalog");
+        if (hadImage) setImportStatus("Library item saved with image.");
     }
 }
 
@@ -5502,14 +5506,15 @@ function syncCatalogItemImageUI() {
         if (dataUrl) {
             preview.hidden = false;
             previewImg.src = dataUrl;
+            setCatalogItemImageStatus("Image ready");
         } else {
             preview.hidden = true;
             previewImg.removeAttribute("src");
+            setCatalogItemImageStatus("");
         }
     }
     if (removeBtn) removeBtn.hidden = !dataUrl;
     if (hint) hint.textContent = dataUrl ? "Change image" : "Add image";
-    setCatalogItemImageStatus("");
 }
 
 function setCatalogItemImageStatus(message) {
@@ -5520,7 +5525,7 @@ function setCatalogItemImageStatus(message) {
 }
 
 function clearCatalogItemImage() {
-    state.pendingCatalogItemImageDataUrl = null;
+    state.pendingCatalogItemImageDataUrl = "";
     if (elements.catalogItemImageInput) elements.catalogItemImageInput.value = "";
     syncCatalogItemImageUI();
 }
@@ -5530,11 +5535,12 @@ async function handleCatalogItemImageInputChange() {
     if (!file) return;
 
     if (elements.catalogItemImageInput) elements.catalogItemImageInput.value = "";
-    setCatalogItemImageStatus("Optimizing…");
+    setCatalogItemImageStatus("Uploading image…");
 
     try {
+        setCatalogItemImageStatus("Optimizing image…");
         const resizedDataUrl = await readImageFileAsDataUrl(file, { maxDimension: 600, quality: 0.85 });
-        setCatalogItemImageStatus("");
+        setCatalogItemImageStatus("Preparing crop…");
         openCatalogItemCropModal(resizedDataUrl);
     } catch {
         setCatalogItemImageStatus("Could not read image. Try a different file.");
@@ -5561,8 +5567,13 @@ function openCatalogItemCropModal(imageDataUrl) {
         canvas.width = Math.round(img.naturalWidth * scale);
         canvas.height = Math.round(img.naturalHeight * scale);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        initCatalogCropSelection(canvas.width, canvas.height);
+        // Show modal before measuring layout — getBoundingClientRect returns zeros on hidden elements
         setModalState(elements.catalogItemCropModal, true);
+        requestAnimationFrame(() => {
+            const r = canvas.getBoundingClientRect();
+            // Use actual CSS display dimensions so selection coords match the visible image
+            initCatalogCropSelection(r.width || canvas.width, r.height || canvas.height);
+        });
     };
     img.src = imageDataUrl;
 }
@@ -5696,7 +5707,7 @@ function skipCatalogItemCrop() {
     }
     closeCatalogItemCropModal();
     syncCatalogItemImageUI();
-    setCatalogItemImageStatus("Image ready");
+    setCatalogItemImageStatus("Image ready — save item to apply.");
 }
 
 function applyCatalogItemCrop() {
@@ -5709,27 +5720,26 @@ function applyCatalogItemCrop() {
 
     const canvasRect = canvas.getBoundingClientRect();
     const selRect = sel.getBoundingClientRect();
-
-    const scaleX = canvas.width / canvasRect.width;
-    const scaleY = canvas.height / canvasRect.height;
-    const sx = Math.round((selRect.left - canvasRect.left) * scaleX);
-    const sy = Math.round((selRect.top - canvasRect.top) * scaleY);
-    const sw = Math.max(1, Math.round(selRect.width * scaleX));
-    const sh = Math.max(1, Math.round(selRect.height * scaleY));
-
-    const out = document.createElement("canvas");
-    out.width = sw;
-    out.height = sh;
-    const outCtx = out.getContext("2d");
     const img = new Image();
 
     img.onload = () => {
-        outCtx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
-        const finalDataUrl = out.toDataURL("image/jpeg", 0.85);
-        state.pendingCatalogItemImageDataUrl = finalDataUrl;
+        // Map directly from CSS display coords to source image coords in one step.
+        // This stays correct even when the canvas is letterboxed by max-height CSS.
+        const srcScaleX = img.naturalWidth / (canvasRect.width || canvas.width);
+        const srcScaleY = img.naturalHeight / (canvasRect.height || canvas.height);
+        const sx = Math.max(0, Math.round((selRect.left - canvasRect.left) * srcScaleX));
+        const sy = Math.max(0, Math.round((selRect.top - canvasRect.top) * srcScaleY));
+        const sw = Math.max(1, Math.round(selRect.width * srcScaleX));
+        const sh = Math.max(1, Math.round(selRect.height * srcScaleY));
+
+        const out = document.createElement("canvas");
+        out.width = sw;
+        out.height = sh;
+        out.getContext("2d").drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+        state.pendingCatalogItemImageDataUrl = out.toDataURL("image/jpeg", 0.85);
         closeCatalogItemCropModal();
         syncCatalogItemImageUI();
-        setCatalogItemImageStatus("Image ready");
+        setCatalogItemImageStatus("Image ready — save item to apply.");
     };
     img.onerror = () => {
         skipCatalogItemCrop();
@@ -6218,6 +6228,7 @@ function createProcurementRowData(source = {}) {
         leadTime: String(source.leadTime || "").trim(),
         supplier: String(source.supplier || source.vendor || "").trim(),
         notes: String(source.notes || "").trim(),
+        itemImageDataUrl: String(source.itemImageDataUrl || source.imageDataUrl || "").trim(),
         quantity: quantityTbd ? "" : quantityValue,
         quantityTbd
     };
@@ -6235,7 +6246,8 @@ function createProcurementSnapshotFromLibraryItem(item) {
         currency: item.currency,
         leadTime: item.leadTime,
         supplier: item.supplier || item.vendor,
-        notes: item.notes
+        notes: item.notes,
+        itemImageDataUrl: item.itemImageDataUrl || item.imageDataUrl || ""
     });
 }
 
@@ -6248,10 +6260,13 @@ function getProcurementRowMarkup(row = {}) {
     const qty = data.quantityTbd ? 0 : (Number.parseFloat(data.quantity) || 0);
     const lineTotal = qty > 0 && price > 0 ? (qty * price).toFixed(2) : null;
     return `
-        <tr class="procurement-row${tbdClass}" data-procurement-row-id="${escapeHtml(data.id)}" data-library-item-id="${escapeHtml(data.libraryItemId)}">
+        <tr class="procurement-row${tbdClass}" data-procurement-row-id="${escapeHtml(data.id)}" data-library-item-id="${escapeHtml(data.libraryItemId)}" data-library-reference-id="${escapeHtml(data.libraryReferenceId)}" data-item-image-data-url="${escapeHtml(data.itemImageDataUrl)}">
             <td class="proc-select-col"><input type="checkbox" class="procurement-row-select" aria-label="Select row"></td>
             <td><span class="procurement-line-number">${escapeHtml(String(data.lineNumber))}</span></td>
-            <td class="proc-td-desc"><textarea data-procurement-field="description" rows="2" placeholder="Item description">${escapeHtml(data.description)}</textarea></td>
+            <td class="proc-td-desc">
+                ${data.itemImageDataUrl ? `<div class="procurement-row-image"><img src="${escapeHtml(data.itemImageDataUrl)}" alt="${escapeHtml(data.description || "Item image")}"></div>` : ""}
+                <textarea data-procurement-field="description" rows="2" placeholder="Item description">${escapeHtml(data.description)}</textarea>
+            </td>
             <td><input type="text" data-procurement-field="brand" value="${escapeHtml(data.brand)}"></td>
             <td><input type="text" data-procurement-field="packSize" value="${escapeHtml(data.packSize)}"></td>
             <td><input type="text" data-procurement-field="unit" value="${escapeHtml(data.unit)}"></td>
@@ -6395,7 +6410,8 @@ function collectProcurementRows() {
             supplier: getValue("supplier"),
             quantity: getValue("quantity"),
             quantityTbd,
-            notes: getValue("notes")
+            notes: getValue("notes"),
+            itemImageDataUrl: row.dataset.itemImageDataUrl || ""
         });
     }).filter(row => row.description || row.brand || row.supplier || row.unitPrice > 0);
 }

@@ -292,7 +292,15 @@ function normalizeCatalogItems(items) {
                 tags: Array.isArray(item.tags)
                     ? item.tags.map(tag => String(tag || "").trim()).filter(Boolean)
                     : String(item.tags || "").split(",").map(tag => tag.trim()).filter(Boolean),
-                archived: Boolean(item.archived)
+                archived: Boolean(item.archived),
+                documentRefs: Array.isArray(item.documentRefs)
+                    ? item.documentRefs.filter(r => r && r.docId)
+                    : [],
+                itemImageDataUrl: typeof item.itemImageDataUrl === "string"
+                    ? item.itemImageDataUrl
+                    : typeof item.imageDataUrl === "string"
+                        ? item.imageDataUrl
+                        : ""
             }))
             .filter(item => item.name)
         : [];
