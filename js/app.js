@@ -1903,7 +1903,7 @@ async function handleLanguageChange(event) {
 
     if (state.currentUser) {
         state.currentUser.language = state.currentLanguage;
-        sessionStorage.setItem(CURRENT_SESSION_STORAGE_KEY, JSON.stringify(state.currentUser));
+        localStorage.setItem(CURRENT_SESSION_STORAGE_KEY, JSON.stringify(state.currentUser));
         await saveUserAccounts(state.userAccounts.map(user =>
             user.id === state.currentUser.userId ? { ...user, language: state.currentLanguage } : user
         ));
@@ -4077,7 +4077,7 @@ function updateRuntimeModeBadge() {
 
 function getStoredSessionUser() {
     try {
-        const rawValue = sessionStorage.getItem(CURRENT_SESSION_STORAGE_KEY);
+        const rawValue = localStorage.getItem(CURRENT_SESSION_STORAGE_KEY);
         if (!rawValue) {
             return null;
         }
@@ -4261,13 +4261,13 @@ function persistCurrentSession(user) {
         accessLevel: user.accessLevel || "workspace",
         sessionLogId: user.sessionLogId || ""
     };
-    sessionStorage.setItem(CURRENT_SESSION_STORAGE_KEY, JSON.stringify(state.currentUser));
+    localStorage.setItem(CURRENT_SESSION_STORAGE_KEY, JSON.stringify(state.currentUser));
     applyRoleAccess();
 }
 
 function clearCurrentSession() {
     state.currentUser = null;
-    sessionStorage.removeItem(CURRENT_SESSION_STORAGE_KEY);
+    localStorage.removeItem(CURRENT_SESSION_STORAGE_KEY);
     applyRoleAccess();
 }
 
