@@ -273,6 +273,8 @@ function normalizeCatalogItems(items) {
             .map(item => ({
                 id: String(item.id || `catalog-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
                 referenceId: String(item.referenceId || item.internalReferenceId || "").trim(),
+                itemNumber: String(item.itemNumber || "").trim(),
+                clientItemCode: String(item.clientItemCode || "").trim(),
                 name: String(item.name || "").trim(),
                 details: String(item.details || "").trim(),
                 notes: String(item.notes || "").trim(),

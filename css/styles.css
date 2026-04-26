@@ -7453,6 +7453,43 @@ body::after {
     border: 1px solid rgba(66, 99, 235, 0.16);
 }
 
+.proc-desc-meta {
+    display: flex;
+    gap: 0.45rem;
+    margin-top: 0.4rem;
+    flex-wrap: wrap;
+}
+.proc-meta-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1 1 80px;
+    min-width: 70px;
+}
+.proc-meta-field span {
+    font-size: 0.64rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-faint, #94a3b8);
+}
+.proc-meta-field input {
+    font-size: 0.78rem;
+    padding: 0.22rem 0.4rem;
+    border: 1px solid rgba(112, 135, 176, 0.22);
+    border-radius: 6px;
+    background: rgba(248, 250, 253, 0.9);
+    color: var(--text);
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+.proc-meta-field input:focus {
+    outline: none;
+    border-color: var(--accent, #2563eb);
+    background: #fff;
+}
+
 .procurement-actions {
     display: flex;
     flex-wrap: wrap;
@@ -14180,4 +14217,124 @@ body #procurementSheetModal:not([hidden]) {
     font-weight: 700;
     color: #1c3a6e;
     margin: 0.04in 0 0;
+}
+
+/* ── Duplicate Review Modal ─────────────────────────────────── */
+.dup-modal-content {
+    max-width: 820px;
+}
+.modal-header-copy {
+    display: grid;
+    gap: 0.1rem;
+}
+.modal-header-sub {
+    font-size: 0.82rem;
+    color: var(--text-soft);
+    margin: 0;
+}
+.dup-group {
+    border: 1px solid rgba(112, 135, 176, 0.14);
+    border-radius: 16px;
+    padding: 1rem 1.05rem;
+    background: rgba(248, 250, 253, 0.7);
+    display: grid;
+    gap: 0.7rem;
+    margin-bottom: 1rem;
+}
+.dup-group:last-child {
+    margin-bottom: 0;
+}
+.dup-group-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.dup-group-label {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--brand-primary, #3b6fd4);
+}
+.dup-group-count {
+    font-size: 0.72rem;
+    color: var(--text-soft);
+    font-weight: 600;
+}
+.dup-group-hint {
+    font-size: 0.8rem;
+    color: var(--text-soft);
+    margin: 0;
+}
+.dup-group-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.55rem;
+}
+.dup-item-card {
+    display: flex;
+    gap: 0.55rem;
+    padding: 0.7rem 0.8rem;
+    border: 2px solid rgba(112, 135, 176, 0.14);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.92);
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    align-items: flex-start;
+}
+.dup-item-card:has(.dup-master-radio:checked) {
+    border-color: var(--accent, #2563eb);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+.dup-master-radio {
+    margin-top: 0.15rem;
+    flex-shrink: 0;
+    accent-color: var(--accent, #2563eb);
+}
+.dup-item-card-body {
+    display: grid;
+    gap: 0.35rem;
+    min-width: 0;
+}
+.dup-item-card-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+.dup-item-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.dup-item-ref {
+    font-size: 0.68rem;
+    color: var(--text-faint);
+    font-weight: 600;
+}
+.dup-item-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+}
+.dup-card-meta-row {
+    font-size: 0.76rem;
+    color: var(--text-soft);
+}
+.dup-card-meta-row strong {
+    color: var(--text);
+    font-weight: 600;
+    margin-right: 0.25rem;
+}
+.dup-card-notes {
+    opacity: 0.8;
+    font-style: italic;
+}
+.dup-group-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
 }

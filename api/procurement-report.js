@@ -21,6 +21,8 @@ function normalizeSheet(sheet) {
         notes: String(sheet?.notes || "").trim(),
         rows: rows.map((row, index) => ({
             lineNumber: Number.parseInt(row?.lineNumber, 10) || index + 1,
+            itemNumber: String(row?.itemNumber || "").trim(),
+            clientItemCode: String(row?.clientItemCode || "").trim(),
             description: String(row?.description || "").trim(),
             brand: String(row?.brand || "").trim(),
             packSize: String(row?.packSize || "").trim(),
@@ -44,8 +46,8 @@ function safeFilenamePart(value, fallback) {
         .replace(/^-+|-+$/g, "") || fallback;
 }
 
-const NCOLS = 11;
-const LAST_COL_LETTER = String.fromCharCode(64 + NCOLS); // "K"
+const NCOLS = 13;
+const LAST_COL_LETTER = String.fromCharCode(64 + NCOLS); // "M"
 
 const COLOR = {
     title:  "FF1459D9",  // brand blue
@@ -110,8 +112,8 @@ module.exports = async function handler(request, response) {
         worksheet.getRow(2).height = 18;
 
         // ── Row 3: Column headers ────────────────────────────────────────
-        //  Columns: # | Item Description | Brand | Pack Size | Unit | Quantity | Unit Price | Currency | Lead Time | Supplier | Notes
-        const headers = ["#", "Item Description", "Brand", "Pack Size", "Unit", "Quantity", "Unit Price", "Currency", "Lead Time", "Supplier", "Notes"];
+        //  Cols: # | Item # | Client Item Code | Item Description | Brand | Pack Size | Unit | Quantity | Unit Price | Currency | Lead Time | Supplier | Notes
+        const headers = ["#", "Item #", "Client Item Code", "Item Description", "Brand", "Pack Size", "Unit", "Quantity", "Unit Price", "Currency", "Lead Time", "Supplier", "Notes"];
         const headerRow = worksheet.addRow(headers);
         headerRow.height = 22;
         headerRow.eachCell((cell, colNumber) => {
@@ -123,8 +125,8 @@ module.exports = async function handler(request, response) {
                 bottom: { style: "thin", color: { argb: "FF253E57" } },
                 right:  { style: "thin", color: { argb: "FF253E57" } }
             };
-            // Default: center; left-align text-heavy columns
-            const leftAligned = [2, 11]; // Description, Notes
+            // Default: center; left-align text-heavy columns (col 4 = Description, col 13 = Notes)
+            const leftAligned = [4, 13];
             cell.alignment = {
                 vertical: "middle",
                 horizontal: leftAligned.includes(colNumber) ? "left" : "center",
@@ -146,17 +148,19 @@ module.exports = async function handler(request, response) {
             }
 
             const dataRow = worksheet.addRow([
-                row.lineNumber,
-                row.description,
-                row.brand,
-                row.packSize,
-                row.unit,
-                row.quantityTbd ? "TBD" : (row.quantity || ""),
-                row.unitPrice > 0 ? row.unitPrice : "",
-                row.currency,
-                row.leadTime,
-                row.supplier,
-                row.notes
+                row.lineNumber,        // col 1
+                row.itemNumber,        // col 2  Item #
+                row.clientItemCode,    // col 3  Client Item Code
+                row.description,       // col 4
+                row.brand,             // col 5
+                row.packSize,          // col 6
+                row.unit,              // col 7
+                row.quantityTbd ? "TBD" : (row.quantity || ""), // col 8
+                row.unitPrice > 0 ? row.unitPrice : "",         // col 9
+                row.currency,          // col 10
+                row.leadTime,          // col 11
+                row.supplier,          // col 12
+                row.notes              // col 13
             ]);
 
             dataRow.height = 18;
@@ -165,32 +169,33 @@ module.exports = async function handler(request, response) {
             dataRow.eachCell((cell, colNumber) => {
                 cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: rowBg } };
                 cell.border = THIN_BORDER();
-                cell.alignment = { vertical: "top", wrapText: [2, 11].includes(colNumber) };
+                cell.alignment = { vertical: "top", wrapText: [4, 13].includes(colNumber) };
             });
 
             // Line number: center
             dataRow.getCell(1).alignment = { vertical: "top", horizontal: "center" };
 
             // Quantity: center, TBD styled in muted italic
-            dataRow.getCell(6).alignment = { vertical: "top", horizontal: "center" };
+            dataRow.getCell(8).alignment = { vertical: "top", horizontal: "center" };
             if (row.quantityTbd) {
-                dataRow.getCell(6).font = { italic: true, color: { argb: COLOR.tbd }, size: 10 };
+                dataRow.getCell(8).font = { italic: true, color: { argb: COLOR.tbd }, size: 10 };
             }
 
             // Unit Price: right-aligned number format
             if (row.unitPrice > 0) {
-                dataRow.getCell(7).numFmt = "#,##0.00";
-                dataRow.getCell(7).alignment = { vertical: "top", horizontal: "right" };
+                dataRow.getCell(9).numFmt = "#,##0.00";
+                dataRow.getCell(9).alignment = { vertical: "top", horizontal: "right" };
             }
 
             // Currency: center
-            dataRow.getCell(8).alignment = { vertical: "top", horizontal: "center" };
+            dataRow.getCell(10).alignment = { vertical: "top", horizontal: "center" };
         });
 
         // ── Totals row ───────────────────────────────────────────────────
         if (sheet.rows.length > 0 && hasTotalizableRows) {
+            // 13 columns: col 4 = Description (TOTAL label), col 9 = Unit Price (total), col 10 = Currency
             const totalRow = worksheet.addRow([
-                "", "TOTAL", "", "", "", "", runningTotal, sheet.currency || "USD", "", "", ""
+                "", "", "", "TOTAL", "", "", "", "", runningTotal, sheet.currency || "USD", "", "", ""
             ]);
             totalRow.height = 20;
             totalRow.eachCell(cell => {
@@ -203,27 +208,29 @@ module.exports = async function handler(request, response) {
                 };
                 cell.alignment = { vertical: "middle" };
             });
-            totalRow.getCell(2).font = { bold: true, size: 10 };
-            totalRow.getCell(2).alignment = { vertical: "middle", horizontal: "left" };
-            totalRow.getCell(7).numFmt = "#,##0.00";
-            totalRow.getCell(7).font = { bold: true, size: 10 };
-            totalRow.getCell(7).alignment = { vertical: "middle", horizontal: "right" };
-            totalRow.getCell(8).alignment = { vertical: "middle", horizontal: "center" };
+            totalRow.getCell(4).font = { bold: true, size: 10 };
+            totalRow.getCell(4).alignment = { vertical: "middle", horizontal: "left" };
+            totalRow.getCell(9).numFmt = "#,##0.00";
+            totalRow.getCell(9).font = { bold: true, size: 10 };
+            totalRow.getCell(9).alignment = { vertical: "middle", horizontal: "right" };
+            totalRow.getCell(10).alignment = { vertical: "middle", horizontal: "center" };
         }
 
         // ── Column widths ────────────────────────────────────────────────
         worksheet.columns = [
             { width: 6  },   // # (line number)
-            { width: 42 },   // Item Description
-            { width: 18 },   // Brand
-            { width: 16 },   // Pack Size
-            { width: 11 },   // Unit
+            { width: 10 },   // Item #
+            { width: 18 },   // Client Item Code
+            { width: 38 },   // Item Description
+            { width: 16 },   // Brand
+            { width: 14 },   // Pack Size
+            { width: 10 },   // Unit
             { width: 12 },   // Quantity
             { width: 14 },   // Unit Price
             { width: 10 },   // Currency
-            { width: 16 },   // Lead Time
-            { width: 22 },   // Supplier
-            { width: 28 }    // Notes
+            { width: 14 },   // Lead Time
+            { width: 20 },   // Supplier
+            { width: 26 }    // Notes
         ];
 
         // ── Auto-filter on header row ────────────────────────────────────

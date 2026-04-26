@@ -2143,6 +2143,8 @@ function cacheElements() {
     elements.notesDrawerTabs = document.getElementById("notesDrawerTabs");
     elements.notesDrawerCompose = document.getElementById("notesDrawerCompose");
     elements.catalogItemNameInput = document.getElementById("catalogItemNameInput");
+    elements.catalogItemNumberInput = document.getElementById("catalogItemNumberInput");
+    elements.catalogItemCodeInput = document.getElementById("catalogItemCodeInput");
     elements.catalogItemCostInput = document.getElementById("catalogItemCostInput");
     elements.catalogItemPriceInput = document.getElementById("catalogItemPriceInput");
     elements.catalogItemCurrencyInput = document.getElementById("catalogItemCurrencyInput");
@@ -2175,6 +2177,11 @@ function cacheElements() {
     elements.exportCatalogReportBtn = document.getElementById("exportCatalogReportBtn");
     elements.clearCatalogSelectionBtn = document.getElementById("clearCatalogSelectionBtn");
     elements.toggleCatalogSelectionModeBtn = document.getElementById("toggleCatalogSelectionModeBtn");
+    elements.findCatalogDuplicatesBtn = document.getElementById("findCatalogDuplicatesBtn");
+    elements.catalogDuplicateModal = document.getElementById("catalogDuplicateModal");
+    elements.closeCatalogDuplicateModalBtn = document.getElementById("closeCatalogDuplicateModalBtn");
+    elements.catalogDuplicateBody = document.getElementById("catalogDuplicateBody");
+    elements.catalogDuplicateSubtitle = document.getElementById("catalogDuplicateSubtitle");
     elements.closeCompanyProfileModalBtn = document.getElementById("closeCompanyProfileModalBtn");
     elements.companyNameInput = document.getElementById("companyNameInput");
     elements.companyTaglineInput = document.getElementById("companyTaglineInput");
@@ -2440,6 +2447,11 @@ function bindEvents() {
     elements.accountAdminCatalogBtn?.addEventListener("click", openCatalogPage);
     elements.openCatalogItemModalBtn.addEventListener("click", openCatalogItemModal);
     elements.closeCatalogItemModalBtn.addEventListener("click", closeCatalogItemModal);
+    elements.findCatalogDuplicatesBtn?.addEventListener("click", openDuplicateReviewModal);
+    elements.closeCatalogDuplicateModalBtn?.addEventListener("click", () => setModalState(elements.catalogDuplicateModal, false));
+    elements.catalogDuplicateModal?.addEventListener("click", event => {
+        if (event.target === elements.catalogDuplicateModal) setModalState(elements.catalogDuplicateModal, false);
+    });
     elements.closeCatalogDetailsModalBtn.addEventListener("click", closeCatalogDetailsModal);
     elements.closeCatalogItemImageExpandModalBtn?.addEventListener("click", closeCatalogItemImageExpand);
     elements.catalogItemImageExpandModal?.addEventListener("click", event => {
@@ -3699,6 +3711,8 @@ function normalizeCatalogItems(items) {
             .map(item => ({
                 id: String(item.id || `catalog-${Date.now()}-${Math.random().toString(36).slice(2)}`),
                 referenceId: String(item.referenceId || item.internalReferenceId || "").trim(),
+                itemNumber: String(item.itemNumber || "").trim(),
+                clientItemCode: String(item.clientItemCode || "").trim(),
                 name: String(item.name || "").trim(),
                 details: String(item.details || "").trim(),
                 notes: String(item.notes || "").trim(),
@@ -4686,6 +4700,8 @@ function openCatalogItemModal(options = {}) {
     state.catalogModalReturnToProcurement = Boolean(options.returnToProcurement);
     state.catalogModalReturnToDocument = Boolean(options.returnToDocument);
     elements.catalogItemNameInput.value = "";
+    if (elements.catalogItemNumberInput) elements.catalogItemNumberInput.value = "";
+    if (elements.catalogItemCodeInput) elements.catalogItemCodeInput.value = "";
     elements.catalogItemCostInput.value = "0";
     elements.catalogItemPriceInput.value = "0";
     elements.catalogItemCurrencyInput.value = "USD";
@@ -4708,6 +4724,8 @@ function openCatalogItemModal(options = {}) {
         const item = options.item;
         state.editingCatalogItemId = item.id || null;
         elements.catalogItemNameInput.value = item.name || "";
+        if (elements.catalogItemNumberInput) elements.catalogItemNumberInput.value = item.itemNumber || "";
+        if (elements.catalogItemCodeInput) elements.catalogItemCodeInput.value = item.clientItemCode || "";
         elements.catalogItemCostInput.value = String(item.costPrice || 0);
         elements.catalogItemPriceInput.value = String(item.sellPrice ?? item.price ?? 0);
         elements.catalogItemCurrencyInput.value = item.currency || "USD";
@@ -5859,6 +5877,8 @@ async function saveCatalogItemFromModal() {
         referenceId: state.editingCatalogItemId
             ? (state.catalogItems.find(entry => entry.id === state.editingCatalogItemId)?.referenceId || `PLI-${String(state.catalogItems.length + 1).padStart(4, "0")}`)
             : `PLI-${String(state.catalogItems.length + 1).padStart(4, "0")}`,
+        itemNumber: elements.catalogItemNumberInput?.value.trim() || "",
+        clientItemCode: elements.catalogItemCodeInput?.value.trim() || "",
         name,
         details: elements.catalogItemDetailsInput.value.trim(),
         notes: elements.catalogItemNotesInput.value.trim(),
@@ -5930,6 +5950,204 @@ async function archiveCatalogItemFromModal() {
     )));
     closeCatalogItemModal();
     setImportStatus("Library item archived. Existing document line items were not changed.");
+}
+
+// ── Catalog duplicate finder ───────────────────────────────────
+
+function findCatalogDuplicates() {
+    const items = state.catalogItems.filter(i => !i.archived);
+    const norm = s => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
+
+    const groups = [];
+    const assigned = new Set();
+
+    for (let i = 0; i < items.length; i++) {
+        const a = items[i];
+        if (assigned.has(a.id)) continue;
+        const nameA = norm(a.name);
+        const codeA = norm(a.clientItemCode);
+
+        const matches = [];
+        for (let j = i + 1; j < items.length; j++) {
+            const b = items[j];
+            if (assigned.has(b.id)) continue;
+            const nameB = norm(b.name);
+            const codeB = norm(b.clientItemCode);
+
+            const sameName = nameA && nameA === nameB;
+            const sameCode = codeA && codeA === codeB;
+            const similarName = nameA && nameB && (
+                nameA.startsWith(nameB) || nameB.startsWith(nameA) ||
+                levenshtein(nameA, nameB) <= Math.floor(Math.max(nameA.length, nameB.length) * 0.15)
+            );
+
+            if (sameName || sameCode || similarName) {
+                matches.push(b);
+            }
+        }
+
+        if (matches.length > 0) {
+            const group = [a, ...matches];
+            group.forEach(item => assigned.add(item.id));
+            groups.push(group);
+        }
+    }
+    return groups;
+}
+
+function levenshtein(a, b) {
+    if (!a) return b.length;
+    if (!b) return a.length;
+    const dp = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+    for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+    for (let i = 1; i <= a.length; i++) {
+        for (let j = 1; j <= b.length; j++) {
+            dp[i][j] = a[i - 1] === b[j - 1]
+                ? dp[i - 1][j - 1]
+                : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+        }
+    }
+    return dp[a.length][b.length];
+}
+
+function openDuplicateReviewModal() {
+    if (!elements.catalogDuplicateModal) return;
+    setModalState(elements.catalogDuplicateModal, true);
+    const groups = findCatalogDuplicates();
+    renderDuplicateReviewGroups(groups);
+}
+
+function renderDuplicateReviewGroups(groups) {
+    const subtitle = elements.catalogDuplicateSubtitle;
+    const body = elements.catalogDuplicateBody;
+    if (!body) return;
+
+    if (groups.length === 0) {
+        if (subtitle) subtitle.textContent = "No duplicate items found.";
+        body.innerHTML = `<div class="empty-state compact-empty-state"><p>Your Pricing Library looks clean — no likely duplicates detected.</p></div>`;
+        return;
+    }
+
+    if (subtitle) subtitle.textContent = `${groups.length} possible duplicate group${groups.length === 1 ? "" : "s"} found.`;
+
+    body.innerHTML = groups.map((group, groupIdx) => {
+        const itemCards = group.map((item, itemIdx) => {
+            const radioName = `dup-master-${groupIdx}`;
+            const metaRows = [
+                item.itemNumber ? `<span class="dup-card-meta-row"><strong>Item #</strong> ${escapeHtml(item.itemNumber)}</span>` : "",
+                item.clientItemCode ? `<span class="dup-card-meta-row"><strong>Client Code</strong> ${escapeHtml(item.clientItemCode)}</span>` : "",
+                item.supplier ? `<span class="dup-card-meta-row"><strong>Supplier</strong> ${escapeHtml(item.supplier)}</span>` : "",
+                item.unit ? `<span class="dup-card-meta-row"><strong>Unit</strong> ${escapeHtml(item.unit)}</span>` : "",
+                (item.sellPrice || item.price) ? `<span class="dup-card-meta-row"><strong>Price</strong> ${escapeHtml(formatCurrency(item.sellPrice || item.price || 0))}</span>` : "",
+                item.notes ? `<span class="dup-card-meta-row dup-card-notes"><strong>Notes</strong> ${escapeHtml(item.notes.length > 80 ? item.notes.slice(0, 80) + "…" : item.notes)}</span>` : ""
+            ].filter(Boolean).join("");
+            return `
+                <label class="dup-item-card">
+                    <input type="radio" name="${escapeHtml(radioName)}" value="${escapeHtml(item.id)}" ${itemIdx === 0 ? "checked" : ""} class="dup-master-radio">
+                    <div class="dup-item-card-body">
+                        <div class="dup-item-card-head">
+                            <strong class="dup-item-name">${escapeHtml(item.name)}</strong>
+                            <span class="dup-item-ref">${escapeHtml(item.referenceId || "")}</span>
+                        </div>
+                        <div class="dup-item-meta">${metaRows || "<span class='dup-card-meta-row'>No additional data</span>"}</div>
+                    </div>
+                </label>
+            `;
+        }).join("");
+
+        return `
+            <div class="dup-group" data-group-idx="${groupIdx}">
+                <div class="dup-group-head">
+                    <span class="dup-group-label">Possible Duplicate Group ${groupIdx + 1}</span>
+                    <span class="dup-group-count">${group.length} items</span>
+                </div>
+                <p class="dup-group-hint">Select the item to keep as the master. Others will be archived.</p>
+                <div class="dup-group-cards">${itemCards}</div>
+                <div class="dup-group-actions">
+                    <button type="button" class="btn btn-secondary btn-sm dup-skip-btn" data-group-idx="${groupIdx}">Skip Group</button>
+                    <button type="button" class="btn btn-primary btn-sm dup-merge-btn" data-group-idx="${groupIdx}" data-item-ids="${escapeHtml(group.map(i => i.id).join(","))}">Merge — Archive Duplicates</button>
+                </div>
+            </div>
+        `;
+    }).join("");
+
+    body.addEventListener("click", handleDuplicateReviewClick, { once: true });
+    body.addEventListener("click", handleDuplicateReviewClick);
+}
+
+function handleDuplicateReviewClick(event) {
+    const skipBtn = event.target.closest(".dup-skip-btn");
+    if (skipBtn) {
+        skipBtn.closest(".dup-group")?.remove();
+        if (!elements.catalogDuplicateBody?.querySelector(".dup-group")) {
+            if (elements.catalogDuplicateSubtitle) elements.catalogDuplicateSubtitle.textContent = "All groups reviewed.";
+            elements.catalogDuplicateBody.innerHTML = `<div class="empty-state compact-empty-state"><p>All duplicate groups reviewed.</p></div>`;
+        }
+        return;
+    }
+
+    const mergeBtn = event.target.closest(".dup-merge-btn");
+    if (mergeBtn) {
+        const groupEl = mergeBtn.closest(".dup-group");
+        const groupIdx = mergeBtn.dataset.groupIdx;
+        const masterRadio = groupEl?.querySelector(`.dup-master-radio:checked`);
+        const masterId = masterRadio?.value;
+        const allIds = (mergeBtn.dataset.itemIds || "").split(",").filter(Boolean);
+        const duplicateIds = allIds.filter(id => id !== masterId);
+
+        if (!masterId || duplicateIds.length === 0) return;
+
+        const master = state.catalogItems.find(i => i.id === masterId);
+        const dupeNames = state.catalogItems
+            .filter(i => duplicateIds.includes(i.id))
+            .map(i => `"${i.name}"`)
+            .join(", ");
+
+        if (!window.confirm(`Keep "${master?.name || masterId}" as master and archive ${dupeNames}?\n\nThis cannot be undone without a data backup.`)) return;
+
+        mergeCatalogDuplicates(masterId, duplicateIds).then(() => {
+            groupEl?.remove();
+            if (!elements.catalogDuplicateBody?.querySelector(".dup-group")) {
+                if (elements.catalogDuplicateSubtitle) elements.catalogDuplicateSubtitle.textContent = "All groups resolved.";
+                elements.catalogDuplicateBody.innerHTML = `<div class="empty-state compact-empty-state"><p>All duplicate groups resolved.</p></div>`;
+            }
+        });
+    }
+}
+
+async function mergeCatalogDuplicates(masterId, duplicateIds) {
+    const master = state.catalogItems.find(i => i.id === masterId);
+    if (!master) return;
+
+    const dupeNames = state.catalogItems
+        .filter(i => duplicateIds.includes(i.id))
+        .map(i => i.name)
+        .join(", ");
+
+    const mergeNote = {
+        id: `sys-merge-${Date.now()}`,
+        text: `Merged with: ${dupeNames}. Duplicate records archived.`,
+        author: state.currentUser?.displayName || "System",
+        userId: "",
+        isSystem: true,
+        createdAt: new Date().toISOString(),
+        editedAt: null
+    };
+
+    const updatedMaster = {
+        ...master,
+        dateUpdated: new Date().toISOString(),
+        noteLog: [...normalizeNoteLog(master.noteLog || []), mergeNote]
+    };
+
+    const nextItems = state.catalogItems.map(item => {
+        if (item.id === masterId) return updatedMaster;
+        if (duplicateIds.includes(item.id)) return { ...item, archived: true, dateUpdated: new Date().toISOString() };
+        return item;
+    });
+
+    await saveCatalogItems(nextItems);
+    setImportStatus(`Merged: kept "${master.name}", archived ${duplicateIds.length} duplicate${duplicateIds.length === 1 ? "" : "s"}.`);
 }
 
 // ── Catalog item image upload ──────────────────────────────────
@@ -6707,6 +6925,8 @@ function createProcurementRowData(source = {}) {
         lineNumber: Number.parseInt(source.lineNumber, 10) || 1,
         libraryItemId: String(source.libraryItemId || ""),
         libraryReferenceId: String(source.libraryReferenceId || ""),
+        itemNumber: String(source.itemNumber || "").trim(),
+        clientItemCode: String(source.clientItemCode || "").trim(),
         description: String(source.description || source.name || "").trim(),
         brand: String(source.brand || "").trim(),
         packSize: String(source.packSize || source.unitSize || "").trim(),
@@ -6754,6 +6974,10 @@ function getProcurementRowMarkup(row = {}) {
             <td class="proc-td-desc">
                 ${data.itemImageDataUrl ? `<div class="procurement-row-image"><img src="${escapeHtml(data.itemImageDataUrl)}" alt="${escapeHtml(data.description || "Item image")}"></div>` : ""}
                 <textarea data-procurement-field="description" rows="2" placeholder="Item description">${escapeHtml(data.description)}</textarea>
+                <div class="proc-desc-meta">
+                    <label class="proc-meta-field"><span>Item #</span><input type="text" data-procurement-field="itemNumber" value="${escapeHtml(data.itemNumber)}" placeholder="1.1"></label>
+                    <label class="proc-meta-field"><span>Client Code</span><input type="text" data-procurement-field="clientItemCode" value="${escapeHtml(data.clientItemCode)}"></label>
+                </div>
             </td>
             <td><input type="text" data-procurement-field="brand" value="${escapeHtml(data.brand)}"></td>
             <td><input type="text" data-procurement-field="packSize" value="${escapeHtml(data.packSize)}"></td>
@@ -6888,6 +7112,8 @@ function collectProcurementRows() {
             id: row.dataset.procurementRowId,
             lineNumber: index + 1,
             libraryItemId: row.dataset.libraryItemId || "",
+            itemNumber: getValue("itemNumber"),
+            clientItemCode: getValue("clientItemCode"),
             description: getValue("description"),
             brand: getValue("brand"),
             packSize: getValue("packSize"),
@@ -7197,6 +7423,8 @@ async function saveProcurementSheet(options = {}) {
     const procDocRef = { docId: sheet.id, docRefNumber: sheet.refNumber, docType: "procurement", date: sheet.date, clientName: sheet.clientName || "" };
     const procCatalogItems = sheet.procurementItems.map(row => ({
         name: row.description,
+        itemNumber: row.itemNumber || "",
+        clientItemCode: row.clientItemCode || "",
         brand: row.brand,
         packSize: row.packSize,
         unit: row.unit,
@@ -7233,9 +7461,11 @@ function buildProcurementCsv(sheet) {
         ...(sheet.notes ? [["Notes", sheet.notes]] : []),
         []
     ];
-    const headers = ["Line No.", "Item Description", "Brand", "Pack Size", "Unit", "Quantity", "Unit Price", "Currency", "Lead Time", "Supplier", "Notes"];
+    const headers = ["Line No.", "Item #", "Client Item Code", "Item Description", "Brand", "Pack Size", "Unit", "Quantity", "Unit Price", "Currency", "Lead Time", "Supplier", "Notes"];
     const rows = (sheet.procurementItems || []).map(row => [
         row.lineNumber,
+        row.itemNumber || "",
+        row.clientItemCode || "",
         row.description,
         row.brand,
         row.packSize,
@@ -7281,12 +7511,11 @@ function parseProcurementCsvText(text) {
         return cells;
     }
 
-    // Find header row: first row where column 1 (index 1) matches "Item Description" or "description"
+    // Find header row: scan every cell in each row for "item description" or "description"
     let headerIdx = -1;
     for (let i = 0; i < lines.length; i++) {
-        const cells = splitCsvLine(lines[i]);
-        const col1 = (cells[1] || "").toLowerCase().trim();
-        if (col1 === "item description" || col1 === "description") {
+        const cells = splitCsvLine(lines[i]).map(c => c.toLowerCase().trim());
+        if (cells.includes("item description") || cells.includes("description")) {
             headerIdx = i;
             break;
         }
@@ -7301,17 +7530,19 @@ function parseProcurementCsvText(text) {
     const headers = splitCsvLine(lines[headerIdx]).map(h => h.toLowerCase().trim());
     const col = key => {
         const aliases = {
-            lineNumber: ["line no.", "#", "line", "line number"],
-            description: ["item description", "description", "item"],
-            brand: ["brand"],
-            packSize: ["pack size", "packsize", "pack"],
-            unit: ["unit"],
-            quantity: ["quantity", "qty"],
-            unitPrice: ["unit price", "unitprice", "price"],
-            currency: ["currency"],
-            leadTime: ["lead time", "leadtime"],
-            supplier: ["supplier", "vendor"],
-            notes: ["notes", "note"]
+            lineNumber:     ["line no.", "#", "line", "line number"],
+            itemNumber:     ["item #", "item number", "line item", "line #", "item no", "item no."],
+            clientItemCode: ["client item code", "item code", "client code", "sku", "reference code", "client ref", "ref code"],
+            description:    ["item description", "description", "item"],
+            brand:          ["brand"],
+            packSize:       ["pack size", "packsize", "pack"],
+            unit:           ["unit"],
+            quantity:       ["quantity", "qty"],
+            unitPrice:      ["unit price", "unitprice", "price"],
+            currency:       ["currency"],
+            leadTime:       ["lead time", "leadtime"],
+            supplier:       ["supplier", "vendor"],
+            notes:          ["notes", "note"]
         };
         const list = aliases[key] || [key];
         const idx = headers.findIndex(h => list.includes(h));
@@ -7324,18 +7555,21 @@ function parseProcurementCsvText(text) {
         if (cells.every(c => !c)) continue;
         const description = (cells[col("description")] || "").trim();
         if (!description) continue;
+        const rawQty = (cells[col("quantity")] || "").trim();
         rows.push({
+            itemNumber:     (cells[col("itemNumber")] || "").trim(),
+            clientItemCode: (cells[col("clientItemCode")] || "").trim(),
             description,
-            brand: (cells[col("brand")] || "").trim(),
-            packSize: (cells[col("packSize")] || "").trim(),
-            unit: (cells[col("unit")] || "").trim(),
-            quantity: (cells[col("quantity")] || "").trim(),
-            quantityTbd: (cells[col("quantity")] || "").trim().toUpperCase() === "TBD",
+            brand:     (cells[col("brand")] || "").trim(),
+            packSize:  (cells[col("packSize")] || "").trim(),
+            unit:      (cells[col("unit")] || "").trim(),
+            quantity:  rawQty,
+            quantityTbd: rawQty.toUpperCase() === "TBD",
             unitPrice: Number.parseFloat(cells[col("unitPrice")]) || 0,
-            currency: (cells[col("currency")] || "").trim() || "USD",
-            leadTime: (cells[col("leadTime")] || "").trim(),
-            supplier: (cells[col("supplier")] || "").trim(),
-            notes: (cells[col("notes")] || "").trim()
+            currency:  (cells[col("currency")] || "").trim() || "USD",
+            leadTime:  (cells[col("leadTime")] || "").trim(),
+            supplier:  (cells[col("supplier")] || "").trim(),
+            notes:     (cells[col("notes")] || "").trim()
         });
     }
     return rows;
