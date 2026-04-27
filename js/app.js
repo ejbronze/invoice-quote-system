@@ -277,7 +277,7 @@ const TRANSLATIONS = {
         new_action: "New",
         new_quote: "New Quote",
         new_invoice: "New Invoice",
-        new_procurement_sheet: "New Procurement Sheet",
+        new_procurement_sheet: "New Offer",
         invoice_reports: "Invoice Reports",
         statements: "Statements",
         statements_copy: "Open previously generated Statement of Account exports and keep them alongside the rest of your workspace output.",
@@ -622,7 +622,7 @@ const TRANSLATIONS = {
         help_q_snapshot: "What is the auto-cycling card on the dashboard?",
         help_a_snapshot: "The snapshot card in the top-right of the dashboard automatically rotates every 3 seconds between three metrics: <strong>Pipeline Value</strong> (blue \u2014 total value of all quotes and invoices), <strong>Amount Invoiced</strong> (green \u2014 total billed), and <strong>Income Received</strong> (amber \u2014 payments collected). Click the card at any time to advance manually; the 3-second timer resets from that point.",
         help_q_catalog: "How do I use the Pricing Library?",
-        help_a_catalog: "Click <strong>Pricing Library</strong> in the sidebar. Use search, category, supplier, image filters, sorting, and the Card/List toggle to browse reusable items captured from quotes, invoices, and procurement rows. The page shows 25 items per page by default, with 50 and 100 item options. Click any item to open its detail modal; editing starts only from the <strong>Edit Item</strong> action inside that modal.",
+        help_a_catalog: "Click <strong>Pricing Library</strong> in the sidebar. Use search, category, supplier, image filters, sorting, and the Card/List toggle to browse reusable items captured from quotes, invoices, and Offer rows. The page shows 25 items per page by default, with 50 and 100 item options. Click any item to open its detail modal; editing starts only from the <strong>Edit Item</strong> action inside that modal.",
         help_q_catalog_pagination: "How does Pricing Library pagination work?",
         help_a_catalog_pagination: "The Pricing Library shows a range such as <strong>1-25 of 143</strong> and page controls below the results. Choose 25, 50, or 100 items per page. Search or filter changes reset back to page 1 so the results stay predictable.",
         help_q_client_balances: "How are client outstanding balances calculated?",
@@ -738,7 +738,7 @@ const TRANSLATIONS = {
         new_action: "Nuevo",
         new_quote: "Nueva Cotización",
         new_invoice: "Nueva Factura",
-        new_procurement_sheet: "New Procurement Sheet",
+        new_procurement_sheet: "New Offer",
         invoice_reports: "Reportes de Facturas",
         invoice_reports_copy: "Revisa los totales de facturas por cliente, cambia entre facturas no pagadas, pendientes y pagadas, y mantén la lista ordenada por cliente.",
         export_report_csv: "Exportar CSV",
@@ -1172,7 +1172,7 @@ const TRANSLATIONS = {
         new_action: "Nouveau",
         new_quote: "Nouveau Devis",
         new_invoice: "Nouvelle Facture",
-        new_procurement_sheet: "New Procurement Sheet",
+        new_procurement_sheet: "New Offer",
         invoice_reports: "Rapports de Factures",
         invoice_reports_copy: "Consultez les totaux de factures par client, basculez entre les factures impayees, en attente et payees, et gardez la liste triee par client.",
         export_report_csv: "Exporter CSV",
@@ -2290,6 +2290,7 @@ function cacheElements() {
     elements.nextBtn = document.getElementById("nextBtn");
     elements.saveBtn = document.getElementById("saveBtn");
     elements.exportPdfBtn = document.getElementById("exportPdfBtn");
+    elements.exportExcelBtn = document.getElementById("exportExcelBtn");
     elements.overviewNewBtn = document.getElementById("overviewNewBtn");
     elements.overviewNewMenu = document.getElementById("overviewNewMenu");
     elements.overviewNewQuoteBtn = document.getElementById("overviewNewQuoteBtn");
@@ -2633,6 +2634,7 @@ function bindEvents() {
     elements.exportProcurementDropdownBtn?.addEventListener("click", e => {
         e.stopPropagation();
         toggleProcurementDropdown(elements.exportProcurementDropdown);
+        refreshProcExportWarning();
     });
     elements.importProcurementDropdown?.addEventListener("click", e => {
         const btn = e.target.closest("[data-procurement-import]");
@@ -2647,6 +2649,12 @@ function bindEvents() {
         closeProcurementDropdowns();
         if (btn.dataset.procurementExport === "csv") exportOpenProcurementCsv();
         else if (btn.dataset.procurementExport === "xlsx") exportOpenProcurementExcel();
+        else if (btn.dataset.procurementExport === "pdf") exportOpenProcurementPdf();
+    });
+    elements.exportProcurementDropdown?.addEventListener("change", e => {
+        if (e.target.matches('input[name="procExportCol"]') || e.target.id === "procExportGrandTotal") {
+            refreshProcExportWarning();
+        }
     });
     document.addEventListener("click", closeProcurementDropdowns);
     elements.procurementTranslateBtn?.addEventListener("click", toggleProcTranslatePanel);
@@ -2790,6 +2798,7 @@ function bindEvents() {
     elements.nextBtn.addEventListener("click", nextStep);
     elements.saveBtn.addEventListener("click", saveDocumentOnly);
     elements.exportPdfBtn.addEventListener("click", saveAndExportDocument);
+    elements.exportExcelBtn.addEventListener("click", exportOpenDocumentExcel);
     elements.stepIndicator.addEventListener("click", handleStepIndicatorClick);
     elements.previewContainer.addEventListener("click", handlePreviewContainerClick);
     elements.documentsGrid.addEventListener("click", handleDocumentCardClick);
@@ -4882,7 +4891,7 @@ function openCatalogDetailsModal(item) {
     }
     if (elements.catalogDetailsDocRefs) {
         elements.catalogDetailsDocRefs.innerHTML = usedInDocs.map(doc => {
-            const typeLabel = doc.type === "procurement" ? "Proc" : doc.type === "invoice" ? "Invoice" : "Quote";
+            const typeLabel = doc.type === "procurement" ? "Offer" : doc.type === "invoice" ? "Invoice" : "Quote";
             const typeMod = escapeHtml(doc.type || "quote");
             const refText = escapeHtml(doc.refNumber || "—");
             const clientText = doc.clientName ? `<span class="catalog-ref-row-client">${escapeHtml(doc.clientName)}</span>` : "";
@@ -4960,10 +4969,10 @@ function showCatalogDocPicker() {
     }
     const docs = getCatalogDocPickerOptions();
     if (!docs.length) {
-        elements.catalogDetailsDocPickerList.innerHTML = `<p class="catalog-doc-picker-empty">No saved documents found. Create a Quote, Invoice, or Procurement Sheet first.</p>`;
+        elements.catalogDetailsDocPickerList.innerHTML = `<p class="catalog-doc-picker-empty">No saved documents found. Create a Quote, Invoice, or Offer first.</p>`;
     } else {
         elements.catalogDetailsDocPickerList.innerHTML = docs.map(d => {
-            const typeLabel = d.type === "procurement" ? "Procurement" : d.type === "invoice" ? "Invoice" : "Quote";
+            const typeLabel = d.type === "procurement" ? "Offer" : d.type === "invoice" ? "Invoice" : "Quote";
             const currentBadge = d.isCurrent ? `<span class="catalog-doc-picker-badge">Current</span>` : "";
             return `<button type="button" class="catalog-doc-picker-item${d.isCurrent ? " is-current" : ""}" data-catalog-add-doc-id="${escapeHtml(String(d.id))}">
                 <span class="catalog-doc-picker-type">${escapeHtml(typeLabel)}</span>
@@ -5180,7 +5189,7 @@ function renderCatalogRefs(item) {
 
     return `<span class="catalog-card-used-in">Used in: ${
         visibleRefs.map(r => {
-            const typeTag = r.docType === "procurement" ? "Proc" : r.docType === "invoice" ? "Inv" : "Quote";
+            const typeTag = r.docType === "procurement" ? "Offer" : r.docType === "invoice" ? "Inv" : "Quote";
             const label = `${typeTag} ${escapeHtml(r.docRefNumber || "")}`;
             const title = [r.clientName, r.date].filter(Boolean).join(" · ");
             return `<button class="catalog-ref-link" type="button" data-open-doc-id="${escapeHtml(r.docId)}"${title ? ` title="${escapeHtml(title)}"` : ""}>${label}</button>`;
@@ -7144,14 +7153,14 @@ function buildProcurementSheetFromEditor() {
         status: "logged",
         refNumber: elements.procurementRefNumberInput.value.trim() || createProcurementReference(elements.procurementDateInput.value || getLocalDateInputValue()),
         date: elements.procurementDateInput.value || getLocalDateInputValue(),
-        clientName: elements.procurementClientInput.value.trim() || "Procurement Request",
+        clientName: elements.procurementClientInput.value.trim() || "Offer",
         clientAddress: "",
         consigneeName: "",
         consigneeAddress: "",
         currency: elements.procurementCurrencyInput.value.trim() || "USD",
         notes: elements.procurementNotesInput.value.trim(),
         internalNotes: "",
-        tags: parseTags(`${elements.procurementClientInput.value}, procurement, bid`),
+        tags: parseTags(`${elements.procurementClientInput.value}, offer, bid`),
         procurementItems: rows,
         items: rows.map(row => ({
             description: row.description,
@@ -7176,7 +7185,7 @@ function populateProcurementEditor(sheet = null, initialRows = null) {
     const today = getLocalDateInputValue();
     const doc = sheet || {};
     state.editingProcurementSheetId = sheet?.id || null;
-    elements.procurementSheetTitle.textContent = sheet ? `Edit ${sheet.refNumber || "Procurement Sheet"}` : "New Procurement Sheet";
+    elements.procurementSheetTitle.textContent = sheet ? `Edit ${sheet.refNumber || "Offer"}` : "New Offer";
     elements.procurementRefNumberInput.value = doc.refNumber || createProcurementReference(today);
     elements.procurementDateInput.value = doc.date || today;
     elements.procurementClientInput.value = doc.clientName || "";
@@ -7219,7 +7228,7 @@ function insertLibraryItemIntoProcurement(item) {
         return;
     }
     addProcurementRow(createProcurementSnapshotFromLibraryItem(item));
-    setImportStatus(`Inserted "${item.name}" as a frozen procurement snapshot.`);
+    setImportStatus(`Inserted "${item.name}" into Offer.`);
 }
 
 function insertSelectedLibraryItemIntoProcurement() {
@@ -7291,11 +7300,11 @@ function showProcSheetPicker(itemId, anchorElement) {
     picker.className = "proc-sheet-picker";
     picker.innerHTML = `
         <div class="proc-sheet-picker-head">
-            <span>Send to Procurement Sheet</span>
+            <span>Send to Offer</span>
             <button type="button" class="proc-sheet-picker-close" aria-label="Close">×</button>
         </div>
         <select class="proc-sheet-picker-select" id="procSheetPickerSelect">
-            <option value="">+ New Procurement Sheet</option>
+            <option value="">+ New Offer</option>
             ${procSheets.map(sheet => `<option value="${escapeHtml(String(sheet.id))}">${escapeHtml(sheet.refNumber || sheet.clientName || "Untitled sheet")}</option>`).join("")}
         </select>
         <button type="button" class="btn btn-primary proc-sheet-picker-submit" id="procSheetPickerSubmit">Add to Sheet</button>
@@ -7332,7 +7341,7 @@ async function confirmSendItemToProcurement(itemId, sheetId) {
 
     const description = row.querySelector(".item-description").value.trim();
     if (!description) {
-        window.alert("Add a description before sending to a Procurement Sheet.");
+        window.alert("Add a description before sending to an Offer.");
         return;
     }
 
@@ -7359,9 +7368,9 @@ async function confirmSendItemToProcurement(itemId, sheetId) {
         const nextDocuments = state.documents.map(doc => isSameDocumentId(doc.id, sheet.id) ? updatedSheet : doc);
         await saveDocumentsToServer(nextDocuments);
         renderDocuments();
-        setImportStatus(`"${description.slice(0, 40)}" added to ${sheet.refNumber || "procurement sheet"}.`);
+        setImportStatus(`"${description.slice(0, 40)}" added to ${sheet.refNumber || "Offer"}.`);
     } catch (error) {
-        window.alert(error.message || "Unable to add item to procurement sheet.");
+        window.alert(error.message || "Unable to add item to the Offer.");
     }
 }
 
@@ -7404,14 +7413,14 @@ async function saveProcurementSheet(options = {}) {
         return null;
     }
     if (!sheet.procurementItems.length) {
-        window.alert("Add at least one procurement row before saving.");
+        window.alert("Add at least one row before saving the Offer.");
         return null;
     }
 
     const existingSheet = state.editingProcurementSheetId
         ? getDocumentById(state.editingProcurementSheetId)
         : null;
-    appendDocumentChangeHistory(sheet, existingSheet, existingSheet ? null : ["Procurement sheet created"]);
+    appendDocumentChangeHistory(sheet, existingSheet, existingSheet ? null : ["Offer created"]);
 
     const nextDocuments = state.editingProcurementSheetId
         ? state.documents.map(doc => isSameDocumentId(doc.id, state.editingProcurementSheetId) ? sheet : doc)
@@ -7436,7 +7445,7 @@ async function saveProcurementSheet(options = {}) {
     }));
     await upsertItemsIntoCatalog(procCatalogItems, procDocRef);
 
-    setImportStatus(`Procurement sheet ${sheet.refNumber} saved and synced to Pricing Library.`);
+    setImportStatus(`Offer ${sheet.refNumber} saved and synced to Pricing Library.`);
     if (!options.keepOpen) {
         closeProcurementSheetModal();
     }
@@ -7449,12 +7458,12 @@ function getOpenProcurementSheetSnapshot() {
 
 function getProcurementFileStem(sheet) {
     const ref = String(sheet?.refNumber || createProcurementReference(sheet?.date || getLocalDateInputValue())).replace(/[^a-z0-9._-]+/gi, "-");
-    return `${ref}_ProcurementSheet`;
+    return `${ref}-OFFER`;
 }
 
 function buildProcurementCsv(sheet) {
     const meta = [
-        ["Procurement Sheet", sheet.refNumber || ""],
+        ["Offer", sheet.refNumber || ""],
         ["Client", sheet.clientName || ""],
         ["Date", sheet.date || ""],
         ["Currency", sheet.currency || "USD"],
@@ -7483,7 +7492,7 @@ function buildProcurementCsv(sheet) {
 function exportOpenProcurementCsv() {
     const sheet = getOpenProcurementSheetSnapshot();
     downloadTextFile(`${getProcurementFileStem(sheet)}.csv`, `${buildProcurementCsv(sheet)}\n`, "text/csv;charset=utf-8");
-    setImportStatus("Procurement CSV exported.");
+    setImportStatus("Offer CSV exported.");
 }
 
 function parseProcurementCsvText(text) {
@@ -7643,26 +7652,329 @@ async function handleProcurementXlsxImport(event) {
     }
 }
 
-async function downloadProcurementExcel(sheet) {
+async function downloadProcurementExcel(sheet, options = {}) {
+    const { includeGrandTotal = false, selectedColumns } = options;
     const response = await fetch("/api/procurement-report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sheet })
+        body: JSON.stringify({ sheet, includeGrandTotal, selectedColumns })
     });
     if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error || "Unable to generate the procurement Excel file.");
+        throw new Error(payload.error || "Unable to generate the Offer Excel file.");
     }
     const blob = await response.blob();
     downloadBlobFile(`${getProcurementFileStem(sheet)}.xlsx`, blob);
 }
 
+function getProcExportOptions() {
+    const includeGrandTotal = document.getElementById("procExportGrandTotal")?.checked === true;
+    const rowsPerPage = Math.max(5, Math.min(50, parseInt(document.getElementById("procExportRowsPerPage")?.value, 10) || 25));
+    const selectedColumns = Array.from(
+        document.querySelectorAll('input[name="procExportCol"]:checked')
+    ).map(cb => cb.value);
+    return { includeGrandTotal, rowsPerPage, selectedColumns };
+}
+
+function refreshProcExportWarning() {
+    const warnEl = document.getElementById("procExportGrandTotalWarn");
+    if (!warnEl) return;
+    const grandTotalOn = document.getElementById("procExportGrandTotal")?.checked;
+    if (!grandTotalOn) {
+        warnEl.hidden = true;
+        return;
+    }
+    const lineTotalChecked = document.querySelector('input[name="procExportCol"][value="lineTotal"]')?.checked;
+    if (!lineTotalChecked) {
+        warnEl.textContent = "Grand total requires Line Total to be included.";
+        warnEl.hidden = false;
+        return;
+    }
+    const rows = collectProcurementRows();
+    const hasValidTotals = rows.some(r => {
+        const qty = r.quantityTbd ? null : Number.parseFloat(r.quantity);
+        return qty !== null && !Number.isNaN(qty) && qty > 0 && Number(r.unitPrice) > 0;
+    });
+    if (!hasValidTotals) {
+        warnEl.textContent = "No valid line totals available for grand total.";
+        warnEl.hidden = false;
+        return;
+    }
+    warnEl.hidden = true;
+}
+
 async function exportOpenProcurementExcel() {
+    const options = getProcExportOptions();
     try {
-        await downloadProcurementExcel(getOpenProcurementSheetSnapshot());
-        setImportStatus("Procurement Excel exported.");
+        await downloadProcurementExcel(getOpenProcurementSheetSnapshot(), options);
+        setImportStatus("Offer Excel exported.");
     } catch (error) {
-        window.alert(error.message || "Unable to export procurement Excel.");
+        window.alert(error.message || "Unable to export Offer Excel.");
+    }
+}
+
+// ── Procurement PDF helpers ──────────────────────────────────────────────────
+
+function buildProcPdfFullHeader(sheet, company, letterheadSrc, dateDisplay, pageNum, pageCount) {
+    const metaItems = [];
+    if (sheet.clientName) metaItems.push(`<strong>Client:</strong> ${escapeHtml(sheet.clientName)}`);
+    if (dateDisplay) metaItems.push(`<strong>Date:</strong> ${escapeHtml(dateDisplay)}`);
+    if (sheet.currency) metaItems.push(`<strong>Currency:</strong> ${escapeHtml(sheet.currency)}`);
+    if (pageCount > 1) metaItems.push(`Page 1 of ${pageCount}`);
+    return `
+<div class="proc-pdf-header-full">
+    <div><img src="${escapeHtml(letterheadSrc)}" alt="" class="proc-pdf-lh-img"></div>
+    <div class="proc-pdf-doc-info">
+        <div class="proc-pdf-doc-title">OFFER</div>
+        <div class="proc-pdf-doc-refnum">${escapeHtml(sheet.refNumber || "")}</div>
+        <div class="proc-pdf-doc-details">${metaItems.join('<span class="proc-pdf-dot"> · </span>')}</div>
+    </div>
+</div>`;
+}
+
+function buildProcPdfCompactHeader(sheet, companyName, pageNum, pageCount) {
+    const parts = [];
+    if (sheet.refNumber) parts.push(escapeHtml(sheet.refNumber));
+    if (sheet.clientName) parts.push(escapeHtml(sheet.clientName));
+    return `
+<div class="proc-pdf-header-compact">
+    <span class="proc-pdf-compact-company">${escapeHtml(companyName || "Offer")}</span>
+    <span class="proc-pdf-compact-center">OFFER${parts.length ? " · " + parts.join(" · ") : ""}</span>
+    <span class="proc-pdf-compact-page">Page ${pageNum} of ${pageCount}</span>
+</div>`;
+}
+
+// Column definitions for PDF — key matches field names used in export options
+const PROC_PDF_COLS = [
+    { key: "#",              label: "#",           pct: 3,  align: "center" },
+    { key: "itemNumber",     label: "Item #",      pct: 5,  align: "center" },
+    { key: "clientItemCode", label: "Client Code", pct: 7,  align: "left"   },
+    { key: "description",    label: "Description", pct: 22, align: "left"   },
+    { key: "brand",          label: "Brand",       pct: 7,  align: "center" },
+    { key: "packSize",       label: "Pack Size",   pct: 6,  align: "center" },
+    { key: "unit",           label: "Unit",        pct: 4,  align: "center" },
+    { key: "quantity",       label: "Qty",         pct: 5,  align: "center" },
+    { key: "unitPrice",      label: "Unit Price",  pct: 8,  align: "right"  },
+    { key: "currency",       label: "Currency",    pct: 5,  align: "center" },
+    { key: "lineTotal",      label: "Line Total",  pct: 8,  align: "right"  },
+    { key: "leadTime",       label: "Lead Time",   pct: 6,  align: "center" },
+    { key: "supplier",       label: "Supplier",    pct: 8,  align: "left"   },
+    { key: "notes",          label: "Notes",       pct: 12, align: "left"   },
+];
+
+function getPdfActiveCols(selectedColumns) {
+    const selected = Array.isArray(selectedColumns) && selectedColumns.length > 0
+        ? new Set(selectedColumns)
+        : new Set(PROC_PDF_COLS.map(c => c.key));
+    const active = PROC_PDF_COLS.filter(c => c.key === "#" || selected.has(c.key));
+    // Normalize widths to 100%
+    const totalPct = active.reduce((s, c) => s + c.pct, 0);
+    return active.map(c => ({ ...c, pct: Math.round((c.pct / totalPct) * 100) }));
+}
+
+function getPdfCellValue(col, row, index) {
+    switch (col.key) {
+        case "#":              return escapeHtml(String(row.lineNumber || index + 1));
+        case "itemNumber":     return escapeHtml(row.itemNumber || "");
+        case "clientItemCode": return escapeHtml(row.clientItemCode || "");
+        case "description":    return escapeHtml(row.description || "");
+        case "brand":          return escapeHtml(row.brand || "");
+        case "packSize":       return escapeHtml(row.packSize || "");
+        case "unit":           return escapeHtml(row.unit || "");
+        case "quantity": {
+            const v = row.quantityTbd ? "TBD" : (row.quantity || "");
+            const style = row.quantityTbd ? "color:#94a3b8;font-style:italic;" : "";
+            return `<span style="${style}">${escapeHtml(v)}</span>`;
+        }
+        case "unitPrice":  return Number(row.unitPrice) > 0 ? escapeHtml(formatAmount(Number(row.unitPrice))) : "";
+        case "lineTotal": {
+            const qty = row.quantityTbd ? null : parseFloat(row.quantity);
+            const hasQty = qty !== null && !Number.isNaN(qty) && qty > 0;
+            return (hasQty && Number(row.unitPrice) > 0) ? escapeHtml(formatAmount(qty * Number(row.unitPrice))) : "";
+        }
+        case "leadTime":  return escapeHtml(row.leadTime || "");
+        case "supplier":  return escapeHtml(row.supplier || "");
+        case "notes":     return escapeHtml(row.notes || "");
+        default:          return "";
+    }
+}
+
+function buildProcPdfDataRow(row, index, activeCols) {
+    const stripeBg = index % 2 === 1 ? "background:#f0f4fa;" : "";
+    const td = (val, align, extra = "") =>
+        `<td class="proc-pdf-td" style="text-align:${align};${extra}">${val}</td>`;
+    const cells = activeCols.map(col => {
+        const val = getPdfCellValue(col, row, index);
+        return td(val, col.align);
+    }).join("");
+    return `<tr style="${stripeBg}">${cells}</tr>`;
+}
+
+function buildProcurementPdfHtml(sheet, options) {
+    const { includeGrandTotal = false, rowsPerPage = 25, selectedColumns } = options || {};
+    const procRows = Array.isArray(sheet?.procurementItems) ? sheet.procurementItems : [];
+    const company = state.companyProfile || {};
+    const companyName = company.companyName || "";
+    const letterheadSrc = getLetterheadUrl();
+    const dateDisplay = formatDisplayDate(sheet.date) || sheet.date || "";
+    const activeCols = getPdfActiveCols(selectedColumns);
+
+    // Calculate grand total
+    let grandTotal = 0;
+    let hasGrandTotal = false;
+    procRows.forEach(row => {
+        const qty = row.quantityTbd ? null : parseFloat(row.quantity);
+        if (qty !== null && !Number.isNaN(qty) && qty > 0 && Number(row.unitPrice) > 0) {
+            grandTotal += qty * Number(row.unitPrice);
+            hasGrandTotal = true;
+        }
+    });
+
+    const pageCount = Math.max(1, Math.ceil(procRows.length / rowsPerPage));
+    const colgroup = activeCols.map(c => `<col style="width:${c.pct}%">`).join("");
+    const thead = `<tr>${activeCols.map(c =>
+        `<th class="proc-pdf-th" style="text-align:${c.align}">${escapeHtml(c.label)}</th>`
+    ).join("")}</tr>`;
+
+    const pages = [];
+    for (let p = 0; p < pageCount; p++) {
+        const isFirst = p === 0;
+        const isLast = p === pageCount - 1;
+        const pageRows = procRows.slice(p * rowsPerPage, (p + 1) * rowsPerPage);
+
+        const header = isFirst
+            ? buildProcPdfFullHeader(sheet, company, letterheadSrc, dateDisplay, p + 1, pageCount)
+            : buildProcPdfCompactHeader(sheet, companyName, p + 1, pageCount);
+
+        const tbody = pageRows.map((row, i) => buildProcPdfDataRow(row, i, activeCols)).join("");
+
+        // Grand total row — only under Line Total column, never Unit Price.
+        let tfoot = "";
+        const lineTotalIdx = activeCols.findIndex(c => c.key === "lineTotal");
+        if (isLast && includeGrandTotal && hasGrandTotal && lineTotalIdx >= 0) {
+            const descIdx = activeCols.findIndex(c => c.key === "description");
+            const currIdx = activeCols.findIndex(c => c.key === "currency");
+            const totalCells = activeCols.map((col, i) => {
+                if (i === descIdx)      return `<td class="proc-pdf-td" style="text-align:right;font-weight:700;padding-right:6px">Grand Total</td>`;
+                if (i === lineTotalIdx) return `<td class="proc-pdf-td" style="text-align:right;font-weight:700">${escapeHtml(formatAmount(grandTotal))}</td>`;
+                if (i === currIdx)      return `<td class="proc-pdf-td" style="text-align:center">${escapeHtml(sheet.currency || "USD")}</td>`;
+                return `<td class="proc-pdf-td"></td>`;
+            }).join("");
+            tfoot = `<tfoot><tr class="proc-pdf-total-row">${totalCells}</tr></tfoot>`;
+        }
+
+        const notes = (isLast && sheet.notes)
+            ? `<div class="proc-pdf-notes">${escapeHtml("Notes: " + sheet.notes)}</div>`
+            : "";
+
+        const compParts = [];
+        if (company.companyName) compParts.push(company.companyName);
+        if (company.address) compParts.push(company.address);
+        if (company.email) compParts.push(company.email);
+        const footerStr = compParts.join("  ·  ");
+
+        pages.push(`
+<div class="proc-pdf-page${isFirst ? "" : " proc-new-page"}">
+    <div class="proc-pdf-inner">
+        ${header}
+        <table class="proc-pdf-table">
+            <colgroup>${colgroup}</colgroup>
+            <thead>${thead}</thead>
+            <tbody>${tbody}</tbody>
+            ${tfoot}
+        </table>
+        ${notes}
+        <div class="proc-pdf-footer">
+            <span class="proc-pdf-footer-company">${escapeHtml(footerStr)}</span>
+            <span>Page ${p + 1} of ${pageCount}</span>
+        </div>
+    </div>
+</div>`);
+    }
+
+    return `<div class="proc-pdf-shell">${pages.join("")}</div>`;
+}
+
+async function generateProcurementPdfBlob(sheet, options) {
+    if (!window.html2pdf) {
+        throw new Error("PDF export is unavailable right now.");
+    }
+    const html = buildProcurementPdfHtml(sheet, options);
+    const wrapper = document.createElement("div");
+    wrapper.style.cssText = "position:fixed;left:-9999px;top:0;z-index:-1;";
+    wrapper.innerHTML = html;
+    const shellEl = wrapper.querySelector(".proc-pdf-shell");
+    document.body.appendChild(wrapper);
+    try {
+        return await window.html2pdf()
+            .set({
+                margin: [0, 0, 0, 0],
+                pagebreak: { mode: "css", before: ".proc-new-page" },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: "#ffffff",
+                    logging: false,
+                    width: 1122,
+                    windowWidth: 1200
+                },
+                jsPDF: {
+                    unit: "mm",
+                    format: "a4",
+                    orientation: "landscape"
+                }
+            })
+            .from(shellEl)
+            .outputPdf("blob");
+    } finally {
+        wrapper.remove();
+    }
+}
+
+async function downloadProcurementPdf(sheet, options = {}) {
+    const blob = await generateProcurementPdfBlob(sheet, options);
+    downloadBlobFile(`${getProcurementFileStem(sheet)}.pdf`, blob);
+}
+
+async function exportOpenProcurementPdf() {
+    const options = getProcExportOptions();
+    try {
+        setImportStatus("Generating PDF…");
+        await downloadProcurementPdf(getOpenProcurementSheetSnapshot(), options);
+        setImportStatus("Offer PDF exported.");
+    } catch (error) {
+        window.alert(error.message || "Unable to export Offer PDF.");
+    }
+}
+
+async function downloadDocumentExcel(doc) {
+    const companyProfile = state.companyProfile || {};
+    const response = await fetch("/api/document-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ doc, companyProfile })
+    });
+    if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Unable to generate the Excel file.");
+    }
+    const blob = await response.blob();
+    const typeLabel = doc.type === "invoice" ? "Invoice" : "Quote";
+    const refPart = slugifyFilePart(doc.refNumber || "document", "document");
+    const clientPart = slugifyFilePart(doc.clientName || "client", "client");
+    downloadBlobFile(`${refPart}_${typeLabel}_${clientPart}.xlsx`, blob);
+}
+
+async function exportOpenDocumentExcel() {
+    if (!canCurrentEditorViewPrint()) return;
+    const doc = buildDocumentData();
+    if (state.editingDocumentId) doc.id = state.editingDocumentId;
+    try {
+        setImportStatus(`Preparing ${doc.refNumber || "document"} Excel export...`);
+        await downloadDocumentExcel(doc);
+        setImportStatus(`${doc.refNumber || "Document"} exported as Excel.`);
+    } catch (error) {
+        window.alert(error.message || "Unable to export Excel.");
     }
 }
 
@@ -7675,9 +7987,9 @@ async function convertOpenProcurementToQuote() {
         closeProcurementSheetModal();
         renderDocuments();
         editDocument(quote.id);
-        setImportStatus(`Created quote ${quote.refNumber} from all rows in ${sheet.refNumber}.`);
+        setImportStatus(`Created quote ${quote.refNumber} from all items in Offer ${sheet.refNumber}.`);
     } catch (error) {
-        window.alert(error.message || "Unable to convert procurement sheet to quote.");
+        window.alert(error.message || "Unable to generate quote from Offer.");
     }
 }
 
@@ -7725,9 +8037,9 @@ async function convertSelectedProcurementRowsToQuote() {
         closeProcurementSheetModal();
         renderDocuments();
         editDocument(quote.id);
-        setImportStatus(`Created quote ${quote.refNumber} from ${selectedRows.length} selected row${selectedRows.length === 1 ? "" : "s"}.`);
+        setImportStatus(`Created quote ${quote.refNumber} from ${selectedRows.length} selected item${selectedRows.length === 1 ? "" : "s"} in Offer ${sheet.refNumber}.`);
     } catch (error) {
-        window.alert(error.message || "Unable to convert selected rows to quote.");
+        window.alert(error.message || "Unable to generate quote from selected Offer items.");
     }
 }
 
@@ -7764,16 +8076,16 @@ function convertProcurementSheetToQuote(sheet, rows = null) {
         status: "logged",
         refNumber,
         date,
-        clientName: sheet.clientName || "Procurement Client",
+        clientName: sheet.clientName || "Client",
         clientAddress: "",
         consigneeName: "",
         consigneeAddress: "",
         poNumber: sheet.refNumber || "",
-        tags: parseTags(`procurement, ${sheet.refNumber || ""}, ${sheet.clientName || ""}`),
+        tags: parseTags(`offer, ${sheet.refNumber || ""}, ${sheet.clientName || ""}`),
         notes: sheet.notes || "",
         internalNotes: rows && rows.length < (sheet.procurementItems || []).length
-            ? `Converted from ${rows.length} selected row${rows.length === 1 ? "" : "s"} of procurement sheet ${sheet.refNumber || sheet.id}.`
-            : `Converted from procurement sheet ${sheet.refNumber || sheet.id}.`,
+            ? `Generated from ${rows.length} selected item${rows.length === 1 ? "" : "s"} of Offer ${sheet.refNumber || sheet.id}.`
+            : `Generated from Offer ${sheet.refNumber || sheet.id}.`,
         paymentTerms: DEFAULT_PAYMENT_TERMS,
         paymentTermsMode: "net30",
         paymentTermsDays: 30,
@@ -8073,7 +8385,7 @@ function getNotesTargetTypeLabel(target, targetType) {
         return "Statement";
     }
     if (target?.type === "invoice") return "Invoice";
-    if (target?.type === "procurement") return "Procurement";
+    if (target?.type === "procurement") return "Offer";
     return "Quote";
 }
 
@@ -13398,6 +13710,7 @@ function goToStep(step) {
     elements.nextBtn.textContent = step === totalSteps - 1 ? "Review Document" : step === totalSteps - 2 ? "Continue to Preview" : "Continue";
     elements.saveBtn.style.display = (isPrefilled || step === totalSteps) ? "block" : "none";
     elements.exportPdfBtn.style.display = step === totalSteps && canCurrentEditorViewPrint() ? "block" : "none";
+    elements.exportExcelBtn.style.display = step === totalSteps && canCurrentEditorViewPrint() ? "block" : "none";
 
     if (step >= totalSteps - 1) {
         generatePreviews();
@@ -13582,7 +13895,7 @@ function addItem() {
             <input type="text" class="item-upcharge-percent" value="0.00%" readonly tabindex="-1">
         </td>
         <td class="it-actions">
-            <button type="button" class="item-to-proc-btn" data-send-to-proc="${itemId}" aria-label="Add to Procurement Sheet" title="Add to Procurement Sheet">
+            <button type="button" class="item-to-proc-btn" data-send-to-proc="${itemId}" aria-label="Add to Offer" title="Add to Offer">
                 <svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="5" width="14" height="9" rx="1.5"/><path d="m4.5 9.5 2 2 4-3"/><path d="M5 5V3.5a1.5 1.5 0 0 1 3 0V5"/></svg>
             </button>
             <button type="button" class="item-del-btn" data-remove-item="${itemId}" aria-label="Remove item" title="Remove item">
@@ -15478,7 +15791,7 @@ function getDocumentCardMarkup(doc) {
     if (doc.type === "invoice") {
         statusBadges.push(getStatusBadgeMarkup(getPaymentStatusLabel(paymentStatus), `is-${paymentStatus}`));
     } else if (isProcurement) {
-        statusBadges.push(getStatusBadgeMarkup("Procurement", "is-draft"));
+        statusBadges.push(getStatusBadgeMarkup("Offer", "is-draft"));
     }
 
     const statusMarkup = statusBadges.join("");
@@ -15542,13 +15855,17 @@ function getDocumentCardMarkup(doc) {
                 <button type="button" class="statement-action-btn is-open" data-action="export-pdf" data-id="${escapeHtml(String(doc.id))}" aria-label="Download PDF" title="Download PDF">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="m8 11 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
                 </button>` : ""}
+                ${canViewPdf && !isProcurement ? `
+                <button type="button" class="statement-action-btn is-open" data-action="export-excel" data-id="${escapeHtml(String(doc.id))}" aria-label="Export Excel" title="Export Excel">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M14 3v4h4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="m9 10 4 4M13 10l-4 4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>` : ""}
                 ${isProcurement ? `
                 <button type="button" class="statement-action-btn is-open" data-action="export-excel" data-id="${escapeHtml(String(doc.id))}" aria-label="Export Excel" title="Export Excel">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M14 3v4h4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="m9 10 4 4M13 10l-4 4M9 18h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
-                <button type="button" class="statement-action-btn is-open" data-action="convert" data-id="${escapeHtml(String(doc.id))}" aria-label="Convert to Quote" title="Convert to Quote">
+                <button type="button" class="statement-action-btn is-open" data-action="convert" data-id="${escapeHtml(String(doc.id))}" aria-label="Generate Quote from Offer" title="Generate Quote from Offer">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M14 2v6h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="m8 13 3 3 5-5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span class="visually-hidden">Convert to Quote</span>
+                    <span class="visually-hidden">Generate Quote from Offer</span>
                 </button>` : ""}
                 <button type="button" class="statement-action-btn is-edit" data-action="edit" data-id="${escapeHtml(String(doc.id))}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
@@ -15576,7 +15893,8 @@ function getDocumentCardMarkup(doc) {
                         ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="paid" data-id="${escapeHtml(String(doc.id))}">${ICONS.checkCircle}<span>${escapeHtml(t("mark_as_paid"))}</span></button>` : ""}
                         ${isProcurement ? `<button type="button" class="doc-actions-menu-btn" data-action="export-csv" data-id="${escapeHtml(String(doc.id))}">${ICONS.fileText}<span>Export CSV</span></button>` : ""}
                         ${isProcurement ? `<button type="button" class="doc-actions-menu-btn" data-action="export-excel" data-id="${escapeHtml(String(doc.id))}">${ICONS.spreadsheet}<span>Export Excel</span></button>` : ""}
-                        <button type="button" class="doc-actions-menu-btn" data-action="convert" data-id="${escapeHtml(String(doc.id))}" data-target-type="${doc.type === "quote" ? "invoice" : "quote"}">${ICONS.convert}<span>${escapeHtml(isProcurement ? "Convert to Quote" : t(doc.type === "quote" ? "convert_to_invoice" : "convert_to_quote"))}</span></button>
+                        ${isProcurement ? `<button type="button" class="doc-actions-menu-btn" data-action="export-pdf-proc" data-id="${escapeHtml(String(doc.id))}">${ICONS.pdf || ICONS.fileText}<span>Export PDF</span></button>` : ""}
+                        <button type="button" class="doc-actions-menu-btn" data-action="convert" data-id="${escapeHtml(String(doc.id))}" data-target-type="${doc.type === "quote" ? "invoice" : "quote"}">${ICONS.convert}<span>${escapeHtml(isProcurement ? "Generate Quote from Offer" : t(doc.type === "quote" ? "convert_to_invoice" : "convert_to_quote"))}</span></button>
                         <button type="button" class="doc-actions-menu-btn doc-actions-menu-btn-danger" data-action="delete" data-id="${escapeHtml(String(doc.id))}">${ICONS.trash}<span>${escapeHtml(t("delete"))}</span></button>
                     </div>
                 </div>
@@ -15635,7 +15953,7 @@ function renderOverviewPanels() {
                 icon: `<svg viewBox="0 0 20 20" fill="none"><rect x="4" y="3" width="12" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`
             }),
             getOverviewSummaryCardMarkup({
-                label: "Procurement",
+                label: "Offers",
                 value: String(state.documents.filter(doc => doc.type === "procurement").length),
                 tone: "statements",
                 targetPage: "documents",
@@ -15959,16 +16277,35 @@ async function handleDocumentCardClick(event) {
             const doc = getDocumentById(docId);
             if (doc?.type === "procurement") {
                 downloadTextFile(`${getProcurementFileStem(doc)}.csv`, `${buildProcurementCsv(doc)}\n`, "text/csv;charset=utf-8");
-                setImportStatus("Procurement CSV exported.");
+                setImportStatus("Offer CSV exported.");
             }
         } else if (action === "export-excel") {
             const doc = getDocumentById(docId);
             if (doc?.type === "procurement") {
                 try {
                     await downloadProcurementExcel(doc);
-                    setImportStatus("Procurement Excel exported.");
+                    setImportStatus("Offer Excel exported.");
                 } catch (error) {
-                    window.alert(error.message || "Unable to export procurement Excel.");
+                    window.alert(error.message || "Unable to export Offer Excel.");
+                }
+            } else if (doc?.type === "quote" || doc?.type === "invoice") {
+                try {
+                    setImportStatus(`Preparing ${doc.refNumber || "document"} Excel export...`);
+                    await downloadDocumentExcel(doc);
+                    setImportStatus(`${doc.refNumber || "Document"} exported as Excel.`);
+                } catch (error) {
+                    window.alert(error.message || "Unable to export Excel.");
+                }
+            }
+        } else if (action === "export-pdf-proc") {
+            const doc = getDocumentById(docId);
+            if (doc?.type === "procurement") {
+                try {
+                    setImportStatus(`Preparing ${doc.refNumber || "document"} PDF…`);
+                    await downloadProcurementPdf(doc);
+                    setImportStatus(`${doc.refNumber || "Document"} exported as PDF.`);
+                } catch (error) {
+                    window.alert(error.message || "Unable to export Offer PDF.");
                 }
             }
         } else if (action === "quick-payment") {
@@ -15984,7 +16321,7 @@ async function handleDocumentCardClick(event) {
                 await saveDocumentsToServer([quote, ...state.documents]);
                 renderDocuments();
                 editDocument(quote.id);
-                setImportStatus(`Created quote ${quote.refNumber} from ${doc.refNumber}.`);
+                setImportStatus(`Created quote ${quote.refNumber} from Offer ${doc.refNumber}.`);
             } else {
                 convertDocumentType(docId, actionButton.dataset.targetType || "invoice");
             }
@@ -16286,7 +16623,7 @@ async function deleteDocument(id) {
         return;
     }
 
-    const docLabel = doc.type === "procurement" ? "procurement sheet" : doc.type === "quote" ? "quote" : "invoice";
+    const docLabel = doc.type === "procurement" ? "Offer" : doc.type === "quote" ? "quote" : "invoice";
     if (!window.confirm(`Delete this ${docLabel} (${doc.refNumber})?`)) {
         return;
     }

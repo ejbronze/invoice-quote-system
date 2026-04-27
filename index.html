@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SantoSync</title>
-    <link rel="stylesheet" href="css/styles.css?v=32">
+    <link rel="stylesheet" href="css/styles.css?v=34">
 </head>
 <body>
     <div class="brand-splash" id="brandSplash" aria-hidden="true" hidden>
@@ -223,8 +223,8 @@
                                         <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 3h11v10h-11z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M2.5 6h11M6 3v10M10 3v10" stroke="currentColor" stroke-width="1.2"/></svg>
                                     </span>
                                     <span class="workspace-new-label">
-                                        <strong>Procurement Sheet</strong>
-                                        <span>Excel-ready bid catalog</span>
+                                        <strong>New Offer</strong>
+                                        <span>Supplier / client item offer sheet</span>
                                     </span>
                                 </button>
                                 <button class="workspace-new-menu-item" id="overviewNewStatementBtn" type="button">
@@ -300,7 +300,7 @@
                             <div class="docs-new-menu" id="newMenu" hidden>
                                 <button class="docs-new-menu-item" id="newQuoteMenuBtn" type="button">New Quote</button>
                                 <button class="docs-new-menu-item" id="newInvoiceMenuBtn" type="button">New Invoice</button>
-                                <button class="docs-new-menu-item" id="newProcurementMenuBtn" type="button">New Procurement Sheet</button>
+                                <button class="docs-new-menu-item" id="newProcurementMenuBtn" type="button">New Offer</button>
                                 <button class="docs-new-menu-item" id="newStatementMenuBtn" type="button">New Statement</button>
                             </div>
                         </div>
@@ -326,7 +326,7 @@
                                 <button class="filter-chip active" id="filterAllBtn" type="button" data-filter="all">All</button>
                                 <button class="filter-chip" id="filterQuotesBtn" type="button" data-filter="quote">Quotes</button>
                                 <button class="filter-chip" id="filterInvoicesBtn" type="button" data-filter="invoice">Invoices</button>
-                                <button class="filter-chip" id="filterProcurementBtn" type="button" data-filter="procurement">Procurement</button>
+                                <button class="filter-chip" id="filterProcurementBtn" type="button" data-filter="procurement">Offers</button>
                             </div>
                         </div>
                     </div>
@@ -1069,7 +1069,7 @@
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_catalog">How do I use the Catalog?</summary>
-                        <p data-i18n-html="help_a_catalog">Click <strong>Pricing Library</strong> in the sidebar. Use search, category, supplier, image filters, sorting, and the Card/List toggle to browse reusable items captured from quotes, invoices, and procurement rows. The page shows 25 items per page by default, with 50 and 100 item options. Click any item to open its detail modal; editing starts only from the <strong>Edit Item</strong> action inside that modal.</p>
+                        <p data-i18n-html="help_a_catalog">Click <strong>Pricing Library</strong> in the sidebar. Use search, category, supplier, image filters, sorting, and the Card/List toggle to browse reusable items captured from quotes, invoices, and Offer rows. The page shows 25 items per page by default, with 50 and 100 item options. Click any item to open its detail modal; editing starts only from the <strong>Edit Item</strong> action inside that modal.</p>
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_catalog_pagination">How does Pricing Library pagination work?</summary>
@@ -1852,6 +1852,10 @@
                 </div>
                 <div class="modal-footer-actions">
                     <button class="btn btn-secondary" id="saveBtn" type="button" style="display: none;">Save</button>
+                    <button class="btn btn-secondary" id="exportExcelBtn" type="button" style="display: none;" aria-label="Export as Excel" data-tooltip="Export as Excel">
+                        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style="margin-right:4px;vertical-align:-3px"><path d="M6 3h8l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M14 3v4h4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="m9 10 4 4M13 10l-4 4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Excel
+                    </button>
                     <button class="btn btn-success" id="exportPdfBtn" type="button" style="display: none;">View / Print</button>
                 </div>
             </div>
@@ -1861,7 +1865,7 @@
     <div class="modal settings-modal" id="procurementSheetModal" aria-hidden="true" hidden>
         <div class="modal-content settings-modal-content procurement-modal-content">
             <div class="modal-header">
-                <h3 id="procurementSheetTitle">New Procurement Sheet</h3>
+                <h3 id="procurementSheetTitle">New Offer</h3>
                 <div class="proc-modal-header-actions">
                     <div class="proc-translate-tooltip-wrap">
                         <button class="proc-translate-btn" id="procurementTranslateBtn" type="button" aria-label="Translate sheet">
@@ -1978,21 +1982,50 @@
                     <input type="file" id="procurementCsvFileInput" accept=".csv" hidden>
                     <input type="file" id="procurementXlsxFileInput" accept=".xlsx,.xls" hidden>
 
-                    <div class="proc-dropdown" id="exportProcurementDropdown">
+                    <div class="proc-dropdown proc-dropdown-persist" id="exportProcurementDropdown">
                         <button class="btn btn-secondary proc-dropdown-trigger proc-export-btn" type="button" aria-haspopup="true" aria-expanded="false" id="exportProcurementDropdownBtn">
-                            <img src="/assets/icons/icon-excel.png" alt="" class="btn-custom-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="btn-icon-svg"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                             <span>Export</span>
                             <span class="proc-dropdown-caret" aria-hidden="true">▾</span>
                         </button>
-                        <div class="proc-dropdown-menu" role="menu">
-                            <button type="button" role="menuitem" data-procurement-export="csv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h5"/></svg>Export CSV</button>
+                        <div class="proc-dropdown-menu proc-export-menu" role="menu">
+                            <div class="proc-export-opts">
+                                <div class="proc-export-cols-label">Export Columns</div>
+                                <div class="proc-export-cols-grid">
+                                    <label class="proc-export-col-label"><input type="checkbox" name="procExportCol" value="itemNumber" checked> Item #</label>
+                                    <label class="proc-export-col-label"><input type="checkbox" name="procExportCol" value="clientItemCode"> Client Item Code</label>
+                                    <label class="proc-export-col-label"><input type="checkbox" name="procExportCol" value="brand" checked> Brand</label>
+                                    <label class="proc-export-col-label"><input type="checkbox" name="procExportCol" value="packSize" checked> Pack Size</label>
+                                    <label class="proc-export-col-label"><input type="checkbox" name="procExportCol" value="unit" checked> Unit</label>
+                                    <label class="proc-export-col-label"><input type="checkbox" name="procExportCol" value="quantity" checked> Quantity</label>
+                                    <label class="proc-export-col-label"><input type="checkbox" name="procExportCol" value="unitPrice" checked> Unit Price</label>
+                                    <label class="proc-export-col-label"><input type="checkbox" name="procExportCol" value="currency" checked> Currency</label>
+                                    <label class="proc-export-col-label"><input type="checkbox" name="procExportCol" value="lineTotal" checked> Line Total</label>
+                                    <label class="proc-export-col-label"><input type="checkbox" name="procExportCol" value="leadTime" checked> Lead Time</label>
+                                    <label class="proc-export-col-label"><input type="checkbox" name="procExportCol" value="supplier" checked> Supplier</label>
+                                    <label class="proc-export-col-label"><input type="checkbox" name="procExportCol" value="notes" checked> Notes</label>
+                                </div>
+                                <div class="proc-export-divider-thin"></div>
+                                <label class="proc-export-opt-label" for="procExportGrandTotal">
+                                    <input type="checkbox" id="procExportGrandTotal">
+                                    <span>Include Grand Total</span>
+                                </label>
+                                <div class="proc-export-grand-total-warn" id="procExportGrandTotalWarn" hidden></div>
+                                <div class="proc-export-rpm-row">
+                                    <span>Rows / PDF page</span>
+                                    <input type="number" id="procExportRowsPerPage" value="25" min="5" max="50" step="5" class="proc-export-rpm-input" aria-label="Rows per PDF page">
+                                </div>
+                            </div>
+                            <div class="proc-dropdown-divider" role="separator"></div>
                             <button type="button" role="menuitem" data-procurement-export="xlsx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 10l4 4M13 10l-4 4"/></svg>Export Excel (.xlsx)</button>
+                            <button type="button" role="menuitem" data-procurement-export="pdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 11h3"/></svg>Export PDF</button>
+                            <button type="button" role="menuitem" data-procurement-export="csv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h5"/></svg>Export CSV</button>
                         </div>
                     </div>
 
-                    <button class="btn btn-secondary" id="convertSelectedToQuoteBtn" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 16V4M7 4 3 8M7 4l4 4M17 8v12M17 20l4-4M17 20l-4-4"/></svg>Convert Selected to Quote</button>
-                    <button class="btn btn-secondary" id="convertProcurementToQuoteBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 16V4M7 4 3 8M7 4l4 4M17 8v12M17 20l4-4M17 20l-4-4"/></svg>Convert All to Quote</button>
-                    <button class="btn btn-primary" id="saveProcurementSheetBtn" type="button"><img src="/assets/icons/icon-save.png" alt="" class="btn-custom-icon">Save Sheet</button>
+                    <button class="btn btn-secondary" id="convertSelectedToQuoteBtn" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 16V4M7 4 3 8M7 4l4 4M17 8v12M17 20l4-4M17 20l-4-4"/></svg>Generate Quote from Selected</button>
+                    <button class="btn btn-secondary" id="convertProcurementToQuoteBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 16V4M7 4 3 8M7 4l4 4M17 8v12M17 20l4-4M17 20l-4-4"/></svg>Generate Quote from All Items</button>
+                    <button class="btn btn-primary" id="saveProcurementSheetBtn" type="button"><img src="/assets/icons/icon-save.png" alt="" class="btn-custom-icon">Save Offer</button>
                 </div>
             </div>
         </div>
@@ -2371,6 +2404,6 @@
     <script src="js/vendor/html2pdf.bundle.min.js"></script>
     <script src="js/brand.js?v=2"></script>
     <script src="js/statement-of-account.js?v=2"></script>
-    <script src="js/app.js?v=24"></script>
+    <script src="js/app.js?v=26"></script>
 </body>
 </html>

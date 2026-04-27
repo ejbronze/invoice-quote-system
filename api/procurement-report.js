@@ -14,7 +14,7 @@ function toNumber(value) {
 function normalizeSheet(sheet) {
     const rows = Array.isArray(sheet?.procurementItems) ? sheet.procurementItems : [];
     return {
-        refNumber: String(sheet?.refNumber || "Procurement Sheet").trim(),
+        refNumber: String(sheet?.refNumber || "Offer").trim(),
         date: String(sheet?.date || "").trim(),
         clientName: String(sheet?.clientName || "").trim(),
         currency: String(sheet?.currency || "USD").trim() || "USD",
@@ -46,17 +46,34 @@ function safeFilenamePart(value, fallback) {
         .replace(/^-+|-+$/g, "") || fallback;
 }
 
-const NCOLS = 13;
-const LAST_COL_LETTER = String.fromCharCode(64 + NCOLS); // "M"
+// All 14 columns in schema order (# is always index 0)
+const ALL_COLUMNS = [
+    { key: "#",              label: "#",                width: 6,  align: "center" },
+    { key: "itemNumber",     label: "Item #",           width: 10, align: "center" },
+    { key: "clientItemCode", label: "Client Item Code", width: 18, align: "left"   },
+    { key: "description",    label: "Item Description", width: 38, align: "left"   },
+    { key: "brand",          label: "Brand",            width: 16, align: "center" },
+    { key: "packSize",       label: "Pack Size",        width: 14, align: "center" },
+    { key: "unit",           label: "Unit",             width: 10, align: "center" },
+    { key: "quantity",       label: "Quantity",         width: 12, align: "center" },
+    { key: "unitPrice",      label: "Unit Price",       width: 14, align: "right"  },
+    { key: "currency",       label: "Currency",         width: 10, align: "center" },
+    { key: "lineTotal",      label: "Line Total",       width: 14, align: "right"  },
+    { key: "leadTime",       label: "Lead Time",        width: 14, align: "center" },
+    { key: "supplier",       label: "Supplier",         width: 20, align: "left"   },
+    { key: "notes",          label: "Notes",            width: 26, align: "left"   },
+];
+
+const DEFAULT_SELECTED = new Set(["#","itemNumber","description","brand","packSize","unit","quantity","unitPrice","currency","lineTotal","leadTime","supplier","notes"]);
 
 const COLOR = {
-    title:  "FF1459D9",  // brand blue
-    header: "FF1D3557",  // dark navy
-    stripe: "FFF0F4FA",  // light ice blue
-    total:  "FFE8EEF7",  // slightly deeper for totals row
-    meta:   "FFF8FAFC",  // near-white for metadata row
-    border: "FFE2E8F0",  // light border
-    tbd:    "FF94A3B8",  // muted gray for TBD text
+    title:  "FF1459D9",
+    header: "FF1D3557",
+    stripe: "FFF0F4FA",
+    total:  "FFE8EEF7",
+    meta:   "FFF8FAFC",
+    border: "FFE2E8F0",
+    tbd:    "FF94A3B8",
     white:  "FFFFFFFF"
 };
 
@@ -67,6 +84,30 @@ const THIN_BORDER = (color = COLOR.border) => ({
     right:  { style: "hair", color: { argb: color } }
 });
 
+function getCellValue(col, row, sheetCurrency) {
+    switch (col.key) {
+        case "#":              return row.lineNumber;
+        case "itemNumber":     return row.itemNumber;
+        case "clientItemCode": return row.clientItemCode;
+        case "description":    return row.description;
+        case "brand":          return row.brand;
+        case "packSize":       return row.packSize;
+        case "unit":           return row.unit;
+        case "quantity":       return row.quantityTbd ? "TBD" : (row.quantity || "");
+        case "unitPrice":      return row.unitPrice > 0 ? row.unitPrice : "";
+        case "currency":       return row.currency;
+        case "lineTotal": {
+            const qty = row.quantityTbd ? null : Number.parseFloat(row.quantity);
+            const hasQty = qty !== null && !Number.isNaN(qty) && qty > 0;
+            return (hasQty && row.unitPrice > 0) ? qty * row.unitPrice : "";
+        }
+        case "leadTime":  return row.leadTime;
+        case "supplier":  return row.supplier;
+        case "notes":     return row.notes;
+        default:          return "";
+    }
+}
+
 module.exports = async function handler(request, response) {
     if (request.method !== "POST") {
         response.setHeader("Allow", "POST");
@@ -75,19 +116,26 @@ module.exports = async function handler(request, response) {
 
     try {
         const sheet = normalizeSheet(request.body?.sheet || {});
+        const includeGrandTotal = request.body?.includeGrandTotal === true;
+        const requestedCols = Array.isArray(request.body?.selectedColumns) ? new Set(request.body.selectedColumns) : DEFAULT_SELECTED;
+
+        // Always include # column; filter to valid keys in schema order
+        const activeCols = ALL_COLUMNS.filter(c => c.key === "#" || requestedCols.has(c.key));
+        const NCOLS = activeCols.length;
+        const LAST_COL_LETTER = String.fromCharCode(64 + NCOLS);
+
         const workbook = new ExcelJS.Workbook();
         workbook.creator = "SantoSync";
         workbook.created = new Date();
 
-        // Freeze rows 1-3 (title + metadata + column headers)
-        const worksheet = workbook.addWorksheet("Procurement Sheet", {
+        const worksheet = workbook.addWorksheet("Offer", {
             views: [{ state: "frozen", ySplit: 3 }]
         });
 
         // ── Row 1: Title banner ──────────────────────────────────────────
         worksheet.mergeCells(`A1:${LAST_COL_LETTER}1`);
         const titleCell = worksheet.getCell("A1");
-        titleCell.value = sheet.refNumber || "Procurement Sheet";
+        titleCell.value = sheet.refNumber || "Offer";
         titleCell.font = { bold: true, size: 14, color: { argb: COLOR.white } };
         titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.title } };
         titleCell.alignment = { vertical: "middle", horizontal: "left", indent: 1 };
@@ -101,9 +149,7 @@ module.exports = async function handler(request, response) {
             `Date: ${sheet.date || "—"}`,
             `Currency: ${sheet.currency || "USD"}`
         ];
-        if (sheet.notes) {
-            metaParts.push(`Notes: ${sheet.notes}`);
-        }
+        if (sheet.notes) metaParts.push(`Notes: ${sheet.notes}`);
         metaCell.value = metaParts.join("   ·   ");
         metaCell.font = { size: 10, color: { argb: "FF475569" } };
         metaCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.meta } };
@@ -112,11 +158,10 @@ module.exports = async function handler(request, response) {
         worksheet.getRow(2).height = 18;
 
         // ── Row 3: Column headers ────────────────────────────────────────
-        //  Cols: # | Item # | Client Item Code | Item Description | Brand | Pack Size | Unit | Quantity | Unit Price | Currency | Lead Time | Supplier | Notes
-        const headers = ["#", "Item #", "Client Item Code", "Item Description", "Brand", "Pack Size", "Unit", "Quantity", "Unit Price", "Currency", "Lead Time", "Supplier", "Notes"];
-        const headerRow = worksheet.addRow(headers);
+        const headerRow = worksheet.addRow(activeCols.map(c => c.label));
         headerRow.height = 22;
-        headerRow.eachCell((cell, colNumber) => {
+        headerRow.eachCell((cell, colIdx) => {
+            const col = activeCols[colIdx - 1];
             cell.font = { bold: true, size: 10, color: { argb: COLOR.white } };
             cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.header } };
             cell.border = {
@@ -125,11 +170,10 @@ module.exports = async function handler(request, response) {
                 bottom: { style: "thin", color: { argb: "FF253E57" } },
                 right:  { style: "thin", color: { argb: "FF253E57" } }
             };
-            // Default: center; left-align text-heavy columns (col 4 = Description, col 13 = Notes)
-            const leftAligned = [4, 13];
+            const isWrap = col && ["description", "notes"].includes(col.key);
             cell.alignment = {
                 vertical: "middle",
-                horizontal: leftAligned.includes(colNumber) ? "left" : "center",
+                horizontal: col ? (isWrap ? "left" : col.align) : "center",
                 wrapText: false
             };
         });
@@ -141,62 +185,50 @@ module.exports = async function handler(request, response) {
         sheet.rows.forEach((row, i) => {
             const qty = row.quantityTbd ? null : Number.parseFloat(row.quantity);
             const hasQty = qty !== null && !Number.isNaN(qty) && qty > 0;
-            const lineTotal = hasQty ? qty * row.unitPrice : null;
+            const lineTotal = hasQty && row.unitPrice > 0 ? qty * row.unitPrice : null;
             if (lineTotal !== null) {
                 runningTotal += lineTotal;
                 hasTotalizableRows = true;
             }
 
-            const dataRow = worksheet.addRow([
-                row.lineNumber,        // col 1
-                row.itemNumber,        // col 2  Item #
-                row.clientItemCode,    // col 3  Client Item Code
-                row.description,       // col 4
-                row.brand,             // col 5
-                row.packSize,          // col 6
-                row.unit,              // col 7
-                row.quantityTbd ? "TBD" : (row.quantity || ""), // col 8
-                row.unitPrice > 0 ? row.unitPrice : "",         // col 9
-                row.currency,          // col 10
-                row.leadTime,          // col 11
-                row.supplier,          // col 12
-                row.notes              // col 13
-            ]);
-
+            const dataRow = worksheet.addRow(activeCols.map(col => getCellValue(col, row, sheet.currency)));
             dataRow.height = 18;
             const rowBg = i % 2 === 1 ? COLOR.stripe : COLOR.white;
 
-            dataRow.eachCell((cell, colNumber) => {
+            dataRow.eachCell((cell, colIdx) => {
+                const col = activeCols[colIdx - 1];
                 cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: rowBg } };
                 cell.border = THIN_BORDER();
-                cell.alignment = { vertical: "top", wrapText: [4, 13].includes(colNumber) };
+                const isWrap = col && ["description", "notes"].includes(col.key);
+                cell.alignment = { vertical: "top", wrapText: isWrap, horizontal: col ? col.align : "left" };
+
+                if (!col) return;
+                if (col.key === "quantity" && row.quantityTbd) {
+                    cell.font = { italic: true, color: { argb: COLOR.tbd }, size: 10 };
+                }
+                if ((col.key === "unitPrice") && row.unitPrice > 0) {
+                    cell.numFmt = "#,##0.00";
+                }
+                if (col.key === "lineTotal" && lineTotal !== null) {
+                    cell.numFmt = "#,##0.00";
+                }
             });
-
-            // Line number: center
-            dataRow.getCell(1).alignment = { vertical: "top", horizontal: "center" };
-
-            // Quantity: center, TBD styled in muted italic
-            dataRow.getCell(8).alignment = { vertical: "top", horizontal: "center" };
-            if (row.quantityTbd) {
-                dataRow.getCell(8).font = { italic: true, color: { argb: COLOR.tbd }, size: 10 };
-            }
-
-            // Unit Price: right-aligned number format
-            if (row.unitPrice > 0) {
-                dataRow.getCell(9).numFmt = "#,##0.00";
-                dataRow.getCell(9).alignment = { vertical: "top", horizontal: "right" };
-            }
-
-            // Currency: center
-            dataRow.getCell(10).alignment = { vertical: "top", horizontal: "center" };
         });
 
-        // ── Totals row ───────────────────────────────────────────────────
-        if (sheet.rows.length > 0 && hasTotalizableRows) {
-            // 13 columns: col 4 = Description (TOTAL label), col 9 = Unit Price (total), col 10 = Currency
-            const totalRow = worksheet.addRow([
-                "", "", "", "TOTAL", "", "", "", "", runningTotal, sheet.currency || "USD", "", "", ""
-            ]);
+        // ── Grand total row ──────────────────────────────────────────────
+        // Only render when: grand total is ON, Line Total column is selected, and at least one valid total exists.
+        // Never place grand total under Unit Price.
+        const lineTotalColIdx = activeCols.findIndex(c => c.key === "lineTotal");
+        if (includeGrandTotal && lineTotalColIdx >= 0 && sheet.rows.length > 0 && hasTotalizableRows) {
+            const descIdx = activeCols.findIndex(c => c.key === "description");
+            const currIdx = activeCols.findIndex(c => c.key === "currency");
+
+            const totalRowData = activeCols.map(() => "");
+            if (descIdx >= 0)       totalRowData[descIdx]       = "TOTAL";
+            totalRowData[lineTotalColIdx] = runningTotal;
+            if (currIdx >= 0)       totalRowData[currIdx]       = sheet.currency || "USD";
+
+            const totalRow = worksheet.addRow(totalRowData);
             totalRow.height = 20;
             totalRow.eachCell(cell => {
                 cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.total } };
@@ -208,49 +240,39 @@ module.exports = async function handler(request, response) {
                 };
                 cell.alignment = { vertical: "middle" };
             });
-            totalRow.getCell(4).font = { bold: true, size: 10 };
-            totalRow.getCell(4).alignment = { vertical: "middle", horizontal: "left" };
-            totalRow.getCell(9).numFmt = "#,##0.00";
-            totalRow.getCell(9).font = { bold: true, size: 10 };
-            totalRow.getCell(9).alignment = { vertical: "middle", horizontal: "right" };
-            totalRow.getCell(10).alignment = { vertical: "middle", horizontal: "center" };
+            if (descIdx >= 0) {
+                totalRow.getCell(descIdx + 1).font = { bold: true, size: 10 };
+                totalRow.getCell(descIdx + 1).alignment = { vertical: "middle", horizontal: "left" };
+            }
+            totalRow.getCell(lineTotalColIdx + 1).numFmt = "#,##0.00";
+            totalRow.getCell(lineTotalColIdx + 1).font = { bold: true, size: 10 };
+            totalRow.getCell(lineTotalColIdx + 1).alignment = { vertical: "middle", horizontal: "right" };
+            if (currIdx >= 0) {
+                totalRow.getCell(currIdx + 1).alignment = { vertical: "middle", horizontal: "center" };
+            }
         }
 
         // ── Column widths ────────────────────────────────────────────────
-        worksheet.columns = [
-            { width: 6  },   // # (line number)
-            { width: 10 },   // Item #
-            { width: 18 },   // Client Item Code
-            { width: 38 },   // Item Description
-            { width: 16 },   // Brand
-            { width: 14 },   // Pack Size
-            { width: 10 },   // Unit
-            { width: 12 },   // Quantity
-            { width: 14 },   // Unit Price
-            { width: 10 },   // Currency
-            { width: 14 },   // Lead Time
-            { width: 20 },   // Supplier
-            { width: 26 }    // Notes
-        ];
+        worksheet.columns = activeCols.map(col => ({ width: col.width }));
 
-        // ── Auto-filter on header row ────────────────────────────────────
+        // ── Auto-filter ──────────────────────────────────────────────────
         if (sheet.rows.length > 0) {
-            const dataEndRow = 3 + sheet.rows.length;
             worksheet.autoFilter = {
                 from: { row: 3, column: 1 },
-                to:   { row: dataEndRow, column: NCOLS }
+                to:   { row: 3 + sheet.rows.length, column: NCOLS }
             };
         }
 
         const buffer = await workbook.xlsx.writeBuffer();
-        const filename = `${safeFilenamePart(sheet.refNumber, "procurement-sheet")}_ProcurementSheet.xlsx`;
+        const refPart = safeFilenamePart(sheet.refNumber, "offer");
+        const filename = `${refPart}-OFFER.xlsx`;
         response.statusCode = 200;
         response.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
         response.end(Buffer.from(buffer));
     } catch (error) {
         return sendJson(response, 500, {
-            error: error.message || "Unable to generate procurement Excel file."
+            error: error.message || "Unable to generate Offer Excel file."
         });
     }
 };

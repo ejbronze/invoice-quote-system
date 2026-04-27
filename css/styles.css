@@ -14338,3 +14338,334 @@ body #procurementSheetModal:not([hidden]) {
     justify-content: flex-end;
     flex-wrap: wrap;
 }
+
+/* ── Procurement Export Dropdown Options ──────────────────────────────────── */
+
+#exportProcurementDropdown .proc-dropdown-menu {
+    min-width: 260px;
+    max-width: 300px;
+}
+
+.proc-export-opts {
+    padding: 8px 8px 4px 8px;
+}
+
+.proc-export-cols-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 4px 4px 4px;
+}
+
+.proc-export-cols-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 4px;
+    padding-bottom: 2px;
+}
+
+.proc-export-col-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 4px;
+    font-size: 0.78rem;
+    color: var(--text);
+    cursor: pointer;
+    border-radius: 3px;
+    user-select: none;
+}
+
+.proc-export-col-label:hover {
+    background: var(--bg-soft);
+}
+
+.proc-export-col-label input[type="checkbox"] {
+    cursor: pointer;
+    flex-shrink: 0;
+    accent-color: var(--blue-deep, #1459d9);
+    width: 12px;
+    height: 12px;
+}
+
+.proc-export-divider-thin {
+    height: 1px;
+    background: var(--line);
+    margin: 6px 2px 4px 2px;
+}
+
+.proc-export-grand-total-warn {
+    font-size: 0.73rem;
+    color: #b45309;
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin: 2px 4px 4px 4px;
+    line-height: 1.4;
+}
+
+.proc-export-opt-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 4px;
+    font-size: 0.8rem;
+    color: var(--text);
+    cursor: pointer;
+    border-radius: 4px;
+    user-select: none;
+}
+
+.proc-export-opt-label:hover {
+    background: var(--bg-soft);
+}
+
+.proc-export-opt-label input[type="checkbox"] {
+    cursor: pointer;
+    flex-shrink: 0;
+    accent-color: var(--blue-deep, #1459d9);
+}
+
+.proc-export-opt-label span {
+    flex: 1;
+}
+
+.proc-export-rpm-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 4px;
+    font-size: 0.79rem;
+    color: var(--text-muted);
+    gap: 8px;
+}
+
+.proc-export-rpm-input {
+    width: 54px;
+    padding: 2px 6px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    font-size: 0.79rem;
+    text-align: center;
+    background: var(--surface);
+    color: var(--text);
+}
+
+.proc-dropdown-divider {
+    height: 1px;
+    background: var(--line);
+    margin: 4px 2px;
+}
+
+.btn-icon-svg {
+    width: 15px;
+    height: 15px;
+    vertical-align: -2px;
+    margin-right: 3px;
+}
+
+/* ── Procurement PDF Template ─────────────────────────────────────────────── */
+
+.proc-pdf-shell {
+    position: fixed;
+    left: -9999px;
+    top: 0;
+    z-index: -1;
+}
+
+/* Landscape A4 page: 297mm × 210mm ≈ 1122px × 794px at 96 DPI */
+.proc-pdf-page {
+    width: 1122px;
+    height: 794px;
+    background: #fff;
+    overflow: hidden;
+    box-sizing: border-box;
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    font-size: 9.5px;
+    color: #1e293b;
+    line-height: 1.3;
+}
+
+.proc-new-page {
+    page-break-before: always;
+    break-before: page;
+}
+
+.proc-pdf-inner {
+    padding: 24px 36px 18px 36px;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Full letterhead header (page 1) ── */
+
+.proc-pdf-header-full {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #1459d9;
+    flex-shrink: 0;
+}
+
+.proc-pdf-lh-img {
+    max-height: 56px;
+    max-width: 300px;
+    object-fit: contain;
+    object-position: left center;
+    display: block;
+}
+
+.proc-pdf-doc-info {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.proc-pdf-doc-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #1459d9;
+    letter-spacing: 0.08em;
+    margin-bottom: 3px;
+}
+
+.proc-pdf-doc-refnum {
+    font-size: 11px;
+    font-weight: 600;
+    color: #1d3557;
+    margin-bottom: 5px;
+}
+
+.proc-pdf-doc-details {
+    font-size: 9px;
+    color: #475569;
+    line-height: 1.7;
+}
+
+.proc-pdf-doc-details strong {
+    color: #334155;
+}
+
+.proc-pdf-dot {
+    color: #94a3b8;
+}
+
+/* ── Compact header (pages 2+) ── */
+
+.proc-pdf-header-compact {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #cbd5e1;
+    flex-shrink: 0;
+}
+
+.proc-pdf-compact-company {
+    font-weight: 700;
+    color: #1d3557;
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+.proc-pdf-compact-center {
+    flex: 1;
+    text-align: center;
+    font-size: 9px;
+    color: #475569;
+    padding: 0 8px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.proc-pdf-compact-page {
+    font-size: 9px;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+/* ── Data table ── */
+
+.proc-pdf-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 8.5px;
+    flex: 1;
+}
+
+.proc-pdf-th {
+    background: #1d3557;
+    color: #fff;
+    font-weight: 700;
+    font-size: 8px;
+    padding: 5px 3px;
+    border: 1px solid #253e57;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    height: 24px;
+    vertical-align: middle;
+}
+
+.proc-pdf-td {
+    padding: 2px 3px;
+    border: 1px solid #e2e8f0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    height: 20px;
+}
+
+/* ── Grand total row ── */
+
+.proc-pdf-total-row td {
+    background: #e8eef7 !important;
+    border: 1px solid #94a3b8 !important;
+    padding: 4px 3px !important;
+    font-size: 9px;
+    height: 22px;
+}
+
+/* ── Notes (last page) ── */
+
+.proc-pdf-notes {
+    font-size: 8.5px;
+    color: #475569;
+    font-style: italic;
+    padding: 5px 3px;
+    margin-top: 5px;
+    border-top: 1px solid #e2e8f0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
+}
+
+/* ── Footer ── */
+
+.proc-pdf-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 6px;
+    margin-top: 6px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 8px;
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+.proc-pdf-footer-company {
+    font-weight: 600;
+    color: #64748b;
+}
