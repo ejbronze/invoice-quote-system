@@ -7654,10 +7654,11 @@ async function handleProcurementXlsxImport(event) {
 
 async function downloadProcurementExcel(sheet, options = {}) {
     const { includeGrandTotal = false, selectedColumns } = options;
+    const companyName = state.companyProfile?.companyName || "";
     const response = await fetch("/api/procurement-report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sheet, includeGrandTotal, selectedColumns })
+        body: JSON.stringify({ sheet, includeGrandTotal, selectedColumns, companyName })
     });
     if (!response.ok) {
         const payload = await response.json().catch(() => ({}));

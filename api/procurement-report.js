@@ -124,44 +124,79 @@ module.exports = async function handler(request, response) {
         const NCOLS = activeCols.length;
         const LAST_COL_LETTER = String.fromCharCode(64 + NCOLS);
 
+        const companyName = String(request.body?.companyName || "").trim();
+
         const workbook = new ExcelJS.Workbook();
         workbook.creator = "SantoSync";
         workbook.created = new Date();
 
         const worksheet = workbook.addWorksheet("Offer", {
-            views: [{ state: "frozen", ySplit: 3 }]
+            views: [{ state: "frozen", ySplit: 6 }]
         });
 
-        // ── Row 1: Title banner ──────────────────────────────────────────
+        // Helper: column letter for 1-based index
+        const colLetter = n => String.fromCharCode(64 + n);
+        const splitCol = NCOLS > 1 ? colLetter(NCOLS - 1) : LAST_COL_LETTER;
+
+        // ── Row 1: Company name ──────────────────────────────────────────
         worksheet.mergeCells(`A1:${LAST_COL_LETTER}1`);
-        const titleCell = worksheet.getCell("A1");
+        const companyCell = worksheet.getCell("A1");
+        companyCell.value = companyName || "";
+        companyCell.font = { size: 11, color: { argb: "FF1E293B" } };
+        companyCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.white } };
+        companyCell.alignment = { vertical: "middle", horizontal: "center" };
+        worksheet.getRow(1).height = 22;
+
+        // ── Row 2: Document ref number ───────────────────────────────────
+        worksheet.mergeCells(`A2:${LAST_COL_LETTER}2`);
+        const titleCell = worksheet.getCell("A2");
         titleCell.value = sheet.refNumber || "Offer";
         titleCell.font = { bold: true, size: 14, color: { argb: COLOR.white } };
-        titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.title } };
-        titleCell.alignment = { vertical: "middle", horizontal: "left", indent: 1 };
-        worksheet.getRow(1).height = 26;
+        titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.header } };
+        titleCell.alignment = { vertical: "middle", horizontal: "center" };
+        worksheet.getRow(2).height = 28;
 
-        // ── Row 2: Metadata ──────────────────────────────────────────────
-        worksheet.mergeCells(`A2:${LAST_COL_LETTER}2`);
-        const metaCell = worksheet.getCell("A2");
-        const metaParts = [
-            `Client: ${sheet.clientName || "—"}`,
-            `Date: ${sheet.date || "—"}`,
-            `Currency: ${sheet.currency || "USD"}`
-        ];
-        if (sheet.notes) metaParts.push(`Notes: ${sheet.notes}`);
-        metaCell.value = metaParts.join("   ·   ");
-        metaCell.font = { size: 10, color: { argb: "FF475569" } };
-        metaCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.meta } };
-        metaCell.alignment = { vertical: "middle", horizontal: "left", indent: 1 };
-        metaCell.border = { bottom: { style: "thin", color: { argb: "FFCBD5E1" } } };
-        worksheet.getRow(2).height = 18;
+        // ── Row 3: Client (left) + Date (right) ──────────────────────────
+        const metaFill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.meta } };
+        const metaFont = { size: 10, color: { argb: "FF1E293B" } };
+        if (NCOLS > 1) worksheet.mergeCells(`A3:${splitCol}3`);
+        const clientCell = worksheet.getCell("A3");
+        clientCell.value = `Client: ${sheet.clientName || "—"}`;
+        clientCell.font = metaFont;
+        clientCell.fill = metaFill;
+        clientCell.alignment = { vertical: "middle", horizontal: "left", indent: 1 };
+        const dateCell = worksheet.getCell(`${LAST_COL_LETTER}3`);
+        dateCell.value = `Date: ${sheet.date || "—"}`;
+        dateCell.font = metaFont;
+        dateCell.fill = metaFill;
+        dateCell.alignment = { vertical: "middle", horizontal: "right", indent: 1 };
+        worksheet.getRow(3).height = 18;
 
-        // ── Row 3: Column headers ────────────────────────────────────────
-        const headerRow = worksheet.addRow(activeCols.map(c => c.label));
+        // ── Row 4: Notes (left) + Currency (right) ───────────────────────
+        if (NCOLS > 1) worksheet.mergeCells(`A4:${splitCol}4`);
+        const notesCell = worksheet.getCell("A4");
+        notesCell.value = sheet.notes ? `Notes: ${sheet.notes}` : "Notes:";
+        notesCell.font = metaFont;
+        notesCell.fill = metaFill;
+        notesCell.alignment = { vertical: "middle", horizontal: "left", indent: 1, wrapText: false };
+        notesCell.border = { bottom: { style: "thin", color: { argb: "FFCBD5E1" } } };
+        const currencyCell = worksheet.getCell(`${LAST_COL_LETTER}4`);
+        currencyCell.value = `Currency: ${sheet.currency || "USD"}`;
+        currencyCell.font = metaFont;
+        currencyCell.fill = metaFill;
+        currencyCell.alignment = { vertical: "middle", horizontal: "right", indent: 1 };
+        currencyCell.border = { bottom: { style: "thin", color: { argb: "FFCBD5E1" } } };
+        worksheet.getRow(4).height = 18;
+
+        // ── Row 5: Empty spacer ───────────────────────────────────────────
+        worksheet.getRow(5).height = 6;
+
+        // ── Row 6: Column headers ────────────────────────────────────────
+        const headerRow = worksheet.getRow(6);
         headerRow.height = 22;
-        headerRow.eachCell((cell, colIdx) => {
-            const col = activeCols[colIdx - 1];
+        activeCols.forEach((col, i) => {
+            const cell = headerRow.getCell(i + 1);
+            cell.value = col.label;
             cell.font = { bold: true, size: 10, color: { argb: COLOR.white } };
             cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.header } };
             cell.border = {
@@ -170,17 +205,18 @@ module.exports = async function handler(request, response) {
                 bottom: { style: "thin", color: { argb: "FF253E57" } },
                 right:  { style: "thin", color: { argb: "FF253E57" } }
             };
-            const isWrap = col && ["description", "notes"].includes(col.key);
+            const isWrap = ["description", "notes"].includes(col.key);
             cell.alignment = {
                 vertical: "middle",
-                horizontal: col ? (isWrap ? "left" : col.align) : "center",
+                horizontal: isWrap ? "left" : col.align,
                 wrapText: false
             };
         });
 
-        // ── Data rows ────────────────────────────────────────────────────
+        // ── Data rows (start at row 7) ───────────────────────────────────
         let runningTotal = 0;
         let hasTotalizableRows = false;
+        let nextDataRow = 7;
 
         sheet.rows.forEach((row, i) => {
             const qty = row.quantityTbd ? null : Number.parseFloat(row.quantity);
@@ -191,7 +227,10 @@ module.exports = async function handler(request, response) {
                 hasTotalizableRows = true;
             }
 
-            const dataRow = worksheet.addRow(activeCols.map(col => getCellValue(col, row, sheet.currency)));
+            const dataRow = worksheet.getRow(nextDataRow++);
+            activeCols.forEach((col, ci) => {
+                dataRow.getCell(ci + 1).value = getCellValue(col, row, sheet.currency);
+            });
             dataRow.height = 18;
             const rowBg = i % 2 === 1 ? COLOR.stripe : COLOR.white;
 
@@ -223,14 +262,11 @@ module.exports = async function handler(request, response) {
             const descIdx = activeCols.findIndex(c => c.key === "description");
             const currIdx = activeCols.findIndex(c => c.key === "currency");
 
-            const totalRowData = activeCols.map(() => "");
-            if (descIdx >= 0)       totalRowData[descIdx]       = "TOTAL";
-            totalRowData[lineTotalColIdx] = runningTotal;
-            if (currIdx >= 0)       totalRowData[currIdx]       = sheet.currency || "USD";
-
-            const totalRow = worksheet.addRow(totalRowData);
+            const totalRow = worksheet.getRow(nextDataRow++);
             totalRow.height = 20;
-            totalRow.eachCell(cell => {
+            activeCols.forEach((_, ci) => {
+                const cell = totalRow.getCell(ci + 1);
+                cell.value = "";
                 cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR.total } };
                 cell.border = {
                     top:    { style: "medium", color: { argb: "FF94A3B8" } },
@@ -241,14 +277,20 @@ module.exports = async function handler(request, response) {
                 cell.alignment = { vertical: "middle" };
             });
             if (descIdx >= 0) {
-                totalRow.getCell(descIdx + 1).font = { bold: true, size: 10 };
-                totalRow.getCell(descIdx + 1).alignment = { vertical: "middle", horizontal: "left" };
+                const c = totalRow.getCell(descIdx + 1);
+                c.value = "TOTAL";
+                c.font = { bold: true, size: 10 };
+                c.alignment = { vertical: "middle", horizontal: "left" };
             }
-            totalRow.getCell(lineTotalColIdx + 1).numFmt = "#,##0.00";
-            totalRow.getCell(lineTotalColIdx + 1).font = { bold: true, size: 10 };
-            totalRow.getCell(lineTotalColIdx + 1).alignment = { vertical: "middle", horizontal: "right" };
+            const ltCell = totalRow.getCell(lineTotalColIdx + 1);
+            ltCell.value = runningTotal;
+            ltCell.numFmt = "#,##0.00";
+            ltCell.font = { bold: true, size: 10 };
+            ltCell.alignment = { vertical: "middle", horizontal: "right" };
             if (currIdx >= 0) {
-                totalRow.getCell(currIdx + 1).alignment = { vertical: "middle", horizontal: "center" };
+                const c = totalRow.getCell(currIdx + 1);
+                c.value = sheet.currency || "USD";
+                c.alignment = { vertical: "middle", horizontal: "center" };
             }
         }
 
@@ -258,8 +300,8 @@ module.exports = async function handler(request, response) {
         // ── Auto-filter ──────────────────────────────────────────────────
         if (sheet.rows.length > 0) {
             worksheet.autoFilter = {
-                from: { row: 3, column: 1 },
-                to:   { row: 3 + sheet.rows.length, column: NCOLS }
+                from: { row: 6, column: 1 },
+                to:   { row: 6 + sheet.rows.length, column: NCOLS }
             };
         }
 
