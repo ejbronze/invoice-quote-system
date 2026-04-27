@@ -92,7 +92,7 @@
                     <button class="sidebar-nav-link" type="button" data-page-nav="documents">Documents</button>
                     <button class="sidebar-nav-link" type="button" data-page-nav="notes">Notes</button>
                     <button class="sidebar-nav-link" type="button" data-page-nav="clients">Clients</button>
-                    <button class="sidebar-nav-link" type="button" data-page-nav="catalog">Pricing Library</button>
+                    <button class="sidebar-nav-link" type="button" data-page-nav="catalog">Pricing Catalog</button>
                     <button class="sidebar-nav-link" type="button" data-page-nav="reports">Statements</button>
                     <button class="sidebar-nav-link" id="settingsNavBtn" type="button" data-page-nav="settings">Settings</button>
                 </nav>
@@ -130,7 +130,7 @@
                     <button class="sidebar-nav-link" type="button" data-page-nav="documents">Documents</button>
                     <button class="sidebar-nav-link" type="button" data-page-nav="notes">Notes</button>
                     <button class="sidebar-nav-link" type="button" data-page-nav="clients">Clients</button>
-                    <button class="sidebar-nav-link" type="button" data-page-nav="catalog">Pricing Library</button>
+                    <button class="sidebar-nav-link" type="button" data-page-nav="catalog">Pricing Catalog</button>
                     <button class="sidebar-nav-link" type="button" data-page-nav="reports">Statements</button>
                     <button class="sidebar-nav-link" id="settingsDrawerBtn" type="button" data-page-nav="settings">Settings</button>
                 </div>
@@ -409,14 +409,14 @@
                 <section class="app-page catalog-page" id="catalogPage" hidden>
                     <div class="page-header">
                         <div>
-                            <span class="page-eyebrow">Pricing Library</span>
-                            <h2 id="catalogHeading">Pricing Library</h2>
+                            <span class="page-eyebrow">Pricing Catalog</span>
+                            <h2 id="catalogHeading">Pricing Catalog</h2>
                             <p class="dashboard-subtitle" id="catalogCopy">Maintain reusable sourced items with supplier, packaging, cost, sell price, and lead-time details.</p>
                         </div>
                         <div class="page-header-actions">
                             <button class="btn btn-secondary" id="toggleCatalogSelectionModeBtn" type="button">Select Items</button>
                             <button class="btn btn-secondary" id="findCatalogDuplicatesBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/><path d="M8 11h6M11 8v6"/></svg>Find Duplicates</button>
-                            <button class="btn btn-primary" id="openCatalogItemModalBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add Library Item</button>
+                            <button class="btn btn-primary" id="openCatalogItemModalBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add Catalog Item</button>
                         </div>
                     </div>
                     <div class="catalog-selection-toolbar" id="catalogSelectionToolbar" hidden>
@@ -463,7 +463,7 @@
                                 <option value="no_image">No image</option>
                             </select>
                         </label>
-                        <div class="pricing-view-toggle" id="pricingLibraryViewToggle" role="group" aria-label="Pricing Library view">
+                        <div class="pricing-view-toggle" id="pricingLibraryViewToggle" role="group" aria-label="Pricing Catalog view">
                             <button class="pricing-view-btn is-active" type="button" data-pricing-view="card">Card view</button>
                             <button class="pricing-view-btn" type="button" data-pricing-view="row">Row view</button>
                         </div>
@@ -473,7 +473,7 @@
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM16 3H8M16 21H8"/>
                             </svg>
-                            <p>No pricing library items yet.</p>
+                            <p>Add your first catalog item to start building your pricing catalog.</p>
                             <button class="btn btn-primary" type="button" data-catalog-action="add-new">Add Your First Item</button>
                         </div>
                     </div>
@@ -957,7 +957,7 @@
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_reuse_items">Can I save line items to reuse later?</summary>
-                        <p data-i18n-html="help_a_reuse_items">Yes. Reusable items live in the <strong>Pricing Library</strong>. Click an item to review its details, then use <strong>Edit Item</strong> inside the detail modal when you need to update pricing, supplier, packaging, image, or notes. The quote and invoice line-item table stays focused on direct entry.</p>
+                        <p data-i18n-html="help_a_reuse_items">Yes. Reusable items live in the <strong>Pricing Catalog</strong>. Click an item to review its details, then use <strong>Edit Item</strong> inside the detail modal when you need to update pricing, supplier, packaging, image, or notes. The quote and invoice line-item table stays focused on direct entry.</p>
                     </details>
                     <details class="help-item">
                         <summary>What are Internal Notes and how are they different from regular Notes?</summary>
@@ -1069,11 +1069,11 @@
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_catalog">How do I use the Catalog?</summary>
-                        <p data-i18n-html="help_a_catalog">Click <strong>Pricing Library</strong> in the sidebar. Use search, category, supplier, image filters, sorting, and the Card/List toggle to browse reusable items captured from quotes, invoices, and Offer rows. The page shows 25 items per page by default, with 50 and 100 item options. Click any item to open its detail modal; editing starts only from the <strong>Edit Item</strong> action inside that modal.</p>
+                        <p data-i18n-html="help_a_catalog">Click <strong>Pricing Catalog</strong> in the sidebar. Use search, category, supplier, image filters, sorting, and the Card/List toggle to browse reusable items captured from quotes, invoices, and Offer rows. The page shows 25 items per page by default, with 50 and 100 item options. Click any item to open its detail modal; editing starts only from the <strong>Edit Item</strong> action inside that modal.</p>
                     </details>
                     <details class="help-item">
-                        <summary data-i18n="help_q_catalog_pagination">How does Pricing Library pagination work?</summary>
-                        <p data-i18n-html="help_a_catalog_pagination">The Pricing Library shows a range such as <strong>1-25 of 143</strong> and page controls below the results. Choose 25, 50, or 100 items per page. Search or filter changes reset back to page 1 so the results stay predictable.</p>
+                        <summary data-i18n="help_q_catalog_pagination">How does Pricing Catalog pagination work?</summary>
+                        <p data-i18n-html="help_a_catalog_pagination">The Pricing Catalog shows a range such as <strong>1-25 of 143</strong> and page controls below the results. Choose 25, 50, or 100 items per page. Search or filter changes reset back to page 1 so the results stay predictable.</p>
                     </details>
                     <details class="help-item">
                         <summary data-i18n="help_q_snapshot">What is the auto-cycling card on the dashboard?</summary>
@@ -1667,12 +1667,12 @@
                                     <div class="line-items-header-actions">
                                         <div class="doc-lib-combobox">
                                             <svg class="proc-lib-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                                            <input type="text" id="documentLibrarySearch" class="proc-lib-search" placeholder="Search Pricing Library…" autocomplete="off" aria-label="Search pricing library items" aria-expanded="false">
+                                            <input type="text" id="documentLibrarySearch" class="proc-lib-search" placeholder="Search Pricing Catalog…" autocomplete="off" aria-label="Search pricing catalog items" aria-expanded="false">
                                             <div class="proc-lib-dropdown" id="docLibDropdown" role="listbox" hidden></div>
                                         </div>
                                         <input type="hidden" id="documentLibrarySelect">
                                         <button type="button" class="btn btn-secondary" id="insertDocumentLibraryItemBtn" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M5 19h14"/></svg>Insert</button>
-                                        <button type="button" class="btn btn-secondary" id="createDocumentLibraryItemBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Create Library Item</button>
+                                        <button type="button" class="btn btn-secondary" id="createDocumentLibraryItemBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Create Catalog Item</button>
                                         <button type="button" class="btn btn-secondary" id="addItemBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add Item</button>
                                     </div>
                                 </div>
@@ -1925,7 +1925,7 @@
                         <div class="proc-lib-combobox-wrap">
                             <div class="proc-lib-combobox">
                                 <svg class="proc-lib-search-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="4"/><line x1="10" y1="10" x2="14" y2="14"/></svg>
-                                <input type="text" id="procLibSearchInput" class="proc-lib-search" placeholder="Search pricing library…" autocomplete="off" aria-label="Search pricing library items">
+                                <input type="text" id="procLibSearchInput" class="proc-lib-search" placeholder="Search pricing catalog…" autocomplete="off" aria-label="Search pricing catalog items">
                                 <div class="proc-lib-dropdown" id="procLibDropdown" role="listbox" hidden></div>
                             </div>
                             <button class="btn btn-secondary proc-lib-create-btn" id="createProcurementLibraryItemBtn" type="button">+ Create item</button>

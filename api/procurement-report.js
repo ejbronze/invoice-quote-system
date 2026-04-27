@@ -119,8 +119,8 @@ module.exports = async function handler(request, response) {
         const includeGrandTotal = request.body?.includeGrandTotal === true;
         const requestedCols = Array.isArray(request.body?.selectedColumns) ? new Set(request.body.selectedColumns) : DEFAULT_SELECTED;
 
-        // Always include # column; filter to valid keys in schema order
-        const activeCols = ALL_COLUMNS.filter(c => c.key === "#" || requestedCols.has(c.key));
+        // Always include # and description; filter to valid keys in schema order
+        const activeCols = ALL_COLUMNS.filter(c => c.key === "#" || c.key === "description" || requestedCols.has(c.key));
         const NCOLS = activeCols.length;
         const LAST_COL_LETTER = String.fromCharCode(64 + NCOLS);
 

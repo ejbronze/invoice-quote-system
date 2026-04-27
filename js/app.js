@@ -224,11 +224,11 @@ const TRANSLATIONS = {
         save_notes: "Save notes",
         issue_notes_saved: "Notes saved.",
         new_report: "New",
-        catalog: "Pricing Library",
-        catalog_heading: "Pricing Library",
+        catalog: "Pricing Catalog",
+        catalog_heading: "Pricing Catalog",
         catalog_copy: "Maintain reusable sourced items with supplier, packaging, cost, sell price, and lead-time details.",
-        add_catalog_item: "Add Library Item",
-        no_catalog_items: "No pricing library items yet.",
+        add_catalog_item: "Add Catalog Item",
+        no_catalog_items: "No catalog items yet.",
         item_name: "Item Name",
         price: "Price",
         item_details: "Details",
@@ -590,7 +590,7 @@ const TRANSLATIONS = {
         help_vl_pdf_preview: "Download PDF",
         help_vc_preview_pdf: "Download PDF",
         help_q_reuse_items: "Can I save line items to reuse later?",
-        help_a_reuse_items: "Yes. Reusable items live in the <strong>Pricing Library</strong>. Click an item to review its details, then use <strong>Edit Item</strong> inside the detail modal when you need to update pricing, supplier, packaging, image, or notes. The quote and invoice line-item table stays focused on direct entry.",
+        help_a_reuse_items: "Yes. Reusable items live in the <strong>Pricing Catalog</strong>. Click an item to review its details, then use <strong>Edit Item</strong> inside the detail modal when you need to update pricing, supplier, packaging, image, or notes. The quote and invoice line-item table stays focused on direct entry.",
         help_q_payment_terms: "How do I set payment terms on an invoice?",
         help_a_payment_terms: "Scroll to the <strong>Document Notes &amp; Terms</strong> panel at the bottom of Step 3. The <strong>Terms of Payment</strong> selector offers four options: <strong>Due Immediately</strong> (disables other options and prints \u201cPayment is due immediately upon receipt\u201d), <strong>Net 15</strong> (due date auto-set to 15 days from invoice date), <strong>Net 30</strong> (due date auto-set to 30 days), or <strong>Other</strong> \u2014 enter a custom day count and optional terms text. Invoice cards show the calculated due date and an overdue indicator when applicable.",
         help_q_backup: "How do I back up or restore my data?",
@@ -621,10 +621,10 @@ const TRANSLATIONS = {
         help_a_search: "Use the search bar at the top of the Documents page. You can search by client name, reference number, date, or any keyword added in Step 4 of the editor. The same query simultaneously filters whichever tab is active \u2014 including the Statements tab, which matches by client name, vendor, reference number, and date.",
         help_q_snapshot: "What is the auto-cycling card on the dashboard?",
         help_a_snapshot: "The snapshot card in the top-right of the dashboard automatically rotates every 3 seconds between three metrics: <strong>Pipeline Value</strong> (blue \u2014 total value of all quotes and invoices), <strong>Amount Invoiced</strong> (green \u2014 total billed), and <strong>Income Received</strong> (amber \u2014 payments collected). Click the card at any time to advance manually; the 3-second timer resets from that point.",
-        help_q_catalog: "How do I use the Pricing Library?",
-        help_a_catalog: "Click <strong>Pricing Library</strong> in the sidebar. Use search, category, supplier, image filters, sorting, and the Card/List toggle to browse reusable items captured from quotes, invoices, and Offer rows. The page shows 25 items per page by default, with 50 and 100 item options. Click any item to open its detail modal; editing starts only from the <strong>Edit Item</strong> action inside that modal.",
-        help_q_catalog_pagination: "How does Pricing Library pagination work?",
-        help_a_catalog_pagination: "The Pricing Library shows a range such as <strong>1-25 of 143</strong> and page controls below the results. Choose 25, 50, or 100 items per page. Search or filter changes reset back to page 1 so the results stay predictable.",
+        help_q_catalog: "What is the Pricing Catalog?",
+        help_a_catalog: "The Pricing Catalog is a visual, searchable catalog of reusable items you can quickly add to offers, quotes, and invoices. Click <strong>Pricing Catalog</strong> in the sidebar and use search, category, supplier, image filters, sorting, and the Card/List toggle to browse. Click the <strong>+</strong> button on any card to add it immediately to an open document, or to choose a document if none is open. Click any item card to open its detail modal; editing starts only from the <strong>Edit Item</strong> action inside that modal.",
+        help_q_catalog_pagination: "How does Pricing Catalog pagination work?",
+        help_a_catalog_pagination: "The Pricing Catalog shows a range such as <strong>1-25 of 143</strong> and page controls below the results. Choose 25, 50, or 100 items per page. Search or filter changes reset back to page 1 so the results stay predictable.",
         help_q_client_balances: "How are client outstanding balances calculated?",
         help_a_client_balances: "Client balances come from that client's invoices. Paid invoices count as 0 outstanding, while Pending or Unpaid invoices count the remaining invoice total after logged payments. Changing an invoice from Pending to Paid reduces the client balance immediately; changing it back to Pending or Unpaid adds the unpaid amount back immediately.",
         help_q_client_contacts: "How do I add contact information to a client?",
@@ -685,11 +685,11 @@ const TRANSLATIONS = {
         save_notes: "Guardar notas",
         issue_notes_saved: "Notas guardadas.",
         new_report: "Nuevo",
-        catalog: "Pricing Library",
-        catalog_heading: "Pricing Library",
+        catalog: "Pricing Catalog",
+        catalog_heading: "Pricing Catalog",
         catalog_copy: "Mantén artículos reutilizables con proveedor, empaque, costo, precio de venta y tiempos de entrega.",
-        add_catalog_item: "Add Library Item",
-        no_catalog_items: "No pricing library items yet.",
+        add_catalog_item: "Add Catalog Item",
+        no_catalog_items: "No catalog items yet.",
         item_name: "Nombre del Artículo",
         price: "Precio",
         item_details: "Detalles",
@@ -1119,11 +1119,11 @@ const TRANSLATIONS = {
         save_notes: "Enregistrer les notes",
         issue_notes_saved: "Notes enregistrées.",
         new_report: "Nouveau",
-        catalog: "Pricing Library",
-        catalog_heading: "Pricing Library",
+        catalog: "Pricing Catalog",
+        catalog_heading: "Pricing Catalog",
         catalog_copy: "G\u00e9rez les articles r\u00e9utilisables avec fournisseur, emballage, co\u00fbt, prix de vente et d\u00e9lais.",
-        add_catalog_item: "Add Library Item",
-        no_catalog_items: "No pricing library items yet.",
+        add_catalog_item: "Add Catalog Item",
+        no_catalog_items: "No catalog items yet.",
         item_name: "Nom de l’Article",
         price: "Prix",
         item_details: "Détails",
@@ -4998,6 +4998,27 @@ function hideCatalogDocPicker() {
     }
 }
 
+function quickAddCatalogItem(item) {
+    if (!item) return;
+    // If an Offer is open, insert into it directly
+    if (state.editingProcurementSheetId !== null) {
+        addCatalogItemToDocument(item, state.editingProcurementSheetId);
+        setImportStatus(`${item.name} added to open offer.`);
+        return;
+    }
+    // If a Quote or Invoice editor is open, insert into it
+    if (state.editingDocumentId !== null) {
+        addCatalogItemToDocument(item, state.editingDocumentId);
+        setImportStatus(`${item.name} added to open document.`);
+        return;
+    }
+    // Nothing open — show the doc picker via the details modal
+    state.pendingCatalogInsertItem = item;
+    openCatalogDetailsModal(item);
+    // Show picker immediately
+    setTimeout(() => showCatalogDocPicker(), 50);
+}
+
 function addCatalogItemToDocument(item, targetDocId) {
     if (!item || !targetDocId) return;
     const targetDoc = getDocumentById(targetDocId);
@@ -5209,6 +5230,7 @@ function renderCatalogCard(item) {
     return `
         <article class="catalog-card${isSelected ? " is-selected" : ""}">
             ${selectorHtml}
+            <button class="catalog-card-quick-add" type="button" data-catalog-action="quick-add" data-catalog-id="${escapeHtml(item.id)}" title="Add to document" aria-label="Add to document">+</button>
             <button class="catalog-card-trigger" type="button" data-catalog-action="open" data-catalog-id="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.name)}">
                 <div class="catalog-card-bubble${imageUrl ? " is-expandable" : ""}" ${imageUrl ? `data-catalog-action="expand-image" data-catalog-id="${escapeHtml(item.id)}" data-catalog-img-src="${escapeHtml(imageUrl)}" data-catalog-img-alt="${escapeHtml(item.name)}"` : ""} aria-hidden="true">
                     ${imageUrl
@@ -5217,7 +5239,8 @@ function renderCatalogCard(item) {
                 </div>
                 <div class="catalog-card-copy">
                     <strong>${escapeHtml(item.name)}</strong>
-                    <span>${escapeHtml([item.brand, item.supplier || item.vendor, item.packSize || item.unitSize].filter(Boolean).join(" · ") || item.referenceId || "Library item")}</span>
+                    <span>${escapeHtml([item.brand, item.supplier || item.vendor, item.packSize || item.unitSize].filter(Boolean).join(" · ") || item.referenceId || "Catalog item")}</span>
+                    ${(item.itemNumber || item.clientItemCode) ? `<span class="catalog-card-codes">${escapeHtml([item.itemNumber ? `Item #${item.itemNumber}` : "", item.clientItemCode ? `Code: ${item.clientItemCode}` : ""].filter(Boolean).join(" · "))}</span>` : ""}
                     <small>${escapeHtml(`${item.currency || "USD"} ${formatAmount(item.sellPrice ?? item.price ?? 0)}${item.leadTime ? ` · ${item.leadTime}` : ""}`)}</small>
                 </div>
             </button>
@@ -5243,7 +5266,7 @@ function renderCatalogRow(item) {
                 </span>
                 <span class="catalog-row-main">
                     <strong>${escapeHtml(item.name)}</strong>
-                    <small>${escapeHtml([item.referenceId, item.brand, item.packSize || item.unitSize].filter(Boolean).join(" · ") || "Library item")}</small>
+                    <small>${escapeHtml([item.referenceId, item.brand, item.packSize || item.unitSize, item.itemNumber ? `Item #${item.itemNumber}` : "", item.clientItemCode ? `Code: ${item.clientItemCode}` : ""].filter(Boolean).join(" · ") || "Catalog item")}</small>
                 </span>
                 <span class="catalog-row-meta">${escapeHtml(item.supplier || item.vendor || "—")}</span>
                 <span class="catalog-row-price">${escapeHtml(`${item.currency || "USD"} ${formatAmount(item.sellPrice ?? item.price ?? 0)}`)}</span>
@@ -5272,8 +5295,8 @@ function renderCatalog() {
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM16 3H8M16 21H8"/>
                     </svg>
-                    <p>No pricing library items yet.</p>
-                    <button class="btn btn-primary" type="button" data-catalog-action="add-new">Add Your First Item</button>
+                    <p>${escapeHtml(t("no_catalog_items"))}</p>
+                    <button class="btn btn-primary" type="button" data-catalog-action="add-new">${escapeHtml(t("add_catalog_item"))}</button>
                 </div>
             `;
         } else {
@@ -5856,6 +5879,14 @@ function handleCatalogGridClick(event) {
     if (expandBubble && expandBubble.dataset.catalogImgSrc) {
         event.stopPropagation();
         openCatalogItemImageExpand(expandBubble.dataset.catalogImgSrc, expandBubble.dataset.catalogImgAlt || "");
+        return;
+    }
+
+    const quickAddButton = event.target.closest("[data-catalog-action=\"quick-add\"]");
+    if (quickAddButton) {
+        event.stopPropagation();
+        const item = getCatalogEntries().find(entry => entry.id === quickAddButton.dataset.catalogId);
+        if (item) quickAddCatalogItem(item);
         return;
     }
 
@@ -7902,9 +7933,15 @@ async function generateProcurementPdfBlob(sheet, options) {
     }
     const html = buildProcurementPdfHtml(sheet, options);
     const wrapper = document.createElement("div");
-    wrapper.style.cssText = "position:fixed;left:-9999px;top:0;z-index:-1;";
+    wrapper.style.cssText = "position:absolute;left:-9999px;top:0;";
     wrapper.innerHTML = html;
     const shellEl = wrapper.querySelector(".proc-pdf-shell");
+    // Override the CSS-applied fixed positioning so html2canvas can capture the content
+    if (shellEl) {
+        shellEl.style.position = "static";
+        shellEl.style.left = "auto";
+        shellEl.style.zIndex = "auto";
+    }
     document.body.appendChild(wrapper);
     try {
         return await window.html2pdf()
@@ -12272,6 +12309,22 @@ function handlePaymentLedgerListClick(event) {
     requestEditorPaymentDelete(removeButton.dataset.removePaymentEntry);
 }
 
+function normalizeQuoteStatus(status) {
+    const s = String(status || "").toLowerCase().trim();
+    if (s === "sent") return "sent";
+    if (s === "approved") return "approved";
+    if (s === "rejected") return "rejected";
+    return "draft";
+}
+
+function getQuoteStatusLabel(status) {
+    const s = normalizeQuoteStatus(status);
+    if (s === "sent") return "Sent";
+    if (s === "approved") return "Approved";
+    if (s === "rejected") return "Rejected";
+    return "Draft";
+}
+
 function getPaymentStatusLabel(status) {
     const normalizedStatus = normalizePaymentStatus(status);
     if (normalizedStatus === "paid") {
@@ -12295,6 +12348,9 @@ function normalizeDocuments(documents) {
         }
 
         doc.status = doc.status === "draft" ? "draft" : "logged";
+        doc.quoteStatus = String(doc.type || "").toLowerCase() === "quote"
+            ? normalizeQuoteStatus(doc.quoteStatus)
+            : null;
         doc.payments = String(doc.type || "").toLowerCase() === "invoice"
             ? normalizeInvoicePayments(doc.payments)
             : [];
@@ -12937,7 +12993,8 @@ function buildDocumentFromCsvRow(row, indexMap) {
     return {
         id: Date.now() + Math.floor(Math.random() * 100000),
         type,
-        status: "draft",
+        status: "logged",
+        quoteStatus: type === "quote" ? "draft" : null,
         paymentStatus: type === "invoice" ? "unpaid" : null,
         refNumber,
         date,
@@ -15073,6 +15130,9 @@ async function persistDocument(options = {}) {
         id: state.editingDocumentId ?? Date.now(),
         type: elements.docType.value,
         status: nextStatus,
+        quoteStatus: elements.docType.value === "quote"
+            ? normalizeQuoteStatus(existingDocument?.quoteStatus)
+            : null,
         paymentStatus: elements.docType.value === "invoice"
             ? normalizePaymentStatus(existingDocument?.paymentStatus)
             : null,
@@ -15750,8 +15810,9 @@ async function downloadSelectedDocuments() {
     await downloadSelectedDocumentsAsPdf();
 }
 
-function getStatusBadgeMarkup(label, className = "") {
-    return `<span class="status-badge ${className}">${escapeHtml(label)}</span>`;
+function getStatusBadgeMarkup(label, className = "", title = "") {
+    const titleAttr = title ? ` title="${escapeHtml(title)}"` : "";
+    return `<span class="status-badge ${className}"${titleAttr}>${escapeHtml(label)}</span>`;
 }
 
 function getCalculatorButtonMarkup() {
@@ -15785,14 +15846,21 @@ function getDocumentCardMarkup(doc) {
     const canViewPdf = !isProcurement && isUserSavedDocument(doc);
     const statusBadges = [];
 
-    if (doc.status === "draft") {
+    // Invoices: amber "Draft" only in pre-save (autosave) state.
+    // Quotes and Offers never show the generic Draft badge — they have their own badges.
+    if (doc.type === "invoice" && doc.status === "draft") {
         statusBadges.push(getStatusBadgeMarkup(t("status_draft"), "is-draft"));
     }
 
     if (doc.type === "invoice") {
         statusBadges.push(getStatusBadgeMarkup(getPaymentStatusLabel(paymentStatus), `is-${paymentStatus}`));
+    } else if (doc.type === "quote") {
+        // Always show quoteStatus regardless of save state — independent of status field.
+        const qs = normalizeQuoteStatus(doc.quoteStatus);
+        statusBadges.push(getStatusBadgeMarkup(getQuoteStatusLabel(qs), `is-quote-${qs}`));
     } else if (isProcurement) {
-        statusBadges.push(getStatusBadgeMarkup("Offer", "is-draft"));
+        // Always show "Offer" badge regardless of save state.
+        statusBadges.push(getStatusBadgeMarkup("Offer", "is-offer"));
     }
 
     const statusMarkup = statusBadges.join("");
@@ -15892,6 +15960,10 @@ function getDocumentCardMarkup(doc) {
                         ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="unpaid" data-id="${escapeHtml(String(doc.id))}">${ICONS.circle}<span>${escapeHtml(t("mark_as_unpaid"))}</span></button>` : ""}
                         ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="pending" data-id="${escapeHtml(String(doc.id))}">${ICONS.clock}<span>${escapeHtml(t("mark_as_pending"))}</span></button>` : ""}
                         ${doc.type === "invoice" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-payment-status" data-payment-status="paid" data-id="${escapeHtml(String(doc.id))}">${ICONS.checkCircle}<span>${escapeHtml(t("mark_as_paid"))}</span></button>` : ""}
+                        ${doc.type === "quote" && doc.status === "logged" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-quote-status" data-quote-status="draft" data-id="${escapeHtml(String(doc.id))}">${ICONS.circle}<span>Mark as Draft</span></button>` : ""}
+                        ${doc.type === "quote" && doc.status === "logged" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-quote-status" data-quote-status="sent" data-id="${escapeHtml(String(doc.id))}">${ICONS.fileText}<span>Mark as Sent</span></button>` : ""}
+                        ${doc.type === "quote" && doc.status === "logged" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-quote-status" data-quote-status="approved" data-id="${escapeHtml(String(doc.id))}">${ICONS.checkCircle}<span>Mark as Approved</span></button>` : ""}
+                        ${doc.type === "quote" && doc.status === "logged" ? `<button type="button" class="doc-actions-menu-btn" data-action="set-quote-status" data-quote-status="rejected" data-id="${escapeHtml(String(doc.id))}">${ICONS.circle}<span>Mark as Rejected</span></button>` : ""}
                         ${isProcurement ? `<button type="button" class="doc-actions-menu-btn" data-action="export-csv" data-id="${escapeHtml(String(doc.id))}">${ICONS.fileText}<span>Export CSV</span></button>` : ""}
                         ${isProcurement ? `<button type="button" class="doc-actions-menu-btn" data-action="export-excel" data-id="${escapeHtml(String(doc.id))}">${ICONS.spreadsheet}<span>Export Excel</span></button>` : ""}
                         ${isProcurement ? `<button type="button" class="doc-actions-menu-btn" data-action="export-pdf-proc" data-id="${escapeHtml(String(doc.id))}">${ICONS.pdf || ICONS.fileText}<span>Export PDF</span></button>` : ""}
@@ -16313,6 +16385,8 @@ async function handleDocumentCardClick(event) {
             openQuickPaymentModal(docId);
         } else if (action === "set-payment-status") {
             await updateDocumentPaymentStatus(docId, actionButton.dataset.paymentStatus);
+        } else if (action === "set-quote-status") {
+            await updateDocumentQuoteStatus(docId, actionButton.dataset.quoteStatus);
         } else if (action === "delete") {
             await deleteDocument(docId);
         } else if (action === "convert") {
@@ -16453,6 +16527,29 @@ async function updateDocumentPaymentStatus(id, status) {
         renderStatementsPage();
     } catch (error) {
         alert(`Unable to update invoice payment status.\n\n${error.message}`);
+    }
+}
+
+async function updateDocumentQuoteStatus(id, quoteStatus) {
+    const doc = getDocumentById(id);
+    if (!doc || doc.type !== "quote" || doc.status !== "logged") return;
+    const next = normalizeQuoteStatus(quoteStatus);
+    if (normalizeQuoteStatus(doc.quoteStatus) === next) {
+        state.openDocumentMenuId = null;
+        renderDocuments();
+        return;
+    }
+    const updatedDoc = { ...doc, quoteStatus: next };
+    appendDocumentChangeHistory(updatedDoc, doc);
+    const nextDocuments = state.documents.map(entry =>
+        isSameDocumentId(entry.id, id) ? updatedDoc : entry
+    );
+    try {
+        await saveDocumentsToServer(nextDocuments);
+        state.openDocumentMenuId = null;
+        renderDocuments();
+    } catch (error) {
+        alert(`Unable to update quote status.\n\n${error.message}`);
     }
 }
 

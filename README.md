@@ -507,6 +507,17 @@ LOCAL_SEED_FROM_BLOB=false npm run dev:sandbox
 
 ## FAQ
 
+**Document Badges**
+Every document card shows one or more status badges:
+
+- **Offers** always show an "Offer" badge. They never show "Draft."
+- **Quotes** always show their pipeline status: **Draft** (created, not yet sent), **Sent**, **Approved**, or **Rejected.** The pipeline status is independent of whether the document has been explicitly saved.
+- **Invoices** show an amber **"Draft"** badge only while the invoice is in a pre-save state (autosaved but not yet explicitly saved by the user). Once saved, invoices show their payment status only: Unpaid, Pending, or Paid.
+
+Internal values such as `status: "logged"` are system-only and are never displayed to users.
+
+---
+
 **How do I add an image to a Pricing Library item?**
 Open the Pricing Library and click the item you want to review. The detail modal opens first. Click **Edit Item** inside that modal, then use the "Item Image" upload area to pick a JPEG, PNG, or WebP file. The app compresses it to a maximum of 600px and then shows a crop modal. You can drag the selection handles to trim the image or click "Skip Crop" to accept it as-is. Once confirmed, a small preview thumbnail appears in the modal. Click Save Library Item to persist it.
 
