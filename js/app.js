@@ -15857,7 +15857,8 @@ function getDocumentCardMarkup(doc) {
     } else if (doc.type === "quote") {
         // Always show quoteStatus regardless of save state — independent of status field.
         const qs = normalizeQuoteStatus(doc.quoteStatus);
-        statusBadges.push(getStatusBadgeMarkup(getQuoteStatusLabel(qs), `is-quote-${qs}`));
+        const qsTitle = qs === "draft" ? "This quote has been created but not yet sent." : "";
+        statusBadges.push(getStatusBadgeMarkup(getQuoteStatusLabel(qs), `is-quote-${qs}`, qsTitle));
     } else if (isProcurement) {
         // Always show "Offer" badge regardless of save state.
         statusBadges.push(getStatusBadgeMarkup("Offer", "is-offer"));
