@@ -2133,6 +2133,10 @@ function cacheElements() {
     elements.signatureSelect = document.getElementById("signatureSelect");
     elements.signatureSelectorWrap = document.getElementById("signatureSelectorWrap");
     elements.noSignaturesHint = document.getElementById("noSignaturesHint");
+    elements.sigSelectorSingle = document.getElementById("sigSelectorSingle");
+    elements.sigSelectorSingleName = document.getElementById("sigSelectorSingleName");
+    elements.sigSelectorPreview = document.getElementById("sigSelectorPreview");
+    elements.sigSelectorPreviewImg = document.getElementById("sigSelectorPreviewImg");
     elements.catalogGrid = document.getElementById("catalogGrid");
     elements.catalogPagination = document.getElementById("catalogPagination");
     elements.pricingLibrarySearch = document.getElementById("pricingLibrarySearch");
@@ -2750,6 +2754,7 @@ function bindEvents() {
     elements.sigEditorClearImageBtn?.addEventListener("click", clearSignatureEditorImage);
     elements.signaturesListWrap?.addEventListener("click", handleSignatureListClick);
     elements.includeSignature?.addEventListener("change", syncSignatureSelectorUI);
+    elements.signatureSelect?.addEventListener("change", updateSignatureSelectorPreview);
     elements.clientManagementList.addEventListener("click", handleClientManagementClick);
     elements.clientManagementList.addEventListener("click", handleClientStatClick);
     elements.clientManagementList.addEventListener("click", handleClientRowToggle);
@@ -10962,10 +10967,11 @@ function populateSignatureSelector() {
     if (!elements.signatureSelect) return;
     const sigs = state.companyProfile?.signatures || [];
     elements.signatureSelect.innerHTML = sigs.map(s =>
-        `<option value="${escapeHtml(s.id)}">${escapeHtml(s.signerName)}${s.signerTitle ? ` — ${escapeHtml(s.signerTitle)}` : ""}${s.isDefault ? " (Default)" : ""}</option>`
+        `<option value="${escapeHtml(s.id)}">${escapeHtml(s.signerName)}${s.signerTitle ? ` — ${escapeHtml(s.signerTitle)}` : ""}</option>`
     ).join("");
     const defaultSig = getDefaultSignature();
     if (defaultSig) elements.signatureSelect.value = defaultSig.id;
+    updateSignatureSelectorPreview();
 }
 
 function syncSignatureSelectorUI() {
@@ -10973,12 +10979,42 @@ function syncSignatureSelectorUI() {
     const checked = elements.includeSignature.checked;
     const sigs = state.companyProfile?.signatures || [];
     const hasSigs = sigs.length > 0;
+    const isSingle = sigs.length === 1;
 
-    elements.signatureSelectorWrap.hidden = !checked || !hasSigs;
     elements.noSignaturesHint.hidden = !checked || hasSigs;
+    elements.signatureSelectorWrap.hidden = !checked || !hasSigs;
 
-    if (checked && !hasSigs) {
-        elements.includeSignature.checked = false;
+    if (!checked || !hasSigs) {
+        if (checked && !hasSigs) elements.includeSignature.checked = false;
+        return;
+    }
+
+    // Single signature: hide dropdown, show static "Signing as" label
+    if (elements.sigSelectorSingle) elements.sigSelectorSingle.hidden = !isSingle;
+    if (elements.signatureSelect) elements.signatureSelect.hidden = isSingle;
+
+    if (isSingle && elements.sigSelectorSingleName) {
+        const sig = sigs[0];
+        elements.sigSelectorSingleName.textContent = sig.signerName + (sig.signerTitle ? ` — ${sig.signerTitle}` : "");
+        if (elements.signatureSelect) elements.signatureSelect.value = sig.id;
+    }
+
+    updateSignatureSelectorPreview();
+}
+
+function updateSignatureSelectorPreview() {
+    if (!elements.sigSelectorPreview || !elements.sigSelectorPreviewImg || !elements.signatureSelect) return;
+    const sigId = elements.signatureSelect.value;
+    const sig = getSignatureById(sigId);
+    const imageUrl = sig ? getSignatureImageUrl(sig) : "";
+
+    if (imageUrl) {
+        elements.sigSelectorPreviewImg.src = imageUrl;
+        elements.sigSelectorPreviewImg.alt = sig?.signerName ? `${sig.signerName} signature` : "Signature preview";
+        elements.sigSelectorPreview.hidden = false;
+    } else {
+        elements.sigSelectorPreview.hidden = true;
+        elements.sigSelectorPreviewImg.removeAttribute("src");
     }
 }
 
@@ -12006,22 +12042,23 @@ function getInvoiceDerivedPaymentStatus(doc) {
     if (storedStatus === "paid") {
         return "paid";
     }
+
     const payments = getInvoicePayments(doc);
     if (!payments.length) {
-        // No actual payment records — preserve the user-set status (pending, unpaid, etc.)
+        // No actual payment records — preserve user-set status; treat stale "partial" as unpaid
         return storedStatus === "partial" ? "unpaid" : storedStatus;
     }
 
     const total = Number(doc?.total || 0);
-    const paidTotal = getInvoicePaymentsTotal(doc);
-    if (paidTotal <= 0) {
-        return "unpaid";
-    }
-    if (paidTotal >= total && total > 0) {
+    const paidTotal = getInvoicePaymentsTotal(doc); // always > 0 here (filtered by normalizeInvoicePayments)
+
+    // Full payment: paid at or above the invoice total
+    if (total <= 0 || paidTotal >= total) {
         return "paid";
     }
-    // Has actual payment records covering part of the balance — "partial" is distinct from
-    // user-set "pending payment" which has no payment records
+
+    // Partial: real money received (paidTotal > 0) but invoice not yet fully covered.
+    // "partial" is strictly separate from user-set "pending payment" which has no payment records.
     return "partial";
 }
 

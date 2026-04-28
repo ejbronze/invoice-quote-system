@@ -1878,7 +1878,14 @@
                                         </label>
                                         <small class="field-help" id="includeSignatureHelp">Turn this off for unsigned quotes or invoices before opening the PDF preview.</small>
                                         <div class="signature-selector-wrap" id="signatureSelectorWrap" hidden>
+                                            <div class="sig-selector-single" id="sigSelectorSingle" hidden>
+                                                <span class="sig-selector-label">Signing as:</span>
+                                                <span class="sig-selector-name" id="sigSelectorSingleName"></span>
+                                            </div>
                                             <select id="signatureSelect" class="form-select" aria-label="Select signer"></select>
+                                            <div class="sig-selector-preview" id="sigSelectorPreview" hidden>
+                                                <img id="sigSelectorPreviewImg" alt="Signature preview">
+                                            </div>
                                         </div>
                                         <small class="field-help" id="noSignaturesHint" hidden>Add a signature in Settings to include one on documents.</small>
                                         <label class="checkbox-row checkbox-row-block final-preview-option">
