@@ -12147,6 +12147,12 @@ function getInvoicePaymentTermDays(invoice) {
 }
 
 function calculateInvoiceDueDate(invoice) {
+    // Explicit due date fields take precedence (e.g. imported invoices)
+    const explicitField = invoice?.dueDate || invoice?.invoiceDueDate;
+    if (explicitField) {
+        const explicit = parseLocalDateValue(explicitField);
+        if (!isNaN(explicit.getTime())) return explicit;
+    }
     const invoiceDate = parseLocalDateValue(invoice?.date || new Date());
     const dueDate = new Date(invoiceDate);
     dueDate.setDate(dueDate.getDate() + getInvoicePaymentTermDays(invoice));
@@ -12164,6 +12170,19 @@ function getInvoiceDaysPastDue(invoice, referenceDate = new Date()) {
     const due = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
     const diffMs = today.getTime() - due.getTime();
     return diffMs > 0 ? Math.floor(diffMs / 86400000) : 0;
+}
+
+function isInvoiceOverdue(doc) {
+    if (doc?.type !== "invoice") return false;
+    if (getInvoiceOutstandingBalance(doc) <= 0) return false;
+    // Require some date basis — explicit or computed
+    if (!doc?.date && !doc?.dueDate && !doc?.invoiceDueDate) return false;
+    const dueDate = calculateInvoiceDueDate(doc);
+    if (!dueDate || isNaN(dueDate.getTime())) return false;
+    const now = new Date();
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dueMidnight = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+    return dueMidnight < todayMidnight;
 }
 
 function buildPaymentDeleteSummaryMarkup(context) {
@@ -16477,22 +16496,23 @@ function renderDashboardAttention() {
     if (!attentionSection || !overdueList || !dueSoonList) return;
 
     const today = new Date();
-    const invoices = state.documents.filter(doc =>
-        doc.type === "invoice" && doc.status === "logged" &&
-        doc.paymentStatus !== "paid" && getInvoiceOutstandingBalance(doc) > 0
+    const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    // All non-draft invoices (derived payment status already set by normalizeDocuments)
+    const candidateInvoices = state.documents.filter(doc =>
+        doc.type === "invoice" && doc.status !== "draft"
     );
 
-    const overdue = invoices
+    const overdue = candidateInvoices
+        .filter(isInvoiceOverdue)
         .map(inv => ({ inv, days: getInvoiceDaysPastDue(inv) }))
-        .filter(({ days }) => days > 0)
         .sort((a, b) => b.days - a.days);
 
-    const sevenDays = new Date(today);
-    sevenDays.setDate(sevenDays.getDate() + 7);
-    const dueSoon = invoices
+    const dueSoon = candidateInvoices
+        .filter(inv => !isInvoiceOverdue(inv) && getInvoiceOutstandingBalance(inv) > 0)
         .map(inv => {
             const due = calculateInvoiceDueDate(inv);
-            const diffMs = due.getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+            const diffMs = due.getTime() - todayMidnight.getTime();
             const daysLeft = Math.ceil(diffMs / 86400000);
             return { inv, daysLeft };
         })
@@ -16505,7 +16525,12 @@ function renderDashboardAttention() {
 
     const MAX_SHOWN = 5;
     const notesIconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 12h8M8 16h5"/></svg>`;
-    function buildRow(inv, labelText) {
+
+    function localDateStr(d) {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+
+    function buildRow(inv, labelText, dueDateLabel = "") {
         const balance = getInvoiceOutstandingBalance(inv);
         const safeId = escapeHtml(String(inv.id));
         const safeRef = escapeHtml(inv.refNumber || "No ref");
@@ -16514,6 +16539,7 @@ function renderDashboardAttention() {
                 <span class="attention-invoice-left">
                     <span class="attention-invoice-ref">${safeRef}</span>
                     <span class="attention-invoice-client">${escapeHtml(inv.clientName || "Unknown client")}</span>
+                    ${dueDateLabel ? `<span class="attention-invoice-duedate">${escapeHtml(dueDateLabel)}</span>` : ""}
                 </span>
                 <span class="attention-invoice-right">
                     <span class="attention-invoice-amount">${escapeHtml(`${inv.currency || "USD"} ${formatAmount(balance)}`)}</span>
@@ -16526,7 +16552,11 @@ function renderDashboardAttention() {
 
     overdueList.innerHTML = overdue.length === 0
         ? `<p class="attention-empty">No overdue invoices.</p>`
-        : overdue.slice(0, MAX_SHOWN).map(({ inv, days }) => buildRow(inv, `${days}d overdue`)).join("");
+        : overdue.slice(0, MAX_SHOWN).map(({ inv, days }) => {
+            const dueDate = calculateInvoiceDueDate(inv);
+            const dueDateLabel = `Due ${formatDisplayDate(localDateStr(dueDate))}`;
+            return buildRow(inv, `${days}d overdue`, dueDateLabel);
+        }).join("");
 
     dueSoonList.innerHTML = dueSoon.length === 0
         ? `<p class="attention-empty">Nothing due in the next 7 days.</p>`
