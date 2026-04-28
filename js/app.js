@@ -75,7 +75,9 @@ const state = {
     pendingCatalogItemCropSrc: "",
     selectedCatalogItemIds: [],
     catalogSelectionMode: false,
-    catalogRecoveryAttempted: false
+    catalogRecoveryAttempted: false,
+    editingSignatureId: null,
+    signatureEditorImageDataUrl: ""
 };
 
 const DOP_PER_USD = 59;
@@ -176,7 +178,8 @@ const DEFAULT_COMPANY_PROFILE = Object.freeze({
     website: "www.santosync.com",
     taxId: "Registration Pending",
     signatureDataUrl: "",
-    stampDataUrl: ""
+    stampDataUrl: "",
+    signatures: []
 });
 const TRANSLATIONS = {
     en: {
@@ -336,11 +339,13 @@ const TRANSLATIONS = {
         convert_to_quote: "Convert to Quote",
         payment_paid: "Paid",
         payment_pending: "Pending Payment",
+        payment_partial: "Partially Paid",
         payment_unpaid: "Unpaid",
         mark_as_paid: "Mark As Paid",
         mark_as_pending: "Mark As Pending",
         mark_as_unpaid: "Mark As Unpaid",
         report_pending: "Pending",
+        report_partial: "Partially Paid",
         local_mode: "LOCAL MODE",
         live_read_local_write: "LIVE READ / LOCAL WRITE",
         test_mode: "TEST MODE",
@@ -772,11 +777,13 @@ const TRANSLATIONS = {
         convert_to_quote: "Convertir en Cotizacion",
         payment_paid: "Pagada",
         payment_pending: "Pago Pendiente",
+        payment_partial: "Pago Parcial",
         payment_unpaid: "No Pagada",
         mark_as_paid: "Marcar como Pagada",
         mark_as_pending: "Marcar como Pendiente",
         mark_as_unpaid: "Marcar como No Pagada",
         report_pending: "Pendiente",
+        report_partial: "Pago Parcial",
         local_mode: "MODO LOCAL",
         pipeline_value: "Valor en Proceso",
         amount_invoiced: "Monto Facturado",
@@ -1206,11 +1213,13 @@ const TRANSLATIONS = {
         convert_to_quote: "Convertir en Devis",
         payment_paid: "Payee",
         payment_pending: "Paiement en attente",
+        payment_partial: "Partiellement payée",
         payment_unpaid: "Non Payee",
         mark_as_paid: "Marquer comme Payee",
         mark_as_pending: "Marquer en attente",
         mark_as_unpaid: "Marquer comme Non Payee",
         report_pending: "En attente",
+        report_partial: "Partiellement payée",
         local_mode: "MODE LOCAL",
         pipeline_value: "Valeur Pipeline",
         amount_invoiced: "Montant Facturé",
@@ -1766,7 +1775,8 @@ function applyTranslations() {
     elements.invoiceReportFilterButtons[0].textContent = t("filter_all");
     elements.invoiceReportFilterButtons[1].textContent = t("payment_unpaid");
     elements.invoiceReportFilterButtons[2].textContent = t("payment_pending");
-    elements.invoiceReportFilterButtons[3].textContent = t("payment_paid");
+    if (elements.invoiceReportFilterButtons[3]) elements.invoiceReportFilterButtons[3].textContent = t("payment_partial");
+    if (elements.invoiceReportFilterButtons[4]) elements.invoiceReportFilterButtons[4].textContent = t("payment_paid");
     setElementText("#statementExportTitle", t("statement_of_account_title"));
     setElementText("#statementExportCopy", t("statement_of_account_copy"));
     setElementText("#statementSelectionTitle", t("statement_no_selection"));
@@ -2107,6 +2117,22 @@ function cacheElements() {
     elements.clearStampAssetBtn = document.getElementById("clearStampAssetBtn");
     elements.accountSessionLogList = document.getElementById("accountSessionLogList");
     elements.accountActivityLogList = document.getElementById("accountActivityLogList");
+    elements.signaturesListWrap = document.getElementById("signaturesListWrap");
+    elements.signatureEditorWrap = document.getElementById("signatureEditorWrap");
+    elements.addSignatureBtn = document.getElementById("addSignatureBtn");
+    elements.addSignatureBtnWrap = document.getElementById("addSignatureBtnWrap");
+    elements.sigEditorNameInput = document.getElementById("sigEditorNameInput");
+    elements.sigEditorTitleInput = document.getElementById("sigEditorTitleInput");
+    elements.sigEditorImageInput = document.getElementById("sigEditorImageInput");
+    elements.sigEditorClearImageBtn = document.getElementById("sigEditorClearImageBtn");
+    elements.sigEditorPreviewImg = document.getElementById("sigEditorPreviewImg");
+    elements.sigEditorPreviewEmpty = document.getElementById("sigEditorPreviewEmpty");
+    elements.sigEditorIsDefault = document.getElementById("sigEditorIsDefault");
+    elements.sigEditorSaveBtn = document.getElementById("sigEditorSaveBtn");
+    elements.sigEditorCancelBtn = document.getElementById("sigEditorCancelBtn");
+    elements.signatureSelect = document.getElementById("signatureSelect");
+    elements.signatureSelectorWrap = document.getElementById("signatureSelectorWrap");
+    elements.noSignaturesHint = document.getElementById("noSignaturesHint");
     elements.catalogGrid = document.getElementById("catalogGrid");
     elements.catalogPagination = document.getElementById("catalogPagination");
     elements.pricingLibrarySearch = document.getElementById("pricingLibrarySearch");
@@ -2717,6 +2743,13 @@ function bindEvents() {
     elements.clearSignatureAssetBtn?.addEventListener("click", () => clearBrandAsset("signature"));
     elements.clearStampAssetBtn?.addEventListener("click", () => clearBrandAsset("stamp"));
     elements.saveBrandAssetsBtn?.addEventListener("click", saveBrandAssets);
+    elements.addSignatureBtn?.addEventListener("click", () => openSignatureEditor(null));
+    elements.sigEditorCancelBtn?.addEventListener("click", closeSignatureEditor);
+    elements.sigEditorSaveBtn?.addEventListener("click", saveSignatureFromEditor);
+    elements.sigEditorImageInput?.addEventListener("change", handleSignatureEditorImageChange);
+    elements.sigEditorClearImageBtn?.addEventListener("click", clearSignatureEditorImage);
+    elements.signaturesListWrap?.addEventListener("click", handleSignatureListClick);
+    elements.includeSignature?.addEventListener("change", syncSignatureSelectorUI);
     elements.clientManagementList.addEventListener("click", handleClientManagementClick);
     elements.clientManagementList.addEventListener("click", handleClientStatClick);
     elements.clientManagementList.addEventListener("click", handleClientRowToggle);
@@ -3452,6 +3485,7 @@ function applyWorkspaceState(payload) {
     state.statementExports = normalizeStatementExports(payload?.statementExports || []);
     state.sessionLogs = normalizeSessionLogs(payload?.sessionLogs || []);
     state.activityLogs = normalizeActivityLogs(payload?.activityLogs || []);
+    migrateLegacySignature();
     try { cacheWorkspaceStateLocally(); } catch (_) { /* localStorage quota — state is valid, continue */ }
     updateRuntimeModeBadge();
     renderUserManagementList();
@@ -3460,6 +3494,7 @@ function applyWorkspaceState(payload) {
     renderCatalog();
     renderStatementsPage();
     renderAccountAdminPage();
+    renderSignaturesSettings();
 }
 
 async function bootstrapSharedWorkspaceData() {
@@ -3574,6 +3609,23 @@ async function saveIssueReports(reports) {
     await persistSharedWorkspaceData();
 }
 
+function normalizeSignature(sig) {
+    return {
+        id: String(sig?.id || `sig-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+        signerName: String(sig?.signerName || "").trim(),
+        signerTitle: String(sig?.signerTitle || "").trim(),
+        signatureImage: typeof sig?.signatureImage === "string" ? sig.signatureImage : "",
+        isDefault: Boolean(sig?.isDefault),
+        createdAt: String(sig?.createdAt || new Date().toISOString()),
+        updatedAt: String(sig?.updatedAt || new Date().toISOString())
+    };
+}
+
+function normalizeSignatures(sigs) {
+    if (!Array.isArray(sigs)) return [];
+    return sigs.filter(s => s && typeof s === "object").map(normalizeSignature);
+}
+
 function normalizeCompanyProfile(profile) {
     return {
         companyName: String(profile?.companyName || DEFAULT_COMPANY_PROFILE.companyName).trim(),
@@ -3584,8 +3636,54 @@ function normalizeCompanyProfile(profile) {
         website: String(profile?.website || DEFAULT_COMPANY_PROFILE.website).trim(),
         taxId: String(profile?.taxId || DEFAULT_COMPANY_PROFILE.taxId).trim(),
         signatureDataUrl: typeof profile?.signatureDataUrl === "string" ? profile.signatureDataUrl : "",
-        stampDataUrl: typeof profile?.stampDataUrl === "string" ? profile.stampDataUrl : ""
+        stampDataUrl: typeof profile?.stampDataUrl === "string" ? profile.stampDataUrl : "",
+        signatures: normalizeSignatures(profile?.signatures)
     };
+}
+
+function migrateLegacySignature() {
+    if (!state.companyProfile) return;
+    if (Array.isArray(state.companyProfile.signatures) && state.companyProfile.signatures.length > 0) return;
+    const signatureImage = state.companyProfile.signatureDataUrl || "__asset_david_forman__";
+    state.companyProfile = {
+        ...state.companyProfile,
+        signatures: [{
+            id: "sig_david_forman_default",
+            signerName: "David Forman",
+            signerTitle: "",
+            signatureImage,
+            isDefault: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        }]
+    };
+}
+
+function enforceOneDefault(sigs) {
+    if (!sigs.length) return sigs;
+    const defaultCount = sigs.filter(s => s.isDefault).length;
+    if (defaultCount === 1) return sigs;
+    if (defaultCount === 0) return sigs.map((s, i) => ({ ...s, isDefault: i === 0 }));
+    let found = false;
+    return sigs.map(s => {
+        if (s.isDefault && !found) { found = true; return s; }
+        return { ...s, isDefault: false };
+    });
+}
+
+function getSignatureById(id) {
+    return (state.companyProfile?.signatures || []).find(s => s.id === id) || null;
+}
+
+function getDefaultSignature() {
+    const sigs = state.companyProfile?.signatures || [];
+    return sigs.find(s => s.isDefault) || sigs[0] || null;
+}
+
+function getSignatureImageUrl(sig) {
+    if (!sig) return getSignatureUrl();
+    if (sig.signatureImage === "__asset_david_forman__") return getSignatureUrl();
+    return sig.signatureImage || "";
 }
 
 function normalizeSessionLogs(logs) {
@@ -9594,15 +9692,22 @@ function getInvoiceReportData() {
 
     const paidCount = rangedInvoices.filter(doc => getInvoiceDerivedPaymentStatus(doc) === "paid").length;
     const pendingCount = rangedInvoices.filter(doc => getInvoiceDerivedPaymentStatus(doc) === "pending").length;
+    const partialCount = rangedInvoices.filter(doc => getInvoiceDerivedPaymentStatus(doc) === "partial").length;
     const unpaidCount = rangedInvoices.filter(doc => getInvoiceDerivedPaymentStatus(doc) === "unpaid").length;
+    // Amount Paid = only actual payment records (real money received). Pending Payment invoices with
+    // no records contribute 0, preserving the rule that Pending ≠ paid.
     const paidTotal = rangedInvoices
         .reduce((sum, doc) => sum + getInvoicePaymentsTotal(doc), 0);
     const pendingTotal = rangedInvoices
         .filter(doc => getInvoiceDerivedPaymentStatus(doc) === "pending")
         .reduce((sum, doc) => sum + getInvoiceOutstandingBalance(doc), 0);
+    const partialTotal = rangedInvoices
+        .filter(doc => getInvoiceDerivedPaymentStatus(doc) === "partial")
+        .reduce((sum, doc) => sum + getInvoiceOutstandingBalance(doc), 0);
     const unpaidTotal = rangedInvoices
         .filter(doc => getInvoiceDerivedPaymentStatus(doc) === "unpaid")
         .reduce((sum, doc) => sum + getInvoiceOutstandingBalance(doc), 0);
+    const outstandingTotal = pendingTotal + partialTotal + unpaidTotal;
 
     return {
         allInvoices: rangedInvoices,
@@ -9611,10 +9716,13 @@ function getInvoiceReportData() {
         summary: {
             paidCount,
             pendingCount,
+            partialCount,
             unpaidCount,
             paidTotal,
             pendingTotal,
+            partialTotal,
             unpaidTotal,
+            outstandingTotal,
             clientCount: new Set(rangedInvoices.map(doc => String(doc.clientName || t("unknown_client")).trim() || t("unknown_client"))).size
         }
     };
@@ -9642,12 +9750,20 @@ function renderInvoiceReport() {
             <strong>${escapeHtml(`${summary.paidCount} • ${formatCurrency(summary.paidTotal)}`)}</strong>
         </article>
         <article class="invoice-report-summary-card">
+            <span>${escapeHtml(t("report_total_pending"))}</span>
+            <strong>${escapeHtml(`${summary.pendingCount} • ${formatCurrency(summary.pendingTotal)}`)}</strong>
+        </article>
+        <article class="invoice-report-summary-card">
+            <span>${escapeHtml(t("report_partial"))}</span>
+            <strong>${escapeHtml(`${summary.partialCount} • ${formatCurrency(summary.partialTotal)}`)}</strong>
+        </article>
+        <article class="invoice-report-summary-card">
             <span>${escapeHtml(t("report_total_unpaid"))}</span>
             <strong>${escapeHtml(`${summary.unpaidCount} • ${formatCurrency(summary.unpaidTotal)}`)}</strong>
         </article>
         <article class="invoice-report-summary-card">
-            <span>${escapeHtml(t("report_total_pending"))}</span>
-            <strong>${escapeHtml(`${summary.pendingCount} • ${formatCurrency(summary.pendingTotal)}`)}</strong>
+            <span>${escapeHtml(t("total_outstanding"))}</span>
+            <strong>${escapeHtml(formatCurrency(summary.outstandingTotal))}</strong>
         </article>
     `;
 
@@ -10435,6 +10551,8 @@ function renderAccountAdminPage() {
         return;
     }
 
+    renderSignaturesSettings();
+
     const managedUsers = state.userAccounts.filter(user => user.role !== "owner");
     const subaccountCount = managedUsers.filter(user => user.parentUserId).length;
     const recentSessions = state.sessionLogs.slice(0, 8);
@@ -10658,6 +10776,210 @@ async function saveBrandAssets() {
     recordActivity("updated branding assets", "Changed the signature or stamp used for generated documents.");
     generatePreviews();
     setImportStatus("Branding assets saved for document generation.");
+}
+
+// ── Signature Management ──────────────────────────────────────────────────
+
+function renderSignaturesSettings() {
+    if (!elements.signaturesListWrap) return;
+
+    const sigs = state.companyProfile?.signatures || [];
+
+    if (!sigs.length) {
+        elements.signaturesListWrap.innerHTML = `<div class="sig-empty-state">No saved signatures. Add one below.</div>`;
+        return;
+    }
+
+    elements.signaturesListWrap.innerHTML = `<div class="sig-list">${sigs.map(sig => {
+        const hasImage = sig.signatureImage && sig.signatureImage !== "__asset_david_forman__";
+        const fallbackIsAsset = sig.signatureImage === "__asset_david_forman__";
+        const thumbHtml = (hasImage || fallbackIsAsset)
+            ? `<img src="${escapeHtml(hasImage ? sig.signatureImage : getSignatureUrl())}" alt="${escapeHtml(sig.signerName)} signature" onerror="this.parentElement.innerHTML='<span class=\\'sig-card-thumb-empty\\'>No image</span>'">`
+            : `<span class="sig-card-thumb-empty">No image</span>`;
+        return `
+        <article class="sig-card" data-sig-id="${escapeHtml(sig.id)}">
+            <div class="sig-card-info">
+                <div class="sig-card-thumb">${thumbHtml}</div>
+                <div class="sig-card-meta">
+                    <span class="sig-card-name">${escapeHtml(sig.signerName)}</span>
+                    ${sig.signerTitle ? `<span class="sig-card-title">${escapeHtml(sig.signerTitle)}</span>` : ""}
+                    ${sig.isDefault ? `<span class="sig-card-default-badge">Default</span>` : ""}
+                </div>
+            </div>
+            <div class="sig-card-actions">
+                ${!sig.isDefault ? `<button class="btn btn-secondary" data-sig-action="set-default" data-sig-id="${escapeHtml(sig.id)}">Set Default</button>` : ""}
+                <button class="btn btn-secondary" data-sig-action="edit" data-sig-id="${escapeHtml(sig.id)}">Edit</button>
+                <button class="btn btn-danger" data-sig-action="delete" data-sig-id="${escapeHtml(sig.id)}">Delete</button>
+            </div>
+        </article>`;
+    }).join("")}</div>`;
+}
+
+function openSignatureEditor(sigId) {
+    state.editingSignatureId = sigId || null;
+    const existing = sigId ? getSignatureById(sigId) : null;
+    state.signatureEditorImageDataUrl = existing?.signatureImage || "";
+
+    if (elements.sigEditorNameInput) elements.sigEditorNameInput.value = existing?.signerName || "";
+    if (elements.sigEditorTitleInput) elements.sigEditorTitleInput.value = existing?.signerTitle || "";
+    if (elements.sigEditorIsDefault) elements.sigEditorIsDefault.checked = existing ? existing.isDefault : false;
+    if (elements.sigEditorImageInput) elements.sigEditorImageInput.value = "";
+
+    syncSignatureEditorImagePreview();
+
+    if (elements.signatureEditorWrap) elements.signatureEditorWrap.hidden = false;
+    if (elements.addSignatureBtnWrap) elements.addSignatureBtnWrap.hidden = true;
+    elements.sigEditorNameInput?.focus();
+}
+
+function closeSignatureEditor() {
+    state.editingSignatureId = null;
+    state.signatureEditorImageDataUrl = "";
+    if (elements.signatureEditorWrap) elements.signatureEditorWrap.hidden = true;
+    if (elements.addSignatureBtnWrap) elements.addSignatureBtnWrap.hidden = false;
+}
+
+function syncSignatureEditorImagePreview() {
+    const url = state.signatureEditorImageDataUrl;
+    const isAsset = url === "__asset_david_forman__";
+    const resolved = isAsset ? getSignatureUrl() : url;
+
+    if (elements.sigEditorPreviewImg) {
+        elements.sigEditorPreviewImg.hidden = !resolved;
+        if (resolved) elements.sigEditorPreviewImg.src = resolved;
+        else elements.sigEditorPreviewImg.removeAttribute("src");
+    }
+    if (elements.sigEditorPreviewEmpty) {
+        elements.sigEditorPreviewEmpty.hidden = Boolean(resolved);
+    }
+    if (elements.sigEditorClearImageBtn) {
+        elements.sigEditorClearImageBtn.hidden = !resolved;
+    }
+}
+
+async function handleSignatureEditorImageChange(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+        state.signatureEditorImageDataUrl = await readFileAsDataUrl(file);
+        syncSignatureEditorImagePreview();
+    } catch {
+        window.alert("Unable to read image file.");
+    }
+}
+
+function clearSignatureEditorImage() {
+    state.signatureEditorImageDataUrl = "";
+    if (elements.sigEditorImageInput) elements.sigEditorImageInput.value = "";
+    syncSignatureEditorImagePreview();
+}
+
+async function saveSignatureFromEditor() {
+    const name = elements.sigEditorNameInput?.value.trim() || "";
+    if (!name) {
+        window.alert("Signer name is required.");
+        elements.sigEditorNameInput?.focus();
+        return;
+    }
+
+    const isDefault = elements.sigEditorIsDefault?.checked || false;
+    const now = new Date().toISOString();
+    let sigs = [...(state.companyProfile?.signatures || [])];
+
+    if (state.editingSignatureId) {
+        sigs = sigs.map(s => s.id !== state.editingSignatureId ? s : {
+            ...s,
+            signerName: name,
+            signerTitle: elements.sigEditorTitleInput?.value.trim() || "",
+            signatureImage: state.signatureEditorImageDataUrl,
+            isDefault,
+            updatedAt: now
+        });
+    } else {
+        sigs.push({
+            id: `sig-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            signerName: name,
+            signerTitle: elements.sigEditorTitleInput?.value.trim() || "",
+            signatureImage: state.signatureEditorImageDataUrl,
+            isDefault,
+            createdAt: now,
+            updatedAt: now
+        });
+    }
+
+    if (isDefault) {
+        sigs = sigs.map(s => ({ ...s, isDefault: s.signerName === name && (state.editingSignatureId ? s.id === state.editingSignatureId : s.createdAt === now) }));
+        const saved = state.editingSignatureId
+            ? sigs.find(s => s.id === state.editingSignatureId)
+            : sigs[sigs.length - 1];
+        if (saved) {
+            sigs = sigs.map(s => ({ ...s, isDefault: s.id === saved.id }));
+        }
+    }
+
+    sigs = enforceOneDefault(sigs);
+
+    state.companyProfile = { ...state.companyProfile, signatures: sigs };
+    await saveCompanyProfileState(state.companyProfile);
+    recordActivity("updated signatures", `Saved signature for ${name}.`);
+    closeSignatureEditor();
+    renderSignaturesSettings();
+    populateSignatureSelector();
+    setImportStatus("Signature saved.");
+}
+
+async function handleSignatureListClick(event) {
+    const btn = event.target.closest("[data-sig-action]");
+    if (!btn) return;
+    const action = btn.dataset.sigAction;
+    const sigId = btn.dataset.sigId;
+
+    if (action === "edit") {
+        openSignatureEditor(sigId);
+    } else if (action === "set-default") {
+        let sigs = (state.companyProfile?.signatures || []).map(s => ({ ...s, isDefault: s.id === sigId }));
+        state.companyProfile = { ...state.companyProfile, signatures: sigs };
+        await saveCompanyProfileState(state.companyProfile);
+        renderSignaturesSettings();
+        populateSignatureSelector();
+        setImportStatus("Default signature updated.");
+    } else if (action === "delete") {
+        const sig = getSignatureById(sigId);
+        if (!sig) return;
+        if (!window.confirm(`Delete signature for "${sig.signerName}"?`)) return;
+        let sigs = (state.companyProfile?.signatures || []).filter(s => s.id !== sigId);
+        sigs = enforceOneDefault(sigs);
+        state.companyProfile = { ...state.companyProfile, signatures: sigs };
+        await saveCompanyProfileState(state.companyProfile);
+        recordActivity("deleted signature", `Removed signature for ${sig.signerName}.`);
+        renderSignaturesSettings();
+        populateSignatureSelector();
+        setImportStatus("Signature deleted.");
+    }
+}
+
+function populateSignatureSelector() {
+    if (!elements.signatureSelect) return;
+    const sigs = state.companyProfile?.signatures || [];
+    elements.signatureSelect.innerHTML = sigs.map(s =>
+        `<option value="${escapeHtml(s.id)}">${escapeHtml(s.signerName)}${s.signerTitle ? ` — ${escapeHtml(s.signerTitle)}` : ""}${s.isDefault ? " (Default)" : ""}</option>`
+    ).join("");
+    const defaultSig = getDefaultSignature();
+    if (defaultSig) elements.signatureSelect.value = defaultSig.id;
+}
+
+function syncSignatureSelectorUI() {
+    if (!elements.signatureSelectorWrap || !elements.noSignaturesHint || !elements.includeSignature) return;
+    const checked = elements.includeSignature.checked;
+    const sigs = state.companyProfile?.signatures || [];
+    const hasSigs = sigs.length > 0;
+
+    elements.signatureSelectorWrap.hidden = !checked || !hasSigs;
+    elements.noSignaturesHint.hidden = !checked || hasSigs;
+
+    if (checked && !hasSigs) {
+        elements.includeSignature.checked = false;
+    }
 }
 
 function renderUserManagementList() {
@@ -11639,7 +11961,7 @@ async function requestJSON(url, options = {}) {
 }
 
 function normalizePaymentStatus(status) {
-    if (status === "paid" || status === "pending" || status === "unpaid") {
+    if (status === "paid" || status === "pending" || status === "partial" || status === "unpaid") {
         return status;
     }
     return "unpaid";
@@ -11686,7 +12008,8 @@ function getInvoiceDerivedPaymentStatus(doc) {
     }
     const payments = getInvoicePayments(doc);
     if (!payments.length) {
-        return storedStatus;
+        // No actual payment records — preserve the user-set status (pending, unpaid, etc.)
+        return storedStatus === "partial" ? "unpaid" : storedStatus;
     }
 
     const total = Number(doc?.total || 0);
@@ -11697,7 +12020,9 @@ function getInvoiceDerivedPaymentStatus(doc) {
     if (paidTotal >= total && total > 0) {
         return "paid";
     }
-    return "pending";
+    // Has actual payment records covering part of the balance — "partial" is distinct from
+    // user-set "pending payment" which has no payment records
+    return "partial";
 }
 
 function inferPaymentTermsMode(paymentTermsText) {
@@ -12332,6 +12657,9 @@ function getPaymentStatusLabel(status) {
     }
     if (normalizedStatus === "pending") {
         return t("payment_pending");
+    }
+    if (normalizedStatus === "partial") {
+        return t("payment_partial");
     }
     return t("payment_unpaid");
 }
@@ -13701,6 +14029,8 @@ function resetForm() {
     resetPaymentTermsUI();
     elements.includeSignature.checked = true;
     elements.includeStamp.checked = false;
+    populateSignatureSelector();
+    syncSignatureSelectorUI();
     renderPaymentLedger([]);
     elements.itemsContainer.innerHTML = "";
     state.itemCounter = 0;
@@ -13729,6 +14059,8 @@ function prepareNewDocument(type = "quote") {
     resetPaymentTermsUI();
     elements.includeSignature.checked = true;
     elements.includeStamp.checked = false;
+    populateSignatureSelector();
+    syncSignatureSelectorUI();
     renderPaymentLedger([]);
     elements.docType.value = type;
     setToday();
@@ -13772,6 +14104,17 @@ function goToStep(step) {
 
     if (step >= totalSteps - 1) {
         generatePreviews();
+    }
+
+    if (step === totalSteps) {
+        populateSignatureSelector();
+        syncSignatureSelectorUI();
+    }
+
+    if (step === 3) {
+        requestAnimationFrame(() => {
+            elements.itemsContainer?.querySelectorAll(".item-description").forEach(autoResizeTextarea);
+        });
     }
 
     updateEditorSummary();
@@ -14479,6 +14822,56 @@ function getSignatureUrl() {
     return url.href;
 }
 
+function buildSignatureBlockMarkup(doc, stampStyle) {
+    if (doc.includeSignature === false) return "";
+
+    const sig = doc.selectedSignatureId
+        ? getSignatureById(doc.selectedSignatureId)
+        : getDefaultSignature();
+
+    const signerName = sig?.signerName || "David Forman";
+    const signerTitle = sig?.signerTitle || "";
+    const imageUrl = getSignatureImageUrl(sig);
+
+    return `
+    <div class="document-signatures">
+        <div class="signature-block">
+            <div class="signature-row">
+                <span class="signature-label">Approved By:</span>
+                <span class="signature-line">
+                    <span class="line-fill approved-by-name">${escapeHtml(signerName)}</span>
+                </span>
+            </div>
+            ${imageUrl ? `
+            <div class="signature-row signature-image-row">
+                <span class="signature-label">Signature:</span>
+                <span class="signature-line signature-image-line">
+                    <span class="line-fill">
+                        <img
+                            class="signature-image"
+                            src="${escapeHtml(imageUrl)}"
+                            alt="${escapeHtml(signerName)} signature"
+                            onerror="this.closest('.line-fill').innerHTML = '&nbsp;';"
+                        >
+                    </span>
+                </span>
+            </div>` : ""}
+            ${signerTitle ? `
+            <div class="signature-row">
+                <span class="signature-label">Title:</span>
+                <span class="signature-line"><span class="line-fill">${escapeHtml(signerTitle)}</span></span>
+            </div>` : ""}
+            ${doc.includeStamp ? `
+            <img
+                class="signature-stamp"
+                src="${escapeHtml(getStampUrl())}"
+                alt="Company stamp"
+                style="${escapeHtml(stampStyle || "")}"
+            >` : ""}
+        </div>
+    </div>`;
+}
+
 function getStampUrl() {
     if (state.companyProfile?.stampDataUrl) {
         return state.companyProfile.stampDataUrl;
@@ -14580,6 +14973,7 @@ function buildDocumentData() {
         paymentTermsMode: getPaymentTermsModeFromUI(),
         paymentTermsDays: parseInt(elements.paymentTermsDays?.value, 10) || 45,
         includeSignature: elements.includeSignature.checked,
+        selectedSignatureId: elements.signatureSelect?.value || getDefaultSignature()?.id || null,
         includeStamp: elements.includeStamp.checked,
         payments: elements.docType.value === "invoice"
             ? normalizeInvoicePayments(readPaymentEntriesFromEditor())
@@ -14726,39 +15120,7 @@ function buildDocumentMarkup(doc, stampStyle, options = {}) {
                 </table>
             </div>
 
-            ${doc.includeSignature === false ? "" : `
-            <div class="document-signatures">
-                <div class="signature-block">
-                    <div class="signature-row">
-                        <span class="signature-label">Approved By:</span>
-                        <span class="signature-line">
-                            <span class="line-fill approved-by-name">David Forman</span>
-                        </span>
-                    </div>
-                    <div class="signature-row signature-image-row">
-                        <span class="signature-label">Signature:</span>
-                        <span class="signature-line signature-image-line">
-                            <span class="line-fill">
-                                <img
-                                    class="signature-image"
-                                    src="${escapeHtml(getSignatureUrl())}"
-                                    alt="David Forman signature"
-                                    onerror="this.closest('.line-fill').innerHTML = '&nbsp;';"
-                                >
-                            </span>
-                        </span>
-                    </div>
-                    ${doc.includeStamp ? `
-                    <img
-                        class="signature-stamp"
-                        src="${escapeHtml(getStampUrl())}"
-                        alt="Company stamp"
-                        style="${escapeHtml(resolvedStampStyle)}"
-                    >
-                    ` : ""}
-                </div>
-            </div>
-            `}
+            ${buildSignatureBlockMarkup(doc, resolvedStampStyle)}
             </div>
 
             <img class="footer-wave" src="${escapeHtml(getFooterWaveUrl())}" alt="" aria-hidden="true">
@@ -15153,6 +15515,7 @@ async function persistDocument(options = {}) {
         paymentTermsMode: getPaymentTermsModeFromUI(),
         paymentTermsDays: parseInt(elements.paymentTermsDays?.value, 10) || 45,
         includeSignature: elements.includeSignature.checked,
+        selectedSignatureId: elements.signatureSelect?.value || getDefaultSignature()?.id || null,
         includeStamp: elements.includeStamp.checked,
         createdBy: existingDocument?.createdBy || (state.currentUser ? {
             userId: state.currentUser.userId,
@@ -16644,6 +17007,11 @@ function populateFormFromDocument(doc) {
     loadPaymentTermsIntoEditor(doc);
     elements.includeSignature.checked = doc.includeSignature !== false;
     elements.includeStamp.checked = Boolean(doc.includeStamp);
+    populateSignatureSelector();
+    if (doc.selectedSignatureId && elements.signatureSelect) {
+        elements.signatureSelect.value = doc.selectedSignatureId;
+    }
+    syncSignatureSelectorUI();
     renderPaymentLedger(doc.type === "invoice" ? doc.payments : []);
 
     elements.itemsContainer.innerHTML = "";

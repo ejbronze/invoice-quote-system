@@ -737,6 +737,51 @@
                     </div>
                 </section>
 
+                <section class="settings-panel account-admin-panel" id="signaturesSettingsPanel">
+                    <div class="settings-panel-header">
+                        <h4>Signatures</h4>
+                        <p>Manage saved signatures used when signing quotes and invoices.</p>
+                    </div>
+                    <div id="signaturesListWrap"></div>
+                    <div id="signatureEditorWrap" hidden>
+                        <div class="signature-editor-form">
+                            <div class="signature-editor-fields">
+                                <label class="form-field">
+                                    <span class="field-label">Signer Name <span class="req-star">*</span></span>
+                                    <input type="text" id="sigEditorNameInput" class="form-control" placeholder="e.g. David Forman">
+                                </label>
+                                <label class="form-field">
+                                    <span class="field-label">Title / Role</span>
+                                    <input type="text" id="sigEditorTitleInput" class="form-control" placeholder="e.g. Director">
+                                </label>
+                                <div class="form-field">
+                                    <span class="field-label">Signature Image</span>
+                                    <div class="sig-editor-image-area">
+                                        <div class="sig-editor-preview" id="sigEditorPreviewWrap">
+                                            <img id="sigEditorPreviewImg" alt="Signature preview" hidden>
+                                            <span class="account-branding-empty" id="sigEditorPreviewEmpty">No image</span>
+                                        </div>
+                                        <label class="btn btn-secondary" for="sigEditorImageInput">Upload Image</label>
+                                        <input type="file" id="sigEditorImageInput" accept="image/*" hidden>
+                                        <button class="btn btn-secondary" id="sigEditorClearImageBtn" type="button" hidden>Remove Image</button>
+                                    </div>
+                                </div>
+                                <label class="checkbox-row">
+                                    <input type="checkbox" id="sigEditorIsDefault">
+                                    <span>Set as default signature</span>
+                                </label>
+                            </div>
+                            <div class="settings-actions">
+                                <button class="btn btn-primary" id="sigEditorSaveBtn" type="button">Save Signature</button>
+                                <button class="btn btn-secondary" id="sigEditorCancelBtn" type="button">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-actions" id="addSignatureBtnWrap">
+                        <button class="btn btn-secondary" id="addSignatureBtn" type="button">+ Add Signature</button>
+                    </div>
+                </section>
+
                 <section class="settings-panel account-admin-panel">
                     <div class="settings-panel-header">
                         <h4>Login Session Reports</h4>
@@ -1317,6 +1362,7 @@
                         <button class="filter-chip active" id="invoiceReportFilterAllBtn" type="button" data-invoice-report-filter="all">All</button>
                         <button class="filter-chip" id="invoiceReportFilterUnpaidBtn" type="button" data-invoice-report-filter="unpaid">Unpaid</button>
                         <button class="filter-chip" id="invoiceReportFilterPendingBtn" type="button" data-invoice-report-filter="pending">Pending</button>
+                        <button class="filter-chip" id="invoiceReportFilterPartialBtn" type="button" data-invoice-report-filter="partial">Partial</button>
                         <button class="filter-chip" id="invoiceReportFilterPaidBtn" type="button" data-invoice-report-filter="paid">Paid</button>
                     </div>
                     <div class="settings-actions invoice-report-actions">
@@ -1831,6 +1877,10 @@
                                             <span id="includeSignatureLabel">Include signature on export</span>
                                         </label>
                                         <small class="field-help" id="includeSignatureHelp">Turn this off for unsigned quotes or invoices before opening the PDF preview.</small>
+                                        <div class="signature-selector-wrap" id="signatureSelectorWrap" hidden>
+                                            <select id="signatureSelect" class="form-select" aria-label="Select signer"></select>
+                                        </div>
+                                        <small class="field-help" id="noSignaturesHint" hidden>Add a signature in Settings to include one on documents.</small>
                                         <label class="checkbox-row checkbox-row-block final-preview-option">
                                             <input type="checkbox" id="includeStamp">
                                             <span id="includeStampLabel">Include stamp on export</span>

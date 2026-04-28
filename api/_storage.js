@@ -218,6 +218,23 @@ function normalizeIssueReports(reports) {
         : [];
 }
 
+function normalizeSignature(sig) {
+    return {
+        id: String(sig?.id || `sig-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+        signerName: String(sig?.signerName || "").trim(),
+        signerTitle: String(sig?.signerTitle || "").trim(),
+        signatureImage: typeof sig?.signatureImage === "string" ? sig.signatureImage : "",
+        isDefault: Boolean(sig?.isDefault),
+        createdAt: String(sig?.createdAt || new Date().toISOString()),
+        updatedAt: String(sig?.updatedAt || new Date().toISOString())
+    };
+}
+
+function normalizeSignatures(sigs) {
+    if (!Array.isArray(sigs)) return [];
+    return sigs.filter(s => s && typeof s === "object").map(normalizeSignature);
+}
+
 function normalizeCompanyProfile(profile) {
     return {
         companyName: String(profile?.companyName || DEFAULT_COMPANY_PROFILE.companyName).trim(),
@@ -228,7 +245,8 @@ function normalizeCompanyProfile(profile) {
         website: String(profile?.website || DEFAULT_COMPANY_PROFILE.website).trim(),
         taxId: String(profile?.taxId || DEFAULT_COMPANY_PROFILE.taxId).trim(),
         signatureDataUrl: typeof profile?.signatureDataUrl === "string" ? profile.signatureDataUrl : "",
-        stampDataUrl: typeof profile?.stampDataUrl === "string" ? profile.stampDataUrl : ""
+        stampDataUrl: typeof profile?.stampDataUrl === "string" ? profile.stampDataUrl : "",
+        signatures: normalizeSignatures(profile?.signatures)
     };
 }
 

@@ -8237,8 +8237,9 @@ body::after {
 
 .items-table .item-description {
     overflow: hidden;
-    min-height: 2em;
+    min-height: 2.4em;
     line-height: 1.45;
+    field-sizing: content; /* progressive enhancement: browser auto-sizes if supported */
 }
 
 /* ─── Legacy card-style item-row (superseded by table layout) ─── */
@@ -12883,6 +12884,12 @@ body {
     border-color: rgba(180, 110, 10, 0.18);
 }
 
+.status-badge.is-partial {
+    color: #1e4f9a;
+    background: rgba(219, 234, 254, 0.92);
+    border-color: rgba(37, 99, 235, 0.2);
+}
+
 /* Offer badge — neutral blue, not a warning state */
 .status-badge.is-offer {
     color: #2563eb;
@@ -14737,4 +14744,164 @@ body #procurementSheetModal:not([hidden]) {
 .proc-pdf-footer-company {
     font-weight: 600;
     color: #64748b;
+}
+
+/* ── Saved Signatures – Settings Panel ───────────────────────────────────── */
+
+.req-star {
+    color: #dc2626;
+}
+
+.sig-list {
+    display: grid;
+    gap: 0.65rem;
+    margin-top: 0.85rem;
+}
+
+.sig-card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    gap: 0.75rem;
+    padding: 0.85rem;
+    border: 1px solid rgba(112, 135, 176, 0.18);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.88);
+}
+
+.sig-card-info {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.sig-card-thumb {
+    width: 80px;
+    height: 40px;
+    border: 1px dashed rgba(112, 135, 176, 0.28);
+    border-radius: 6px;
+    background: rgba(245, 248, 253, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.sig-card-thumb img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.sig-card-thumb-empty {
+    font-size: 0.68rem;
+    color: #9ca3af;
+    font-weight: 600;
+}
+
+.sig-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+}
+
+.sig-card-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #1e293b;
+}
+
+.sig-card-title {
+    font-size: 0.78rem;
+    color: #64748b;
+}
+
+.sig-card-default-badge {
+    display: inline-block;
+    font-size: 0.67rem;
+    font-weight: 700;
+    padding: 0.15em 0.55em;
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    margin-top: 0.25rem;
+    width: fit-content;
+}
+
+.sig-card-actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.sig-card-actions .btn {
+    padding: 0.28rem 0.6rem;
+    font-size: 0.74rem;
+    width: auto !important;
+}
+
+.sig-empty-state {
+    padding: 1.2rem;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 0.82rem;
+    border: 1px dashed rgba(112, 135, 176, 0.25);
+    border-radius: 10px;
+    margin-top: 0.85rem;
+}
+
+/* Signature editor form */
+.signature-editor-form {
+    padding: 1rem;
+    border: 1px solid rgba(112, 135, 176, 0.22);
+    border-radius: 12px;
+    background: rgba(245, 248, 253, 0.8);
+    margin-top: 0.85rem;
+}
+
+.signature-editor-fields {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.sig-editor-image-area {
+    display: grid;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+}
+
+.sig-editor-preview {
+    min-height: 72px;
+    border: 1px dashed rgba(112, 135, 176, 0.28);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.sig-editor-preview img {
+    max-width: 100%;
+    max-height: 72px;
+    object-fit: contain;
+    display: block;
+}
+
+/* Signature selector in Step 6 modal */
+.signature-selector-wrap {
+    margin-top: 0.5rem;
+}
+
+.signature-selector-wrap .form-select {
+    width: 100%;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid rgba(112, 135, 176, 0.3);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    background: #fff;
+    color: #1e293b;
 }
