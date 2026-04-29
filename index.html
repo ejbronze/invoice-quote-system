@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SantoSync</title>
-    <link rel="stylesheet" href="css/styles.css?v=35">
+    <link rel="stylesheet" href="css/styles.css?v=36">
 </head>
 <body>
     <div class="brand-splash" id="brandSplash" aria-hidden="true" hidden>
@@ -628,6 +628,51 @@
                             </div>
                         </div>
                         <input type="checkbox" id="showInternalPricingToggle" hidden aria-hidden="true">
+
+                        <div class="settings-panel" id="signaturesSettingsPanel">
+                            <div class="settings-panel-header">
+                                <h4>Signatures</h4>
+                                <p>Manage saved signatures used when signing quotes and invoices.</p>
+                            </div>
+                            <div id="signaturesListWrap"></div>
+                            <div id="signatureEditorWrap" hidden>
+                                <div class="signature-editor-form">
+                                    <div class="signature-editor-fields">
+                                        <label class="form-field">
+                                            <span class="field-label">Signer Name <span class="req-star">*</span></span>
+                                            <input type="text" id="sigEditorNameInput" class="form-control" placeholder="e.g. David Forman">
+                                        </label>
+                                        <label class="form-field">
+                                            <span class="field-label">Title / Role</span>
+                                            <input type="text" id="sigEditorTitleInput" class="form-control" placeholder="e.g. Director">
+                                        </label>
+                                        <div class="form-field">
+                                            <span class="field-label">Signature Image</span>
+                                            <div class="sig-editor-image-area">
+                                                <div class="sig-editor-preview" id="sigEditorPreviewWrap">
+                                                    <img id="sigEditorPreviewImg" alt="Signature preview" hidden>
+                                                    <span class="account-branding-empty" id="sigEditorPreviewEmpty">No image</span>
+                                                </div>
+                                                <label class="btn btn-secondary" for="sigEditorImageInput">Upload Image</label>
+                                                <input type="file" id="sigEditorImageInput" accept="image/*" hidden>
+                                                <button class="btn btn-secondary" id="sigEditorClearImageBtn" type="button" hidden>Remove Image</button>
+                                            </div>
+                                        </div>
+                                        <label class="checkbox-row">
+                                            <input type="checkbox" id="sigEditorIsDefault">
+                                            <span>Set as default signature</span>
+                                        </label>
+                                    </div>
+                                    <div class="settings-actions">
+                                        <button class="btn btn-primary" id="sigEditorSaveBtn" type="button">Save Signature</button>
+                                        <button class="btn btn-secondary" id="sigEditorCancelBtn" type="button">Cancel</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="settings-actions" id="addSignatureBtnWrap">
+                                <button class="btn btn-secondary" id="addSignatureBtn" type="button">+ Add Signature</button>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -760,51 +805,6 @@
                     </div>
                     <div class="settings-actions">
                         <button class="btn btn-primary" id="saveBrandAssetsBtn" type="button"><img src="/assets/icons/icon-save.png" alt="" class="btn-custom-icon">Save Branding Assets</button>
-                    </div>
-                </section>
-
-                <section class="settings-panel account-admin-panel" id="signaturesSettingsPanel">
-                    <div class="settings-panel-header">
-                        <h4>Signatures</h4>
-                        <p>Manage saved signatures used when signing quotes and invoices.</p>
-                    </div>
-                    <div id="signaturesListWrap"></div>
-                    <div id="signatureEditorWrap" hidden>
-                        <div class="signature-editor-form">
-                            <div class="signature-editor-fields">
-                                <label class="form-field">
-                                    <span class="field-label">Signer Name <span class="req-star">*</span></span>
-                                    <input type="text" id="sigEditorNameInput" class="form-control" placeholder="e.g. David Forman">
-                                </label>
-                                <label class="form-field">
-                                    <span class="field-label">Title / Role</span>
-                                    <input type="text" id="sigEditorTitleInput" class="form-control" placeholder="e.g. Director">
-                                </label>
-                                <div class="form-field">
-                                    <span class="field-label">Signature Image</span>
-                                    <div class="sig-editor-image-area">
-                                        <div class="sig-editor-preview" id="sigEditorPreviewWrap">
-                                            <img id="sigEditorPreviewImg" alt="Signature preview" hidden>
-                                            <span class="account-branding-empty" id="sigEditorPreviewEmpty">No image</span>
-                                        </div>
-                                        <label class="btn btn-secondary" for="sigEditorImageInput">Upload Image</label>
-                                        <input type="file" id="sigEditorImageInput" accept="image/*" hidden>
-                                        <button class="btn btn-secondary" id="sigEditorClearImageBtn" type="button" hidden>Remove Image</button>
-                                    </div>
-                                </div>
-                                <label class="checkbox-row">
-                                    <input type="checkbox" id="sigEditorIsDefault">
-                                    <span>Set as default signature</span>
-                                </label>
-                            </div>
-                            <div class="settings-actions">
-                                <button class="btn btn-primary" id="sigEditorSaveBtn" type="button">Save Signature</button>
-                                <button class="btn btn-secondary" id="sigEditorCancelBtn" type="button">Cancel</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="settings-actions" id="addSignatureBtnWrap">
-                        <button class="btn btn-secondary" id="addSignatureBtn" type="button">+ Add Signature</button>
                     </div>
                 </section>
 
@@ -2499,6 +2499,6 @@
     <script src="js/vendor/html2pdf.bundle.min.js"></script>
     <script src="js/brand.js?v=2"></script>
     <script src="js/statement-of-account.js?v=2"></script>
-    <script src="js/app.js?v=26"></script>
+    <script src="js/app.js?v=27"></script>
 </body>
 </html>

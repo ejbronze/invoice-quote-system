@@ -8379,6 +8379,7 @@ function openSettingsModal() {
     renderUserManagementList();
     renderClientManagementList();
     renderSnapshotsList();
+    renderSignaturesSettings();
     setActivePage("settings");
 }
 
@@ -10817,7 +10818,7 @@ function renderSignaturesSettings() {
     const sigs = state.companyProfile?.signatures || [];
 
     if (!sigs.length) {
-        elements.signaturesListWrap.innerHTML = `<div class="sig-empty-state">No saved signatures. Add one below.</div>`;
+        elements.signaturesListWrap.innerHTML = `<div class="sig-empty-state">Add your first signature to include it on quotes and invoices.</div>`;
         return;
     }
 

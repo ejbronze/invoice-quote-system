@@ -2,7 +2,17 @@
 
 SantoSync is a focused document and operations workspace built for trade teams, freelancers, and logistics operators who need to generate, track, and deliver professional quotes and invoices without the overhead of enterprise billing software.
 
-Version: `1.13.0` — Last updated: April 29, 2026
+Version: `1.14.0` — Last updated: April 29, 2026
+
+## Version 1.14.0 Summary
+
+This release fixes Signatures access in workspace Settings, making it visible and usable for all admin users without requiring access to Account Admin.
+
+**Signatures in Settings:** The Signatures panel has been moved from the owner-only Account Admin page into the standard Settings page. All admins can now open Settings and see the Signatures section — including the list of saved signatures, the editor form, and the "+ Add Signature" button.
+
+**Empty-state UX:** When no signatures exist, the panel now shows "Add your first signature to include it on quotes and invoices." instead of the previous generic message.
+
+**No data changes:** Signature data structure, export logic, `selectedSignatureId` behavior, and all existing signature functionality are unchanged. The move is a visibility-only fix.
 
 ## Version 1.13.0 Summary
 
