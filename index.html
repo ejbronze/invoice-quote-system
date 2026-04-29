@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SantoSync</title>
-    <link rel="stylesheet" href="css/styles.css?v=34">
+    <link rel="stylesheet" href="css/styles.css?v=35">
 </head>
 <body>
     <div class="brand-splash" id="brandSplash" aria-hidden="true" hidden>
@@ -154,132 +154,139 @@
                 <input id="importBackupInput" type="file" accept=".json,application/json" hidden>
 
                 <section class="workspace-shell app-page overview-page" id="overviewPage">
-                    <div class="workspace-hero">
-                        <div class="workspace-hero-main">
-                            <span class="eyebrow">Dashboard</span>
-                            <div class="workspace-hero-headline">
-                                <div class="hero-copy">
-                                    <h1>Quotes, invoices, and payments — all in one place.</h1>
-                                    <p>Build polished documents, convert quotes to invoices instantly, and track every payment from one focused workspace.</p>
-                                </div>
-                                <div class="hero-side-column">
-                                    <button class="overview-mobile-toggle" id="overviewMobileToggle" type="button" aria-label="Cycle snapshot value" hidden>
-                                        <span class="overview-mobile-toggle-copy">
-                                            <span class="overview-mobile-toggle-label" id="overviewMobileToggleLabel">Pipeline Value</span>
-                                            <strong class="overview-mobile-toggle-value" id="overviewMobileToggleValue">$0.00</strong>
+
+                    <!-- Dashboard header: eyebrow + headline + new-document button -->
+                    <div class="workspace-hero dash-hero">
+                        <div class="workspace-hero-main dash-hero-main">
+                            <div class="hero-copy dash-hero-copy">
+                                <span class="eyebrow">Dashboard</span>
+                                <h1 class="dash-headline">Workspace Overview</h1>
+                                <p hidden></p>
+                            </div>
+                            <div class="workspace-new-wrap">
+                                <button class="btn btn-primary workspace-new-btn" id="overviewNewBtn" type="button" aria-expanded="false" aria-haspopup="true">+ New</button>
+                                <div class="workspace-new-menu" id="overviewNewMenu" hidden>
+                                    <button class="workspace-new-menu-item" id="overviewNewQuoteBtn" type="button">
+                                        <span class="workspace-new-icon">
+                                            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 2h7l3 3v9H3V2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M10 2v3h3" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
                                         </span>
-                                        <span class="overview-mobile-toggle-meta" id="overviewMobileToggleMeta">0 documents</span>
+                                        <span class="workspace-new-label">
+                                            <strong>Quote</strong>
+                                            <span>New quote document</span>
+                                        </span>
                                     </button>
-                                    <div class="overview-panel" aria-label="Workspace snapshot">
-                                        <div class="overview-panel-head">
-                                            <span class="overview-kicker">Snapshot</span>
-                                        </div>
-                                        <button class="stat-card stat-card-toggle stat-card-hero" id="valueToggleCard" type="button" aria-pressed="false">
-                                            <strong class="stat-value stat-value-hero" id="totalValueStat">$0.00</strong>
-                                            <span class="stat-label" id="totalValueLabel">Pipeline Value</span>
-                                            <span class="stat-meta" id="totalValueHint"></span>
-                                        </button>
-                                        <div class="overview-kpi-meta">
-                                            <span><strong id="totalDocumentsStat">0</strong> <span class="kpi-meta-label" id="kpiDocumentsLabel">Documents</span></span>
-                                            <span class="kpi-meta-sep" aria-hidden="true">·</span>
-                                            <span><strong id="quoteCountStat">0</strong> <span class="kpi-meta-label" id="kpiQuotesLabel">Quotes</span></span>
-                                        </div>
-                                        <div class="overview-outstanding-wrap" id="overviewOutstandingWrap" hidden>
-                                            <span class="outstanding-label" id="outstandingBalanceLabel">Outstanding Balance</span>
-                                            <strong class="outstanding-value" id="outstandingBalanceStat">$0.00</strong>
-                                        </div>
-                                    </div>
+                                    <button class="workspace-new-menu-item" id="overviewNewInvoiceBtn" type="button">
+                                        <span class="workspace-new-icon">
+                                            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5 6h6M5 8.5h4M5 11h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                                        </span>
+                                        <span class="workspace-new-label">
+                                            <strong>Invoice</strong>
+                                            <span>New invoice document</span>
+                                        </span>
+                                    </button>
+                                    <button class="workspace-new-menu-item" id="overviewNewProcurementBtn" type="button">
+                                        <span class="workspace-new-icon">
+                                            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 3h11v10h-11z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M2.5 6h11M6 3v10M10 3v10" stroke="currentColor" stroke-width="1.2"/></svg>
+                                        </span>
+                                        <span class="workspace-new-label">
+                                            <strong>New Offer</strong>
+                                            <span>Supplier / client item offer sheet</span>
+                                        </span>
+                                    </button>
+                                    <button class="workspace-new-menu-item" id="overviewNewStatementBtn" type="button">
+                                        <span class="workspace-new-icon">
+                                            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 4h12M2 8h8M2 12h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                                        </span>
+                                        <span class="workspace-new-label">
+                                            <strong>Statement</strong>
+                                            <span>Client billing statement</span>
+                                        </span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
                         <p class="hero-helper hero-status" id="importDocumentStatus" hidden>Use JSON backup tools to restore deleted records or move data between environments.</p>
                     </div>
 
-                    <div class="workspace-actions" aria-label="Primary actions">
-                        <div class="workspace-new-wrap">
-                            <button class="btn btn-primary workspace-new-btn" id="overviewNewBtn" type="button" aria-expanded="false" aria-haspopup="true">+ New</button>
-                            <div class="workspace-new-menu" id="overviewNewMenu" hidden>
-                                <button class="workspace-new-menu-item" id="overviewNewQuoteBtn" type="button">
-                                    <span class="workspace-new-icon">
-                                        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 2h7l3 3v9H3V2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M10 2v3h3" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
-                                    </span>
-                                    <span class="workspace-new-label">
-                                        <strong>Quote</strong>
-                                        <span>New quote document</span>
-                                    </span>
-                                </button>
-                                <button class="workspace-new-menu-item" id="overviewNewInvoiceBtn" type="button">
-                                    <span class="workspace-new-icon">
-                                        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5 6h6M5 8.5h4M5 11h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-                                    </span>
-                                    <span class="workspace-new-label">
-                                        <strong>Invoice</strong>
-                                        <span>New invoice document</span>
-                                    </span>
-                                </button>
-                                <button class="workspace-new-menu-item" id="overviewNewProcurementBtn" type="button">
-                                    <span class="workspace-new-icon">
-                                        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 3h11v10h-11z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M2.5 6h11M6 3v10M10 3v10" stroke="currentColor" stroke-width="1.2"/></svg>
-                                    </span>
-                                    <span class="workspace-new-label">
-                                        <strong>New Offer</strong>
-                                        <span>Supplier / client item offer sheet</span>
-                                    </span>
-                                </button>
-                                <button class="workspace-new-menu-item" id="overviewNewStatementBtn" type="button">
-                                    <span class="workspace-new-icon">
-                                        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 4h12M2 8h8M2 12h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-                                    </span>
-                                    <span class="workspace-new-label">
-                                        <strong>Statement</strong>
-                                        <span>Client billing statement</span>
-                                    </span>
-                                </button>
+                    <!-- KPI strip: cycling snapshot card + outstanding balance tile -->
+                    <div class="dash-kpi-strip">
+                        <button class="overview-mobile-toggle" id="overviewMobileToggle" type="button" aria-label="Cycle snapshot value" hidden>
+                            <span class="overview-mobile-toggle-copy">
+                                <span class="overview-mobile-toggle-label" id="overviewMobileToggleLabel">Pipeline Value</span>
+                                <strong class="overview-mobile-toggle-value" id="overviewMobileToggleValue">$0.00</strong>
+                            </span>
+                            <span class="overview-mobile-toggle-meta" id="overviewMobileToggleMeta">0 documents</span>
+                        </button>
+                        <div class="overview-panel" aria-label="Workspace snapshot">
+                            <div class="overview-panel-head">
+                                <span class="overview-kicker">Snapshot</span>
                             </div>
+                            <button class="stat-card stat-card-toggle stat-card-hero" id="valueToggleCard" type="button" aria-pressed="false">
+                                <strong class="stat-value stat-value-hero" id="totalValueStat">$0.00</strong>
+                                <span class="stat-label" id="totalValueLabel">Pipeline Value</span>
+                                <span class="stat-meta" id="totalValueHint"></span>
+                            </button>
+                            <div class="overview-kpi-meta">
+                                <span><strong id="totalDocumentsStat">0</strong> <span class="kpi-meta-label" id="kpiDocumentsLabel">Documents</span></span>
+                                <span class="kpi-meta-sep" aria-hidden="true">·</span>
+                                <span><strong id="quoteCountStat">0</strong> <span class="kpi-meta-label" id="kpiQuotesLabel">Quotes</span></span>
+                            </div>
+                        </div>
+                        <div class="overview-outstanding-wrap" id="overviewOutstandingWrap" hidden>
+                            <span class="outstanding-label" id="outstandingBalanceLabel">Outstanding Balance</span>
+                            <strong class="outstanding-value" id="outstandingBalanceStat">$0.00</strong>
                         </div>
                     </div>
 
+                    <!-- Attention: past due + coming due invoices (unified card) -->
                     <section class="overview-attention-section" id="overviewAttentionSection" hidden>
-                        <div class="overview-attention-grid">
-                            <article class="overview-attention-card is-overdue" id="overdueInvoicesCard">
-                                <div class="overview-attention-head">
-                                    <span class="overview-attention-badge is-red">Overdue</span>
-                                    <h3>Past Due Invoices <span class="attention-head-qualifier">(Needs Attention)</span></h3>
-                                    <div class="attention-head-info">
-                                        <button class="attention-head-info-btn" type="button" aria-label="About Past Due Invoices">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                                        </button>
-                                        <div class="attention-head-tooltip" role="tooltip">Shows unpaid or partially paid invoices with a remaining balance and a due date before today.</div>
+                        <div class="dash-attention-card">
+                            <div class="dash-attention-header">
+                                <span class="overview-attention-badge is-red">Attention</span>
+                                <h3 class="dash-attention-title">Invoices needing review</h3>
+                            </div>
+                            <div class="overview-attention-grid">
+                                <article class="overview-attention-card is-overdue" id="overdueInvoicesCard">
+                                    <div class="overview-attention-head">
+                                        <span class="overview-attention-badge is-red">Overdue</span>
+                                        <h3>Past Due Invoices <span class="attention-head-qualifier">(Needs Attention)</span></h3>
+                                        <div class="attention-head-info">
+                                            <button class="attention-head-info-btn" type="button" aria-label="About Past Due Invoices">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                            </button>
+                                            <div class="attention-head-tooltip" role="tooltip">Shows unpaid or partially paid invoices with a remaining balance and a due date before today.</div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="attention-card-total" id="overdueCardTotal" hidden>
-                                    <span id="overdueCardTotalLabel">Total Overdue</span>
-                                    <strong id="overdueCardTotalValue">$0.00</strong>
-                                </div>
-                                <div class="overview-attention-list" id="overdueInvoicesList"></div>
-                                <button class="overview-attention-viewall" id="viewAllOverdueBtn" type="button" hidden>View all overdue</button>
-                            </article>
-                            <article class="overview-attention-card is-due-soon" id="dueSoonInvoicesCard">
-                                <div class="overview-attention-head">
-                                    <span class="overview-attention-badge is-amber">Due Soon</span>
-                                    <h3>Coming Due <span class="attention-head-qualifier">(Next 7 Days)</span></h3>
-                                    <div class="attention-head-info">
-                                        <button class="attention-head-info-btn" type="button" aria-label="About Coming Due">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                                        </button>
-                                        <div class="attention-head-tooltip" role="tooltip">Shows unpaid or partially paid invoices with a remaining balance due today or within the next 7 days.</div>
+                                    <div class="attention-card-total" id="overdueCardTotal" hidden>
+                                        <span id="overdueCardTotalLabel">Total Overdue</span>
+                                        <strong id="overdueCardTotalValue">$0.00</strong>
                                     </div>
-                                </div>
-                                <div class="attention-card-total" id="dueSoonCardTotal" hidden>
-                                    <span id="dueSoonCardTotalLabel">Due Soon Total</span>
-                                    <strong id="dueSoonCardTotalValue">$0.00</strong>
-                                </div>
-                                <div class="overview-attention-list" id="dueSoonInvoicesList"></div>
-                                <button class="overview-attention-viewall" id="viewAllDueSoonBtn" type="button" hidden>View all due soon</button>
-                            </article>
+                                    <div class="overview-attention-list" id="overdueInvoicesList"></div>
+                                    <button class="overview-attention-viewall" id="viewAllOverdueBtn" type="button" hidden>View all overdue</button>
+                                </article>
+                                <article class="overview-attention-card is-due-soon" id="dueSoonInvoicesCard">
+                                    <div class="overview-attention-head">
+                                        <span class="overview-attention-badge is-amber">Due Soon</span>
+                                        <h3>Coming Due <span class="attention-head-qualifier">(Next 7 Days)</span></h3>
+                                        <div class="attention-head-info">
+                                            <button class="attention-head-info-btn" type="button" aria-label="About Coming Due">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                            </button>
+                                            <div class="attention-head-tooltip" role="tooltip">Shows unpaid or partially paid invoices with a remaining balance due today or within the next 7 days.</div>
+                                        </div>
+                                    </div>
+                                    <div class="attention-card-total" id="dueSoonCardTotal" hidden>
+                                        <span id="dueSoonCardTotalLabel">Due Soon Total</span>
+                                        <strong id="dueSoonCardTotalValue">$0.00</strong>
+                                    </div>
+                                    <div class="overview-attention-list" id="dueSoonInvoicesList"></div>
+                                    <button class="overview-attention-viewall" id="viewAllDueSoonBtn" type="button" hidden>View all due soon</button>
+                                </article>
+                            </div>
                         </div>
                     </section>
 
+                    <!-- Recent documents + workspace summary -->
                     <section class="overview-secondary-grid">
                         <article class="overview-card">
                             <div class="page-section-heading">

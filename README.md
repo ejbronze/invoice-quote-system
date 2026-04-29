@@ -2,7 +2,23 @@
 
 SantoSync is a focused document and operations workspace built for trade teams, freelancers, and logistics operators who need to generate, track, and deliver professional quotes and invoices without the overhead of enterprise billing software.
 
-Version: `1.12.0` — Last updated: April 28, 2026
+Version: `1.13.0` — Last updated: April 29, 2026
+
+## Version 1.13.0 Summary
+
+This release delivers a visual hierarchy upgrade to the dashboard overview page, improving the layout, information architecture, and polish of the workspace's main landing screen.
+
+**Refreshed dashboard layout:** The overview page has been redesigned with a cleaner information hierarchy. The top of the page now shows a concise header (eyebrow label + "Workspace Overview" headline + "+ New" button) instead of the previous generic marketing copy. This gives the dashboard an operator-console feel from the moment you land.
+
+**KPI strip:** The snapshot panel (cycling pipeline value, invoiced amount, and income received) has been extracted from the old workspace-hero layout into a dedicated `.dash-kpi-strip`. The hero value card is larger and more prominent, with the financial figure displayed at up to 3rem. When an outstanding invoice balance exists, a second tile appears alongside the hero card showing the total outstanding amount in a red-tinted tile — hidden when the balance is zero.
+
+**Unified attention card:** The two separate Past Due and Coming Due cards have been merged into a single unified card with a shared header ("Attention — Invoices needing review"). The two columns sit side by side inside the unified card, separated by a subtle divider. Both the hover tooltip ⓘ icons and the card-level totals are fully preserved. The card hides itself when no invoices require attention.
+
+**Improved empty states:** The Recent Documents empty state and inline attention empty states now use a styled dashed-border container to feel intentional and helpful rather than broken.
+
+**Responsive layout:** The KPI strip collapses to a single column on screens ≤ 768px. The attention grid stacks vertically on mobile with a horizontal divider between the two sections.
+
+**No data or logic changes:** All existing calculations — overdue detection, coming-due logic, outstanding balance math, pipeline/invoiced/income cycling, status badges, filter chips, document cards, and export behavior — are unchanged. All element IDs and JS event bindings are intact.
 
 ## Version 1.12.0 Summary
 

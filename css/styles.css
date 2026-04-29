@@ -15155,3 +15155,257 @@ body #procurementSheetModal:not([hidden]) {
     object-fit: contain;
     display: block;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   DASHBOARD v2 — Visual hierarchy upgrade (v1.13)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Width constraint for new dashboard sections ─────────── */
+.dash-hero,
+.dash-kpi-strip {
+    width: min(100%, 1240px);
+    margin-inline: auto;
+}
+
+.overview-attention-section {
+    width: min(100%, 1240px);
+    margin-inline: auto;
+}
+
+/* ── Dashboard hero: clean header row ────────────────────── */
+.dash-hero {
+    padding: 0.15rem 0 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.dash-hero-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.dash-hero-copy .eyebrow {
+    margin-bottom: 0.2rem;
+}
+
+.dash-hero .dash-headline {
+    font-family: var(--brand-display-font, "Sora"), "Manrope", "Helvetica Neue", Arial, sans-serif;
+    font-size: clamp(1.45rem, 2.2vw, 2rem);
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.035em;
+    margin: 0 0 0.08rem;
+    line-height: 1.1;
+    max-width: none;
+}
+
+.dash-hero .workspace-new-wrap {
+    flex: none;
+}
+
+/* ── KPI strip layout ────────────────────────────────────── */
+.dash-kpi-strip {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    align-items: start;
+}
+
+/* Two-column layout when outstanding balance tile is visible */
+.dash-kpi-strip:has(.overview-outstanding-wrap:not([hidden])) {
+    grid-template-columns: minmax(0, 1.7fr) minmax(200px, 0.55fr);
+}
+
+/* Snapshot panel card (contains cycling stat card + kpi-meta) */
+.dash-kpi-strip .overview-panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow-md);
+    padding: 1.15rem 1.25rem 1.05rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
+}
+
+.dash-kpi-strip .overview-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 88% 12%, rgba(66, 99, 235, 0.09), transparent 42%),
+        radial-gradient(circle at 12% 88%, rgba(23, 184, 137, 0.06), transparent 40%);
+    pointer-events: none;
+}
+
+/* Hero stat card inside the KPI panel */
+.dash-kpi-strip .stat-card-hero {
+    border-radius: 13px;
+}
+
+.dash-kpi-strip .stat-value-hero {
+    font-size: clamp(2.1rem, 3.8vw, 3rem);
+    letter-spacing: -0.055em;
+}
+
+/* Outstanding balance tile */
+.dash-kpi-strip .overview-outstanding-wrap {
+    border-radius: 18px;
+    padding: 1.3rem 1.25rem 1.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    align-self: stretch;
+    justify-content: center;
+    background: rgba(192, 32, 32, 0.06);
+    border: 1px solid rgba(192, 32, 32, 0.2);
+    box-shadow: var(--shadow-sm);
+}
+
+.dash-kpi-strip .outstanding-label {
+    font-size: 0.61rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: #b01818;
+}
+
+.dash-kpi-strip .outstanding-value {
+    font-size: clamp(1.7rem, 2.8vw, 2.3rem);
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    line-height: 1;
+    color: #b01818;
+}
+
+/* ── Unified attention card ───────────────────────────────── */
+.dash-attention-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+}
+
+.dash-attention-header {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.9rem 1.2rem 0.8rem;
+    border-bottom: 1px solid rgba(20, 40, 80, 0.06);
+}
+
+.dash-attention-title {
+    font-family: var(--brand-display-font, "Sora"), "Manrope", sans-serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+/* Reset individual card borders/backgrounds inside unified card */
+.dash-attention-card .overview-attention-grid {
+    gap: 0;
+}
+
+.dash-attention-card .overview-attention-card {
+    border-radius: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    padding: 0.9rem 1.2rem 1.1rem;
+}
+
+.dash-attention-card .overview-attention-card.is-overdue {
+    border-right: 1px solid rgba(20, 40, 80, 0.06);
+    background: rgba(255, 247, 247, 0.45);
+}
+
+.dash-attention-card .overview-attention-card.is-due-soon {
+    background: rgba(255, 252, 242, 0.45);
+}
+
+/* ── Overview secondary grid cards ───────────────────────── */
+.overview-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.overview-card .page-section-heading {
+    margin-bottom: 0;
+}
+
+.overview-card .page-section-heading h2 {
+    font-size: clamp(0.95rem, 1.4vw, 1.1rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+/* ── Intentional empty states ────────────────────────────── */
+.compact-empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 80px;
+    padding: 1.5rem 1rem;
+    border-radius: 12px;
+    background: rgba(248, 250, 255, 0.65);
+    border: 1px dashed rgba(112, 135, 176, 0.22);
+    color: var(--text-faint);
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.compact-empty-state p {
+    margin: 0;
+    color: inherit;
+    font-size: inherit;
+}
+
+/* ── Attention empty state ────────────────────────────────── */
+.attention-empty {
+    color: var(--text-faint);
+    font-size: 0.78rem;
+    padding: 0.5rem 0.1rem;
+    margin: 0;
+    font-style: italic;
+}
+
+/* ── Responsive: stack KPI strip + attention ─────────────── */
+@media (max-width: 768px) {
+    .dash-kpi-strip,
+    .dash-kpi-strip:has(.overview-outstanding-wrap:not([hidden])) {
+        grid-template-columns: 1fr;
+    }
+
+    .dash-kpi-strip .overview-outstanding-wrap {
+        align-self: auto;
+    }
+
+    .dash-attention-card .overview-attention-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dash-attention-card .overview-attention-card.is-overdue {
+        border-right: none;
+        border-bottom: 1px solid rgba(20, 40, 80, 0.06);
+    }
+
+    .dash-hero-main {
+        flex-wrap: wrap;
+    }
+
+    .dash-kpi-strip .stat-value-hero {
+        font-size: clamp(1.8rem, 8vw, 2.4rem);
+    }
+}
