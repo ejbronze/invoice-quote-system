@@ -352,6 +352,11 @@ const TRANSLATIONS = {
         pipeline_value: "Pipeline Value",
         amount_invoiced: "Amount Invoiced",
         income_received: "Income Received",
+        outstanding_balance: "Outstanding Balance",
+        total_overdue: "Total Overdue",
+        due_soon_total: "Due Soon Total",
+        needs_attention: "Needs Attention",
+        next_7_days: "Next 7 Days",
         tap_view_invoiced: "Tap to view invoiced amount",
         tap_view_income: "Tap to view income received",
         tap_view_pipeline: "Tap to view pipeline value",
@@ -788,6 +793,11 @@ const TRANSLATIONS = {
         pipeline_value: "Valor en Proceso",
         amount_invoiced: "Monto Facturado",
         income_received: "Ingresos Recibidos",
+        outstanding_balance: "Saldo Pendiente",
+        total_overdue: "Total Vencido",
+        due_soon_total: "Total Próximo a Vencer",
+        needs_attention: "Requiere Atención",
+        next_7_days: "Próximos 7 Días",
         tap_view_invoiced: "Toca para ver el monto facturado",
         tap_view_income: "Toca para ver los ingresos recibidos",
         tap_view_pipeline: "Toca para ver el valor en proceso",
@@ -1224,6 +1234,11 @@ const TRANSLATIONS = {
         pipeline_value: "Valeur Pipeline",
         amount_invoiced: "Montant Facturé",
         income_received: "Revenus Reçus",
+        outstanding_balance: "Solde Impayé",
+        total_overdue: "Total en Retard",
+        due_soon_total: "Total Prochainement Dû",
+        needs_attention: "Nécessite Attention",
+        next_7_days: "7 Prochains Jours",
         tap_view_invoiced: "Touchez pour voir le montant facturé",
         tap_view_income: "Touchez pour voir les revenus reçus",
         tap_view_pipeline: "Touchez pour voir la valeur pipeline",
@@ -1653,8 +1668,11 @@ function applyTranslations() {
         elements.importDocumentStatus.hidden = true;
     }
     setElementText(".overview-kicker", t("snapshot"));
-    setElementText(elements.totalDocumentsStat.previousElementSibling, t("documents"));
-    setElementText(elements.quoteCountStat.previousElementSibling, t("quotes"));
+    setElementText(elements.kpiDocumentsLabel, t("documents"));
+    setElementText(elements.kpiQuotesLabel, t("quotes"));
+    setElementText(document.getElementById("outstandingBalanceLabel"), t("outstanding_balance"));
+    setElementText(document.getElementById("overdueCardTotalLabel"), t("total_overdue"));
+    setElementText(document.getElementById("dueSoonCardTotalLabel"), t("due_soon_total"));
     if (state.valueView === "invoiced") {
         elements.totalValueLabel.textContent = t("amount_invoiced");
     } else if (state.valueView === "income") {
@@ -2378,10 +2396,18 @@ function cacheElements() {
     elements.addAnotherItemBtn = document.getElementById("addAnotherItemBtn");
     elements.totalDocumentsStat = document.getElementById("totalDocumentsStat");
     elements.quoteCountStat = document.getElementById("quoteCountStat");
+    elements.kpiDocumentsLabel = document.getElementById("kpiDocumentsLabel");
+    elements.kpiQuotesLabel = document.getElementById("kpiQuotesLabel");
     elements.totalValueStat = document.getElementById("totalValueStat");
     elements.totalValueLabel = document.getElementById("totalValueLabel");
     elements.totalValueHint = document.getElementById("totalValueHint");
     elements.valueToggleCard = document.getElementById("valueToggleCard");
+    elements.outstandingBalanceStat = document.getElementById("outstandingBalanceStat");
+    elements.overviewOutstandingWrap = document.getElementById("overviewOutstandingWrap");
+    elements.overdueCardTotal = document.getElementById("overdueCardTotal");
+    elements.overdueCardTotalValue = document.getElementById("overdueCardTotalValue");
+    elements.dueSoonCardTotal = document.getElementById("dueSoonCardTotal");
+    elements.dueSoonCardTotalValue = document.getElementById("dueSoonCardTotalValue");
     elements.overviewMobileToggle = document.getElementById("overviewMobileToggle");
     elements.overviewMobileToggleValue = document.getElementById("overviewMobileToggleValue");
     elements.overviewMobileToggleMeta = document.getElementById("overviewMobileToggleMeta");
@@ -15864,6 +15890,9 @@ function updateOverviewStats() {
         : state.valueView === "income"
             ? "income_received"
             : "pipeline_value";
+    const outstandingBalance = state.documents
+        .filter(doc => doc.type === "invoice")
+        .reduce((sum, doc) => sum + Math.max(0, getInvoiceOutstandingBalance(doc)), 0);
     elements.totalDocumentsStat.textContent = String(state.documents.length);
     elements.quoteCountStat.textContent = String(quoteCount);
     elements.totalValueStat.textContent = formatCurrency(totalValue);
@@ -15872,6 +15901,12 @@ function updateOverviewStats() {
     elements.valueToggleCard.setAttribute("aria-pressed", String(state.valueView !== "pipeline"));
     elements.valueToggleCard.classList.toggle("is-invoiced", state.valueView === "invoiced");
     elements.valueToggleCard.classList.toggle("is-income", state.valueView === "income");
+    if (elements.outstandingBalanceStat) {
+        elements.outstandingBalanceStat.textContent = formatCurrency(outstandingBalance);
+    }
+    if (elements.overviewOutstandingWrap) {
+        elements.overviewOutstandingWrap.hidden = outstandingBalance <= 0;
+    }
     if (elements.overviewMobileToggleValue && elements.overviewMobileToggleMeta) {
         elements.overviewMobileToggleValue.textContent = formatCurrency(totalValue);
         elements.overviewMobileToggleMeta.textContent = `${state.documents.length} ${t("documents").toLowerCase()} • ${quoteCount} ${t("quotes").toLowerCase()} • ${invoiceCount} ${t("invoices").toLowerCase()}`;
@@ -16292,8 +16327,8 @@ function getOverviewSummaryCardMarkup({ label, value, icon = "", tone = "default
         >
             <span class="summary-card-icon" aria-hidden="true">${icon}</span>
             <span class="summary-card-copy">
-                <span class="summary-card-label">${escapeHtml(label)}</span>
                 <strong class="summary-card-value">${escapeHtml(value)}</strong>
+                <span class="summary-card-label">${escapeHtml(label)}</span>
             </span>
             <span class="summary-card-arrow" aria-hidden="true">
                 <svg viewBox="0 0 20 20" fill="none"><path d="M7 5.5 12 10l-5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -16460,13 +16495,39 @@ function renderOverviewPanels() {
             .slice(0, 5);
 
         elements.overviewRecentDocuments.innerHTML = recentDocuments.length
-            ? recentDocuments.map(doc => `
-                <button class="overview-document-link overview-document-link-${escapeHtml(doc.type || "quote")}" type="button" data-open-overview-doc="${escapeHtml(String(doc.id))}">
-                    <span class="overview-document-ref">${escapeHtml(doc.refNumber || "Reference pending")}</span>
+            ? recentDocuments.map(doc => {
+                const typeClass = escapeHtml(doc.type || "quote");
+                const isProcurement = doc.type === "procurement";
+                let typeBadge = "";
+                let statusBadge = "";
+                if (doc.type === "invoice") {
+                    const ps = getInvoiceDerivedPaymentStatus(doc);
+                    typeBadge = getStatusBadgeMarkup("Invoice", "is-doc-type is-type-invoice");
+                    if (doc.status === "draft") {
+                        statusBadge = getStatusBadgeMarkup(t("status_draft"), "is-draft");
+                    } else {
+                        statusBadge = getStatusBadgeMarkup(getPaymentStatusLabel(ps), `is-${ps}`);
+                    }
+                } else if (doc.type === "quote") {
+                    const qs = normalizeQuoteStatus(doc.quoteStatus);
+                    typeBadge = getStatusBadgeMarkup("Quote", "is-doc-type is-type-quote");
+                    statusBadge = getStatusBadgeMarkup(getQuoteStatusLabel(qs), `is-quote-${qs}`);
+                } else if (isProcurement) {
+                    typeBadge = getStatusBadgeMarkup("Offer", "is-doc-type is-type-procurement");
+                }
+                const totalText = isProcurement
+                    ? `${(doc.procurementItems || []).length} rows`
+                    : formatCurrency(doc.total || 0);
+                return `
+                <button class="overview-document-link overview-document-link-${typeClass}" type="button" data-open-overview-doc="${escapeHtml(String(doc.id))}">
+                    <span class="overview-document-ref-row">
+                        <span class="overview-document-ref">${escapeHtml(doc.refNumber || "Reference pending")}</span>
+                        <span class="overview-document-badges">${typeBadge}${statusBadge}</span>
+                    </span>
                     <span class="overview-document-meta">${escapeHtml(doc.clientName || "Unknown client")} · ${escapeHtml(formatDisplayDate(doc.date || ""))}</span>
-                    <strong class="overview-document-total">${escapeHtml(doc.type === "procurement" ? `${(doc.procurementItems || []).length} rows` : formatCurrency(doc.total || 0))}</strong>
-                </button>
-            `).join("")
+                    <strong class="overview-document-total">${escapeHtml(totalText)}</strong>
+                </button>`;
+            }).join("")
             : `<div class="empty-state compact-empty-state"><p>${escapeHtml(t("empty_documents"))}</p></div>`;
     }
 
@@ -16559,11 +16620,11 @@ function renderDashboardAttention() {
     const dueSoon = candidateInvoices
         .filter(inv => !isInvoiceOverdue(inv) && getInvoiceOutstandingBalance(inv) > 0)
         .map(inv => {
-            const due = resolveInvoiceDueDate(inv);
-            if (!due) return null;
-            const diffMs = due.getTime() - todayMidnight.getTime();
+            const dueDate = resolveInvoiceDueDate(inv);
+            if (!dueDate) return null;
+            const diffMs = dueDate.getTime() - todayMidnight.getTime();
             const daysLeft = Math.ceil(diffMs / 86400000);
-            return { inv, daysLeft };
+            return { inv, daysLeft, dueDate };
         })
         .filter(item => item !== null && item.daysLeft >= 0 && item.daysLeft <= 7)
         .sort((a, b) => a.daysLeft - b.daysLeft);
@@ -16583,17 +16644,16 @@ function renderDashboardAttention() {
         const balance = getInvoiceOutstandingBalance(inv);
         const safeId = escapeHtml(String(inv.id));
         const safeRef = escapeHtml(inv.refNumber || "No ref");
+        const metaParts = [safeRef];
+        if (dueDateLabel) metaParts.push(escapeHtml(dueDateLabel));
         return `<div class="attention-invoice-row">
             <button class="attention-invoice-main" type="button" data-open-doc="${safeId}" aria-label="Open invoice ${safeRef}">
-                <span class="attention-invoice-left">
-                    <span class="attention-invoice-ref">${safeRef}</span>
-                    <span class="attention-invoice-client">${escapeHtml(inv.clientName || "Unknown client")}</span>
-                    ${dueDateLabel ? `<span class="attention-invoice-duedate">${escapeHtml(dueDateLabel)}</span>` : ""}
-                </span>
-                <span class="attention-invoice-right">
+                <span class="attention-invoice-top">
                     <span class="attention-invoice-amount">${escapeHtml(`${inv.currency || "USD"} ${formatAmount(balance)}`)}</span>
                     <span class="attention-invoice-days">${escapeHtml(labelText)}</span>
                 </span>
+                <span class="attention-invoice-client">${escapeHtml(inv.clientName || "Unknown client")}</span>
+                <span class="attention-invoice-meta">${metaParts.join(" · ")}</span>
             </button>
             <button class="attention-invoice-notes-btn" type="button" data-open-notes="${safeId}" aria-label="Open notes for ${safeRef}" title="Notes">${notesIconSvg}</button>
         </div>`;
@@ -16608,9 +16668,22 @@ function renderDashboardAttention() {
 
     dueSoonList.innerHTML = dueSoon.length === 0
         ? `<p class="attention-empty">No invoices due soon.</p>`
-        : dueSoon.slice(0, MAX_SHOWN).map(({ inv, daysLeft }) =>
-            buildRow(inv, daysLeft === 0 ? "Due today" : daysLeft === 1 ? "Due tomorrow" : `Due in ${daysLeft}d`)
-        ).join("");
+        : dueSoon.slice(0, MAX_SHOWN).map(({ inv, daysLeft, dueDate }) => {
+            const dueDateLabel = dueDate ? `Due ${formatDisplayDate(localDateStr(dueDate))}` : "";
+            const urgencyText = daysLeft === 0 ? "Due today" : daysLeft === 1 ? "Due tomorrow" : `Due in ${daysLeft}d`;
+            return buildRow(inv, urgencyText, dueDateLabel);
+        }).join("");
+
+    const overdueTotal = overdue.reduce((s, { inv }) => s + Math.max(0, getInvoiceOutstandingBalance(inv)), 0);
+    const dueSoonTotal = dueSoon.reduce((s, { inv }) => s + Math.max(0, getInvoiceOutstandingBalance(inv)), 0);
+    if (elements.overdueCardTotal && elements.overdueCardTotalValue) {
+        elements.overdueCardTotal.hidden = overdue.length === 0;
+        elements.overdueCardTotalValue.textContent = formatCurrency(overdueTotal);
+    }
+    if (elements.dueSoonCardTotal && elements.dueSoonCardTotalValue) {
+        elements.dueSoonCardTotal.hidden = dueSoon.length === 0;
+        elements.dueSoonCardTotalValue.textContent = formatCurrency(dueSoonTotal);
+    }
 
     if (viewAllOverdueBtn) {
         viewAllOverdueBtn.hidden = overdue.length <= MAX_SHOWN;

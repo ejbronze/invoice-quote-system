@@ -2,7 +2,29 @@
 
 SantoSync is a focused document and operations workspace built for trade teams, freelancers, and logistics operators who need to generate, track, and deliver professional quotes and invoices without the overhead of enterprise billing software.
 
-Version: `1.11.0` — Last updated: April 25, 2026
+Version: `1.12.0` — Last updated: April 28, 2026
+
+## Version 1.12.0 Summary
+
+This release upgrades the dashboard's visual hierarchy, surfaces financial urgency data more prominently, and refines the overdue/coming-due invoice detection logic.
+
+**Dashboard Snapshot hero layout:** The pipeline value stat card has been redesigned as a full-width hero element with the amount displayed in large text (clamped between 1.9rem and 2.6rem) and the label directly below it. Secondary stats (total documents and total quotes) moved to a compact inline row beneath the hero card. An Outstanding Balance bar now appears below the secondary stats when any invoice has an unpaid balance — hidden when the balance is zero.
+
+**Outstanding Balance metric:** A new global metric sums all positive outstanding invoice balances across the workspace. It is displayed in a red-tinted bar in the snapshot panel and is recalculated on every document change.
+
+**Attention card row refactor:** Each invoice row in the Past Due and Coming Due cards has been reorganized. The outstanding balance (large, bold) and urgency text (colored, small) appear on the first line. The client name appears on the second line with medium emphasis. The reference number and due date appear on the third line in the smallest text.
+
+**Card-level totals:** Both attention cards now display a running total of the outstanding balances in all listed invoices — shown in a tinted footer bar at the bottom of each card. The totals are hidden when the card is empty.
+
+**Recent Documents type and status badges:** Each document in the Recent Documents list now shows a compact type badge (Quote / Invoice / Offer) and a status badge (e.g., Draft, Sent, Paid, Unpaid) directly next to the reference number.
+
+**Workspace Summary 3-column layout:** The summary card grid changed from 2 to 3 columns, fitting all five nav cards in a tighter two-row layout. Summary cards now display the count as the primary element with the label below it.
+
+**Procurement offer left-border accent:** Offer (procurement) documents in the Recent Documents list now use a purple left border and purple gradient background, consistent with the blue (quotes) and green (invoices) accents already in use.
+
+**Overdue and coming-due logic refinement:** A new `resolveInvoiceDueDate` helper returns `null` when an invoice has no explicit due date field or payment terms, preventing invoices without configured terms from appearing in the attention section. The strict resolver is used throughout `isInvoiceOverdue` and the coming-due filter. The existing `calculateInvoiceDueDate` (which always falls back to DEFAULT_PAYMENT_TERMS) is preserved for card display and aging report contexts.
+
+**Tooltip ⓘ icons:** Both attention card headings now include an information tooltip explaining the qualification criteria for each section.
 
 ## Version 1.11.0 Summary
 
@@ -179,6 +201,29 @@ The Help & FAQ modal has been fully upgraded: it now opens with a live search ba
 ## Version 1.0.0 Summary
 
 This version brought SantoSync into a more complete shared-workspace release. The app now supports server-backed shared workspace data for online use, invoice payment tracking, a three-state commercial snapshot card, stronger quote-versus-invoice card styling, compact overflow menus for document and line-item actions, per-item image handling across the editor and catalog, a dedicated catalog page, compact export thumbnails for imaged line items, admin issue inbox controls, stronger mobile modal behavior, and a cleaner branded dashboard shell. The quote/invoice workflow, catalog flow, document preview/export flow, and admin tooling all remain intact while the product identity and UI structure are more polished and easier to navigate.
+
+## Dashboard Overview
+
+The SantoSync dashboard (Overview page) is designed around three tiers of financial visibility:
+
+**Snapshot Panel (top)**
+A hero stat card displays the current workspace value in large text with the label directly below. The active view cycles between Pipeline Value (quote totals), Amount Invoiced (invoice totals), and Income Received (total logged payments). Secondary counts — total documents and total quotes — appear as a compact inline row below the hero card. When any invoice has an outstanding balance, a red-tinted Outstanding Balance bar appears at the bottom of the snapshot panel showing the total unpaid amount across all invoices.
+
+**Attention Required (middle)**
+Two cards appear side-by-side when there are past-due or soon-due invoices, and are hidden entirely when no invoices need attention.
+
+- **Past Due Invoices** lists invoices whose due date has passed and still carry an unpaid balance, sorted by most days overdue first. A running total of the overdue amount appears at the bottom of the card.
+- **Coming Due** lists invoices due within the next 7 days (including today), sorted by closest due date first. A running total also appears.
+
+Each row in both cards shows: the outstanding balance and urgency text on the first line (amount large/bold, urgency colored), client name on the second line, and reference number with due date on the third line. Clicking the row opens the invoice in the editor. A secondary notes icon opens the notes drawer for that invoice.
+
+Only invoices with explicit payment terms (NET15, NET30, etc.) or a specific due date set are included in both attention cards. Invoices without payment terms are excluded to prevent false urgency.
+
+**Workspace Summary (bottom)**
+A 3-column grid of quick-nav cards provides one-click access to Quotes, Invoices, Offers, Clients, and Statements. Each card shows the count as the primary (large) number with the label below it.
+
+**Recent Documents**
+A list of the 5 most recently created or edited documents. Each row shows the reference number with document-type and status badges, the client name and date, and the total amount (or row count for Offers). Each document type uses a distinct left-border color: blue for quotes, green for invoices, purple for offers.
 
 ## Brand Identity
 

@@ -174,20 +174,19 @@
                                         <div class="overview-panel-head">
                                             <span class="overview-kicker">Snapshot</span>
                                         </div>
-                                        <div class="overview-grid" id="overviewKpiGrid">
-                                            <article class="stat-card stat-card-mini">
-                                                <span class="stat-label">Documents</span>
-                                                <strong class="stat-value" id="totalDocumentsStat">0</strong>
-                                            </article>
-                                            <article class="stat-card stat-card-mini">
-                                                <span class="stat-label">Quotes</span>
-                                                <strong class="stat-value" id="quoteCountStat">0</strong>
-                                            </article>
-                                            <button class="stat-card stat-card-toggle" id="valueToggleCard" type="button" aria-pressed="false">
-                                                <span class="stat-label" id="totalValueLabel">Pipeline Value</span>
-                                                <strong class="stat-value" id="totalValueStat">$0.00</strong>
-                                                <span class="stat-meta" id="totalValueHint">Tap to view invoiced amount</span>
-                                            </button>
+                                        <button class="stat-card stat-card-toggle stat-card-hero" id="valueToggleCard" type="button" aria-pressed="false">
+                                            <strong class="stat-value stat-value-hero" id="totalValueStat">$0.00</strong>
+                                            <span class="stat-label" id="totalValueLabel">Pipeline Value</span>
+                                            <span class="stat-meta" id="totalValueHint"></span>
+                                        </button>
+                                        <div class="overview-kpi-meta">
+                                            <span><strong id="totalDocumentsStat">0</strong> <span class="kpi-meta-label" id="kpiDocumentsLabel">Documents</span></span>
+                                            <span class="kpi-meta-sep" aria-hidden="true">·</span>
+                                            <span><strong id="quoteCountStat">0</strong> <span class="kpi-meta-label" id="kpiQuotesLabel">Quotes</span></span>
+                                        </div>
+                                        <div class="overview-outstanding-wrap" id="overviewOutstandingWrap" hidden>
+                                            <span class="outstanding-label" id="outstandingBalanceLabel">Outstanding Balance</span>
+                                            <strong class="outstanding-value" id="outstandingBalanceStat">$0.00</strong>
                                         </div>
                                     </div>
                                 </div>
@@ -245,13 +244,17 @@
                             <article class="overview-attention-card is-overdue" id="overdueInvoicesCard">
                                 <div class="overview-attention-head">
                                     <span class="overview-attention-badge is-red">Overdue</span>
-                                    <h3>Past Due Invoices</h3>
+                                    <h3>Past Due Invoices <span class="attention-head-qualifier">(Needs Attention)</span></h3>
                                     <div class="attention-head-info">
                                         <button class="attention-head-info-btn" type="button" aria-label="About Past Due Invoices">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                                         </button>
-                                        <div class="attention-head-tooltip" role="tooltip">Shows unpaid or partially paid invoices with a remaining balance and a due date before today. Due dates come from the invoice due date or are calculated from invoice date + payment terms.</div>
+                                        <div class="attention-head-tooltip" role="tooltip">Shows unpaid or partially paid invoices with a remaining balance and a due date before today.</div>
                                     </div>
+                                </div>
+                                <div class="attention-card-total" id="overdueCardTotal" hidden>
+                                    <span id="overdueCardTotalLabel">Total Overdue</span>
+                                    <strong id="overdueCardTotalValue">$0.00</strong>
                                 </div>
                                 <div class="overview-attention-list" id="overdueInvoicesList"></div>
                                 <button class="overview-attention-viewall" id="viewAllOverdueBtn" type="button" hidden>View all overdue</button>
@@ -259,13 +262,17 @@
                             <article class="overview-attention-card is-due-soon" id="dueSoonInvoicesCard">
                                 <div class="overview-attention-head">
                                     <span class="overview-attention-badge is-amber">Due Soon</span>
-                                    <h3>Coming Due</h3>
+                                    <h3>Coming Due <span class="attention-head-qualifier">(Next 7 Days)</span></h3>
                                     <div class="attention-head-info">
                                         <button class="attention-head-info-btn" type="button" aria-label="About Coming Due">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                                         </button>
                                         <div class="attention-head-tooltip" role="tooltip">Shows unpaid or partially paid invoices with a remaining balance due today or within the next 7 days.</div>
                                     </div>
+                                </div>
+                                <div class="attention-card-total" id="dueSoonCardTotal" hidden>
+                                    <span id="dueSoonCardTotalLabel">Due Soon Total</span>
+                                    <strong id="dueSoonCardTotalValue">$0.00</strong>
                                 </div>
                                 <div class="overview-attention-list" id="dueSoonInvoicesList"></div>
                                 <button class="overview-attention-viewall" id="viewAllDueSoonBtn" type="button" hidden>View all due soon</button>
@@ -1062,6 +1069,18 @@
                     <details class="help-item">
                         <summary data-i18n="help_q_mark_paid">How do I mark an invoice as paid?</summary>
                         <p data-i18n-html="help_a_mark_paid">On the Documents page, open the invoice card's three-dot menu and select the appropriate payment status — <strong>Unpaid</strong>, <strong>Pending</strong>, or <strong>Paid</strong>. For real payment tracking, open the invoice and use the payment ledger, or log a payment from the Statements page. Paid invoices are visually flagged and excluded from outstanding balance calculations in Invoice Reports.</p>
+                    </details>
+                    <details class="help-item">
+                        <summary>What does "Past Due" mean on the dashboard?</summary>
+                        <p>An invoice is <strong>past due</strong> when its due date has passed and it still has an unpaid balance. The due date is determined by the invoice's explicit due date field, or by adding payment terms (e.g. NET30) to the invoice date. Invoices without any payment terms set are not shown in the Past Due list — set payment terms to enable due-date tracking.</p>
+                    </details>
+                    <details class="help-item">
+                        <summary>What does "Coming Due" mean on the dashboard?</summary>
+                        <p>The <strong>Coming Due</strong> section shows invoices with an outstanding balance that are due within the next 7 days (including today). Like Past Due, only invoices with explicit payment terms or a due date set are included. Use this list to prioritize follow-up before invoices become overdue.</p>
+                    </details>
+                    <details class="help-item">
+                        <summary>What is the Outstanding Balance shown on the dashboard?</summary>
+                        <p><strong>Outstanding Balance</strong> is the total unpaid amount across all your invoices — the sum of every invoice's remaining balance after payments are accounted for. It is hidden when the total is zero. Use it as a quick gauge of how much money is still owed to you across all clients.</p>
                     </details>
                 </section>
 
