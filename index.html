@@ -246,6 +246,12 @@
                                 <div class="overview-attention-head">
                                     <span class="overview-attention-badge is-red">Overdue</span>
                                     <h3>Past Due Invoices</h3>
+                                    <div class="attention-head-info">
+                                        <button class="attention-head-info-btn" type="button" aria-label="About Past Due Invoices">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                        </button>
+                                        <div class="attention-head-tooltip" role="tooltip">Shows unpaid or partially paid invoices with a remaining balance and a due date before today. Due dates come from the invoice due date or are calculated from invoice date + payment terms.</div>
+                                    </div>
                                 </div>
                                 <div class="overview-attention-list" id="overdueInvoicesList"></div>
                                 <button class="overview-attention-viewall" id="viewAllOverdueBtn" type="button" hidden>View all overdue</button>
@@ -254,6 +260,12 @@
                                 <div class="overview-attention-head">
                                     <span class="overview-attention-badge is-amber">Due Soon</span>
                                     <h3>Coming Due</h3>
+                                    <div class="attention-head-info">
+                                        <button class="attention-head-info-btn" type="button" aria-label="About Coming Due">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                        </button>
+                                        <div class="attention-head-tooltip" role="tooltip">Shows unpaid or partially paid invoices with a remaining balance due today or within the next 7 days.</div>
+                                    </div>
                                 </div>
                                 <div class="overview-attention-list" id="dueSoonInvoicesList"></div>
                                 <button class="overview-attention-viewall" id="viewAllDueSoonBtn" type="button" hidden>View all due soon</button>

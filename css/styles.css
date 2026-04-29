@@ -11828,6 +11828,63 @@ body {
     margin: 0;
 }
 
+.attention-head-info {
+    position: relative;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.attention-head-info-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 0.15rem;
+    cursor: default;
+    color: var(--text-soft);
+    opacity: 0.4;
+    border-radius: 50%;
+    transition: opacity 0.15s;
+    line-height: 0;
+}
+
+.attention-head-info-btn svg {
+    width: 14px;
+    height: 14px;
+    display: block;
+}
+
+.attention-head-info:hover .attention-head-info-btn,
+.attention-head-info-btn:focus {
+    opacity: 1;
+}
+
+.attention-head-tooltip {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    width: 252px;
+    background: #1e293b;
+    color: #fff;
+    font-size: 0.71rem;
+    line-height: 1.55;
+    font-weight: 400;
+    padding: 0.5rem 0.65rem;
+    border-radius: 8px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.18s;
+    z-index: 250;
+    white-space: normal;
+    text-align: left;
+}
+
+.attention-head-info:hover .attention-head-tooltip,
+.attention-head-info-btn:focus + .attention-head-tooltip {
+    opacity: 1;
+}
+
 .overview-attention-badge {
     font-size: 0.63rem;
     font-weight: 800;

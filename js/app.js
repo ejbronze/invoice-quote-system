@@ -12146,6 +12146,51 @@ function getInvoicePaymentTermDays(invoice) {
     return Math.max(1, Number.isFinite(parsedDays) ? parsedDays : 30);
 }
 
+// Strict variant used by isInvoiceOverdue / Coming Due — returns null when no terms are set.
+// Unlike getInvoicePaymentTermDays, this does NOT fall back to DEFAULT_PAYMENT_TERMS.
+function resolvePaymentTermDays(invoice) {
+    const mode = invoice?.paymentTermsMode;
+    if (mode === "immediate") return 0;
+    if (mode === "net15") return 15;
+    if (mode === "net30") return 30;
+    if (mode === "other") {
+        const d = parseInt(invoice?.paymentTermsDays, 10);
+        return isNaN(d) ? null : Math.max(0, d);
+    }
+    // No explicit mode — parse paymentTerms text only (never use DEFAULT_PAYMENT_TERMS as fallback)
+    const text = String(invoice?.paymentTerms || "").trim().toUpperCase();
+    if (!text) return null;
+    if (text.includes("IMMEDIATE") || text.includes("UPON RECEIPT") || text.includes("DUE ON RECEIPT")) return 0;
+    const netMatch = text.match(/NET\s*[- ]?(\d{1,3})/i);
+    if (netMatch) return Number(netMatch[1]);
+    const dayMatch = text.match(/\b(\d{1,3})\s*(DAY|DAYS)\b/i);
+    if (dayMatch) return Number(dayMatch[1]);
+    return null;
+}
+
+// Strict due date resolver: checks explicit date fields first, then invoice date + terms.
+// Returns null when no due date can be determined (no explicit date, no payment terms).
+// doc.date alone is NOT treated as due date — terms must be set (or explicit dueDate exists).
+function resolveInvoiceDueDate(doc) {
+    if (doc?.dueDate) {
+        const d = parseLocalDateValue(doc.dueDate);
+        if (!isNaN(d.getTime())) return d;
+    }
+    if (doc?.invoiceDueDate) {
+        const d = parseLocalDateValue(doc.invoiceDueDate);
+        if (!isNaN(d.getTime())) return d;
+    }
+    const invoiceDate = doc?.date || doc?.invoiceDate;
+    if (!invoiceDate) return null;
+    const base = parseLocalDateValue(invoiceDate);
+    if (isNaN(base.getTime())) return null;
+    const termDays = resolvePaymentTermDays(doc);
+    if (termDays === null) return null;
+    const due = new Date(base);
+    due.setDate(due.getDate() + termDays);
+    return due;
+}
+
 function calculateInvoiceDueDate(invoice) {
     // Explicit due date fields take precedence (e.g. imported invoices)
     const explicitField = invoice?.dueDate || invoice?.invoiceDueDate;
@@ -12175,10 +12220,8 @@ function getInvoiceDaysPastDue(invoice, referenceDate = new Date()) {
 function isInvoiceOverdue(doc) {
     if (doc?.type !== "invoice") return false;
     if (getInvoiceOutstandingBalance(doc) <= 0) return false;
-    // Require some date basis — explicit or computed
-    if (!doc?.date && !doc?.dueDate && !doc?.invoiceDueDate) return false;
-    const dueDate = calculateInvoiceDueDate(doc);
-    if (!dueDate || isNaN(dueDate.getTime())) return false;
+    const dueDate = resolveInvoiceDueDate(doc);
+    if (!dueDate) return false;
     const now = new Date();
     const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const dueMidnight = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
@@ -16505,18 +16548,24 @@ function renderDashboardAttention() {
 
     const overdue = candidateInvoices
         .filter(isInvoiceOverdue)
-        .map(inv => ({ inv, days: getInvoiceDaysPastDue(inv) }))
+        .map(inv => {
+            const dueDate = resolveInvoiceDueDate(inv);
+            const dueMidnight = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+            const days = Math.floor((todayMidnight.getTime() - dueMidnight.getTime()) / 86400000);
+            return { inv, days, dueDate };
+        })
         .sort((a, b) => b.days - a.days);
 
     const dueSoon = candidateInvoices
         .filter(inv => !isInvoiceOverdue(inv) && getInvoiceOutstandingBalance(inv) > 0)
         .map(inv => {
-            const due = calculateInvoiceDueDate(inv);
+            const due = resolveInvoiceDueDate(inv);
+            if (!due) return null;
             const diffMs = due.getTime() - todayMidnight.getTime();
             const daysLeft = Math.ceil(diffMs / 86400000);
             return { inv, daysLeft };
         })
-        .filter(({ daysLeft }) => daysLeft >= 0 && daysLeft <= 7)
+        .filter(item => item !== null && item.daysLeft >= 0 && item.daysLeft <= 7)
         .sort((a, b) => a.daysLeft - b.daysLeft);
 
     const hasContent = overdue.length > 0 || dueSoon.length > 0;
@@ -16551,15 +16600,14 @@ function renderDashboardAttention() {
     }
 
     overdueList.innerHTML = overdue.length === 0
-        ? `<p class="attention-empty">No overdue invoices.</p>`
-        : overdue.slice(0, MAX_SHOWN).map(({ inv, days }) => {
-            const dueDate = calculateInvoiceDueDate(inv);
+        ? `<p class="attention-empty">No past due invoices.</p>`
+        : overdue.slice(0, MAX_SHOWN).map(({ inv, days, dueDate }) => {
             const dueDateLabel = `Due ${formatDisplayDate(localDateStr(dueDate))}`;
             return buildRow(inv, `${days}d overdue`, dueDateLabel);
         }).join("");
 
     dueSoonList.innerHTML = dueSoon.length === 0
-        ? `<p class="attention-empty">Nothing due in the next 7 days.</p>`
+        ? `<p class="attention-empty">No invoices due soon.</p>`
         : dueSoon.slice(0, MAX_SHOWN).map(({ inv, daysLeft }) =>
             buildRow(inv, daysLeft === 0 ? "Due today" : daysLeft === 1 ? "Due tomorrow" : `Due in ${daysLeft}d`)
         ).join("");
