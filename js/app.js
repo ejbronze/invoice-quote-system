@@ -2680,6 +2680,7 @@ function bindEvents() {
         }
     });
     elements.procurementRowsContainer?.addEventListener("change", handleProcurementRowsChange);
+    elements.procurementRowsContainer?.addEventListener("change", handleItemImageInputChange);
     elements.procurementRowsContainer?.addEventListener("click", handleProcurementRowsClick);
     elements.insertProcurementLibraryItemBtn?.addEventListener("click", insertSelectedLibraryItemIntoProcurement);
     elements.createProcurementLibraryItemBtn?.addEventListener("click", () => openCatalogItemModal({ returnToProcurement: true }));
@@ -7171,11 +7172,30 @@ function getProcurementRowMarkup(row = {}) {
             <td class="proc-select-col"><input type="checkbox" class="procurement-row-select" aria-label="Select row"></td>
             <td><span class="procurement-line-number">${escapeHtml(String(data.lineNumber))}</span></td>
             <td class="proc-td-desc">
-                ${data.itemImageDataUrl ? `<div class="procurement-row-image"><img src="${escapeHtml(data.itemImageDataUrl)}" alt="${escapeHtml(data.description || "Item image")}"></div>` : ""}
-                <textarea data-procurement-field="description" rows="2" placeholder="Item description">${escapeHtml(data.description)}</textarea>
-                <div class="proc-desc-meta">
-                    <label class="proc-meta-field"><span>Item #</span><input type="text" data-procurement-field="itemNumber" value="${escapeHtml(data.itemNumber)}" placeholder="1.1"></label>
-                    <label class="proc-meta-field"><span>Client Code</span><input type="text" data-procurement-field="clientItemCode" value="${escapeHtml(data.clientItemCode)}"></label>
+                <div class="item-desc-inner">
+                    <div class="item-img-cell">
+                        <input type="file" class="item-image-input" accept="image/jpeg,image/png,image/webp" hidden>
+                        <button type="button" class="item-img-btn${data.itemImageDataUrl ? " has-img" : ""}" aria-label="${data.itemImageDataUrl ? "View item image" : "Add item image"}" title="${data.itemImageDataUrl ? "Click to view or replace image" : "Add item image"}">
+                            <span class="item-img-placeholder" aria-hidden="true">
+                                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="1" y="3.5" width="14" height="9" rx="1.5"/>
+                                    <circle cx="8" cy="8" r="2"/>
+                                    <path d="M5.5 3.5l.8-2h3.4l.8 2"/>
+                                </svg>
+                            </span>
+                            <img class="item-img-thumb"${data.itemImageDataUrl ? ` src="${escapeHtml(data.itemImageDataUrl)}"` : ""} ${data.itemImageDataUrl ? "" : "hidden"} alt="Item image">
+                            <div class="item-img-hover-preview" aria-hidden="true">
+                                <img class="item-img-hover-preview-img"${data.itemImageDataUrl ? ` src="${escapeHtml(data.itemImageDataUrl)}"` : ""} alt="">
+                            </div>
+                        </button>
+                    </div>
+                    <div class="proc-td-desc-body">
+                        <textarea data-procurement-field="description" rows="2" placeholder="Item description">${escapeHtml(data.description)}</textarea>
+                        <div class="proc-desc-meta">
+                            <label class="proc-meta-field"><span>Item #</span><input type="text" data-procurement-field="itemNumber" value="${escapeHtml(data.itemNumber)}" placeholder="1.1"></label>
+                            <label class="proc-meta-field"><span>Client Code</span><input type="text" data-procurement-field="clientItemCode" value="${escapeHtml(data.clientItemCode)}"></label>
+                        </div>
+                    </div>
                 </div>
             </td>
             <td><input type="text" data-procurement-field="brand" value="${escapeHtml(data.brand)}"></td>
@@ -7264,6 +7284,20 @@ function handleSelectAllProcurementRows(event) {
 }
 
 function handleProcurementRowsClick(event) {
+    const imgBtn = event.target.closest(".item-img-btn");
+    if (imgBtn) {
+        const rowEl = imgBtn.closest(".procurement-row");
+        if (rowEl) {
+            if (rowEl.dataset.itemImageDataUrl) {
+                openItemImagePreviewModal(rowEl);
+            } else {
+                const fileInput = rowEl.querySelector(".item-image-input");
+                if (fileInput) fileInput.click();
+            }
+        }
+        return;
+    }
+
     const notesBtn = event.target.closest("[data-proc-notes]");
     if (notesBtn) {
         const rowEl = notesBtn.closest(".procurement-row");
@@ -14602,7 +14636,7 @@ async function handleItemImageInputChange(event) {
         return;
     }
 
-    const itemRow = imageInput.closest(".item-row");
+    const itemRow = imageInput.closest(".item-row") || imageInput.closest(".procurement-row");
     if (!itemRow) {
         return;
     }
