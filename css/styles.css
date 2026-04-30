@@ -797,6 +797,18 @@ body::after {
     margin: 0;
 }
 
+.about-attribution-body {
+    color: var(--text-faint);
+    font-size: 0.78rem;
+    line-height: 1.6;
+    margin: 0;
+}
+.about-attribution-body a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: rgba(130, 144, 166, 0.4);
+}
+
 /* ── Help & FAQ modal ───────────────────────────────────────────── */
 .help-modal-content {
     max-width: 660px;
@@ -15580,6 +15592,28 @@ body #procurementSheetModal:not([hidden]) {
     letter-spacing: 0.04em;
 }
 
+.donut-seg {
+    transition: filter 0.15s, opacity 0.15s;
+    cursor: pointer;
+    outline: none;
+}
+.donut-seg:hover {
+    filter: brightness(1.18);
+}
+.donut-seg:focus-visible {
+    filter: brightness(1.18);
+    outline: 2px solid rgba(66, 99, 235, 0.5);
+    outline-offset: 2px;
+}
+
+.dash-mix-leg-row {
+    border-radius: 6px;
+    transition: background 0.12s;
+}
+.dash-mix-leg-row:hover {
+    background: rgba(100, 116, 139, 0.06);
+}
+
 .dash-mix-legend {
     flex: 1;
     display: flex;
@@ -15625,10 +15659,255 @@ body #procurementSheetModal:not([hidden]) {
 }
 
 .dash-mix-footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid rgba(100, 116, 139, 0.1);
+}
+
+.dash-mix-extra {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 10px;
+    border: 1px solid transparent;
+}
+
+.dash-mix-extra-clients {
+    background: rgba(66, 99, 235, 0.06);
+    border-color: rgba(66, 99, 235, 0.14);
+}
+
+.dash-mix-extra-statements {
+    background: rgba(100, 116, 139, 0.06);
+    border-color: rgba(100, 116, 139, 0.14);
+}
+
+.dash-mix-extra-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.dash-mix-extra-clients .dash-mix-extra-icon {
+    background: rgba(66, 99, 235, 0.12);
+    color: #4263eb;
+}
+
+.dash-mix-extra-statements .dash-mix-extra-icon {
+    background: rgba(100, 116, 139, 0.12);
+    color: #64748b;
+}
+
+.dash-mix-extra-icon svg {
+    width: 13px;
+    height: 13px;
+}
+
+.dash-mix-extra-val {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+.dash-mix-extra-label {
+    font-size: 0.65rem;
+    color: var(--text-soft);
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+/* ── KPI chip clickable ──────────────────────────────────────────────── */
+.dash-kpi-chip {
+    cursor: pointer;
+    transition: box-shadow 0.14s, transform 0.12s;
+    user-select: none;
+}
+.dash-kpi-chip:hover {
+    box-shadow: 0 0 0 2px rgba(66, 99, 235, 0.18), var(--shadow-sm, 0 1px 4px rgba(0,0,0,0.06));
+    transform: translateY(-1px);
+}
+.dash-kpi-chip:focus-visible {
+    outline: 2px solid rgba(66, 99, 235, 0.5);
+    outline-offset: 2px;
+}
+
+/* ── KPI Detail Modal ────────────────────────────────────────────────── */
+.kpi-detail-content {
+    max-width: 540px;
+    width: 96%;
+    max-height: min(88vh, 620px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.kpi-detail-head-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.kpi-detail-sub {
+    font-size: 0.75rem;
+    color: var(--text-faint);
+    margin: 0;
+    font-weight: 400;
+}
+
+.kpi-detail-body {
+    overflow-y: auto;
+    flex: 1;
+    padding: 0;
+}
+
+.kpi-detail-kpi {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 0.4rem;
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface, #fff);
+}
+
+.kd-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.kd-stat-val {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.2;
+}
+
+.kd-stat-val.kd-stat-alert {
+    color: #dc2626;
+}
+
+.kd-stat-label {
     font-size: 0.68rem;
     color: var(--text-faint);
-    padding-top: 0.5rem;
-    border-top: 1px solid rgba(100, 116, 139, 0.1);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 500;
+}
+
+.kpi-detail-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.kd-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.52rem 1rem;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    transition: background 0.1s;
+}
+
+.kd-row:last-child {
+    border-bottom: none;
+}
+
+.kd-row:hover {
+    background: rgba(100, 116, 139, 0.045);
+}
+
+.kd-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.kd-ref {
+    font-weight: 700;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    min-width: 70px;
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.kd-client {
+    flex: 1;
+    font-size: 0.8rem;
+    color: var(--text-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.kd-date {
+    font-size: 0.74rem;
+    color: var(--text-faint);
+    white-space: nowrap;
+}
+
+.kd-amount {
+    font-size: 0.82rem;
+    font-weight: 700;
+    white-space: nowrap;
+    color: var(--text);
+}
+
+.kd-badge-pill {
+    font-size: 0.67rem;
+    padding: 0.12em 0.45em;
+    border-radius: 4px;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.kd-badge-pill.is-overdue {
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+}
+
+.kd-badge-pill.is-paid {
+    background: rgba(13, 145, 102, 0.1);
+    color: #0d9166;
+}
+
+.kd-badge-pill.is-partial {
+    background: rgba(217, 119, 6, 0.1);
+    color: #d97706;
+}
+
+.kd-badge-pill.is-current {
+    background: rgba(66, 99, 235, 0.1);
+    color: #4263eb;
+}
+
+.kpi-detail-foot {
+    padding: 0.65rem 1rem;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+.kpi-detail-empty {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--text-faint);
+    font-size: 0.85rem;
 }
 
 /* ── Remove the large old KPI panel from responsive overrides ────────── */

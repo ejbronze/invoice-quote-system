@@ -218,20 +218,20 @@
                             <span class="overview-mobile-toggle-meta" id="overviewMobileToggleMeta">0 documents</span>
                         </button>
                         <div class="dash-kpi-row">
-                            <div class="dash-kpi-chip dash-kpi-chip-pipeline">
+                            <div class="dash-kpi-chip dash-kpi-chip-pipeline" role="button" tabindex="0" title="View pipeline breakdown">
                                 <span class="dash-kpi-chip-label">Pipeline</span>
                                 <strong class="dash-kpi-chip-val" id="dashKpiPipeline">$0</strong>
                                 <span class="dash-kpi-chip-sub"><strong id="totalDocumentsStat">0</strong> docs · <strong id="quoteCountStat">0</strong> <span id="kpiQuotesLabel">quotes</span></span>
                             </div>
-                            <div class="dash-kpi-chip dash-kpi-chip-invoiced">
+                            <div class="dash-kpi-chip dash-kpi-chip-invoiced" role="button" tabindex="0" title="View invoices">
                                 <span class="dash-kpi-chip-label">Invoiced</span>
                                 <strong class="dash-kpi-chip-val" id="dashKpiInvoiced">$0</strong>
                             </div>
-                            <div class="dash-kpi-chip dash-kpi-chip-income">
+                            <div class="dash-kpi-chip dash-kpi-chip-income" role="button" tabindex="0" title="View income">
                                 <span class="dash-kpi-chip-label">Income</span>
                                 <strong class="dash-kpi-chip-val" id="dashKpiIncome">$0</strong>
                             </div>
-                            <div class="dash-kpi-chip dash-kpi-chip-outstanding" id="overviewOutstandingWrap" hidden>
+                            <div class="dash-kpi-chip dash-kpi-chip-outstanding" id="overviewOutstandingWrap" role="button" tabindex="0" title="View outstanding balances" hidden>
                                 <span class="dash-kpi-chip-label" id="outstandingBalanceLabel">Outstanding</span>
                                 <strong class="dash-kpi-chip-val dash-kpi-val-alert" id="outstandingBalanceStat">$0</strong>
                                 <div class="dash-ob-bar" id="dashObBar" hidden></div>
@@ -842,7 +842,6 @@
                         <strong class="footer-brand-name">SantoSync</strong>
                         <span class="footer-updated" id="footerUpdated">Updated —</span>
                     </div>
-                    <p class="app-footer-attribution">Icons by <a href="https://www.flaticon.com/free-icons/calculator" title="calculator icons" target="_blank" rel="noopener">Smashicons</a>, <a href="https://www.flaticon.com/free-icons/pdf" title="pdf icons" target="_blank" rel="noopener">Dimitry Miroliubov</a>, <a href="https://www.flaticon.com/free-icons/excel" title="excel icons" target="_blank" rel="noopener">Freepik</a>, <a href="https://www.flaticon.com/free-icons/translate" title="translate icons" target="_blank" rel="noopener">Freepik</a>, <a href="https://www.flaticon.com/free-icons/floppy-disk" title="save icons" target="_blank" rel="noopener">Freepik</a>, <a href="https://www.flaticon.com/free-icons/question" title="help icons" target="_blank" rel="noopener">Freepik</a>, <a href="https://www.flaticon.com/free-icons/trash-can" title="trash-can icons" target="_blank" rel="noopener">lalawidi</a>, <a href="https://www.flaticon.com/free-icons/send" title="send icons" target="_blank" rel="noopener">Pixel perfect</a> — Flaticon</p>
                     <div class="app-footer-actions">
                         <div class="footer-help-wrap" id="footerHelpWrap">
                             <button class="footer-secondary-btn footer-help-btn" id="footerHelpBtn" type="button" aria-haspopup="true" aria-expanded="false">
@@ -958,6 +957,11 @@
                     </div>
 
                     <p id="aboutDeveloperCopy">Designed and developed by Edwin Jaquez through Palmchat Innovations Lab under Palmchat Innovations LLC NYC, with a focus on premium operational tools for modern trade and logistics teams.</p>
+
+                    <div class="about-section about-attribution-section">
+                        <strong class="about-section-heading">Icon Credits</strong>
+                        <p class="about-attribution-body">Icons by <a href="https://www.flaticon.com/free-icons/calculator" title="calculator icons" target="_blank" rel="noopener">Smashicons</a>, <a href="https://www.flaticon.com/free-icons/pdf" title="pdf icons" target="_blank" rel="noopener">Dimitry Miroliubov</a>, <a href="https://www.flaticon.com/free-icons/excel" title="excel icons" target="_blank" rel="noopener">Freepik</a>, <a href="https://www.flaticon.com/free-icons/translate" title="translate icons" target="_blank" rel="noopener">Freepik</a>, <a href="https://www.flaticon.com/free-icons/floppy-disk" title="save icons" target="_blank" rel="noopener">Freepik</a>, <a href="https://www.flaticon.com/free-icons/question" title="help icons" target="_blank" rel="noopener">Freepik</a>, <a href="https://www.flaticon.com/free-icons/trash-can" title="trash-can icons" target="_blank" rel="noopener">lalawidi</a>, <a href="https://www.flaticon.com/free-icons/send" title="send icons" target="_blank" rel="noopener">Pixel perfect</a> — Flaticon</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2527,10 +2531,30 @@
         </div>
     </div>
 
+    <!-- KPI Detail Modal -->
+    <div class="modal kpi-detail-modal" id="kpiDetailModal" aria-hidden="true" hidden>
+        <div class="modal-content kpi-detail-content" role="dialog" aria-labelledby="kpiDetailTitle" aria-modal="true">
+            <div class="modal-header">
+                <div class="kpi-detail-head-text">
+                    <h3 id="kpiDetailTitle">Details</h3>
+                    <p class="kpi-detail-sub" id="kpiDetailSub"></p>
+                </div>
+                <button class="close-btn" id="closeKpiDetailModalBtn" type="button" aria-label="Close">×</button>
+            </div>
+            <div class="modal-body kpi-detail-body">
+                <div id="kpiDetailKpi"></div>
+                <div id="kpiDetailList"></div>
+            </div>
+            <div class="kpi-detail-foot">
+                <button class="btn btn-secondary" id="kpiDetailViewAllBtn" type="button">View All</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/vendor/jszip.min.js"></script>
     <script src="js/vendor/html2pdf.bundle.min.js"></script>
     <script src="js/brand.js?v=2"></script>
     <script src="js/statement-of-account.js?v=2"></script>
-    <script src="js/app.js?v=31"></script>
+    <script src="js/app.js?v=33"></script>
 </body>
 </html>

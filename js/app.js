@@ -129,7 +129,7 @@ const LANGUAGE_LOCALES = {
     es: "es-DO",
     fr: "fr-FR"
 };
-const APP_LAST_UPDATED = "2026-04-25T02:00:00";
+const APP_LAST_UPDATED = "2026-04-30T02:00:00";
 
 const ICONS = {
     plus:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`,
@@ -2247,6 +2247,8 @@ function cacheElements() {
     elements.aboutModal = document.getElementById("aboutModal");
     elements.aboutBrandLogo = document.getElementById("aboutBrandLogo");
     elements.closeAboutModalBtn = document.getElementById("closeAboutModalBtn");
+    elements.kpiDetailModal = document.getElementById("kpiDetailModal");
+    elements.closeKpiDetailModalBtn = document.getElementById("closeKpiDetailModalBtn");
     elements.showInternalPricingToggle = document.getElementById("showInternalPricingToggle");
     elements.clientManagementList = document.getElementById("clientManagementList");
     elements.clientsPageHeaderActions = document.getElementById("clientsPageHeaderActions");
@@ -2504,6 +2506,19 @@ function bindEvents() {
         void confirmPendingPaymentDelete();
     });
     elements.openAboutBtn.addEventListener("click", openAboutModal);
+    elements.closeKpiDetailModalBtn?.addEventListener("click", closeKpiDetailModal);
+    elements.kpiDetailModal?.addEventListener("click", e => { if (e.target === elements.kpiDetailModal) closeKpiDetailModal(); });
+    [
+        [".dash-kpi-chip-pipeline", "pipeline"],
+        [".dash-kpi-chip-invoiced", "invoiced"],
+        [".dash-kpi-chip-income", "income"],
+        ["#overviewOutstandingWrap", "outstanding"]
+    ].forEach(([sel, type]) => {
+        const el = document.querySelector(sel);
+        if (!el) return;
+        el.addEventListener("click", () => openKpiDetailModal(type));
+        el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openKpiDetailModal(type); } });
+    });
     elements.closeIssueReportModalBtn.addEventListener("click", closeIssueReportModal);
     elements.closeCompanyProfileModalBtn.addEventListener("click", closeCompanyProfileModal);
     elements.accountAdminWorkspaceBtn?.addEventListener("click", () => setActivePage("overview"));
@@ -16195,10 +16210,24 @@ function renderDocumentMixDonut() {
 
     chart.innerHTML = _buildDonutSVG({ quotes, invoices, offers });
 
+    if (!chart.dataset.clickBound) {
+        chart.dataset.clickBound = "1";
+        chart.addEventListener("click", (e) => {
+            const seg = e.target.closest(".donut-seg[data-type]");
+            if (seg) openDocumentsPageWithFilter(seg.dataset.type);
+        });
+        chart.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                const seg = e.target.closest(".donut-seg[data-type]");
+                if (seg) { e.preventDefault(); openDocumentsPageWithFilter(seg.dataset.type); }
+            }
+        });
+    }
+
     const segments = [
-        { label: "Quotes", value: quotes, color: "#4263eb" },
-        { label: "Invoices", value: invoices, color: "#0d9166" },
-        { label: "Offers", value: offers, color: "#7c3aed" }
+        { label: "Quotes", value: quotes, color: "#4263eb", type: "quote" },
+        { label: "Invoices", value: invoices, color: "#0d9166", type: "invoice" },
+        { label: "Offers", value: offers, color: "#d97706", type: "procurement" }
     ].filter(s => s.value > 0);
 
     if (segments.length === 0) {
@@ -16206,29 +16235,66 @@ function renderDocumentMixDonut() {
     } else {
         legend.innerHTML = segments.map(s => {
             const pct = Math.round(s.value / total * 100);
-            return `<div class="dash-mix-leg-row">
+            return `<div class="dash-mix-leg-row" data-filter-nav="${s.type}" role="button" tabindex="0" title="View ${s.label}" style="cursor:pointer;">
                 <span class="dash-mix-leg-dot" style="background:${s.color}"></span>
                 <span class="dash-mix-leg-label">${escapeHtml(s.label)}</span>
                 <strong class="dash-mix-leg-val">${s.value}</strong>
                 <span class="dash-mix-leg-pct">${pct}%</span>
             </div>`;
         }).join("");
+        legend.querySelectorAll("[data-filter-nav]").forEach(row => {
+            row.addEventListener("click", () => openDocumentsPageWithFilter(row.dataset.filterNav));
+            row.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDocumentsPageWithFilter(row.dataset.filterNav); }
+            });
+        });
     }
 
     if (footer) {
-        const parts = [];
-        if (clients > 0) parts.push(`${clients} Client${clients !== 1 ? "s" : ""}`);
-        if (statements > 0) parts.push(`${statements} Statement${statements !== 1 ? "s" : ""}`);
-        footer.textContent = parts.join("  ·  ");
-        footer.hidden = parts.length === 0;
+        const chips = [];
+        if (clients > 0) {
+            chips.push(`<div class="dash-mix-extra dash-mix-extra-clients">
+                <span class="dash-mix-extra-icon" aria-hidden="true">
+                    <svg viewBox="0 0 18 18" fill="none"><path d="M9 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 16a5.5 5.5 0 0 1 11 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </span>
+                <strong class="dash-mix-extra-val">${clients}</strong>
+                <span class="dash-mix-extra-label">Client${clients !== 1 ? "s" : ""}</span>
+            </div>`);
+        }
+        if (statements > 0) {
+            chips.push(`<div class="dash-mix-extra dash-mix-extra-statements">
+                <span class="dash-mix-extra-icon" aria-hidden="true">
+                    <svg viewBox="0 0 18 18" fill="none"><path d="M3.5 5h11M3.5 9h11M3.5 13h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </span>
+                <strong class="dash-mix-extra-val">${statements}</strong>
+                <span class="dash-mix-extra-label">Statement${statements !== 1 ? "s" : ""}</span>
+            </div>`);
+        }
+        footer.innerHTML = chips.join("");
+        footer.hidden = chips.length === 0;
     }
+}
+
+function _polarToCartesian(cx, cy, r, angleDeg) {
+    const rad = angleDeg * Math.PI / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+function _donutArcPath(cx, cy, Ri, Ro, startDeg, endDeg) {
+    const p1 = _polarToCartesian(cx, cy, Ro, startDeg);
+    const p2 = _polarToCartesian(cx, cy, Ro, endDeg);
+    const p3 = _polarToCartesian(cx, cy, Ri, endDeg);
+    const p4 = _polarToCartesian(cx, cy, Ri, startDeg);
+    const large = (endDeg - startDeg) > 180 ? 1 : 0;
+    return `M${p1.x.toFixed(2)},${p1.y.toFixed(2)} A${Ro},${Ro},0,${large},1,${p2.x.toFixed(2)},${p2.y.toFixed(2)} L${p3.x.toFixed(2)},${p3.y.toFixed(2)} A${Ri},${Ri},0,${large},0,${p4.x.toFixed(2)},${p4.y.toFixed(2)} Z`;
 }
 
 function _buildDonutSVG({ quotes, invoices, offers }) {
     const total = quotes + invoices + offers;
     const SIZE = 106, cx = 53, cy = 53, R = 36, STROKE = 12;
+    const Ri = R - STROKE / 2, Ro = R + STROKE / 2;
     const C = 2 * Math.PI * R;
-    const GAP = 3;
+    const HALF_GAP_DEG = (3 / C) * 180;
 
     if (total === 0) {
         return `<svg class="dash-donut-svg" viewBox="0 0 ${SIZE} ${SIZE}" aria-hidden="true">
@@ -16239,26 +16305,177 @@ function _buildDonutSVG({ quotes, invoices, offers }) {
     }
 
     const segs = [
-        { value: quotes, color: "#4263eb" },
-        { value: invoices, color: "#0d9166" },
-        { value: offers, color: "#7c3aed" }
+        { value: quotes, color: "#4263eb", type: "quote", label: "Quotes", tip: "Active proposals sent to clients, not yet converted to invoices." },
+        { value: invoices, color: "#0d9166", type: "invoice", label: "Invoices", tip: "Issued invoices — billed amounts awaiting or received payment." },
+        { value: offers, color: "#d97706", type: "procurement", label: "Offers", tip: "Procurement offer sheets — supplier or client item lists, convertible to quotes." }
     ].filter(s => s.value > 0);
 
-    let cum = 0;
-    const arcs = segs.map(s => {
-        const fullArc = (s.value / total) * C;
-        const dash = Math.max(1, fullArc - GAP);
-        const offset = C / 4 - cum;
-        cum += fullArc;
-        return `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${s.color}" stroke-width="${STROKE}" stroke-dasharray="${dash.toFixed(2)} ${(C - dash).toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}" stroke-linecap="butt"/>`;
+    let cumPct = 0;
+    const paths = segs.map(s => {
+        const pct = s.value / total;
+        const startDeg = -90 + cumPct * 360 + HALF_GAP_DEG;
+        const endDeg   = -90 + (cumPct + pct) * 360 - HALF_GAP_DEG;
+        cumPct += pct;
+        const tooltip = `${s.label} (${s.value}): ${s.tip}`;
+        const d = _donutArcPath(cx, cy, Ri, Ro, startDeg, endDeg);
+        return `<path class="donut-seg" data-type="${s.type}" d="${d}" fill="${s.color}" data-tooltip="${escapeHtml(tooltip)}" tabindex="0" role="button" aria-label="${escapeHtml(tooltip)}"/>`;
     }).join("");
 
-    return `<svg class="dash-donut-svg" viewBox="0 0 ${SIZE} ${SIZE}" aria-hidden="true">
+    return `<svg class="dash-donut-svg" viewBox="0 0 ${SIZE} ${SIZE}">
         <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="rgba(100,116,139,0.08)" stroke-width="${STROKE}"/>
-        ${arcs}
-        <text x="${cx}" y="${cy + 1}" text-anchor="middle" dominant-baseline="middle" class="donut-count">${total}</text>
-        <text x="${cx}" y="${cy + 13}" text-anchor="middle" class="donut-sub">docs</text>
+        ${paths}
+        <text x="${cx}" y="${cy + 1}" text-anchor="middle" dominant-baseline="middle" class="donut-count" style="pointer-events:none;">${total}</text>
+        <text x="${cx}" y="${cy + 13}" text-anchor="middle" class="donut-sub" style="pointer-events:none;">docs</text>
     </svg>`;
+}
+
+// ── KPI Detail Modal ─────────────────────────────────────────────────
+
+function openKpiDetailModal(chipType) {
+    const modal = document.getElementById("kpiDetailModal");
+    if (!modal) return;
+    _renderKpiDetailContent(chipType);
+    setModalState(modal, true);
+}
+
+function closeKpiDetailModal() {
+    const modal = document.getElementById("kpiDetailModal");
+    if (modal) setModalState(modal, false);
+}
+
+function _renderKpiDetailContent(chipType) {
+    const titleEl = document.getElementById("kpiDetailTitle");
+    const subEl = document.getElementById("kpiDetailSub");
+    const kpiEl = document.getElementById("kpiDetailKpi");
+    const listEl = document.getElementById("kpiDetailList");
+    const viewAllBtn = document.getElementById("kpiDetailViewAllBtn");
+
+    const docs = state.documents;
+    let title = "", sub = "", kpiHtml = "", listHtml = "", viewAllFilter = "all";
+
+    if (chipType === "pipeline") {
+        const total = docs.reduce((s, d) => s + (d.total || 0), 0);
+        const quotes = docs.filter(d => d.type === "quote").length;
+        const invoices = docs.filter(d => d.type === "invoice").length;
+        const offers = docs.filter(d => d.type === "procurement").length;
+        title = "Pipeline";
+        sub = `${docs.length} total document${docs.length !== 1 ? "s" : ""}`;
+        kpiHtml = `
+            <div class="kd-stat"><strong class="kd-stat-val">${escapeHtml(formatCurrency(total))}</strong><span class="kd-stat-label">Total Value</span></div>
+            <div class="kd-stat"><strong class="kd-stat-val">${quotes}</strong><span class="kd-stat-label">Quotes</span></div>
+            <div class="kd-stat"><strong class="kd-stat-val">${invoices}</strong><span class="kd-stat-label">Invoices</span></div>
+            <div class="kd-stat"><strong class="kd-stat-val">${offers}</strong><span class="kd-stat-label">Offers</span></div>`;
+        listHtml = _buildKdRows([...docs].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)));
+        viewAllFilter = "all";
+
+    } else if (chipType === "invoiced") {
+        const invDocs = docs.filter(d => d.type === "invoice");
+        const total = invDocs.reduce((s, d) => s + (d.total || 0), 0);
+        const paidCount = invDocs.filter(d => getInvoiceDerivedPaymentStatus(d) === "paid").length;
+        title = "Invoiced";
+        sub = `${invDocs.length} invoice${invDocs.length !== 1 ? "s" : ""}`;
+        kpiHtml = `
+            <div class="kd-stat"><strong class="kd-stat-val">${escapeHtml(formatCurrency(total))}</strong><span class="kd-stat-label">Total Billed</span></div>
+            <div class="kd-stat"><strong class="kd-stat-val">${paidCount}</strong><span class="kd-stat-label">Paid</span></div>
+            <div class="kd-stat"><strong class="kd-stat-val">${invDocs.length - paidCount}</strong><span class="kd-stat-label">Unpaid</span></div>`;
+        listHtml = _buildKdRows([...invDocs].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)));
+        viewAllFilter = "invoice";
+
+    } else if (chipType === "income") {
+        const paidDocs = docs.filter(d => d.type === "invoice" && getInvoiceDerivedPaymentStatus(d) === "paid");
+        const total = paidDocs.reduce((s, d) => s + (d.total || 0), 0);
+        title = "Income";
+        sub = `${paidDocs.length} paid invoice${paidDocs.length !== 1 ? "s" : ""}`;
+        kpiHtml = `
+            <div class="kd-stat"><strong class="kd-stat-val">${escapeHtml(formatCurrency(total))}</strong><span class="kd-stat-label">Total Received</span></div>
+            <div class="kd-stat"><strong class="kd-stat-val">${paidDocs.length}</strong><span class="kd-stat-label">Invoices</span></div>`;
+        listHtml = _buildKdRows([...paidDocs].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)));
+        viewAllFilter = "invoice";
+
+    } else if (chipType === "outstanding") {
+        const outDocs = docs.filter(d => d.type === "invoice" && getInvoiceDerivedPaymentStatus(d) !== "paid");
+        const total = outDocs.reduce((s, d) => s + getInvoiceOutstandingBalance(d), 0);
+        const overdueDocs = outDocs.filter(d => getInvoiceDaysPastDue(d) > 0);
+        title = "Outstanding Balance";
+        sub = `${outDocs.length} unpaid invoice${outDocs.length !== 1 ? "s" : ""}`;
+        kpiHtml = `
+            <div class="kd-stat"><strong class="kd-stat-val">${escapeHtml(formatCurrency(total))}</strong><span class="kd-stat-label">Total Owed</span></div>
+            <div class="kd-stat"><strong class="kd-stat-val kd-stat-alert">${overdueDocs.length}</strong><span class="kd-stat-label">Overdue</span></div>
+            <div class="kd-stat"><strong class="kd-stat-val">${outDocs.length - overdueDocs.length}</strong><span class="kd-stat-label">Current</span></div>`;
+        const sorted = [...outDocs].sort((a, b) => {
+            const da = getInvoiceDaysPastDue(a), db = getInvoiceDaysPastDue(b);
+            if (da > 0 && db > 0) return db - da;
+            if (da > 0) return -1;
+            if (db > 0) return 1;
+            return new Date(a.date || 0) - new Date(b.date || 0);
+        });
+        listHtml = _buildKdRows(sorted, true);
+        viewAllFilter = "invoice";
+    }
+
+    if (titleEl) titleEl.textContent = title;
+    if (subEl) subEl.textContent = sub;
+    if (kpiEl) kpiEl.innerHTML = `<div class="kpi-detail-kpi">${kpiHtml}</div>`;
+    if (listEl) {
+        listEl.innerHTML = listHtml || `<p class="kpi-detail-empty">No data yet.</p>`;
+        listEl.querySelectorAll(".kd-row[data-doc-id]").forEach(row => {
+            row.addEventListener("click", () => {
+                const doc = getDocumentById(row.dataset.docId);
+                closeKpiDetailModal();
+                if (doc?.type === "procurement") openProcurementSheetModal(doc);
+                else editDocument(row.dataset.docId);
+            });
+            row.addEventListener("keydown", e => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    row.click();
+                }
+            });
+        });
+    }
+
+    if (viewAllBtn) {
+        viewAllBtn.onclick = () => {
+            closeKpiDetailModal();
+            openDocumentsPageWithFilter(viewAllFilter);
+        };
+    }
+}
+
+function _buildKdRows(docs, showBalance = false) {
+    if (docs.length === 0) return `<p class="kpi-detail-empty">No documents found.</p>`;
+    const TYPE_COLORS = { quote: "#4263eb", invoice: "#0d9166", procurement: "#d97706" };
+    return docs.map(doc => {
+        const color = TYPE_COLORS[doc.type] || "#64748b";
+        const ref = escapeHtml(doc.refNumber || "—");
+        const client = escapeHtml(doc.clientName || "Unknown");
+        const date = escapeHtml(formatDisplayDate(doc.date || ""));
+        let amount, badgeHtml = "";
+        if (showBalance) {
+            const bal = getInvoiceOutstandingBalance(doc);
+            const days = getInvoiceDaysPastDue(doc);
+            amount = escapeHtml(formatCurrency(bal));
+            badgeHtml = days > 0
+                ? `<span class="kd-badge-pill is-overdue">${days}d overdue</span>`
+                : `<span class="kd-badge-pill is-current">Current</span>`;
+        } else {
+            amount = escapeHtml(formatCurrency(doc.total || 0));
+            if (doc.type === "invoice") {
+                const status = getInvoiceDerivedPaymentStatus(doc);
+                const label = escapeHtml(getPaymentStatusLabel(status));
+                const cls = status === "paid" ? "is-paid" : status === "partial" ? "is-partial" : "is-current";
+                badgeHtml = `<span class="kd-badge-pill ${cls}">${label}</span>`;
+            }
+        }
+        return `<div class="kd-row" data-doc-id="${escapeHtml(String(doc.id))}" role="button" tabindex="0">
+            <span class="kd-dot" style="background:${color}"></span>
+            <span class="kd-ref">${ref}</span>
+            <span class="kd-client">${client}</span>
+            <span class="kd-date">${date}</span>
+            <strong class="kd-amount">${amount}</strong>
+            ${badgeHtml}
+        </div>`;
+    }).join("");
 }
 
 // ── Tooltip System ────────────────────────────────────────────────────
