@@ -16253,7 +16253,7 @@ function renderDocumentMixDonut() {
     if (footer) {
         const chips = [];
         if (clients > 0) {
-            chips.push(`<div class="dash-mix-extra dash-mix-extra-clients">
+            chips.push(`<div class="dash-mix-extra dash-mix-extra-clients" role="button" tabindex="0" title="View clients">
                 <span class="dash-mix-extra-icon" aria-hidden="true">
                     <svg viewBox="0 0 18 18" fill="none"><path d="M9 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 16a5.5 5.5 0 0 1 11 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 </span>
@@ -16262,7 +16262,7 @@ function renderDocumentMixDonut() {
             </div>`);
         }
         if (statements > 0) {
-            chips.push(`<div class="dash-mix-extra dash-mix-extra-statements">
+            chips.push(`<div class="dash-mix-extra dash-mix-extra-statements" role="button" tabindex="0" title="View statements">
                 <span class="dash-mix-extra-icon" aria-hidden="true">
                     <svg viewBox="0 0 18 18" fill="none"><path d="M3.5 5h11M3.5 9h11M3.5 13h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 </span>
@@ -16272,6 +16272,11 @@ function renderDocumentMixDonut() {
         }
         footer.innerHTML = chips.join("");
         footer.hidden = chips.length === 0;
+
+        footer.querySelector(".dash-mix-extra-clients")?.addEventListener("click", () => openKpiDetailModal("clients"));
+        footer.querySelector(".dash-mix-extra-clients")?.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openKpiDetailModal("clients"); } });
+        footer.querySelector(".dash-mix-extra-statements")?.addEventListener("click", () => openKpiDetailModal("statements"));
+        footer.querySelector(".dash-mix-extra-statements")?.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openKpiDetailModal("statements"); } });
     }
 }
 
@@ -16351,7 +16356,7 @@ function _renderKpiDetailContent(chipType) {
     const viewAllBtn = document.getElementById("kpiDetailViewAllBtn");
 
     const docs = state.documents;
-    let title = "", sub = "", kpiHtml = "", listHtml = "", viewAllFilter = "all";
+    let title = "", sub = "", kpiHtml = "", listHtml = "", viewAllFilter = "all", viewAllLabel = "View All";
 
     if (chipType === "pipeline") {
         const total = docs.reduce((s, d) => s + (d.total || 0), 0);
@@ -16367,6 +16372,7 @@ function _renderKpiDetailContent(chipType) {
             <div class="kd-stat"><strong class="kd-stat-val">${offers}</strong><span class="kd-stat-label">Offers</span></div>`;
         listHtml = _buildKdRows([...docs].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)));
         viewAllFilter = "all";
+        viewAllLabel = "View All Documents";
 
     } else if (chipType === "invoiced") {
         const invDocs = docs.filter(d => d.type === "invoice");
@@ -16380,6 +16386,7 @@ function _renderKpiDetailContent(chipType) {
             <div class="kd-stat"><strong class="kd-stat-val">${invDocs.length - paidCount}</strong><span class="kd-stat-label">Unpaid</span></div>`;
         listHtml = _buildKdRows([...invDocs].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)));
         viewAllFilter = "invoice";
+        viewAllLabel = "View All Invoices";
 
     } else if (chipType === "income") {
         const paidDocs = docs.filter(d => d.type === "invoice" && getInvoiceDerivedPaymentStatus(d) === "paid");
@@ -16391,6 +16398,7 @@ function _renderKpiDetailContent(chipType) {
             <div class="kd-stat"><strong class="kd-stat-val">${paidDocs.length}</strong><span class="kd-stat-label">Invoices</span></div>`;
         listHtml = _buildKdRows([...paidDocs].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)));
         viewAllFilter = "invoice";
+        viewAllLabel = "View All Invoices";
 
     } else if (chipType === "outstanding") {
         const outDocs = docs.filter(d => d.type === "invoice" && getInvoiceDerivedPaymentStatus(d) !== "paid");
@@ -16411,6 +16419,34 @@ function _renderKpiDetailContent(chipType) {
         });
         listHtml = _buildKdRows(sorted, true);
         viewAllFilter = "invoice";
+        viewAllLabel = "View All Invoices";
+
+    } else if (chipType === "clients") {
+        const allClients = state.clients;
+        const totalInvoiced = allClients.reduce((sum, c) => {
+            return sum + state.documents.filter(d => d.type === "invoice" && String(d.clientName || "").trim().toLowerCase() === String(c.name || "").trim().toLowerCase()).reduce((s, d) => s + (d.total || 0), 0);
+        }, 0);
+        title = "Clients";
+        sub = `${allClients.length} client${allClients.length !== 1 ? "s" : ""}`;
+        kpiHtml = `
+            <div class="kd-stat"><strong class="kd-stat-val">${allClients.length}</strong><span class="kd-stat-label">Total Clients</span></div>
+            <div class="kd-stat"><strong class="kd-stat-val">${escapeHtml(formatCurrency(totalInvoiced))}</strong><span class="kd-stat-label">Total Invoiced</span></div>`;
+        listHtml = _buildKdRowsClients(allClients);
+        viewAllFilter = null;
+        viewAllLabel = "View All Clients";
+
+    } else if (chipType === "statements") {
+        const stmts = state.statementExports;
+        const paidCount = stmts.filter(s => getStatementLiveOutstanding(s) <= 0).length;
+        title = "Statements";
+        sub = `${stmts.length} statement${stmts.length !== 1 ? "s" : ""}`;
+        kpiHtml = `
+            <div class="kd-stat"><strong class="kd-stat-val">${stmts.length}</strong><span class="kd-stat-label">Total</span></div>
+            <div class="kd-stat"><strong class="kd-stat-val">${paidCount}</strong><span class="kd-stat-label">Settled</span></div>
+            <div class="kd-stat"><strong class="kd-stat-val">${stmts.length - paidCount}</strong><span class="kd-stat-label">Outstanding</span></div>`;
+        listHtml = _buildKdRowsStatements(stmts);
+        viewAllFilter = null;
+        viewAllLabel = "View All Statements";
     }
 
     if (titleEl) titleEl.textContent = title;
@@ -16425,20 +16461,23 @@ function _renderKpiDetailContent(chipType) {
                 if (doc?.type === "procurement") openProcurementSheetModal(doc);
                 else editDocument(row.dataset.docId);
             });
-            row.addEventListener("keydown", e => {
-                if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    row.click();
-                }
-            });
+            row.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); row.click(); } });
+        });
+        listEl.querySelectorAll(".kd-row[data-nav-page]").forEach(row => {
+            row.addEventListener("click", () => { closeKpiDetailModal(); setActivePage(row.dataset.navPage); });
+            row.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); row.click(); } });
         });
     }
 
     if (viewAllBtn) {
-        viewAllBtn.onclick = () => {
-            closeKpiDetailModal();
-            openDocumentsPageWithFilter(viewAllFilter);
-        };
+        viewAllBtn.textContent = viewAllLabel;
+        if (chipType === "clients") {
+            viewAllBtn.onclick = () => { closeKpiDetailModal(); setActivePage("clients"); };
+        } else if (chipType === "statements") {
+            viewAllBtn.onclick = () => { closeKpiDetailModal(); setActivePage("reports"); };
+        } else {
+            viewAllBtn.onclick = () => { closeKpiDetailModal(); openDocumentsPageWithFilter(viewAllFilter || "all"); };
+        }
     }
 }
 
@@ -16473,6 +16512,60 @@ function _buildKdRows(docs, showBalance = false) {
             <span class="kd-client">${client}</span>
             <span class="kd-date">${date}</span>
             <strong class="kd-amount">${amount}</strong>
+            ${badgeHtml}
+        </div>`;
+    }).join("");
+}
+
+function _buildKdRowsClients(clients) {
+    if (!clients.length) return `<p class="kpi-detail-empty">No clients found.</p>`;
+
+    return [...clients].sort((left, right) => String(left.name || "").localeCompare(String(right.name || ""), getCurrentLocale(), { sensitivity: "base" })).map(client => {
+        const clientName = String(client.name || "Unknown").trim() || "Unknown";
+        const normalizedName = clientName.toLowerCase();
+        const clientDocs = state.documents.filter(doc => String(doc.clientName || "").trim().toLowerCase() === normalizedName);
+        const quoteCount = clientDocs.filter(doc => doc.type === "quote").length;
+        const invoiceDocs = clientDocs.filter(doc => doc.type === "invoice");
+        const invoiceCount = invoiceDocs.length;
+        const statementCount = (state.statementExports || []).filter(statement => String(statement.clientName || "").trim().toLowerCase() === normalizedName).length;
+        const totalInvoiced = invoiceDocs.reduce((sum, doc) => sum + Number(doc.total || 0), 0);
+        const outstanding = invoiceDocs.reduce((sum, doc) => sum + getInvoiceOutstandingBalance(doc), 0);
+        const initials = clientName.split(/\s+/).map(part => part[0] || "").slice(0, 2).join("").toUpperCase() || "?";
+        const metaParts = [
+            `${quoteCount} quote${quoteCount !== 1 ? "s" : ""}`,
+            `${invoiceCount} invoice${invoiceCount !== 1 ? "s" : ""}`,
+            `${statementCount} statement${statementCount !== 1 ? "s" : ""}`
+        ];
+
+        return `<div class="kd-row kd-client-row" data-nav-page="clients" role="button" tabindex="0">
+            <span class="kd-avatar" aria-hidden="true">${escapeHtml(initials)}</span>
+            <span class="kd-client-main">
+                <span class="kd-client-name">${escapeHtml(clientName)}</span>
+                <span class="kd-client-meta">${escapeHtml(metaParts.join(" • "))}</span>
+            </span>
+            <strong class="kd-amount">${escapeHtml(formatCurrency(totalInvoiced))}</strong>
+            ${outstanding > 0 ? `<span class="kd-badge-pill is-overdue">${escapeHtml(formatCurrency(outstanding))} due</span>` : `<span class="kd-badge-pill is-paid">Settled</span>`}
+        </div>`;
+    }).join("");
+}
+
+function _buildKdRowsStatements(statements) {
+    if (!statements.length) return `<p class="kpi-detail-empty">No statements found.</p>`;
+
+    return [...statements].sort((left, right) => Date.parse(right.generatedAt || 0) - Date.parse(left.generatedAt || 0)).map(statement => {
+        const liveOutstanding = getStatementLiveOutstanding(statement);
+        const isPaid = liveOutstanding <= 0;
+        const amount = statement.totalSelectedFormatted || formatCurrency(0);
+        const badgeHtml = isPaid
+            ? `<span class="kd-badge-pill is-paid">Settled</span>`
+            : `<span class="kd-badge-pill is-overdue">${escapeHtml(formatCurrency(liveOutstanding))} due</span>`;
+
+        return `<div class="kd-row kd-statement-row" data-nav-page="reports" role="button" tabindex="0">
+            <span class="kd-dot" style="background:#64748b"></span>
+            <span class="kd-ref">${escapeHtml(statement.referenceNumber || "Statement")}</span>
+            <span class="kd-client">${escapeHtml(statement.clientName || "Unknown")}</span>
+            <span class="kd-date">${escapeHtml(formatPrintedDate(statement.generatedAt))}</span>
+            <strong class="kd-amount">${escapeHtml(amount)}</strong>
             ${badgeHtml}
         </div>`;
     }).join("");

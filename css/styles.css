@@ -15673,6 +15673,19 @@ body #procurementSheetModal:not([hidden]) {
     padding: 0.5rem 0.65rem;
     border-radius: 10px;
     border: 1px solid transparent;
+    cursor: pointer;
+    user-select: none;
+    transition: box-shadow 0.14s, transform 0.12s, background 0.14s;
+}
+
+.dash-mix-extra:hover {
+    box-shadow: 0 0 0 2px rgba(66, 99, 235, 0.12), var(--shadow-sm, 0 1px 4px rgba(0,0,0,0.06));
+    transform: translateY(-1px);
+}
+
+.dash-mix-extra:focus-visible {
+    outline: 2px solid rgba(66, 99, 235, 0.5);
+    outline-offset: 2px;
 }
 
 .dash-mix-extra-clients {
@@ -15826,6 +15839,11 @@ body #procurementSheetModal:not([hidden]) {
     background: rgba(100, 116, 139, 0.045);
 }
 
+.kd-row:focus-visible {
+    outline: 2px solid rgba(66, 99, 235, 0.5);
+    outline-offset: -2px;
+}
+
 .kd-dot {
     width: 8px;
     height: 8px;
@@ -15851,6 +15869,45 @@ body #procurementSheetModal:not([hidden]) {
     text-overflow: ellipsis;
     white-space: nowrap;
     min-width: 0;
+}
+
+.kd-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(66, 99, 235, 0.1);
+    color: #4263eb;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.kd-client-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+}
+
+.kd-client-name {
+    font-size: 0.84rem;
+    font-weight: 750;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.kd-client-meta {
+    font-size: 0.7rem;
+    color: var(--text-faint);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .kd-date {
