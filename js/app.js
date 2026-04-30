@@ -8953,11 +8953,12 @@ function getAllNoteRecords() {
             return {
                 targetType: "document",
                 targetId: String(doc.id),
-                documentType: doc.type === "invoice" ? "invoice" : "quote",
+                documentType: doc.type === "invoice" ? "invoice" : doc.type === "procurement" ? "procurement" : "quote",
                 documentReference: doc.refNumber || "Reference pending",
                 clientName: doc.clientName || t("unknown_client"),
                 noteCount: notes.length,
                 latestNote,
+                recentNotes: notes.slice(-3).reverse(),
                 sortDate: latestNote?.editedAt || latestNote?.createdAt || "",
                 allNotesText: notes.map(note => String(note.text || "")).join(" "),
                 target: doc
@@ -8977,6 +8978,7 @@ function getAllNoteRecords() {
                 clientName: statement.clientName || t("unknown_client"),
                 noteCount: notes.length,
                 latestNote,
+                recentNotes: notes.slice(-3).reverse(),
                 sortDate: latestNote?.editedAt || latestNote?.createdAt || "",
                 allNotesText: notes.map(note => String(note.text || "")).join(" "),
                 target: statement
@@ -9038,7 +9040,19 @@ function openNoteLinkedRecord(note) {
     }
 
     setActivePage("documents");
+    const doc = getDocumentById(note.targetId);
+    if (doc?.type === "procurement") {
+        openProcurementSheetModal(doc);
+        return;
+    }
     editDocument(note.targetId);
+}
+
+function getNotesRecordTypeLabel(documentType) {
+    if (documentType === "statement") return "Statement";
+    if (documentType === "invoice") return "Invoice";
+    if (documentType === "procurement") return "Offer";
+    return "Quote";
 }
 
 function getNoteRecordByTarget(targetId, targetType = "document") {
@@ -9086,13 +9100,22 @@ function buildNotesRecordSummaryCards(record) {
     const cards = [
         { label: "Reference", value: record.documentReference, action: "open-record" },
         { label: "Client", value: record.clientName || t("unknown_client"), action: "open-client" },
-        { label: "Type", value: record.documentType === "statement" ? "Statement" : record.documentType === "invoice" ? "Invoice" : "Quote", action: "open-type" }
+        { label: "Type", value: getNotesRecordTypeLabel(record.documentType), action: "open-type" }
     ];
 
     if (record.targetType === "statement") {
         cards.push(
             { label: "Outstanding", value: formatCurrency(getStatementLiveOutstanding(target)), action: "open-record" },
             { label: "Rows", value: String(target.rowCount || target.payload?.rows?.length || 0), action: "open-record" },
+            { label: "Notes", value: String(record.noteCount), action: "manage-notes" }
+        );
+        return cards;
+    }
+
+    if (record.documentType === "procurement") {
+        cards.push(
+            { label: "Rows", value: String(target.procurementItems?.length || 0), action: "open-record" },
+            { label: "Date", value: formatDisplayDate(target.date || ""), action: "open-record" },
             { label: "Notes", value: String(record.noteCount), action: "manage-notes" }
         );
         return cards;
@@ -9117,7 +9140,7 @@ function renderNotesRecordModal(record) {
 
     const target = record.target;
     const notes = normalizeNoteLog(target?.noteLog);
-    const typeLabel = record.documentType === "statement" ? "Statement" : record.documentType === "invoice" ? "Invoice" : "Quote";
+    const typeLabel = getNotesRecordTypeLabel(record.documentType);
     const client = getClientByName(record.clientName);
 
     elements.notesRecordModalTitle.textContent = `${typeLabel} Summary`;
@@ -9216,52 +9239,73 @@ function renderNotesPage() {
     syncNotesFilterButtons();
     const records = getFilteredNoteRecords();
     elements.notesPageSummary.innerHTML = `
-        <article class="invoice-report-summary-card">
+        <article class="invoice-report-summary-card notes-summary-card">
             <span>Visible Records</span>
             <strong>${escapeHtml(String(records.length))}</strong>
         </article>
-        <article class="invoice-report-summary-card">
+        <article class="invoice-report-summary-card notes-summary-card">
             <span>Invoices</span>
             <strong>${escapeHtml(String(records.filter(note => note.documentType === "invoice").length))}</strong>
         </article>
-        <article class="invoice-report-summary-card">
+        <article class="invoice-report-summary-card notes-summary-card">
             <span>Quotes</span>
             <strong>${escapeHtml(String(records.filter(note => note.documentType === "quote").length))}</strong>
         </article>
-        <article class="invoice-report-summary-card">
+        <article class="invoice-report-summary-card notes-summary-card">
+            <span>Offers</span>
+            <strong>${escapeHtml(String(records.filter(note => note.documentType === "procurement").length))}</strong>
+        </article>
+        <article class="invoice-report-summary-card notes-summary-card">
             <span>Statements</span>
             <strong>${escapeHtml(String(records.filter(note => note.documentType === "statement").length))}</strong>
         </article>
     `;
 
     if (!records.length) {
-        elements.notesFeed.innerHTML = `<div class="empty-state compact-empty-state"><p>No notes match the current filters.</p></div>`;
+        elements.notesFeed.innerHTML = `
+            <div class="empty-state compact-empty-state notes-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                    <path d="M14 3v6h6"/>
+                    <path d="M8 13h8M8 17h5"/>
+                </svg>
+                <strong>No notes match these filters</strong>
+                <p>Try a broader search, choose All clients, or switch the note type filter.</p>
+            </div>`;
         return;
     }
 
     elements.notesFeed.innerHTML = records.map(record => {
-        const previewSource = record.latestNote?.text || "";
-        const preview = previewSource.length > 180 ? `${previewSource.slice(0, 180)}…` : previewSource;
-        const typeLabel = record.documentType === "statement" ? "Statement" : record.documentType === "invoice" ? "Invoice" : "Quote";
+        const typeLabel = getNotesRecordTypeLabel(record.documentType);
+        const recentNotes = Array.isArray(record.recentNotes) && record.recentNotes.length ? record.recentNotes : [record.latestNote].filter(Boolean);
+        const notePreviewHtml = recentNotes.map(note => {
+            const previewSource = String(note?.text || "");
+            const preview = previewSource.length > 150 ? `${previewSource.slice(0, 150)}…` : previewSource;
+            const timeLabel = note?.editedAt ? `${formatNoteTimestamp(note.createdAt)} · edited` : formatNoteTimestamp(note?.createdAt || record.sortDate);
+            return `
+                <div class="notes-feed-note-line">
+                    <p>${escapeHtml(preview)}</p>
+                    <span>${escapeHtml(note?.author || "Unknown")} · ${escapeHtml(timeLabel)}</span>
+                </div>`;
+        }).join("");
         return `
-            <article class="notes-feed-item" data-open-note-target="${escapeHtml(record.targetId)}" data-open-note-target-type="${escapeHtml(record.targetType)}" tabindex="0" role="button" aria-label="${escapeHtml(`Open ${typeLabel} summary for ${record.documentReference}`)}">
+            <article class="notes-feed-item notes-feed-item-${escapeHtml(record.documentType)}" data-open-note-target="${escapeHtml(record.targetId)}" data-open-note-target-type="${escapeHtml(record.targetType)}" tabindex="0" role="button" aria-label="${escapeHtml(`Open ${typeLabel} summary for ${record.documentReference}`)}">
                 <div class="notes-feed-item-main">
                     <div class="notes-feed-item-head">
                         <div class="notes-feed-item-meta">
                             <span class="notes-feed-item-type is-${escapeHtml(record.documentType)}">${escapeHtml(typeLabel)}</span>
                             <strong>${escapeHtml(record.documentReference)}</strong>
-                            <span>${escapeHtml(record.clientName || t("unknown_client"))}</span>
                             <span class="notes-feed-item-count">${escapeHtml(String(record.noteCount))} note${record.noteCount === 1 ? "" : "s"}</span>
                         </div>
-                        <span class="notes-feed-item-time">${escapeHtml(formatNoteTimestamp(record.latestNote?.createdAt || record.sortDate))}</span>
+                        <span class="notes-feed-item-client">${escapeHtml(record.clientName || t("unknown_client"))}</span>
                     </div>
-                    <p class="notes-feed-item-text">${escapeHtml(preview)}</p>
-                    <div class="notes-feed-item-foot">
-                        <span>${escapeHtml(record.latestNote?.author || "Unknown")}</span>
-                        <span>Latest note</span>
-                    </div>
+                    <div class="notes-feed-notes">${notePreviewHtml}</div>
                 </div>
-                <button class="btn btn-secondary notes-feed-open-btn" type="button" data-open-note-target="${escapeHtml(record.targetId)}" data-open-note-target-type="${escapeHtml(record.targetType)}">View Summary</button>
+                <span class="notes-feed-open-btn" aria-hidden="true" title="Open summary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </span>
             </article>
         `;
     }).join("");
