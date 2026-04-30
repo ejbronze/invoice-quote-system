@@ -4099,6 +4099,7 @@ async function upsertItemsIntoCatalog(items, docRef) {
                 ...(item.packSize ? { packSize: item.packSize, unitSize: item.packSize } : {}),
                 ...(item.unit ? { unit: item.unit } : {}),
                 ...(item.leadTime ? { leadTime: item.leadTime } : {}),
+                ...(item.itemImageDataUrl ? { itemImageDataUrl: item.itemImageDataUrl } : {}),
                 // Preserve archived status — do not un-archive automatically
                 archived: entry.archived,
                 documentRefs: mergeRefs(entry.documentRefs, ref),
@@ -4126,6 +4127,7 @@ async function upsertItemsIntoCatalog(items, docRef) {
                 vendor: String(item.supplier || "").trim(),
                 supplier: String(item.supplier || "").trim(),
                 leadTime: String(item.leadTime || "").trim(),
+                itemImageDataUrl: item.itemImageDataUrl || "",
                 country: "",
                 tags: [],
                 archived: false,
@@ -7665,7 +7667,8 @@ async function saveProcurementSheet(options = {}) {
         currency: row.currency || sheet.currency || "USD",
         leadTime: row.leadTime,
         supplier: row.supplier,
-        notes: row.notes
+        notes: row.notes,
+        itemImageDataUrl: row.itemImageDataUrl || ""
     }));
     await upsertItemsIntoCatalog(procCatalogItems, procDocRef);
 
