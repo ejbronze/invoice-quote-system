@@ -3091,6 +3091,11 @@ body::after {
     overflow: hidden;
 }
 
+/* Nested modals must render above the modal that triggered them */
+.modal.nested-modal {
+    z-index: 1050;
+}
+
 .modal.active {
     display: flex;
     align-items: center;
@@ -15496,7 +15501,7 @@ body #procurementSheetModal:not([hidden]) {
 
 .dash-ob-seg.is-overdue { background: #dc2626; }
 .dash-ob-seg.is-soon    { background: #d97706; }
-.dash-ob-seg.is-other   { background: rgba(255,255,255,0.5); }
+.dash-ob-seg.is-other   { background: rgba(66, 99, 235, 0.45); }
 
 .dash-ob-legend {
     display: flex;
@@ -15522,7 +15527,7 @@ body #procurementSheetModal:not([hidden]) {
 
 .dash-ob-dot.is-overdue { background: #dc2626; }
 .dash-ob-dot.is-soon    { background: #d97706; }
-.dash-ob-dot.is-other   { background: rgba(255,255,255,0.6); }
+.dash-ob-dot.is-other   { background: #4263eb; }
 
 /* Document activity chart card */
 .dash-charts-section {

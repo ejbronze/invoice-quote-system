@@ -16235,15 +16235,18 @@ function _hideTooltip() {
 function _positionTooltip(anchor) {
     if (!_tooltipEl) return;
     const r = anchor.getBoundingClientRect();
-    const tw = _tooltipEl.offsetWidth || 100;
-    const th = _tooltipEl.offsetHeight || 24;
+    const tw = _tooltipEl.offsetWidth || 120;
+    const th = _tooltipEl.offsetHeight || 28;
     const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    // position: fixed uses viewport coords — do NOT add scrollY
     let top = r.top - th - 7;
     if (top < 6) top = r.bottom + 6;
+    if (top + th > vh - 6) top = r.top - th - 7;
     let left = r.left + r.width / 2 - tw / 2;
     if (left < 6) left = 6;
     if (left + tw > vw - 6) left = vw - tw - 6;
-    _tooltipEl.style.top = `${top + window.scrollY}px`;
+    _tooltipEl.style.top = `${top}px`;
     _tooltipEl.style.left = `${left}px`;
 }
 
