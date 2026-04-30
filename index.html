@@ -208,7 +208,7 @@
                         <p class="hero-helper hero-status" id="importDocumentStatus" hidden>Use JSON backup tools to restore deleted records or move data between environments.</p>
                     </div>
 
-                    <!-- KPI strip: cycling snapshot card + outstanding balance tile -->
+                    <!-- KPI strip: compact 4-chip row -->
                     <div class="dash-kpi-strip">
                         <button class="overview-mobile-toggle" id="overviewMobileToggle" type="button" aria-label="Cycle snapshot value" hidden>
                             <span class="overview-mobile-toggle-copy">
@@ -217,32 +217,31 @@
                             </span>
                             <span class="overview-mobile-toggle-meta" id="overviewMobileToggleMeta">0 documents</span>
                         </button>
-                        <div class="overview-panel" aria-label="Workspace snapshot">
-                            <div class="overview-panel-head">
-                                <span class="overview-kicker">Snapshot</span>
+                        <div class="dash-kpi-row">
+                            <div class="dash-kpi-chip dash-kpi-chip-pipeline">
+                                <span class="dash-kpi-chip-label">Pipeline</span>
+                                <strong class="dash-kpi-chip-val" id="dashKpiPipeline">$0</strong>
+                                <span class="dash-kpi-chip-sub"><strong id="totalDocumentsStat">0</strong> docs · <strong id="quoteCountStat">0</strong> <span id="kpiQuotesLabel">quotes</span></span>
                             </div>
-                            <button class="stat-card stat-card-toggle stat-card-hero" id="valueToggleCard" type="button" aria-pressed="false">
-                                <strong class="stat-value stat-value-hero" id="totalValueStat">$0.00</strong>
-                                <span class="stat-label" id="totalValueLabel">Pipeline Value</span>
-                                <span class="stat-meta" id="totalValueHint"></span>
-                            </button>
-                            <div class="overview-kpi-meta">
-                                <span><strong id="totalDocumentsStat">0</strong> <span class="kpi-meta-label" id="kpiDocumentsLabel">Documents</span></span>
-                                <span class="kpi-meta-sep" aria-hidden="true">·</span>
-                                <span><strong id="quoteCountStat">0</strong> <span class="kpi-meta-label" id="kpiQuotesLabel">Quotes</span></span>
+                            <div class="dash-kpi-chip dash-kpi-chip-invoiced">
+                                <span class="dash-kpi-chip-label">Invoiced</span>
+                                <strong class="dash-kpi-chip-val" id="dashKpiInvoiced">$0</strong>
                             </div>
-                            <div class="dash-sparkline-wrap" id="dashSparklineWrap" hidden>
-                                <div class="dash-trend-row">
-                                    <span class="dash-trend-badge" id="dashTrendBadge"></span>
-                                    <span class="dash-trend-period">vs prev 15d</span>
-                                </div>
-                                <div id="dashSparklineSvg" aria-hidden="true"></div>
+                            <div class="dash-kpi-chip dash-kpi-chip-income">
+                                <span class="dash-kpi-chip-label">Income</span>
+                                <strong class="dash-kpi-chip-val" id="dashKpiIncome">$0</strong>
+                            </div>
+                            <div class="dash-kpi-chip dash-kpi-chip-outstanding" id="overviewOutstandingWrap" hidden>
+                                <span class="dash-kpi-chip-label" id="outstandingBalanceLabel">Outstanding</span>
+                                <strong class="dash-kpi-chip-val dash-kpi-val-alert" id="outstandingBalanceStat">$0</strong>
+                                <div class="dash-ob-bar" id="dashObBar" hidden></div>
                             </div>
                         </div>
-                        <div class="overview-outstanding-wrap" id="overviewOutstandingWrap" hidden>
-                            <span class="outstanding-label" id="outstandingBalanceLabel">Outstanding Balance</span>
-                            <strong class="outstanding-value" id="outstandingBalanceStat">$0.00</strong>
-                            <div class="dash-ob-bar" id="dashObBar" hidden></div>
+                        <!-- Hidden legacy elements: JS still writes to these -->
+                        <div hidden aria-hidden="true">
+                            <button id="valueToggleCard" type="button" aria-pressed="false"></button>
+                            <span id="totalValueStat"></span><span id="totalValueLabel"></span>
+                            <span id="totalValueHint"></span><span id="kpiDocumentsLabel"></span>
                         </div>
                     </div>
 
@@ -294,17 +293,6 @@
                         </div>
                     </section>
 
-                    <!-- Document activity chart -->
-                    <section class="dash-charts-section" id="dashChartsSection" hidden>
-                        <article class="overview-card dash-activity-card">
-                            <div class="dash-activity-head">
-                                <span class="dash-activity-title">Document Activity</span>
-                                <span class="dash-activity-period">Last 8 weeks</span>
-                            </div>
-                            <div id="dashActivityChartWrap" aria-hidden="true"></div>
-                        </article>
-                    </section>
-
                     <!-- Recent documents + workspace summary -->
                     <section class="overview-secondary-grid">
                         <article class="overview-card">
@@ -321,14 +309,17 @@
                                 </div>
                             </div>
                         </article>
-                        <article class="overview-card">
-                            <div class="page-section-heading">
-                                <div>
-                                    <h2>Workspace Summary</h2>
-                                    <p>Track saved clients, pending items, and statement activity from one page.</p>
-                                </div>
+                        <article class="overview-card dash-mix-card">
+                            <div class="dash-mix-head">
+                                <span class="dash-mix-title">Document Mix</span>
                             </div>
-                            <div class="overview-summary-grid" id="overviewSummaryGrid"></div>
+                            <div class="dash-mix-body">
+                                <div id="dashDocMixChart" aria-hidden="true"></div>
+                                <div class="dash-mix-legend" id="dashDocMixLegend"></div>
+                            </div>
+                            <div class="dash-mix-footer" id="dashDocMixFooter" hidden></div>
+                            <!-- Legacy grid: hidden, JS still renders into it for other code paths -->
+                            <div id="overviewSummaryGrid" hidden aria-hidden="true"></div>
                         </article>
                     </section>
                 </section>
@@ -2540,6 +2531,6 @@
     <script src="js/vendor/html2pdf.bundle.min.js"></script>
     <script src="js/brand.js?v=2"></script>
     <script src="js/statement-of-account.js?v=2"></script>
-    <script src="js/app.js?v=30"></script>
+    <script src="js/app.js?v=31"></script>
 </body>
 </html>

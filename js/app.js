@@ -4745,9 +4745,7 @@ function setActivePage(page) {
     closeTopbarMenu();
     closeNewMenu();
     closeOverviewNewMenu();
-    if (state.activePage === "overview") {
-        startValueViewCycle();
-    } else {
+    if (state.activePage !== "overview") {
         stopValueViewCycle();
     }
 }
@@ -15990,6 +15988,14 @@ function updateOverviewStats() {
             elements.overviewMobileToggleLabel.textContent = t(currentLabelKey);
         }
     }
+    // Compact KPI chip values (all shown simultaneously, no cycling)
+    const kpiPipeline = document.getElementById("dashKpiPipeline");
+    const kpiInvoiced = document.getElementById("dashKpiInvoiced");
+    const kpiIncome = document.getElementById("dashKpiIncome");
+    if (kpiPipeline) kpiPipeline.textContent = formatCurrency(pipelineValue);
+    if (kpiInvoiced) kpiInvoiced.textContent = formatCurrency(invoicedValue);
+    if (kpiIncome) kpiIncome.textContent = formatCurrency(incomeValue);
+
     syncMobileOverviewState();
     renderDashboardCharts();
 }
@@ -15997,9 +16003,8 @@ function updateOverviewStats() {
 // ── Dashboard Charts ──────────────────────────────────────────────────
 
 function renderDashboardCharts() {
-    renderPipelineSparkline();
     renderOutstandingBreakdown();
-    renderDocumentActivityChart();
+    renderDocumentMixDonut();
 }
 
 function renderPipelineSparkline() {
@@ -16170,6 +16175,89 @@ function renderDocumentActivityChart() {
     wrap.innerHTML = `<svg class="dash-activity-svg" viewBox="0 0 ${W} ${H}" aria-hidden="true">
         <style>.dash-bar-label{font-size:9px;fill:#94a3b8;font-family:inherit}.dash-bar-count{font-size:9px;fill:#64748b;font-family:inherit;font-weight:600}</style>
         ${bars}
+    </svg>`;
+}
+
+// ── Document Mix Donut ────────────────────────────────────────────────
+
+function renderDocumentMixDonut() {
+    const chart = document.getElementById("dashDocMixChart");
+    const legend = document.getElementById("dashDocMixLegend");
+    const footer = document.getElementById("dashDocMixFooter");
+    if (!chart || !legend) return;
+
+    const quotes = state.documents.filter(d => d.type === "quote").length;
+    const invoices = state.documents.filter(d => d.type === "invoice").length;
+    const offers = state.documents.filter(d => d.type === "procurement").length;
+    const clients = state.clients.length;
+    const statements = state.statementExports.length;
+    const total = quotes + invoices + offers;
+
+    chart.innerHTML = _buildDonutSVG({ quotes, invoices, offers });
+
+    const segments = [
+        { label: "Quotes", value: quotes, color: "#4263eb" },
+        { label: "Invoices", value: invoices, color: "#0d9166" },
+        { label: "Offers", value: offers, color: "#7c3aed" }
+    ].filter(s => s.value > 0);
+
+    if (segments.length === 0) {
+        legend.innerHTML = `<p class="attention-empty">No documents yet</p>`;
+    } else {
+        legend.innerHTML = segments.map(s => {
+            const pct = Math.round(s.value / total * 100);
+            return `<div class="dash-mix-leg-row">
+                <span class="dash-mix-leg-dot" style="background:${s.color}"></span>
+                <span class="dash-mix-leg-label">${escapeHtml(s.label)}</span>
+                <strong class="dash-mix-leg-val">${s.value}</strong>
+                <span class="dash-mix-leg-pct">${pct}%</span>
+            </div>`;
+        }).join("");
+    }
+
+    if (footer) {
+        const parts = [];
+        if (clients > 0) parts.push(`${clients} Client${clients !== 1 ? "s" : ""}`);
+        if (statements > 0) parts.push(`${statements} Statement${statements !== 1 ? "s" : ""}`);
+        footer.textContent = parts.join("  ·  ");
+        footer.hidden = parts.length === 0;
+    }
+}
+
+function _buildDonutSVG({ quotes, invoices, offers }) {
+    const total = quotes + invoices + offers;
+    const SIZE = 106, cx = 53, cy = 53, R = 36, STROKE = 12;
+    const C = 2 * Math.PI * R;
+    const GAP = 3;
+
+    if (total === 0) {
+        return `<svg class="dash-donut-svg" viewBox="0 0 ${SIZE} ${SIZE}" aria-hidden="true">
+            <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="rgba(100,116,139,0.1)" stroke-width="${STROKE}"/>
+            <text x="${cx}" y="${cy + 1}" text-anchor="middle" dominant-baseline="middle" class="donut-count">0</text>
+            <text x="${cx}" y="${cy + 14}" text-anchor="middle" class="donut-sub">docs</text>
+        </svg>`;
+    }
+
+    const segs = [
+        { value: quotes, color: "#4263eb" },
+        { value: invoices, color: "#0d9166" },
+        { value: offers, color: "#7c3aed" }
+    ].filter(s => s.value > 0);
+
+    let cum = 0;
+    const arcs = segs.map(s => {
+        const fullArc = (s.value / total) * C;
+        const dash = Math.max(1, fullArc - GAP);
+        const offset = C / 4 - cum;
+        cum += fullArc;
+        return `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${s.color}" stroke-width="${STROKE}" stroke-dasharray="${dash.toFixed(2)} ${(C - dash).toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}" stroke-linecap="butt"/>`;
+    }).join("");
+
+    return `<svg class="dash-donut-svg" viewBox="0 0 ${SIZE} ${SIZE}" aria-hidden="true">
+        <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="rgba(100,116,139,0.08)" stroke-width="${STROKE}"/>
+        ${arcs}
+        <text x="${cx}" y="${cy + 1}" text-anchor="middle" dominant-baseline="middle" class="donut-count">${total}</text>
+        <text x="${cx}" y="${cy + 13}" text-anchor="middle" class="donut-sub">docs</text>
     </svg>`;
 }
 
@@ -16906,6 +16994,7 @@ function renderOverviewPanels() {
             })
         ].join("");
     }
+    renderDocumentMixDonut();
 }
 
 function syncDocumentsSelectionToolbar() {
