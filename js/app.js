@@ -2135,6 +2135,11 @@ function cacheElements() {
     elements.clearStampAssetBtn = document.getElementById("clearStampAssetBtn");
     elements.accountSessionLogList = document.getElementById("accountSessionLogList");
     elements.accountActivityLogList = document.getElementById("accountActivityLogList");
+    elements.itemImagePreviewModal = document.getElementById("itemImagePreviewModal");
+    elements.itemImagePreviewModalImg = document.getElementById("itemImagePreviewModalImg");
+    elements.itemImagePreviewReplaceBtn = document.getElementById("itemImagePreviewReplaceBtn");
+    elements.itemImagePreviewRemoveBtn = document.getElementById("itemImagePreviewRemoveBtn");
+    elements.itemImagePreviewCloseBtn = document.getElementById("itemImagePreviewCloseBtn");
     elements.signaturesListWrap = document.getElementById("signaturesListWrap");
     elements.signatureEditorWrap = document.getElementById("signatureEditorWrap");
     elements.addSignatureBtn = document.getElementById("addSignatureBtn");
@@ -2773,6 +2778,31 @@ function bindEvents() {
     elements.clearSignatureAssetBtn?.addEventListener("click", () => clearBrandAsset("signature"));
     elements.clearStampAssetBtn?.addEventListener("click", () => clearBrandAsset("stamp"));
     elements.saveBrandAssetsBtn?.addEventListener("click", saveBrandAssets);
+    elements.itemImagePreviewReplaceBtn?.addEventListener("click", () => {
+        const row = _itemImagePreviewRow;
+        closeItemImagePreviewModal();
+        if (row) {
+            const fileInput = row.querySelector(".item-image-input");
+            if (fileInput) fileInput.click();
+        }
+    });
+    elements.itemImagePreviewRemoveBtn?.addEventListener("click", () => {
+        const row = _itemImagePreviewRow;
+        closeItemImagePreviewModal();
+        if (row) {
+            row.dataset.itemImageDataUrl = "";
+            const fileInput = row.querySelector(".item-image-input");
+            if (fileInput) fileInput.value = "";
+            syncItemImageUI(row);
+            queueDraftAutosave();
+        }
+    });
+    elements.itemImagePreviewCloseBtn?.addEventListener("click", closeItemImagePreviewModal);
+    elements.itemImagePreviewModal?.addEventListener("click", (e) => {
+        if (e.target === elements.itemImagePreviewModal || e.target.classList.contains("item-img-preview-backdrop")) {
+            closeItemImagePreviewModal();
+        }
+    });
     elements.addSignatureBtn?.addEventListener("click", () => openSignatureEditor(null));
     elements.sigEditorCancelBtn?.addEventListener("click", closeSignatureEditor);
     elements.sigEditorSaveBtn?.addEventListener("click", saveSignatureFromEditor);
@@ -14376,34 +14406,24 @@ function addItem() {
             <span class="item-number">${state.itemCounter}</span>
         </td>
         <td class="it-desc">
-            <textarea class="item-description" placeholder="Describe the item or service..."></textarea>
-            <div class="item-image-group">
-                <div class="item-image-uploader">
-                    <label class="item-image-upload-btn" for="itemImageInput-${itemId}" aria-label="Upload item image" title="Upload item image">
-                        <input type="file" id="itemImageInput-${itemId}" class="item-image-input" accept="image/jpeg,image/png,image/webp" hidden>
-                        <span class="item-image-upload-art" aria-hidden="true">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M5 7.5A2.5 2.5 0 0 1 7.5 5h9A2.5 2.5 0 0 1 19 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 16.5z" fill="none" stroke="currentColor" stroke-width="1.7"/>
-                                <path d="M8 15l2.4-2.4a1 1 0 0 1 1.4 0l1.1 1.1 2.1-2.1a1 1 0 0 1 1.4 0L19 14.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                                <circle cx="10" cy="9.5" r="1.2" fill="currentColor"/>
+            <div class="item-desc-inner">
+                <div class="item-img-cell">
+                    <input type="file" id="itemImageInput-${itemId}" class="item-image-input" accept="image/jpeg,image/png,image/webp" hidden>
+                    <button type="button" class="item-img-btn" aria-label="Add item image" title="Add item image">
+                        <span class="item-img-placeholder" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="1" y="3.5" width="14" height="9" rx="1.5"/>
+                                <circle cx="8" cy="8" r="2"/>
+                                <path d="M5.5 3.5l.8-2h3.4l.8 2"/>
                             </svg>
                         </span>
-                        <span class="item-image-upload-copy">
-                            <strong>Item image</strong>
-                            <small>Add image</small>
-                        </span>
-                    </label>
-                    <button type="button" class="item-image-remove-btn" hidden aria-label="Remove item image" title="Remove item image">
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M6 7h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                            <path d="M9.5 7V5.6c0-.4.3-.6.6-.6h3.8c.3 0 .6.2.6.6V7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                            <path d="M8.2 7l.7 10.2c0 .4.3.8.8.8h4.6c.4 0 .7-.3.8-.8L16 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
+                        <img class="item-img-thumb" hidden alt="Item image">
+                        <div class="item-img-hover-preview" aria-hidden="true">
+                            <img class="item-img-hover-preview-img" alt="">
+                        </div>
                     </button>
                 </div>
-                <div class="item-image-preview" hidden>
-                    <img class="item-image-preview-img" alt="Item image preview">
-                </div>
+                <textarea class="item-description" placeholder="Describe the item or service..."></textarea>
             </div>
         </td>
         <td class="it-qty">
@@ -14505,16 +14525,16 @@ async function handleItemContainerClick(event) {
         return;
     }
 
-    const removeImageButton = event.target.closest(".item-image-remove-btn");
-    if (removeImageButton) {
-        const itemRow = removeImageButton.closest(".item-row");
+    const imgBtn = event.target.closest(".item-img-btn");
+    if (imgBtn) {
+        const itemRow = imgBtn.closest(".item-row");
         if (itemRow) {
-            itemRow.dataset.itemImageDataUrl = "";
-            const imageInput = itemRow.querySelector(".item-image-input");
-            if (imageInput) {
-                imageInput.value = "";
+            if (itemRow.dataset.itemImageDataUrl) {
+                openItemImagePreviewModal(itemRow);
+            } else {
+                const fileInput = itemRow.querySelector(".item-image-input");
+                if (fileInput) fileInput.click();
             }
-            syncItemImageUI(itemRow);
         }
         return;
     }
@@ -14612,27 +14632,28 @@ async function handleItemImageInputChange(event) {
 
 function syncItemImageUI(row) {
     const imageDataUrl = row?.dataset?.itemImageDataUrl || "";
-    const preview = row.querySelector(".item-image-preview");
-    const previewImage = row.querySelector(".item-image-preview-img");
-    const removeButton = row.querySelector(".item-image-remove-btn");
-    const uploadButtonCopy = row.querySelector(".item-image-upload-copy small");
+    const btn = row.querySelector(".item-img-btn");
+    const thumb = row.querySelector(".item-img-thumb");
+    const hoverPreviewImg = row.querySelector(".item-img-hover-preview-img");
 
-    if (!preview || !previewImage || !removeButton || !uploadButtonCopy) {
-        return;
-    }
+    if (!btn || !thumb) return;
 
     if (imageDataUrl) {
-        preview.hidden = false;
-        previewImage.src = imageDataUrl;
-        removeButton.hidden = false;
+        thumb.src = imageDataUrl;
+        thumb.hidden = false;
+        if (hoverPreviewImg) hoverPreviewImg.src = imageDataUrl;
+        btn.classList.add("has-img");
+        btn.setAttribute("aria-label", "View item image");
+        btn.setAttribute("title", "Click to view or replace image");
         row.classList.add("has-item-image");
-        uploadButtonCopy.textContent = "Change image";
     } else {
-        preview.hidden = true;
-        previewImage.removeAttribute("src");
-        removeButton.hidden = true;
+        thumb.removeAttribute("src");
+        thumb.hidden = true;
+        if (hoverPreviewImg) hoverPreviewImg.removeAttribute("src");
+        btn.classList.remove("has-img");
+        btn.setAttribute("aria-label", "Add item image");
+        btn.setAttribute("title", "Add item image");
         row.classList.remove("has-item-image");
-        uploadButtonCopy.textContent = "Add image";
     }
 
     const summaryThumbImage = row.querySelector(".item-summary-thumb-img");
@@ -14802,6 +14823,22 @@ function refreshItemOrdering() {
         const numCell = row.querySelector(".item-number");
         if (numCell) numCell.textContent = String(index + 1);
     });
+}
+
+// ── Item Image Preview Modal ─────────────────────────────────────
+
+let _itemImagePreviewRow = null;
+
+function openItemImagePreviewModal(row) {
+    _itemImagePreviewRow = row;
+    const img = elements.itemImagePreviewModalImg;
+    if (img) img.src = row.dataset.itemImageDataUrl || "";
+    if (elements.itemImagePreviewModal) elements.itemImagePreviewModal.hidden = false;
+}
+
+function closeItemImagePreviewModal() {
+    if (elements.itemImagePreviewModal) elements.itemImagePreviewModal.hidden = true;
+    _itemImagePreviewRow = null;
 }
 
 // ─── Drag-to-reorder ────────────────────────────────────────────

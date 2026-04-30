@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SantoSync</title>
-    <link rel="stylesheet" href="css/styles.css?v=36">
+    <link rel="stylesheet" href="css/styles.css?v=37">
 </head>
 <body>
     <div class="brand-splash" id="brandSplash" aria-hidden="true" hidden>
@@ -825,6 +825,18 @@
                 </section>
             </div>
         </section>
+
+                <div id="itemImagePreviewModal" class="item-img-preview-modal" hidden role="dialog" aria-modal="true" aria-label="Item image">
+                    <div class="item-img-preview-backdrop"></div>
+                    <div class="item-img-preview-content">
+                        <img id="itemImagePreviewModalImg" class="item-img-preview-modal-img" alt="Item image preview">
+                        <div class="item-img-preview-actions">
+                            <button class="btn btn-secondary" id="itemImagePreviewReplaceBtn" type="button">Replace Image</button>
+                            <button class="btn btn-danger" id="itemImagePreviewRemoveBtn" type="button">Remove</button>
+                            <button class="btn btn-secondary" id="itemImagePreviewCloseBtn" type="button">Close</button>
+                        </div>
+                    </div>
+                </div>
 
                 <footer class="app-footer">
                     <div class="app-footer-copy">
@@ -2499,6 +2511,6 @@
     <script src="js/vendor/html2pdf.bundle.min.js"></script>
     <script src="js/brand.js?v=2"></script>
     <script src="js/statement-of-account.js?v=2"></script>
-    <script src="js/app.js?v=27"></script>
+    <script src="js/app.js?v=28"></script>
 </body>
 </html>

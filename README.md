@@ -2,7 +2,21 @@
 
 SantoSync is a focused document and operations workspace built for trade teams, freelancers, and logistics operators who need to generate, track, and deliver professional quotes and invoices without the overhead of enterprise billing software.
 
-Version: `1.14.0` — Last updated: April 29, 2026
+Version: `1.15.0` — Last updated: April 29, 2026
+
+## Version 1.15.0 Summary
+
+This release adds inline item image support to line items in Offer, Quote, and Invoice editors without expanding the table or adding new columns.
+
+**Inline image cell:** A compact 22px camera icon now appears to the left of each item description. When an image is set, it displays as a 22×22px thumbnail. Clicking the icon with no image opens a file picker; clicking a thumbnail opens a preview modal with Replace and Remove options.
+
+**Hover preview:** On pointer/hover-capable devices, hovering over an item thumbnail shows a 120×160px floating preview above the row with a subtle shadow and fade-in animation (120ms). Mobile devices rely on tap behavior only — no hover preview fires.
+
+**PDF export:** The printed document table already includes an image column when any line item has an image (existing behavior preserved). Excel exports remain image-free.
+
+**Auto-populate from catalog:** Items added from the catalog automatically carry their catalog image into the line item (existing behavior preserved).
+
+**No layout changes:** No new table columns, no row height increase, no impact on totals, pricing, or drag-to-reorder.
 
 ## Version 1.14.0 Summary
 
