@@ -231,10 +231,18 @@
                                 <span class="kpi-meta-sep" aria-hidden="true">·</span>
                                 <span><strong id="quoteCountStat">0</strong> <span class="kpi-meta-label" id="kpiQuotesLabel">Quotes</span></span>
                             </div>
+                            <div class="dash-sparkline-wrap" id="dashSparklineWrap" hidden>
+                                <div class="dash-trend-row">
+                                    <span class="dash-trend-badge" id="dashTrendBadge"></span>
+                                    <span class="dash-trend-period">vs prev 15d</span>
+                                </div>
+                                <div id="dashSparklineSvg" aria-hidden="true"></div>
+                            </div>
                         </div>
-                        <div class="overview-outstanding-wrap" id="overviewOutstandingWrap" hidden>
+                        <div class="overview-outstanding-wrap" id="overviewOutstandingWrap" hidden data-tooltip="Total unpaid or partially paid invoice balances">
                             <span class="outstanding-label" id="outstandingBalanceLabel">Outstanding Balance</span>
                             <strong class="outstanding-value" id="outstandingBalanceStat">$0.00</strong>
+                            <div class="dash-ob-bar" id="dashObBar" hidden></div>
                         </div>
                     </div>
 
@@ -284,6 +292,17 @@
                                 </article>
                             </div>
                         </div>
+                    </section>
+
+                    <!-- Document activity chart -->
+                    <section class="dash-charts-section" id="dashChartsSection" hidden>
+                        <article class="overview-card dash-activity-card">
+                            <div class="dash-activity-head">
+                                <span class="dash-activity-title">Document Activity</span>
+                                <span class="dash-activity-period">Last 8 weeks</span>
+                            </div>
+                            <div id="dashActivityChartWrap" aria-hidden="true"></div>
+                        </article>
                     </section>
 
                     <!-- Recent documents + workspace summary -->
@@ -826,17 +845,6 @@
             </div>
         </section>
 
-                <div id="itemImagePreviewModal" class="item-img-preview-modal" hidden role="dialog" aria-modal="true" aria-label="Item image">
-                    <div class="item-img-preview-backdrop"></div>
-                    <div class="item-img-preview-content">
-                        <img id="itemImagePreviewModalImg" class="item-img-preview-modal-img" alt="Item image preview">
-                        <div class="item-img-preview-actions">
-                            <button class="btn btn-secondary" id="itemImagePreviewReplaceBtn" type="button">Replace Image</button>
-                            <button class="btn btn-danger" id="itemImagePreviewRemoveBtn" type="button">Remove</button>
-                            <button class="btn btn-secondary" id="itemImagePreviewCloseBtn" type="button">Close</button>
-                        </div>
-                    </div>
-                </div>
 
                 <footer class="app-footer">
                     <div class="app-footer-copy">
@@ -2507,10 +2515,31 @@
         </div>
     </div>
 
+    <!-- Image preview modal — rendered at body level so it always stacks above editor modals -->
+    <div id="itemImagePreviewModal" class="item-img-preview-modal" hidden role="dialog" aria-modal="true" aria-label="Item image preview">
+        <div class="item-img-preview-backdrop"></div>
+        <div class="item-img-preview-content">
+            <img id="itemImagePreviewModalImg" class="item-img-preview-modal-img" alt="Item image preview">
+            <div class="item-img-preview-actions">
+                <button class="img-preview-btn" id="itemImagePreviewReplaceBtn" type="button" data-tooltip="Replace image" aria-label="Replace image">
+                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M17 10a7 7 0 1 1-7-7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M17 4v4h-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>Replace</span>
+                </button>
+                <button class="img-preview-btn is-danger" id="itemImagePreviewRemoveBtn" type="button" data-tooltip="Remove image" aria-label="Remove image">
+                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 6h12M7 6V4h6v2M16 6l-1 10H5L4 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>Remove</span>
+                </button>
+                <button class="img-preview-close-btn" id="itemImagePreviewCloseBtn" type="button" data-tooltip="Close" aria-label="Close">
+                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/vendor/jszip.min.js"></script>
     <script src="js/vendor/html2pdf.bundle.min.js"></script>
     <script src="js/brand.js?v=2"></script>
     <script src="js/statement-of-account.js?v=2"></script>
-    <script src="js/app.js?v=29"></script>
+    <script src="js/app.js?v=30"></script>
 </body>
 </html>

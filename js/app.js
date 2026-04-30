@@ -2434,6 +2434,7 @@ function cacheElements() {
 }
 
 function bindEvents() {
+    initTooltipSystem();
     elements.accessForm.addEventListener("submit", handleAccessSubmit);
     elements.overviewNewBtn?.addEventListener("click", toggleOverviewNewMenu);
     elements.overviewNewQuoteBtn?.addEventListener("click", () => {
@@ -7177,7 +7178,7 @@ function getProcurementRowMarkup(row = {}) {
                 <div class="item-desc-inner">
                     <div class="item-img-cell">
                         <input type="file" class="item-image-input" accept="image/jpeg,image/png,image/webp" hidden>
-                        <button type="button" class="item-img-btn${data.itemImageDataUrl ? " has-img" : ""}" aria-label="${data.itemImageDataUrl ? "View item image" : "Add item image"}" title="${data.itemImageDataUrl ? "Click to view or replace image" : "Add item image"}">
+                        <button type="button" class="item-img-btn${data.itemImageDataUrl ? " has-img" : ""}" aria-label="${data.itemImageDataUrl ? "View item image" : "Add item image"}" data-tooltip="${data.itemImageDataUrl ? "Click to view or replace image" : "Add item image"}">
                             <span class="item-img-placeholder" aria-hidden="true">
                                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
                                     <rect x="1" y="3.5" width="14" height="9" rx="1.5"/>
@@ -14446,7 +14447,7 @@ function addItem() {
             <div class="item-desc-inner">
                 <div class="item-img-cell">
                     <input type="file" id="itemImageInput-${itemId}" class="item-image-input" accept="image/jpeg,image/png,image/webp" hidden>
-                    <button type="button" class="item-img-btn" aria-label="Add item image" title="Add item image">
+                    <button type="button" class="item-img-btn" aria-label="Add item image" data-tooltip="Add item image">
                         <span class="item-img-placeholder" aria-hidden="true">
                             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="1" y="3.5" width="14" height="9" rx="1.5"/>
@@ -15990,6 +15991,260 @@ function updateOverviewStats() {
         }
     }
     syncMobileOverviewState();
+    renderDashboardCharts();
+}
+
+// ── Dashboard Charts ──────────────────────────────────────────────────
+
+function renderDashboardCharts() {
+    renderPipelineSparkline();
+    renderOutstandingBreakdown();
+    renderDocumentActivityChart();
+}
+
+function renderPipelineSparkline() {
+    const wrap = document.getElementById("dashSparklineWrap");
+    const svgContainer = document.getElementById("dashSparklineSvg");
+    const trendBadge = document.getElementById("dashTrendBadge");
+    if (!wrap || !svgContainer || !trendBadge) return;
+
+    const DAY = 86400000;
+    const DAYS = 30;
+    const now = Date.now();
+    const todayStart = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); })();
+
+    const buckets = Array.from({ length: DAYS }, (_, i) => {
+        const start = todayStart - (DAYS - 1 - i) * DAY;
+        return { start, end: start + DAY - 1, total: 0 };
+    });
+
+    state.documents
+        .filter(doc => doc.type === "quote")
+        .forEach(doc => {
+            const ts = getDocumentCreatedAt(doc);
+            const idx = buckets.findIndex(b => ts >= b.start && ts <= b.end);
+            if (idx >= 0) buckets[idx].total += Number(doc.total || 0);
+        });
+
+    const values = buckets.map(b => b.total);
+    const hasData = values.some(v => v > 0);
+
+    if (!hasData) { wrap.hidden = true; return; }
+    wrap.hidden = false;
+
+    const recent = values.slice(15).reduce((s, v) => s + v, 0);
+    const prev = values.slice(0, 15).reduce((s, v) => s + v, 0);
+
+    if (prev > 0) {
+        const pct = ((recent - prev) / prev) * 100;
+        trendBadge.textContent = `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`;
+        trendBadge.className = `dash-trend-badge ${pct >= 0 ? "is-up" : "is-down"}`;
+    } else if (recent > 0) {
+        trendBadge.textContent = "New";
+        trendBadge.className = "dash-trend-badge is-up";
+    } else {
+        trendBadge.textContent = "—";
+        trendBadge.className = "dash-trend-badge";
+    }
+
+    const W = 240, H = 36;
+    const max = Math.max(...values, 1);
+    const pts = values.map((v, i) => {
+        const x = (i / (values.length - 1)) * W;
+        const y = H - (v / max) * (H - 4) - 2;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(" ");
+    const areaPts = `0,${H} ${pts} ${W},${H}`;
+
+    svgContainer.innerHTML = `<svg class="dash-sparkline" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+            <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#4263eb" stop-opacity="0.2"/>
+                <stop offset="100%" stop-color="#4263eb" stop-opacity="0"/>
+            </linearGradient>
+        </defs>
+        <polygon points="${areaPts}" fill="url(#sparkGrad)"/>
+        <polyline points="${pts}" fill="none" stroke="#4263eb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
+}
+
+function renderOutstandingBreakdown() {
+    const bar = document.getElementById("dashObBar");
+    if (!bar) return;
+
+    const today = new Date();
+    const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const sevenDaysOut = new Date(todayMidnight);
+    sevenDaysOut.setDate(sevenDaysOut.getDate() + 7);
+
+    let overdue = 0, dueSoon = 0, other = 0;
+
+    state.documents
+        .filter(doc => doc.type === "invoice" && doc.status !== "draft")
+        .forEach(doc => {
+            const balance = Math.max(0, getInvoiceOutstandingBalance(doc));
+            if (balance <= 0) return;
+            const dueDate = resolveInvoiceDueDate(doc);
+            if (!dueDate) { other += balance; return; }
+            const dueMidnight = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+            if (dueMidnight < todayMidnight) overdue += balance;
+            else if (dueMidnight <= sevenDaysOut) dueSoon += balance;
+            else other += balance;
+        });
+
+    const total = overdue + dueSoon + other;
+    if (total <= 0) { bar.hidden = true; return; }
+    bar.hidden = false;
+
+    const fmt = (v) => escapeHtml(formatCurrency(v));
+    const pct = (v) => ((v / total) * 100).toFixed(1);
+
+    const overdueHtml = overdue > 0
+        ? `<div class="dash-ob-seg is-overdue" style="width:${pct(overdue)}%" title="Overdue: ${fmt(overdue)}"></div>` : "";
+    const soonHtml = dueSoon > 0
+        ? `<div class="dash-ob-seg is-soon" style="width:${pct(dueSoon)}%" title="Due soon: ${fmt(dueSoon)}"></div>` : "";
+    const otherHtml = other > 0
+        ? `<div class="dash-ob-seg is-other" style="width:${pct(other)}%" title="Current: ${fmt(other)}"></div>` : "";
+
+    const legendItems = [
+        overdue > 0 ? `<span class="dash-ob-dot is-overdue"></span><span>Overdue</span>` : "",
+        dueSoon > 0 ? `<span class="dash-ob-dot is-soon"></span><span>Due Soon</span>` : "",
+        other > 0 ? `<span class="dash-ob-dot is-other"></span><span>Current</span>` : ""
+    ].filter(Boolean).join("");
+
+    bar.innerHTML = `
+        <div class="dash-ob-track">${overdueHtml}${soonHtml}${otherHtml}</div>
+        <div class="dash-ob-legend">${legendItems}</div>
+    `;
+}
+
+function renderDocumentActivityChart() {
+    const section = document.getElementById("dashChartsSection");
+    const wrap = document.getElementById("dashActivityChartWrap");
+    if (!section || !wrap) return;
+
+    const WEEKS = 8;
+    const WEEK_MS = 7 * 86400000;
+    const now = Date.now();
+    const todayEnd = (() => { const d = new Date(); d.setHours(23, 59, 59, 999); return d.getTime(); })();
+
+    const buckets = Array.from({ length: WEEKS }, (_, i) => {
+        const end = todayEnd - i * WEEK_MS;
+        const start = end - WEEK_MS + 1;
+        const d = new Date(end);
+        const label = i === 0 ? "This wk" : `${d.getMonth() + 1}/${d.getDate()}`;
+        return { start, end, count: 0, label };
+    }).reverse();
+
+    state.documents.forEach(doc => {
+        const ts = getDocumentCreatedAt(doc);
+        const bucket = buckets.find(b => ts >= b.start && ts <= b.end);
+        if (bucket) bucket.count++;
+    });
+
+    const hasActivity = buckets.some(b => b.count > 0);
+    if (!hasActivity) { section.hidden = true; return; }
+    section.hidden = false;
+
+    const maxCount = Math.max(...buckets.map(b => b.count), 1);
+    const W = 560, H = 72;
+    const barW = 44;
+    const totalBarSpace = barW * WEEKS;
+    const gapSpace = W - totalBarSpace;
+    const gap = gapSpace / (WEEKS + 1);
+
+    const bars = buckets.map((b, i) => {
+        const bH = Math.max(4, (b.count / maxCount) * (H - 22));
+        const x = gap + i * (barW + gap);
+        const y = H - 18 - bH;
+        const isCurrent = i === WEEKS - 1;
+        const fill = isCurrent ? "#4263eb" : "rgba(66,99,235,0.22)";
+        const countLabel = b.count > 0
+            ? `<text x="${(x + barW / 2).toFixed(1)}" y="${(y - 3).toFixed(1)}" text-anchor="middle" class="dash-bar-count">${b.count}</text>`
+            : "";
+        return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${bH.toFixed(1)}" rx="5" fill="${fill}"/>
+            ${countLabel}
+            <text x="${(x + barW / 2).toFixed(1)}" y="${H}" text-anchor="middle" class="dash-bar-label">${escapeHtml(b.label)}</text>`;
+    }).join("");
+
+    wrap.innerHTML = `<svg class="dash-activity-svg" viewBox="0 0 ${W} ${H}" aria-hidden="true">
+        <style>.dash-bar-label{font-size:9px;fill:#94a3b8;font-family:inherit}.dash-bar-count{font-size:9px;fill:#64748b;font-family:inherit;font-weight:600}</style>
+        ${bars}
+    </svg>`;
+}
+
+// ── Tooltip System ────────────────────────────────────────────────────
+
+let _tooltipEl = null;
+let _tooltipHideTimer = null;
+
+function initTooltipSystem() {
+    _tooltipEl = document.createElement("div");
+    _tooltipEl.className = "app-tooltip";
+    _tooltipEl.setAttribute("role", "tooltip");
+    _tooltipEl.hidden = true;
+    document.body.appendChild(_tooltipEl);
+
+    document.addEventListener("mouseover", _onTipMouseover);
+    document.addEventListener("mouseout", _onTipMouseout);
+    document.addEventListener("focusin", _onTipFocusin);
+    document.addEventListener("focusout", _onTipFocusout);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") _hideTooltip(); });
+}
+
+function _onTipMouseover(e) {
+    const el = e.target.closest("[data-tooltip]");
+    if (el) _showTooltip(el);
+}
+
+function _onTipMouseout(e) {
+    const el = e.target.closest("[data-tooltip]");
+    if (el && !el.contains(e.relatedTarget)) _hideTooltip();
+}
+
+function _onTipFocusin(e) {
+    const el = e.target.closest("[data-tooltip]");
+    if (el) _showTooltip(el);
+}
+
+function _onTipFocusout(e) {
+    const el = e.target.closest("[data-tooltip]");
+    if (el) _hideTooltip();
+}
+
+function _showTooltip(anchor) {
+    if (!_tooltipEl) return;
+    const text = anchor.dataset.tooltip;
+    if (!text) return;
+    clearTimeout(_tooltipHideTimer);
+    _tooltipEl.textContent = text;
+    _tooltipEl.hidden = false;
+    requestAnimationFrame(() => {
+        _positionTooltip(anchor);
+        requestAnimationFrame(() => _tooltipEl?.classList.add("is-visible"));
+    });
+}
+
+function _hideTooltip() {
+    if (!_tooltipEl) return;
+    _tooltipEl.classList.remove("is-visible");
+    clearTimeout(_tooltipHideTimer);
+    _tooltipHideTimer = setTimeout(() => { if (_tooltipEl) _tooltipEl.hidden = true; }, 120);
+}
+
+function _positionTooltip(anchor) {
+    if (!_tooltipEl) return;
+    const r = anchor.getBoundingClientRect();
+    const tw = _tooltipEl.offsetWidth || 100;
+    const th = _tooltipEl.offsetHeight || 24;
+    const vw = window.innerWidth;
+    let top = r.top - th - 7;
+    if (top < 6) top = r.bottom + 6;
+    let left = r.left + r.width / 2 - tw / 2;
+    if (left < 6) left = 6;
+    if (left + tw > vw - 6) left = vw - tw - 6;
+    _tooltipEl.style.top = `${top + window.scrollY}px`;
+    _tooltipEl.style.left = `${left}px`;
 }
 
 function toggleValueView(isManual = false) {
