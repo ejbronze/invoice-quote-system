@@ -16303,8 +16303,11 @@ function renderDocumentMixDonut() {
                 <span class="dash-mix-extra-icon" aria-hidden="true">
                     <svg viewBox="0 0 18 18" fill="none"><path d="M9 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 16a5.5 5.5 0 0 1 11 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 </span>
-                <strong class="dash-mix-extra-val">${clients}</strong>
-                <span class="dash-mix-extra-label">Client${clients !== 1 ? "s" : ""}</span>
+                <span class="dash-mix-extra-copy">
+                    <strong class="dash-mix-extra-val">${clients}</strong>
+                    <span class="dash-mix-extra-label">Client${clients !== 1 ? "s" : ""}</span>
+                </span>
+                <span class="dash-mix-extra-arrow" aria-hidden="true">&rsaquo;</span>
             </div>`);
         }
         if (statements > 0) {
@@ -16312,8 +16315,11 @@ function renderDocumentMixDonut() {
                 <span class="dash-mix-extra-icon" aria-hidden="true">
                     <svg viewBox="0 0 18 18" fill="none"><path d="M3.5 5h11M3.5 9h11M3.5 13h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 </span>
-                <strong class="dash-mix-extra-val">${statements}</strong>
-                <span class="dash-mix-extra-label">Statement${statements !== 1 ? "s" : ""}</span>
+                <span class="dash-mix-extra-copy">
+                    <strong class="dash-mix-extra-val">${statements}</strong>
+                    <span class="dash-mix-extra-label">Statement${statements !== 1 ? "s" : ""}</span>
+                </span>
+                <span class="dash-mix-extra-arrow" aria-hidden="true">&rsaquo;</span>
             </div>`);
         }
         footer.innerHTML = chips.join("");
@@ -16342,7 +16348,7 @@ function _donutArcPath(cx, cy, Ri, Ro, startDeg, endDeg) {
 
 function _buildDonutSVG({ quotes, invoices, offers }) {
     const total = quotes + invoices + offers;
-    const SIZE = 106, cx = 53, cy = 53, R = 36, STROKE = 12;
+    const SIZE = 144, cx = 72, cy = 72, R = 48, STROKE = 16;
     const Ri = R - STROKE / 2, Ro = R + STROKE / 2;
     const C = 2 * Math.PI * R;
     const HALF_GAP_DEG = (3 / C) * 180;
