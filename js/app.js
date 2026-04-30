@@ -2785,6 +2785,24 @@ function bindEvents() {
         }
         closeMobileDrawer();
     });
+    document.getElementById("dashCatalogStrip")?.addEventListener("click", event => {
+        const trigger = event.target.closest("[data-dash-catalog-id]");
+        if (!trigger) return;
+        const item = getCatalogEntries().find(entry => String(entry.id) === String(trigger.dataset.dashCatalogId));
+        if (item) openCatalogDetailsModal(item);
+    });
+    document.getElementById("dashNeedsList")?.addEventListener("click", event => {
+        const trigger = event.target.closest("[data-dash-needs-action]");
+        if (!trigger) return;
+        const action = trigger.dataset.dashNeedsAction;
+        if (action === "invoice") {
+            openDocumentsPageWithFilter("invoice");
+        } else if (action === "notes") {
+            setActivePage("notes");
+        } else if (action === "procurement") {
+            openDocumentsPageWithFilter("procurement");
+        }
+    });
     document.addEventListener("click", handleImageUploadTriggerClick);
     elements.clearLocalTestDataBtn.addEventListener("click", clearLocalTestData);
     elements.accountAdminSaveBtn?.addEventListener("click", handleAccountAdminSaveUser);
@@ -16298,38 +16316,180 @@ function renderDocumentMixDonut() {
 
     if (footer) {
         const chips = [];
-        if (clients > 0) {
-            chips.push(`<div class="dash-mix-extra dash-mix-extra-clients" role="button" tabindex="0" title="View clients">
+        chips.push(`<div class="dash-mix-extra dash-mix-extra-clients" role="button" tabindex="0" title="View clients">
                 <span class="dash-mix-extra-icon" aria-hidden="true">
                     <svg viewBox="0 0 18 18" fill="none"><path d="M9 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 16a5.5 5.5 0 0 1 11 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 </span>
                 <span class="dash-mix-extra-copy">
+                    <span class="dash-mix-extra-label">Clients</span>
                     <strong class="dash-mix-extra-val">${clients}</strong>
-                    <span class="dash-mix-extra-label">Client${clients !== 1 ? "s" : ""}</span>
                 </span>
-                <span class="dash-mix-extra-arrow" aria-hidden="true">&rsaquo;</span>
+                <span class="dash-mix-extra-arrow" aria-hidden="true">View &rarr;</span>
             </div>`);
-        }
-        if (statements > 0) {
-            chips.push(`<div class="dash-mix-extra dash-mix-extra-statements" role="button" tabindex="0" title="View statements">
+        chips.push(`<div class="dash-mix-extra dash-mix-extra-statements" role="button" tabindex="0" title="View statements">
                 <span class="dash-mix-extra-icon" aria-hidden="true">
                     <svg viewBox="0 0 18 18" fill="none"><path d="M3.5 5h11M3.5 9h11M3.5 13h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                 </span>
                 <span class="dash-mix-extra-copy">
+                    <span class="dash-mix-extra-label">Statements</span>
                     <strong class="dash-mix-extra-val">${statements}</strong>
-                    <span class="dash-mix-extra-label">Statement${statements !== 1 ? "s" : ""}</span>
                 </span>
-                <span class="dash-mix-extra-arrow" aria-hidden="true">&rsaquo;</span>
+                <span class="dash-mix-extra-arrow" aria-hidden="true">View &rarr;</span>
             </div>`);
-        }
         footer.innerHTML = chips.join("");
-        footer.hidden = chips.length === 0;
+        footer.hidden = false;
 
         footer.querySelector(".dash-mix-extra-clients")?.addEventListener("click", () => openKpiDetailModal("clients"));
         footer.querySelector(".dash-mix-extra-clients")?.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openKpiDetailModal("clients"); } });
         footer.querySelector(".dash-mix-extra-statements")?.addEventListener("click", () => openKpiDetailModal("statements"));
         footer.querySelector(".dash-mix-extra-statements")?.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openKpiDetailModal("statements"); } });
     }
+
+    renderDashboardRightPanelSections();
+}
+
+function renderDashboardRightPanelSections() {
+    renderDashboardCatalogStrip();
+    renderDashboardNeedsList();
+}
+
+function getCatalogUpdatedTime(item) {
+    return Date.parse(item?.updatedAt || item?.dateUpdated || item?.createdAt || "") || 0;
+}
+
+function renderDashboardCatalogStrip() {
+    const panel = document.getElementById("dashCatalogPanel");
+    const strip = document.getElementById("dashCatalogStrip");
+    if (!panel || !strip) return;
+
+    const items = getCatalogEntries()
+        .slice()
+        .sort((left, right) => getCatalogUpdatedTime(right) - getCatalogUpdatedTime(left))
+        .slice(0, 10);
+
+    panel.hidden = items.length === 0;
+    if (!items.length) {
+        strip.innerHTML = "";
+        return;
+    }
+
+    strip.innerHTML = items.map(item => {
+        const imageUrl = item.itemImageDataUrl || item.imageDataUrl || "";
+        const price = Number(item.sellPrice ?? item.price) || 0;
+        const meta = [
+            item.clientItemCode || item.referenceId || "",
+            price > 0 ? formatCurrency(price) : ""
+        ].filter(Boolean).join(" · ");
+        const tooltip = meta ? `${item.name} · ${meta}` : item.name;
+        const fallbackIcon = ICONS.library || `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h5"/></svg>`;
+        return `<button class="dash-catalog-thumb" type="button" data-dash-catalog-id="${escapeHtml(String(item.id))}" data-tooltip="${escapeHtml(tooltip)}" aria-label="${escapeHtml(`Open ${item.name}`)}">
+            ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="">` : fallbackIcon}
+        </button>`;
+    }).join("");
+}
+
+function getDashboardInvoiceBuckets() {
+    const today = new Date();
+    const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const candidateInvoices = state.documents.filter(doc => doc.type === "invoice" && doc.status !== "draft");
+    const overdue = candidateInvoices.filter(isInvoiceOverdue);
+    const dueSoon = candidateInvoices.filter(inv => {
+        if (isInvoiceOverdue(inv) || getInvoiceOutstandingBalance(inv) <= 0) return false;
+        const dueDate = resolveInvoiceDueDate(inv);
+        if (!dueDate) return false;
+        const dueMidnight = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+        const daysLeft = Math.ceil((dueMidnight.getTime() - todayMidnight.getTime()) / 86400000);
+        return daysLeft >= 0 && daysLeft <= 7;
+    });
+    const pendingOrPartial = candidateInvoices.filter(inv => {
+        const status = getInvoiceDerivedPaymentStatus(inv);
+        return (status === "pending" || status === "partial") && getInvoiceOutstandingBalance(inv) > 0;
+    });
+
+    return { overdue, dueSoon, pendingOrPartial };
+}
+
+function getDashboardOffersReadyToQuote() {
+    return state.documents.filter(doc =>
+        doc.type === "procurement" &&
+        doc.status === "logged" &&
+        Array.isArray(doc.procurementItems) &&
+        doc.procurementItems.length > 0
+    );
+}
+
+function renderDashboardNeedsList() {
+    const list = document.getElementById("dashNeedsList");
+    if (!list) return;
+
+    const { overdue, dueSoon, pendingOrPartial } = getDashboardInvoiceBuckets();
+    const noteRecords = getAllNoteRecords();
+    const offersReady = getDashboardOffersReadyToQuote();
+    const rows = [];
+
+    const overdueTotal = overdue.reduce((sum, doc) => sum + getInvoiceOutstandingBalance(doc), 0);
+    if (overdue.length > 0) {
+        rows.push({
+            tone: "red",
+            action: "invoice",
+            label: "Past Due Invoices",
+            value: `${overdue.length} · ${formatCurrency(overdueTotal)}`,
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8v5"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>`
+        });
+    }
+
+    const dueSoonTotal = dueSoon.reduce((sum, doc) => sum + getInvoiceOutstandingBalance(doc), 0);
+    if (dueSoon.length > 0) {
+        rows.push({
+            tone: "amber",
+            action: "invoice",
+            label: "Coming Due",
+            value: `${dueSoon.length} · ${formatCurrency(dueSoonTotal)}`,
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`
+        });
+    }
+
+    if (pendingOrPartial.length > 0) {
+        rows.push({
+            tone: "blue",
+            action: "invoice",
+            label: "Pending / Partially Paid",
+            value: String(pendingOrPartial.length),
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h7"/><path d="M18 14v6M15 17h6"/></svg>`
+        });
+    }
+
+    if (noteRecords.length > 0) {
+        rows.push({
+            tone: "blue",
+            action: "notes",
+            label: "Recent Notes",
+            value: String(noteRecords.length),
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h5"/></svg>`
+        });
+    }
+
+    if (offersReady.length > 0) {
+        rows.push({
+            tone: "amber",
+            action: "procurement",
+            label: "Offers Ready to Quote",
+            value: String(offersReady.length),
+            icon: ICONS.procurement
+        });
+    }
+
+    list.innerHTML = rows.length
+        ? rows.map(row => `<button class="dash-needs-row is-${escapeHtml(row.tone)}" type="button" data-dash-needs-action="${escapeHtml(row.action)}">
+            <span class="dash-needs-icon" aria-hidden="true">${row.icon}</span>
+            <span class="dash-needs-label">${escapeHtml(row.label)}</span>
+            <strong class="dash-needs-value">${escapeHtml(row.value)}</strong>
+            <span class="dash-needs-arrow" aria-hidden="true">&rarr;</span>
+        </button>`).join("")
+        : `<div class="dash-needs-empty">
+            <span class="dash-needs-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg></span>
+            <span>All clear — nothing needs attention right now.</span>
+        </div>`;
 }
 
 function _polarToCartesian(cx, cy, r, angleDeg) {
@@ -16348,7 +16508,7 @@ function _donutArcPath(cx, cy, Ri, Ro, startDeg, endDeg) {
 
 function _buildDonutSVG({ quotes, invoices, offers }) {
     const total = quotes + invoices + offers;
-    const SIZE = 144, cx = 72, cy = 72, R = 48, STROKE = 16;
+    const SIZE = 132, cx = 66, cy = 66, R = 44, STROKE = 14;
     const Ri = R - STROKE / 2, Ro = R + STROKE / 2;
     const C = 2 * Math.PI * R;
     const HALF_GAP_DEG = (3 / C) * 180;
@@ -16356,8 +16516,8 @@ function _buildDonutSVG({ quotes, invoices, offers }) {
     if (total === 0) {
         return `<svg class="dash-donut-svg" viewBox="0 0 ${SIZE} ${SIZE}" aria-hidden="true">
             <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="rgba(100,116,139,0.1)" stroke-width="${STROKE}"/>
-            <text x="${cx}" y="${cy + 1}" text-anchor="middle" dominant-baseline="middle" class="donut-count">0</text>
-            <text x="${cx}" y="${cy + 14}" text-anchor="middle" class="donut-sub">docs</text>
+            <text x="${cx}" y="${cy - 2}" text-anchor="middle" dominant-baseline="middle" class="donut-count">0</text>
+            <text x="${cx}" y="${cy + 13}" text-anchor="middle" class="donut-sub">Docs</text>
         </svg>`;
     }
 
@@ -16381,8 +16541,8 @@ function _buildDonutSVG({ quotes, invoices, offers }) {
     return `<svg class="dash-donut-svg" viewBox="0 0 ${SIZE} ${SIZE}">
         <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="rgba(100,116,139,0.08)" stroke-width="${STROKE}"/>
         ${paths}
-        <text x="${cx}" y="${cy + 1}" text-anchor="middle" dominant-baseline="middle" class="donut-count" style="pointer-events:none;">${total}</text>
-        <text x="${cx}" y="${cy + 13}" text-anchor="middle" class="donut-sub" style="pointer-events:none;">docs</text>
+        <text x="${cx}" y="${cy - 2}" text-anchor="middle" dominant-baseline="middle" class="donut-count" style="pointer-events:none;">${total}</text>
+        <text x="${cx}" y="${cy + 13}" text-anchor="middle" class="donut-sub" style="pointer-events:none;">Docs</text>
     </svg>`;
 }
 
@@ -17414,7 +17574,7 @@ function renderDashboardAttention() {
         .sort((a, b) => a.daysLeft - b.daysLeft);
 
     const hasContent = overdue.length > 0 || dueSoon.length > 0;
-    attentionSection.hidden = !hasContent;
+    attentionSection.hidden = true;
     if (!hasContent) return;
 
     const MAX_SHOWN = 5;

@@ -310,14 +310,27 @@
                             </div>
                         </article>
                         <article class="overview-card dash-mix-card">
-                            <div class="dash-mix-head">
-                                <span class="dash-mix-title">Document Mix</span>
-                            </div>
-                            <div class="dash-mix-body">
-                                <div id="dashDocMixChart" aria-hidden="true"></div>
-                                <div class="dash-mix-legend" id="dashDocMixLegend"></div>
-                            </div>
-                            <div class="dash-mix-footer" id="dashDocMixFooter" hidden></div>
+                            <section class="dash-mix-section" aria-labelledby="dashMixTitle">
+                                <div class="dash-mix-head">
+                                    <span class="dash-mix-title" id="dashMixTitle">Document Mix</span>
+                                </div>
+                                <div class="dash-mix-body">
+                                    <div id="dashDocMixChart" aria-hidden="true"></div>
+                                    <div class="dash-mix-legend" id="dashDocMixLegend"></div>
+                                </div>
+                            </section>
+                            <section class="dash-panel-section dash-quick-section" aria-labelledby="dashQuickTitle">
+                                <span class="dash-panel-section-title" id="dashQuickTitle">Quick Access</span>
+                                <div class="dash-mix-footer" id="dashDocMixFooter" hidden></div>
+                            </section>
+                            <section class="dash-panel-section dash-catalog-panel" id="dashCatalogPanel" aria-labelledby="dashCatalogTitle" hidden>
+                                <span class="dash-panel-section-title" id="dashCatalogTitle">Recently Updated Catalog</span>
+                                <div class="dash-catalog-strip" id="dashCatalogStrip"></div>
+                            </section>
+                            <section class="dash-panel-section dash-needs-panel" aria-labelledby="dashNeedsTitle">
+                                <span class="dash-panel-section-title" id="dashNeedsTitle">Needs Attention</span>
+                                <div class="dash-needs-list" id="dashNeedsList"></div>
+                            </section>
                             <!-- Legacy grid: hidden, JS still renders into it for other code paths -->
                             <div id="overviewSummaryGrid" hidden aria-hidden="true"></div>
                         </article>
