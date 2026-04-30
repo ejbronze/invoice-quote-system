@@ -4579,6 +4579,19 @@ body::after {
     color: #0d5c41;
 }
 
+.statement-action-btn.is-markpaid.is-settled {
+    background: rgba(29, 191, 140, 0.18);
+    border-color: rgba(29, 191, 140, 0.35);
+    color: #0d5c41;
+    cursor: default;
+    pointer-events: none;
+}
+
+.statement-action-btn.is-markpaid.is-settled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
 /* Payment history accordion */
 .phist-list {
     display: flex;

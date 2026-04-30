@@ -5584,10 +5584,10 @@ function renderStatementsPage() {
                 </div>
             </div>
             <div class="client-row-actions statement-export-actions-bar">
-                ${!isPaid ? `<button class="statement-action-btn is-markpaid" type="button" data-statement-action="mark-paid" data-statement-id="${escapeHtml(statement.id)}" aria-label="${escapeHtml(t("statement_mark_paid_all"))}" title="${escapeHtml(t("statement_mark_paid_all"))}">
+                <button class="statement-action-btn is-markpaid${isPaid ? " is-settled" : ""}" type="button" ${isPaid ? "disabled" : `data-statement-action="mark-paid" data-statement-id="${escapeHtml(statement.id)}"`} aria-label="${isPaid ? "Fully Paid" : escapeHtml(t("statement_mark_paid_all"))}" title="${isPaid ? "Fully Paid" : escapeHtml(t("statement_mark_paid_all"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span class="visually-hidden">${escapeHtml(t("statement_mark_paid_all"))}</span>
-                </button>` : ""}
+                    <span class="visually-hidden">${isPaid ? "Fully Paid" : escapeHtml(t("statement_mark_paid_all"))}</span>
+                </button>
                 <button class="statement-action-btn is-open" type="button" data-statement-action="open" data-statement-id="${escapeHtml(statement.id)}" aria-label="${escapeHtml(t("open_statement"))}" title="${escapeHtml(t("open_statement"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>
                     <span class="visually-hidden">${escapeHtml(t("open_statement"))}</span>
