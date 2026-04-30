@@ -451,9 +451,9 @@
                             <p class="dashboard-subtitle" id="catalogCopy">Maintain reusable sourced items with supplier, packaging, cost, sell price, and lead-time details.</p>
                         </div>
                         <div class="page-header-actions">
-                            <button class="btn btn-secondary" id="toggleCatalogSelectionModeBtn" type="button">Select Items</button>
-                            <button class="btn btn-secondary" id="findCatalogDuplicatesBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/><path d="M8 11h6M11 8v6"/></svg>Find Duplicates</button>
-                            <button class="btn btn-primary" id="openCatalogItemModalBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add Catalog Item</button>
+                            <button class="btn btn-secondary catalog-action-btn" id="toggleCatalogSelectionModeBtn" type="button" data-tooltip="Select items"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span>Select</span></button>
+                            <button class="btn btn-secondary catalog-action-btn" id="findCatalogDuplicatesBtn" type="button" data-tooltip="Find duplicate catalog items"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/><path d="M8 11h6M11 8v6"/></svg><span>Duplicates</span></button>
+                            <button class="btn btn-primary catalog-action-btn catalog-action-primary" id="openCatalogItemModalBtn" type="button" data-tooltip="Create a new catalog item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>New Item</span></button>
                         </div>
                     </div>
                     <div class="catalog-selection-toolbar" id="catalogSelectionToolbar" hidden>
@@ -462,8 +462,8 @@
                             <span>Select items to export a PDF report.</span>
                         </div>
                         <div class="catalog-selection-actions">
-                            <button class="btn btn-secondary" id="clearCatalogSelectionBtn" type="button">Clear</button>
-                            <button class="btn btn-primary" id="exportCatalogReportBtn" type="button">Export Item Report</button>
+                            <button class="btn btn-secondary catalog-action-btn" id="clearCatalogSelectionBtn" type="button" data-tooltip="Clear selected items"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg><span>Clear</span></button>
+                            <button class="btn btn-primary catalog-action-btn" id="exportCatalogReportBtn" type="button" data-tooltip="Export selected items"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M12 17v-6M9 14l3 3 3-3"/></svg><span>Export</span></button>
                         </div>
                     </div>
                     <div class="pricing-library-toolbar">
@@ -525,7 +525,7 @@
                             <p class="dashboard-subtitle">Prepare invoice selections for statements, then reopen exported statements whenever you need them.</p>
                         </div>
                         <div class="page-header-actions">
-                            <button class="btn btn-primary" id="reportsOpenInvoiceReportsBtn" type="button">Open Invoice Reports</button>
+                            <button class="btn btn-primary catalog-action-btn" id="reportsOpenInvoiceReportsBtn" type="button" data-tooltip="Open invoice reporting"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5a2 2 0 0 1 2-2h8l6 6v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h5"/></svg><span>Invoice Reports</span></button>
                         </div>
                     </div>
                     <div class="reports-layout">

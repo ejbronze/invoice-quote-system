@@ -1683,7 +1683,7 @@ function applyTranslations() {
     elements.totalValueHint.textContent = "";
     setElementText("#catalogHeading", t("catalog_heading"));
     setElementText("#catalogCopy", t("catalog_copy"));
-    setElementHtml("#openCatalogItemModalBtn", `${ICONS.plus}<span>${escapeHtml(t("add_catalog_item"))}</span>`);
+    setElementHtml("#openCatalogItemModalBtn", `${ICONS.plus}<span>New Item</span>`);
     setElementText("#catalogItemModalTitle", state.editingCatalogItemId ? t("update_catalog_item") : t("add_catalog_item"));
     setElementText("#catalogItemNameLabel", t("item_name"));
     setElementText("#catalogItemCostLabel", "Cost Price");
@@ -5397,6 +5397,8 @@ function renderCatalogRefs(item) {
 function renderCatalogCard(item) {
     const isSelected = state.selectedCatalogItemIds.includes(item.id);
     const imageUrl = item.imageDataUrl || item.itemImageDataUrl || "";
+    const fullName = String(item.name || "Catalog item").trim() || "Catalog item";
+    const metaText = [item.brand, item.supplier || item.vendor, item.packSize || item.unitSize].filter(Boolean).join(" · ") || item.referenceId || "Catalog item";
     const selectorHtml = state.catalogSelectionMode
         ? `<label class="catalog-card-selector" aria-label="Select ${escapeHtml(item.name)}">
                 <input type="checkbox" data-catalog-select="${escapeHtml(item.id)}"${isSelected ? " checked" : ""}>
@@ -5406,16 +5408,16 @@ function renderCatalogCard(item) {
     return `
         <article class="catalog-card${isSelected ? " is-selected" : ""}">
             ${selectorHtml}
-            <button class="catalog-card-quick-add" type="button" data-catalog-action="quick-add" data-catalog-id="${escapeHtml(item.id)}" title="Add to document" aria-label="Add to document">+</button>
-            <button class="catalog-card-trigger" type="button" data-catalog-action="open" data-catalog-id="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.name)}">
+            <button class="catalog-card-quick-add" type="button" data-catalog-action="quick-add" data-catalog-id="${escapeHtml(item.id)}" data-tooltip="Add to document" aria-label="Add to document">+</button>
+            <button class="catalog-card-trigger" type="button" data-catalog-action="open" data-catalog-id="${escapeHtml(item.id)}" aria-label="${escapeHtml(fullName)}">
                 <div class="catalog-card-bubble${imageUrl ? " is-expandable" : ""}" ${imageUrl ? `data-catalog-action="expand-image" data-catalog-id="${escapeHtml(item.id)}" data-catalog-img-src="${escapeHtml(imageUrl)}" data-catalog-img-alt="${escapeHtml(item.name)}"` : ""} aria-hidden="true">
                     ${imageUrl
-                        ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(item.name)}" loading="lazy">`
-                        : `<span>${escapeHtml((item.name || "Item").trim().slice(0, 2).toUpperCase() || "IT")}</span>`}
+                        ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(fullName)}" loading="lazy">`
+                        : `<span>${escapeHtml(fullName.slice(0, 2).toUpperCase() || "IT")}</span>`}
                 </div>
                 <div class="catalog-card-copy">
-                    <strong>${escapeHtml(item.name)}</strong>
-                    <span>${escapeHtml([item.brand, item.supplier || item.vendor, item.packSize || item.unitSize].filter(Boolean).join(" · ") || item.referenceId || "Catalog item")}</span>
+                    <strong data-tooltip="${escapeHtml(fullName)}">${escapeHtml(fullName)}</strong>
+                    <span>${escapeHtml(metaText)}</span>
                     ${(item.itemNumber || item.clientItemCode) ? `<span class="catalog-card-codes">${escapeHtml([item.itemNumber ? `Item #${item.itemNumber}` : "", item.clientItemCode ? `Code: ${item.clientItemCode}` : ""].filter(Boolean).join(" · "))}</span>` : ""}
                     <small>${escapeHtml(`${item.currency || "USD"} ${formatAmount(item.sellPrice ?? item.price ?? 0)}${item.leadTime ? ` · ${item.leadTime}` : ""}`)}</small>
                 </div>
