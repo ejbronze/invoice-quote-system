@@ -15928,7 +15928,6 @@ body #procurementSheetModal:not([hidden]) {
 .dash-mix-body {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 0.95rem;
     padding: 0.05rem 0 0.12rem;
 }
@@ -15984,12 +15983,11 @@ body #procurementSheetModal:not([hidden]) {
     flex-direction: column;
     gap: 0.35rem;
     min-width: 0;
-    max-width: 280px;
 }
 
 .dash-mix-leg-row {
     display: grid;
-    grid-template-columns: 10px 1fr auto auto;
+    grid-template-columns: 10px minmax(0, 1fr) auto auto;
     align-items: center;
     gap: 0.4rem 0.5rem;
     font-size: 0.76rem;
