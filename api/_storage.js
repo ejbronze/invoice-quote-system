@@ -322,7 +322,15 @@ function normalizeCatalogItems(items) {
                     ? item.itemImageDataUrl
                     : typeof item.imageDataUrl === "string"
                         ? item.imageDataUrl
-                        : ""
+                        : "",
+                itemImages: (() => {
+                    if (Array.isArray(item.itemImages) && item.itemImages.some(u => typeof u === "string" && u.trim())) {
+                        return item.itemImages.filter(u => typeof u === "string" && u.trim());
+                    }
+                    const fallback = typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl
+                        : typeof item.imageDataUrl === "string" ? item.imageDataUrl : "";
+                    return fallback ? [fallback] : [];
+                })()
             }))
             .filter(item => item.name)
         : [];

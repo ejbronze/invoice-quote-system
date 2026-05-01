@@ -2295,6 +2295,7 @@
                     <div class="catalog-item-image-preview" id="catalogItemImagePreview" hidden>
                         <img id="catalogItemImagePreviewImg" alt="Item image preview">
                     </div>
+                    <div id="catalogItemImagesGallery" class="catalog-images-gallery" hidden></div>
                     <p class="catalog-item-image-status" id="catalogItemImageStatus" hidden></p>
                 </div>
                 <div class="settings-grid report-grid">
@@ -2653,6 +2654,22 @@
             </div>
             <div class="kpi-detail-foot">
                 <button class="btn btn-secondary" id="kpiDetailViewAllBtn" type="button">View All</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row image picker modal -->
+    <div class="modal" id="rowImagePickerModal" role="dialog" aria-modal="true" aria-label="Choose image" aria-hidden="true" hidden>
+        <div class="modal-content row-img-picker-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Choose Image</h2>
+                <button class="close-btn" id="closeRowImagePickerBtn" type="button" aria-label="Close">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="rowImagePickerGrid" class="row-img-picker-grid"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="rowImagePickerUploadBtn" type="button">Upload from device</button>
             </div>
         </div>
     </div>

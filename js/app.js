@@ -72,6 +72,7 @@ const state = {
     notesDrawerTab: "notes",
     pendingCatalogInsertItem: null,
     pendingCatalogItemImageDataUrl: null,
+    pendingCatalogItemImages: null,
     pendingCatalogItemCropSrc: "",
     selectedCatalogItemIds: [],
     catalogSelectionMode: false,
@@ -84,7 +85,8 @@ const state = {
     imageLibraryPendingAction: null,
     imageLibraryAssignImageId: null,
     imageLibraryAssignSelectedItemId: null,
-    dupExclusions: []
+    dupExclusions: [],
+    rowImagePickerRow: null
 };
 
 const DOP_PER_USD = 59;
@@ -2262,6 +2264,9 @@ function cacheElements() {
     elements.imageLibraryAssignPreviewImg = document.getElementById("imageLibraryAssignPreviewImg");
     elements.imageLibraryAssignSearchInput = document.getElementById("imageLibraryAssignSearchInput");
     elements.imageLibraryAssignList = document.getElementById("imageLibraryAssignList");
+    elements.rowImagePickerModal = document.getElementById("rowImagePickerModal");
+    elements.rowImagePickerGrid = document.getElementById("rowImagePickerGrid");
+    elements.rowImagePickerUploadBtn = document.getElementById("rowImagePickerUploadBtn");
     elements.confirmImageLibraryAssignBtn = document.getElementById("confirmImageLibraryAssignBtn");
     elements.cancelImageLibraryAssignBtn = document.getElementById("cancelImageLibraryAssignBtn");
     elements.closeCompanyProfileModalBtn = document.getElementById("closeCompanyProfileModalBtn");
@@ -2675,6 +2680,26 @@ function bindEvents() {
     });
     elements.imageLibraryAssignList?.addEventListener("click", handleImageLibraryAssignListClick);
     elements.confirmImageLibraryAssignBtn?.addEventListener("click", () => { void confirmImageLibraryAssign(); });
+    elements.rowImagePickerModal?.addEventListener("click", event => {
+        const thumb = event.target.closest("[data-picker-item-id]");
+        if (thumb) {
+            const item = state.catalogItems.find(c => c.id === thumb.dataset.pickerItemId);
+            const row = state.rowImagePickerRow;
+            closeRowImagePicker();
+            if (item && row) {
+                const src = (Array.isArray(item.itemImages) && item.itemImages[0]) || item.itemImageDataUrl || item.imageDataUrl || "";
+                if (src) { row.dataset.itemImageDataUrl = src; syncItemImageUI(row); }
+            }
+            return;
+        }
+        if (event.target === elements.rowImagePickerModal) closeRowImagePicker();
+    });
+    elements.rowImagePickerUploadBtn?.addEventListener("click", () => {
+        const row = state.rowImagePickerRow;
+        closeRowImagePicker();
+        if (row) { const fi = row.querySelector(".item-image-input"); if (fi) fi.click(); }
+    });
+    document.getElementById("closeRowImagePickerBtn")?.addEventListener("click", closeRowImagePicker);
     elements.statementExportsList?.addEventListener("click", handleStatementExportsListClick);
     elements.closeAboutModalBtn.addEventListener("click", closeAboutModal);
     elements.footerHelpBtn?.addEventListener("click", toggleHelpMenu);
@@ -3170,6 +3195,15 @@ function bindEvents() {
     });
 
     elements.catalogItemModal.addEventListener("click", event => {
+        const removeGalleryBtn = event.target.closest("[data-remove-gallery-index]");
+        if (removeGalleryBtn) {
+            const idx = Number(removeGalleryBtn.dataset.removeGalleryIndex);
+            if (Array.isArray(state.pendingCatalogItemImages)) {
+                state.pendingCatalogItemImages = state.pendingCatalogItemImages.filter((_, i) => i !== idx);
+                syncCatalogItemImageUI();
+            }
+            return;
+        }
         if (event.target === elements.catalogItemModal) {
             closeCatalogItemModal();
         }
@@ -4022,7 +4056,15 @@ function normalizeCatalogItems(items) {
                     ? item.itemImageDataUrl
                     : typeof item.imageDataUrl === "string"
                         ? item.imageDataUrl
-                        : ""
+                        : "",
+                itemImages: (() => {
+                    if (Array.isArray(item.itemImages) && item.itemImages.some(u => typeof u === "string" && u.trim())) {
+                        return item.itemImages.filter(u => typeof u === "string" && u.trim());
+                    }
+                    const fallback = typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl
+                        : typeof item.imageDataUrl === "string" ? item.imageDataUrl : "";
+                    return fallback ? [fallback] : [];
+                })()
             }))
             .filter(item => item.name)
         : [];
@@ -4239,6 +4281,8 @@ async function upsertItemsIntoCatalog(items, docRef) {
                 ...(item.unit ? { unit: item.unit } : {}),
                 ...(item.leadTime ? { leadTime: item.leadTime } : {}),
                 ...(item.itemImageDataUrl ? { itemImageDataUrl: item.itemImageDataUrl } : {}),
+                ...(item.itemNumber ? { itemNumber: item.itemNumber } : {}),
+                ...(item.clientItemCode ? { clientItemCode: item.clientItemCode } : {}),
                 // Preserve archived status — do not un-archive automatically
                 archived: entry.archived,
                 documentRefs: mergeRefs(entry.documentRefs, ref),
@@ -4266,6 +4310,8 @@ async function upsertItemsIntoCatalog(items, docRef) {
                 vendor: String(item.supplier || "").trim(),
                 supplier: String(item.supplier || "").trim(),
                 leadTime: String(item.leadTime || "").trim(),
+                itemNumber: String(item.itemNumber || "").trim(),
+                clientItemCode: String(item.clientItemCode || "").trim(),
                 itemImageDataUrl: item.itemImageDataUrl || "",
                 country: "",
                 tags: [],
@@ -5055,9 +5101,13 @@ function openCatalogItemModal(options = {}) {
         if (elements.archiveCatalogItemBtn) {
             elements.archiveCatalogItemBtn.hidden = false;
         }
-        state.pendingCatalogItemImageDataUrl = item.itemImageDataUrl || item.imageDataUrl || null;
+        state.pendingCatalogItemImageDataUrl = null;
+        state.pendingCatalogItemImages = Array.isArray(item.itemImages) && item.itemImages.length
+            ? [...item.itemImages]
+            : (item.itemImageDataUrl || item.imageDataUrl ? [item.itemImageDataUrl || item.imageDataUrl] : []);
     } else {
         state.pendingCatalogItemImageDataUrl = null;
+        state.pendingCatalogItemImages = [];
     }
 
     syncCatalogItemImageUI();
@@ -5069,6 +5119,7 @@ function closeCatalogItemModal() {
     setModalState(elements.catalogItemModal, false);
     state.editingCatalogItemId = null;
     state.pendingCatalogItemImageDataUrl = null;
+    state.pendingCatalogItemImages = null;
     state.catalogModalReturnToProcurement = false;
     state.catalogModalReturnToDocument = false;
 }
@@ -6394,13 +6445,17 @@ async function saveCatalogItemFromModal() {
         country: elements.catalogItemCountryInput.value.trim(),
         tags: parseTags(elements.catalogItemTagsInput.value),
         archived: false,
-        itemImageDataUrl: state.pendingCatalogItemImageDataUrl != null
-            ? state.pendingCatalogItemImageDataUrl
-            : (state.editingCatalogItemId
-                ? (state.catalogItems.find(e => e.id === state.editingCatalogItemId)?.itemImageDataUrl
-                    || state.catalogItems.find(e => e.id === state.editingCatalogItemId)?.imageDataUrl
-                    || "")
-                : "")
+        itemImages: Array.isArray(state.pendingCatalogItemImages) ? state.pendingCatalogItemImages : [],
+        itemImageDataUrl: (() => {
+            const imgs = Array.isArray(state.pendingCatalogItemImages) ? state.pendingCatalogItemImages : [];
+            if (imgs.length) return imgs[0];
+            if (state.pendingCatalogItemImageDataUrl != null) return state.pendingCatalogItemImageDataUrl;
+            if (state.editingCatalogItemId) {
+                const existing = state.catalogItems.find(e => e.id === state.editingCatalogItemId);
+                return existing?.itemImageDataUrl || existing?.imageDataUrl || "";
+            }
+            return "";
+        })()
     };
 
     const nextItems = state.editingCatalogItemId
@@ -6816,25 +6871,33 @@ async function mergeCatalogDuplicates(masterId, duplicateIds) {
 // ── Catalog item image upload ──────────────────────────────────
 
 function syncCatalogItemImageUI() {
-    const dataUrl = state.pendingCatalogItemImageDataUrl || "";
-    const preview = elements.catalogItemImagePreview;
-    const previewImg = elements.catalogItemImagePreviewImg;
-    const removeBtn = elements.catalogItemImageRemoveBtn;
-    const hint = document.getElementById("catalogItemImageUploadHint");
+    // Use images array if available; fall back to legacy single-image pending state
+    const images = Array.isArray(state.pendingCatalogItemImages)
+        ? state.pendingCatalogItemImages
+        : (state.pendingCatalogItemImageDataUrl ? [state.pendingCatalogItemImageDataUrl] : []);
 
-    if (preview && previewImg) {
-        if (dataUrl) {
-            preview.hidden = false;
-            previewImg.src = dataUrl;
-            setCatalogItemImageStatus("Image ready");
-        } else {
-            preview.hidden = true;
-            previewImg.removeAttribute("src");
-            setCatalogItemImageStatus("");
-        }
+    const gallery = document.getElementById("catalogItemImagesGallery");
+    if (gallery) {
+        gallery.hidden = images.length === 0;
+        gallery.innerHTML = images.map((src, i) => `
+            <div class="catalog-gallery-thumb">
+                <img src="${escapeHtml(src)}" alt="Image ${i + 1}">
+                ${i === 0 ? '<span class="catalog-gallery-primary">Primary</span>' : ""}
+                <button type="button" class="catalog-gallery-remove" data-remove-gallery-index="${i}" aria-label="Remove image">×</button>
+            </div>`).join("");
     }
-    if (removeBtn) removeBtn.hidden = !dataUrl;
-    if (hint) hint.textContent = dataUrl ? "Change image" : "Add image";
+
+    const preview = elements.catalogItemImagePreview;
+    if (preview) preview.hidden = true;
+
+    const removeBtn = elements.catalogItemImageRemoveBtn;
+    if (removeBtn) removeBtn.hidden = images.length === 0;
+
+    const hint = document.getElementById("catalogItemImageUploadHint");
+    if (hint) hint.textContent = images.length ? "Add another image" : "Add image";
+
+    const count = images.length;
+    setCatalogItemImageStatus(count > 1 ? `${count} images` : count === 1 ? "1 image" : "");
 }
 
 function setCatalogItemImageStatus(message) {
@@ -6845,7 +6908,8 @@ function setCatalogItemImageStatus(message) {
 }
 
 function clearCatalogItemImage() {
-    state.pendingCatalogItemImageDataUrl = "";
+    state.pendingCatalogItemImages = [];
+    state.pendingCatalogItemImageDataUrl = null;
     if (elements.catalogItemImageInput) elements.catalogItemImageInput.value = "";
     syncCatalogItemImageUI();
 }
@@ -7029,8 +7093,12 @@ function skipCatalogItemCrop() {
     if (state.imageLibraryPendingAction) {
         _onImageLibraryCropComplete();
     } else {
+        if (state.pendingCatalogItemImageDataUrl && Array.isArray(state.pendingCatalogItemImages)) {
+            state.pendingCatalogItemImages = [...state.pendingCatalogItemImages, state.pendingCatalogItemImageDataUrl];
+            state.pendingCatalogItemImageDataUrl = null;
+        }
         syncCatalogItemImageUI();
-        setCatalogItemImageStatus("Image ready — save item to apply.");
+        setCatalogItemImageStatus("Image added — save item to apply.");
     }
 }
 
@@ -7065,8 +7133,12 @@ function applyCatalogItemCrop() {
         if (state.imageLibraryPendingAction) {
             _onImageLibraryCropComplete();
         } else {
+            if (state.pendingCatalogItemImageDataUrl && Array.isArray(state.pendingCatalogItemImages)) {
+                state.pendingCatalogItemImages = [...state.pendingCatalogItemImages, state.pendingCatalogItemImageDataUrl];
+                state.pendingCatalogItemImageDataUrl = null;
+            }
             syncCatalogItemImageUI();
-            setCatalogItemImageStatus("Image ready — save item to apply.");
+            setCatalogItemImageStatus("Image added — save item to apply.");
         }
     };
     img.onerror = () => {
@@ -7626,7 +7698,9 @@ function createProcurementSnapshotFromLibraryItem(item) {
         leadTime: item.leadTime,
         supplier: item.supplier || item.vendor,
         notes: item.notes,
-        itemImageDataUrl: item.itemImageDataUrl || item.imageDataUrl || ""
+        itemImageDataUrl: item.itemImageDataUrl || item.imageDataUrl || "",
+        itemNumber: item.itemNumber || "",
+        clientItemCode: item.clientItemCode || ""
     });
 }
 
@@ -7764,8 +7838,7 @@ function handleProcurementRowsClick(event) {
             if (resolveItemImage(rowEl)) {
                 openItemImagePreviewModal(rowEl);
             } else {
-                const fileInput = rowEl.querySelector(".item-image-input");
-                if (fileInput) fileInput.click();
+                openRowImagePicker(rowEl);
             }
         }
         return;
@@ -8354,34 +8427,33 @@ function _findMatchingProcurementRowEl(existingRowEls, importedRow) {
 }
 
 function _fillEmptyProcurementRowFields(rowEl, importedRow) {
-    const fillIfEmpty = (selector, value) => {
+    // Full update: overwrite with any non-empty incoming value
+    const overwrite = (selector, value) => {
         if (!value && value !== 0) return;
         const el = rowEl.querySelector(selector);
-        if (!el) return;
-        const current = String(el.value || "").trim();
-        if (!current) el.value = value;
+        if (el && String(value).trim()) el.value = value;
     };
 
-    fillIfEmpty('[data-procurement-field="brand"]', importedRow.brand);
-    fillIfEmpty('[data-procurement-field="packSize"]', importedRow.packSize);
-    fillIfEmpty('[data-procurement-field="unit"]', importedRow.unit);
-    fillIfEmpty('[data-procurement-field="leadTime"]', importedRow.leadTime);
-    fillIfEmpty('[data-procurement-field="supplier"]', importedRow.supplier);
-    fillIfEmpty('[data-procurement-field="currency"]', importedRow.currency);
-    fillIfEmpty('[data-procurement-field="notes"]', importedRow.notes);
+    if (importedRow.description) overwrite('[data-procurement-field="description"]', importedRow.description);
+    if (importedRow.itemNumber)   overwrite('[data-procurement-field="itemNumber"]', importedRow.itemNumber);
+    if (importedRow.clientItemCode) overwrite('[data-procurement-field="clientItemCode"]', importedRow.clientItemCode);
+    overwrite('[data-procurement-field="brand"]',    importedRow.brand);
+    overwrite('[data-procurement-field="packSize"]', importedRow.packSize);
+    overwrite('[data-procurement-field="unit"]',     importedRow.unit);
+    overwrite('[data-procurement-field="leadTime"]', importedRow.leadTime);
+    overwrite('[data-procurement-field="supplier"]', importedRow.supplier);
+    overwrite('[data-procurement-field="currency"]', importedRow.currency);
+    overwrite('[data-procurement-field="notes"]',    importedRow.notes);
 
-    const qtyEl = rowEl.querySelector('[data-procurement-field="quantity"]');
-    if (qtyEl && !qtyEl.disabled) {
-        const current = String(qtyEl.value || "").trim();
-        const incoming = String(importedRow.quantity || "").trim();
-        if (!current && incoming) qtyEl.value = incoming;
+    if (!importedRow.quantityTbd && importedRow.quantity) {
+        const qtyEl = rowEl.querySelector('[data-procurement-field="quantity"]');
+        if (qtyEl && !qtyEl.disabled) qtyEl.value = importedRow.quantity;
     }
 
-    const priceEl = rowEl.querySelector('[data-procurement-field="unitPrice"]');
-    if (priceEl) {
-        const current = Number.parseFloat(priceEl.value) || 0;
-        const incoming = Number.parseFloat(importedRow.unitPrice) || 0;
-        if (!current && incoming) priceEl.value = incoming.toFixed(2);
+    const incoming = Number.parseFloat(importedRow.unitPrice) || 0;
+    if (incoming > 0) {
+        const priceEl = rowEl.querySelector('[data-procurement-field="unitPrice"]');
+        if (priceEl) priceEl.value = incoming.toFixed(2);
     }
 }
 
@@ -15159,8 +15231,7 @@ async function handleItemContainerClick(event) {
             if (resolveItemImage(itemRow)) {
                 openItemImagePreviewModal(itemRow);
             } else {
-                const fileInput = itemRow.querySelector(".item-image-input");
-                if (fileInput) fileInput.click();
+                openRowImagePicker(itemRow);
             }
         }
         return;
@@ -15264,9 +15335,10 @@ function resolveItemImage(itemOrRow) {
     const libraryId = itemOrRow?.libraryItemId || itemOrRow?.dataset?.libraryItemId || "";
     if (libraryId) {
         const ci = state.catalogItems.find(c => c.id === libraryId && !c.archived);
-        if (ci) return ci.itemImageDataUrl || ci.imageDataUrl || "";
+        if (ci) return (Array.isArray(ci.itemImages) && ci.itemImages[0]) || ci.itemImageDataUrl || ci.imageDataUrl || "";
     }
-    return itemOrRow?.itemImageDataUrl || itemOrRow?.imageDataUrl
+    return (Array.isArray(itemOrRow?.itemImages) && itemOrRow.itemImages[0])
+        || itemOrRow?.itemImageDataUrl || itemOrRow?.imageDataUrl
         || itemOrRow?.dataset?.itemImageDataUrl || "";
 }
 
@@ -18836,6 +18908,39 @@ function getFilteredImageLibraryEntries() {
         const haystack = [entry.originalFilename, entry.assignedItemName].filter(Boolean).join(" ").toLowerCase();
         return haystack.includes(query);
     });
+}
+
+// ── Row image picker ───────────────────────────────────────────
+
+function openRowImagePicker(rowEl) {
+    state.rowImagePickerRow = rowEl;
+    _renderRowImagePickerGrid();
+    setModalState(elements.rowImagePickerModal, true);
+}
+
+function closeRowImagePicker() {
+    state.rowImagePickerRow = null;
+    setModalState(elements.rowImagePickerModal, false);
+}
+
+function _renderRowImagePickerGrid() {
+    const grid = elements.rowImagePickerGrid;
+    if (!grid) return;
+    const itemsWithImages = state.catalogItems.filter(c => {
+        if (c.archived) return false;
+        return (Array.isArray(c.itemImages) && c.itemImages[0]) || c.itemImageDataUrl || c.imageDataUrl;
+    });
+    if (!itemsWithImages.length) {
+        grid.innerHTML = '<p class="row-picker-empty">No catalog images yet. Upload an image in the Pricing Catalog first.</p>';
+        return;
+    }
+    grid.innerHTML = itemsWithImages.map(c => {
+        const src = (Array.isArray(c.itemImages) && c.itemImages[0]) || c.itemImageDataUrl || c.imageDataUrl;
+        return `<button type="button" class="row-picker-thumb" data-picker-item-id="${escapeHtml(c.id)}">
+            <img src="${escapeHtml(src)}" alt="${escapeHtml(c.name)}">
+            <span>${escapeHtml(c.name)}</span>
+        </button>`;
+    }).join("");
 }
 
 // ── Open / close ───────────────────────────────────────────────
