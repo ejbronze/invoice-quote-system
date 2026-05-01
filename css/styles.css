@@ -16851,3 +16851,458 @@ body #procurementSheetModal:not([hidden]) {
 .overview-card .page-section-heading p {
     display: none;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   IMAGE LIBRARY
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Toolbar badge on Images button ────────────────────────────────────── */
+
+.img-lib-toolbar-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    background: #e55a2b;
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.62rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-left: 2px;
+    vertical-align: middle;
+}
+
+/* ── Modal shell ────────────────────────────────────────────────────────── */
+
+.image-library-modal {
+    z-index: 1000;
+}
+
+.image-library-modal-content {
+    width: min(96vw, 1100px);
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 32px 72px rgba(18, 42, 82, 0.22);
+}
+
+.image-library-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem 0.85rem;
+    border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+}
+
+.image-library-header-copy h3 {
+    margin: 0 0 0.15rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+/* ── Inner toolbar ─────────────────────────────────────────────────────── */
+
+.image-library-toolbar-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    padding: 0.8rem 1.25rem;
+    background: rgba(246, 248, 255, 0.85);
+    border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+}
+
+.image-library-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.image-library-upload-btn svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
+
+.image-library-filter-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.image-library-search-field {
+    flex: 1;
+    min-width: 160px;
+    max-width: 280px;
+}
+
+.image-library-upload-status {
+    font-size: 0.8rem;
+    color: var(--text-soft);
+    margin: 0;
+    width: 100%;
+    padding: 0.1rem 0;
+}
+
+/* ── Modal body ─────────────────────────────────────────────────────────── */
+
+.image-library-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 1.25rem;
+    min-height: 0;
+}
+
+/* ── Image grid ─────────────────────────────────────────────────────────── */
+
+.image-library-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.85rem;
+}
+
+/* ── Image card ─────────────────────────────────────────────────────────── */
+
+.img-lib-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(18, 42, 82, 0.05);
+    transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.img-lib-card:hover {
+    box-shadow: 0 6px 18px rgba(18, 42, 82, 0.12);
+    transform: translateY(-2px);
+}
+
+.img-lib-thumb {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: #f0f3f9;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.img-lib-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.2s ease;
+}
+
+.img-lib-card:hover .img-lib-thumb img {
+    transform: scale(1.03);
+}
+
+/* ── Card info ─────────────────────────────────────────────────────────── */
+
+.img-lib-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.22rem;
+    padding: 0.55rem 0.65rem 0.35rem;
+    flex: 1;
+    min-height: 0;
+}
+
+.img-lib-filename {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.img-lib-date {
+    font-size: 0.68rem;
+    color: var(--text-faint);
+}
+
+.img-lib-item-name {
+    font-size: 0.7rem;
+    color: var(--text-soft);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Status badge ─────────────────────────────────────────────────────── */
+
+.img-lib-badge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.img-lib-badge--uploaded {
+    background: rgba(234, 149, 40, 0.12);
+    color: #b86a00;
+    border: 1px solid rgba(234, 149, 40, 0.28);
+}
+
+.img-lib-badge--assigned {
+    background: rgba(16, 176, 100, 0.1);
+    color: #0d7a48;
+    border: 1px solid rgba(16, 176, 100, 0.24);
+}
+
+/* ── Smart match hint ─────────────────────────────────────────────────── */
+
+.img-lib-match-hint {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 0.2rem;
+    padding: 0.3rem 0.45rem;
+    background: rgba(20, 89, 217, 0.06);
+    border: 1px solid rgba(20, 89, 217, 0.18);
+    border-radius: 6px;
+    font-size: 0.67rem;
+    color: var(--text-soft);
+}
+
+.img-lib-match-hint strong {
+    color: var(--text);
+}
+
+.img-lib-confirm-match {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-size: 0.67rem;
+    font-weight: 700;
+    color: var(--blue);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    white-space: nowrap;
+}
+
+.img-lib-confirm-match:hover {
+    color: var(--blue-deep);
+}
+
+/* ── Card action buttons ─────────────────────────────────────────────── */
+
+.img-lib-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.4rem 0.5rem;
+    border-top: 1px solid var(--line);
+    background: rgba(246, 248, 255, 0.7);
+}
+
+.img-lib-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: none;
+    color: var(--text-soft);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    padding: 0;
+}
+
+.img-lib-action-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.img-lib-action-btn:hover {
+    background: rgba(20, 89, 217, 0.08);
+    color: var(--blue);
+    border-color: rgba(20, 89, 217, 0.2);
+}
+
+.img-lib-action-btn--danger:hover {
+    background: rgba(220, 50, 50, 0.08);
+    color: #c0392b;
+    border-color: rgba(220, 50, 50, 0.2);
+}
+
+/* ── Assign modal ───────────────────────────────────────────────────────── */
+
+.image-library-assign-content {
+    width: min(96vw, 520px);
+}
+
+.image-library-assign-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f3f9;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    max-height: 180px;
+}
+
+.image-library-assign-preview img {
+    max-width: 100%;
+    max-height: 180px;
+    object-fit: contain;
+    display: block;
+}
+
+.image-library-assign-search {
+    margin-bottom: 0.75rem;
+    width: 100%;
+}
+
+.image-library-assign-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    max-height: 280px;
+    overflow-y: auto;
+}
+
+.image-library-assign-empty {
+    color: var(--text-faint);
+    font-size: 0.82rem;
+    text-align: center;
+    padding: 1rem;
+    margin: 0;
+}
+
+.img-lib-assign-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    transition: border-color 0.15s, background 0.15s;
+    width: 100%;
+}
+
+.img-lib-assign-item:hover {
+    border-color: rgba(20, 89, 217, 0.35);
+    background: rgba(20, 89, 217, 0.04);
+}
+
+.img-lib-assign-item.is-selected {
+    border-color: var(--blue);
+    background: rgba(20, 89, 217, 0.06);
+}
+
+.img-lib-assign-thumb {
+    width: 36px;
+    height: 36px;
+    border-radius: 7px;
+    overflow: hidden;
+    background: #e8edf6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-soft);
+}
+
+.img-lib-assign-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.img-lib-assign-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.img-lib-assign-copy strong {
+    font-size: 0.82rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.img-lib-assign-copy small {
+    font-size: 0.7rem;
+    color: var(--text-faint);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.img-lib-assign-has-img-note {
+    font-size: 0.66rem;
+    color: #c07a00;
+    font-weight: 600;
+}
+
+.img-lib-assign-check {
+    width: 18px;
+    height: 18px;
+    color: var(--blue);
+    flex-shrink: 0;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+    .image-library-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 0.6rem;
+    }
+
+    .image-library-modal-content {
+        max-height: 96vh;
+        border-radius: 12px 12px 0 0;
+        align-self: flex-end;
+    }
+
+    .image-library-toolbar-bar {
+        padding: 0.65rem 0.9rem;
+    }
+
+    .image-library-body {
+        padding: 0.75rem 0.9rem;
+    }
+}
