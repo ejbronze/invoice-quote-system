@@ -16133,8 +16133,13 @@ body #procurementSheetModal:not([hidden]) {
     display: flex;
     align-items: center;
     gap: 0.44rem;
-    overflow: hidden;
-    flex-wrap: wrap;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+}
+
+.dash-catalog-strip::-webkit-scrollbar {
+    display: none;
 }
 
 .dash-catalog-thumb {
@@ -16167,9 +16172,11 @@ body #procurementSheetModal:not([hidden]) {
 }
 
 .dash-catalog-thumb img {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    flex-shrink: 0;
 }
 
 .dash-catalog-thumb svg {

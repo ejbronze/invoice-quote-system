@@ -3594,6 +3594,7 @@ function applyWorkspaceState(payload) {
     renderIssueInbox();
     updateInboxBadge();
     renderCatalog();
+    renderDashboardRightPanelSections();
     renderStatementsPage();
     renderAccountAdminPage();
     renderSignaturesSettings();
@@ -4104,6 +4105,7 @@ async function saveCatalogItems(items) {
     state.catalogItems = normalizeCatalogItems(items);
     try { cacheWorkspaceStateLocally(); } catch (_) { /* localStorage quota — state is valid, continue */ }
     renderCatalog();
+    renderDashboardRightPanelSections();
     await persistSharedWorkspaceData();
 }
 
