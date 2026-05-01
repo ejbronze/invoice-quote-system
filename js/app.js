@@ -19,6 +19,8 @@ const state = {
     isBootstrapping: false,
     isAuthenticating: false,
     inactivityTimerId: null,
+    inactivityWarningTimerId: null,
+    inactivityCountdownIntervalId: null,
     currentLanguage: "en",
     currentUser: null,
     userAccounts: [],
@@ -127,6 +129,7 @@ const SESSION_LOGS_STORAGE_KEY = "santosyncSessionLogs";
 const ACTIVITY_LOGS_STORAGE_KEY = "santosyncActivityLogs";
 const DEFAULT_ACCESS_ERROR_MESSAGE = "That username or password is incorrect. Try again.";
 const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
+const INACTIVITY_WARNING_BEFORE_MS = 60 * 1000; // show warning 1 min before timeout
 const BRAND_SPLASH_MIN_MS = 1100;
 const LOCAL_DOCUMENTS_STORAGE_KEY = "todosLocalDocuments";
 const LOCAL_CLIENTS_STORAGE_KEY = "todosLocalClients";
@@ -2524,6 +2527,9 @@ function bindEvents() {
     });
     elements.topbarSignOutBtn.addEventListener("click", handleEndSessionClick);
     elements.mobileDrawerSignOutBtn?.addEventListener("click", handleEndSessionClick);
+    document.getElementById("extendSessionBtn")?.addEventListener("click", () => {
+        resetInactivityTimer();
+    });
     elements.openDataToolsBtn?.addEventListener("click", openDataToolsModal);
     elements.closeDataToolsModalBtn?.addEventListener("click", closeDataToolsModal);
     elements.exportCsvTemplateBtn.addEventListener("click", exportCsvTemplate);
@@ -4253,6 +4259,36 @@ async function saveCatalogItems(items) {
     await persistSharedWorkspaceData();
 }
 
+// On login, find catalog items that still have inline data-URL images and upload
+// them to Vercel Blob so they persist across the session timeout / re-login cycle.
+async function migrateCatalogImagesToBlob() {
+    if (state.workspaceDataMode !== "server") return;
+    const itemsNeedingMigration = state.catalogItems.filter(item =>
+        (Array.isArray(item.itemImages) && item.itemImages.some(u => String(u).startsWith("data:")))
+        || (item.itemImageDataUrl && item.itemImageDataUrl.startsWith("data:"))
+    );
+    if (!itemsNeedingMigration.length) return;
+
+    const migrated = await Promise.all(
+        state.catalogItems.map(async item => {
+            const hasDataUrls =
+                (Array.isArray(item.itemImages) && item.itemImages.some(u => String(u).startsWith("data:")))
+                || (item.itemImageDataUrl && item.itemImageDataUrl.startsWith("data:"));
+            if (!hasDataUrls) return item;
+            const resolvedImages = await Promise.all(
+                (Array.isArray(item.itemImages) ? item.itemImages : []).map(u => uploadImageToBlob(u))
+            );
+            const resolvedPrimary = resolvedImages[0]
+                || (item.itemImageDataUrl?.startsWith("data:") ? await uploadImageToBlob(item.itemImageDataUrl) : item.itemImageDataUrl)
+                || "";
+            return { ...item, itemImages: resolvedImages, itemImageDataUrl: resolvedPrimary };
+        })
+    );
+
+    state.catalogItems = normalizeCatalogItems(migrated);
+    await persistSharedWorkspaceData();
+}
+
 // Auto-syncs items from documents/procurement into the library.
 // items: [{ name, brand, packSize, unit, unitPrice, currency, leadTime, supplier, notes }]
 // docRef: { docId, docRefNumber, docType, date, clientName }
@@ -4811,6 +4847,8 @@ async function unlockAccess(user) {
     await bootstrapAppData();
     setActivePage("overview");
     applyRoleAccess();
+    // Background: migrate any remaining data-URL images to Vercel Blob
+    void migrateCatalogImagesToBlob();
     applyAccessState(true);
 }
 
@@ -4819,6 +4857,43 @@ function clearInactivityTimer() {
         window.clearTimeout(state.inactivityTimerId);
         state.inactivityTimerId = null;
     }
+    if (state.inactivityWarningTimerId !== null) {
+        window.clearTimeout(state.inactivityWarningTimerId);
+        state.inactivityWarningTimerId = null;
+    }
+    if (state.inactivityCountdownIntervalId !== null) {
+        window.clearInterval(state.inactivityCountdownIntervalId);
+        state.inactivityCountdownIntervalId = null;
+    }
+}
+
+function _closeSessionWarningModal() {
+    const modal = document.getElementById("sessionWarningModal");
+    if (modal) {
+        modal.hidden = true;
+        modal.setAttribute("aria-hidden", "true");
+    }
+    if (state.inactivityCountdownIntervalId !== null) {
+        window.clearInterval(state.inactivityCountdownIntervalId);
+        state.inactivityCountdownIntervalId = null;
+    }
+}
+
+function _showSessionWarningModal() {
+    const modal = document.getElementById("sessionWarningModal");
+    const countdownEl = document.getElementById("sessionWarningCountdown");
+    if (!modal) return;
+    let secondsLeft = Math.round(INACTIVITY_WARNING_BEFORE_MS / 1000);
+    if (countdownEl) countdownEl.textContent = secondsLeft;
+    modal.hidden = false;
+    modal.setAttribute("aria-hidden", "false");
+    state.inactivityCountdownIntervalId = window.setInterval(() => {
+        secondsLeft -= 1;
+        if (countdownEl) countdownEl.textContent = secondsLeft;
+        if (secondsLeft <= 0) {
+            _closeSessionWarningModal();
+        }
+    }, 1000);
 }
 
 function resetInactivityTimer() {
@@ -4828,7 +4903,17 @@ function resetInactivityTimer() {
     }
 
     clearInactivityTimer();
+    _closeSessionWarningModal();
+
+    // Fire warning 1 minute before the actual timeout
+    state.inactivityWarningTimerId = window.setTimeout(() => {
+        state.inactivityWarningTimerId = null;
+        _showSessionWarningModal();
+    }, INACTIVITY_TIMEOUT_MS - INACTIVITY_WARNING_BEFORE_MS);
+
+    // Hard signout at full timeout
     state.inactivityTimerId = window.setTimeout(() => {
+        _closeSessionWarningModal();
         signOutForInactivity();
     }, INACTIVITY_TIMEOUT_MS);
 }
@@ -4843,6 +4928,7 @@ function handleSessionActivity() {
 
 async function endSession(message = "", { showMessage = false } = {}) {
     clearInactivityTimer();
+    _closeSessionWarningModal();
     await closeSessionLog(message || "Signed out");
     recordActivity("signed out", message || "Ended the current session.");
     clearCurrentSession();

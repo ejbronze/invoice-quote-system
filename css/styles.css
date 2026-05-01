@@ -17553,3 +17553,51 @@ body #procurementSheetModal:not([hidden]) {
     padding: 1.5rem;
     width: 100%;
 }
+
+/* ── Session expiry warning modal ─────────────────────────────── */
+.session-warning-modal .modal-content,
+.session-warning-content {
+    max-width: 380px;
+    text-align: center;
+    padding: 2rem 2rem 1.8rem;
+    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.9rem;
+}
+.session-warning-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(217, 119, 6, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.session-warning-icon svg {
+    width: 26px;
+    height: 26px;
+    stroke: #d97706;
+}
+.session-warning-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+}
+.session-warning-body {
+    font-size: 0.88rem;
+    color: var(--text-soft);
+    margin: 0;
+    line-height: 1.5;
+}
+.session-warning-body strong {
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+.session-warning-btn {
+    width: 100%;
+    margin-top: 0.3rem;
+}

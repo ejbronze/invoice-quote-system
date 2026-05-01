@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SantoSync</title>
-    <link rel="stylesheet" href="css/styles.css?v=39">
+    <link rel="stylesheet" href="css/styles.css?v=40">
 </head>
 <body>
     <div class="brand-splash" id="brandSplash" aria-hidden="true" hidden>
@@ -2658,6 +2658,22 @@
         </div>
     </div>
 
+    <!-- Session expiry warning modal -->
+    <div class="modal session-warning-modal" id="sessionWarningModal" role="alertdialog" aria-modal="true" aria-labelledby="sessionWarningTitle" aria-hidden="true" hidden>
+        <div class="modal-content session-warning-content">
+            <div class="session-warning-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+            </div>
+            <h2 class="session-warning-title" id="sessionWarningTitle">Still there?</h2>
+            <p class="session-warning-body">You'll be signed out in <strong><span id="sessionWarningCountdown">60</span> seconds</strong> due to inactivity.</p>
+            <button class="btn btn-primary session-warning-btn" id="extendSessionBtn" type="button">Keep me signed in</button>
+        </div>
+    </div>
+
     <!-- Row image picker modal -->
     <div class="modal" id="rowImagePickerModal" role="dialog" aria-modal="true" aria-label="Choose image" aria-hidden="true" hidden>
         <div class="modal-content row-img-picker-content">
@@ -2678,6 +2694,6 @@
     <script src="js/vendor/html2pdf.bundle.min.js"></script>
     <script src="js/brand.js?v=2"></script>
     <script src="js/statement-of-account.js?v=2"></script>
-    <script src="js/app.js?v=34"></script>
+    <script src="js/app.js?v=35"></script>
 </body>
 </html>
