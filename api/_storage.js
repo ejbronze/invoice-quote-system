@@ -465,6 +465,18 @@ function normalizeStatementExports(items) {
                 rowCount: Number.parseInt(item.rowCount, 10) || 0,
                 totalSelectedFormatted: String(item.totalSelectedFormatted || "").trim(),
                 totalOutstandingFormatted: String(item.totalOutstandingFormatted || "").trim(),
+                versionHistory: Array.isArray(item.versionHistory)
+                    ? item.versionHistory
+                        .filter(entry => entry && typeof entry === "object" && entry.payload && typeof entry.payload === "object")
+                        .map((entry, index) => ({
+                            id: String(entry.id || `statement-version-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`),
+                            createdAt: String(entry.createdAt || new Date().toISOString()),
+                            reason: String(entry.reason || "Date update").trim() || "Date update",
+                            statementDateInput: String(entry.statementDateInput || entry.payload.statementDateInput || entry.payload.generatedIsoDate || "").slice(0, 10),
+                            signatureDateInput: String(entry.signatureDateInput || entry.payload.signatureDateInput || entry.payload.generatedIsoDate || "").slice(0, 10),
+                            payload: entry.payload
+                        }))
+                    : [],
                 payload: item.payload && typeof item.payload === "object" ? item.payload : null
             }))
             .filter(item => item.payload)

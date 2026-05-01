@@ -5557,6 +5557,20 @@ body::after {
     align-items: start;
 }
 
+.statement-edit-dates-card {
+    margin-bottom: 0.85rem;
+}
+
+.statement-edit-dates-card .statement-edit-card-head {
+    margin-bottom: 0.65rem;
+}
+
+.statement-edit-dates-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(170px, 1fr));
+    gap: 0.65rem;
+}
+
 .statement-edit-card {
     border: 1px solid rgba(214, 223, 234, 0.88);
     border-radius: 14px;
@@ -5745,6 +5759,88 @@ body::after {
 
 .statement-edit-total-row.statement-edit-payment-row strong {
     color: #0d9166;
+}
+
+.statement-edit-version-history {
+    display: grid;
+    gap: 0.55rem;
+    margin-top: 0.8rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid rgba(214, 223, 234, 0.82);
+}
+
+.statement-edit-history-head {
+    display: grid;
+    gap: 0.15rem;
+}
+
+.statement-edit-history-head strong {
+    color: #173453;
+    font-size: 0.86rem;
+}
+
+.statement-edit-history-head span {
+    color: #6d8097;
+    font-size: 0.76rem;
+    line-height: 1.35;
+}
+
+.statement-edit-history-list {
+    display: grid;
+    gap: 0.45rem;
+    max-height: 220px;
+    overflow: auto;
+}
+
+.statement-edit-history-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.55rem;
+    align-items: center;
+    padding: 0.6rem;
+    border: 1px solid rgba(214, 223, 234, 0.82);
+    border-radius: 10px;
+    background: rgba(250, 252, 255, 0.96);
+}
+
+.statement-edit-history-item div {
+    min-width: 0;
+}
+
+.statement-edit-history-item strong,
+.statement-edit-history-item span {
+    display: block;
+}
+
+.statement-edit-history-item strong {
+    color: #173453;
+    font-size: 0.78rem;
+}
+
+.statement-edit-history-item span {
+    color: #647a91;
+    font-size: 0.72rem;
+    line-height: 1.3;
+}
+
+.statement-edit-restore-btn {
+    min-height: 2rem;
+    padding: 0.35rem 0.62rem;
+    border: 1px solid rgba(20, 89, 217, 0.18);
+    border-radius: 8px;
+    background: rgba(20, 89, 217, 0.08);
+    color: #1459d9;
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.statement-edit-restore-btn:hover,
+.statement-edit-restore-btn:focus-visible {
+    background: rgba(20, 89, 217, 0.13);
+    border-color: rgba(20, 89, 217, 0.24);
+    outline: none;
 }
 
 .statement-deduction-payment-row {
@@ -10791,6 +10887,7 @@ body.print-window .print-preview-sheet {
     .statement-export-steps,
     .statement-export-confirm-grid,
     .statement-edit-layout,
+    .statement-edit-dates-grid,
     .statement-edit-row-grid {
         grid-template-columns: 1fr;
     }

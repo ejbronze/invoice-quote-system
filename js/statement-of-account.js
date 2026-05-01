@@ -37,6 +37,19 @@
         });
     }
 
+    function formatSignatureDate(dateValue) {
+        const parsedDate = parseDateInput(dateValue);
+        if (!parsedDate) {
+            return "";
+        }
+
+        return parsedDate.toLocaleDateString("en-US", {
+            month: "2-digit",
+            day: "2-digit",
+            year: "2-digit"
+        }).replace(/\//g, " / ");
+    }
+
     function formatStatementCurrency(amount, options = {}) {
         const locale = options.locale || "en-US";
         const currency = options.currency || DEFAULT_CURRENCY;
@@ -215,6 +228,10 @@
             locale,
             currency,
             rows,
+            statementDateInput: String(payload.statementDateInput || payload.generatedIsoDate || "").slice(0, 10),
+            signatureDateInput: String(payload.signatureDateInput || payload.generatedIsoDate || "").slice(0, 10),
+            generatedDate: payload.generatedDate || formatDate(payload.statementDateInput || payload.generatedIsoDate || new Date(), locale),
+            signatureDateFormatted: payload.signatureDateFormatted || formatSignatureDate(payload.signatureDateInput || payload.generatedIsoDate || new Date()),
             deductions: totals.deductions,
             totalSelectedFormatted: totals.selectedTotalFormatted,
             totalOutstandingFormatted: totals.selectedTotalFormatted,
@@ -242,6 +259,9 @@
             signatureUrl,
             stampUrl,
             statementNote,
+            statementDateInput,
+            signatureDateInput,
+            signatureDateFormatted,
             deductions
         } = normalizedPayload;
 
@@ -810,7 +830,7 @@
                     </div>
                     <div class="statement-date-line">
                         <span class="statement-line-label">Date:</span>
-                        <div class="statement-date-value">${escapeHtml(new Date(payload.generatedIsoDate || Date.now()).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" }).replace(/\//g, " / "))}</div>
+                        <div class="statement-date-value">${escapeHtml(signatureDateFormatted || formatSignatureDate(signatureDateInput || statementDateInput || payload.generatedIsoDate || Date.now()))}</div>
                     </div>
                 </div>
             </div>

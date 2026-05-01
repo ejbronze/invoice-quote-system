@@ -2083,7 +2083,10 @@ function cacheElements() {
     elements.statementEditRows = document.getElementById("statementEditRows");
     elements.statementEditDeductions = document.getElementById("statementEditDeductions");
     elements.statementEditTotals = document.getElementById("statementEditTotals");
+    elements.statementEditVersionHistory = document.getElementById("statementEditVersionHistory");
     elements.statementEditNoteInput = document.getElementById("statementEditNoteInput");
+    elements.statementEditStatementDateInput = document.getElementById("statementEditStatementDateInput");
+    elements.statementEditSignatureDateInput = document.getElementById("statementEditSignatureDateInput");
     elements.addStatementRowBtn = document.getElementById("addStatementRowBtn");
     elements.addStatementDeductionBtn = document.getElementById("addStatementDeductionBtn");
     elements.previewStatementEditBtn = document.getElementById("previewStatementEditBtn");
@@ -2666,6 +2669,9 @@ function bindEvents() {
     elements.addStatementDeductionBtn?.addEventListener("click", addStatementEditDeduction);
     elements.statementEditRows?.addEventListener("click", handleStatementEditRowsClick);
     elements.statementEditRows?.addEventListener("input", syncStatementEditTotalsUi);
+    elements.statementEditVersionHistory?.addEventListener("click", handleStatementVersionHistoryClick);
+    elements.statementEditStatementDateInput?.addEventListener("change", syncStatementEditTotalsUi);
+    elements.statementEditSignatureDateInput?.addEventListener("change", syncStatementEditTotalsUi);
     elements.statementEditDeductions?.addEventListener("click", handleStatementEditDeductionsClick);
     elements.statementEditDeductions?.addEventListener("input", syncStatementEditTotalsUi);
     elements.statementEditDeductions?.addEventListener("change", event => {
@@ -3993,6 +3999,7 @@ function normalizeStatementExports(items) {
                 totalSelectedFormatted: String(item.totalSelectedFormatted || payload?.totalSelectedFormatted || totals?.selectedTotalFormatted || "").trim(),
                 totalOutstandingFormatted: String(item.totalOutstandingFormatted || payload?.grandTotalFormatted || totals?.grandTotalFormatted || "").trim(),
                 noteLog: normalizeNoteLog(item.noteLog),
+                versionHistory: normalizeStatementVersionHistory(item.versionHistory),
                 payload
             };
         })
@@ -4016,6 +4023,30 @@ function normalizeStatementExports(items) {
         });
 
     return normalizedItems.sort(compareStatementExports);
+}
+
+function normalizeStatementVersionHistory(entries) {
+    if (!Array.isArray(entries)) {
+        return [];
+    }
+
+    return entries
+        .filter(entry => entry && typeof entry === "object")
+        .map((entry, index) => {
+            const payload = entry.payload && typeof entry.payload === "object"
+                ? window.StatementOfAccount.normalizeStatementPayload(entry.payload)
+                : null;
+            return {
+                id: String(entry.id || `statement-version-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`),
+                createdAt: String(entry.createdAt || new Date().toISOString()),
+                reason: String(entry.reason || "Date update").trim() || "Date update",
+                statementDateInput: String(entry.statementDateInput || payload?.statementDateInput || payload?.generatedIsoDate || "").slice(0, 10),
+                signatureDateInput: String(entry.signatureDateInput || payload?.signatureDateInput || payload?.generatedIsoDate || "").slice(0, 10),
+                payload
+            };
+        })
+        .filter(entry => entry.payload)
+        .sort((left, right) => Date.parse(right.createdAt || 0) - Date.parse(left.createdAt || 0));
 }
 
 function parseStatementReferenceSequence(referenceNumber) {
@@ -5738,6 +5769,63 @@ function getEditingStatementExport() {
     return state.statementExports.find(entry => entry.id === state.editingStatementExportId) || null;
 }
 
+function normalizeDateInputValue(value) {
+    const normalizedValue = String(value || "").trim();
+    const dateOnlyMatch = normalizedValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dateOnlyMatch) {
+        return normalizedValue;
+    }
+
+    const parsedDate = new Date(normalizedValue);
+    if (Number.isNaN(parsedDate.getTime())) {
+        return new Date().toISOString().slice(0, 10);
+    }
+
+    return parsedDate.toISOString().slice(0, 10);
+}
+
+function getStatementPayloadDateInput(payload = {}, fieldName = "statementDateInput") {
+    return normalizeDateInputValue(payload[fieldName] || payload.generatedIsoDate || new Date().toISOString());
+}
+
+function formatStatementDateInput(dateInput) {
+    return formatDisplayDate(normalizeDateInputValue(dateInput));
+}
+
+function formatSignatureDateInput(dateInput) {
+    const parts = normalizeDateInputValue(dateInput).split("-");
+    return `${parts[1]} / ${parts[2]} / ${parts[0].slice(2)}`;
+}
+
+function getStatementDateChangeReason(previousPayload = {}, nextPayload = {}) {
+    const previousStatementDate = getStatementPayloadDateInput(previousPayload, "statementDateInput");
+    const previousSignatureDate = getStatementPayloadDateInput(previousPayload, "signatureDateInput");
+    const nextStatementDate = getStatementPayloadDateInput(nextPayload, "statementDateInput");
+    const nextSignatureDate = getStatementPayloadDateInput(nextPayload, "signatureDateInput");
+    const changedLabels = [];
+
+    if (previousStatementDate !== nextStatementDate) {
+        changedLabels.push(`Statement date ${formatStatementDateInput(previousStatementDate)} to ${formatStatementDateInput(nextStatementDate)}`);
+    }
+    if (previousSignatureDate !== nextSignatureDate) {
+        changedLabels.push(`Signature date ${formatStatementDateInput(previousSignatureDate)} to ${formatStatementDateInput(nextSignatureDate)}`);
+    }
+
+    return changedLabels.join("; ");
+}
+
+function createStatementVersionSnapshot(statement, reason) {
+    const payload = window.StatementOfAccount.normalizeStatementPayload(statement.payload || {});
+    return {
+        id: `statement-version-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        createdAt: new Date().toISOString(),
+        reason: reason || "Date update",
+        statementDateInput: getStatementPayloadDateInput(payload, "statementDateInput"),
+        signatureDateInput: getStatementPayloadDateInput(payload, "signatureDateInput"),
+        payload
+    };
+}
+
 function buildStatementEditRowMarkup(row) {
     return `
         <article class="statement-edit-row" data-statement-row-id="${escapeHtml(String(row.id))}">
@@ -5848,6 +5936,10 @@ function collectStatementEditPayload() {
 
     return window.StatementOfAccount.normalizeStatementPayload({
         ...statement.payload,
+        statementDateInput: getStatementPayloadDateInput({ statementDateInput: elements.statementEditStatementDateInput?.value || statement.payload.statementDateInput || statement.payload.generatedIsoDate }, "statementDateInput"),
+        signatureDateInput: getStatementPayloadDateInput({ signatureDateInput: elements.statementEditSignatureDateInput?.value || statement.payload.signatureDateInput || statement.payload.generatedIsoDate }, "signatureDateInput"),
+        generatedDate: formatStatementDateInput(elements.statementEditStatementDateInput?.value || statement.payload.statementDateInput || statement.payload.generatedIsoDate),
+        signatureDateFormatted: formatSignatureDateInput(elements.statementEditSignatureDateInput?.value || statement.payload.signatureDateInput || statement.payload.generatedIsoDate),
         rows,
         deductions,
         statementNote: elements.statementEditNoteInput.value.trim()
@@ -5879,6 +5971,33 @@ function syncStatementEditTotalsUi() {
     `;
 }
 
+function renderStatementVersionHistory(statement) {
+    if (!elements.statementEditVersionHistory) {
+        return;
+    }
+
+    const history = normalizeStatementVersionHistory(statement.versionHistory || []);
+    elements.statementEditVersionHistory.innerHTML = `
+        <div class="statement-edit-history-head">
+            <strong>Version History</strong>
+            <span>${history.length ? "Restore a date-change snapshot." : "No manual date changes saved yet."}</span>
+        </div>
+        ${history.length ? `
+            <div class="statement-edit-history-list">
+                ${history.map(entry => `
+                    <article class="statement-edit-history-item">
+                        <div>
+                            <strong>${escapeHtml(formatPrintedDate(entry.createdAt))}</strong>
+                            <span>${escapeHtml(entry.reason || "Date update")}</span>
+                        </div>
+                        <button class="statement-edit-restore-btn" type="button" data-statement-version-restore="${escapeHtml(entry.id)}">Restore</button>
+                    </article>
+                `).join("")}
+            </div>
+        ` : ""}
+    `;
+}
+
 function renderStatementEditModal() {
     const statement = getEditingStatementExport();
     if (!statement) {
@@ -5907,9 +6026,16 @@ function renderStatementEditModal() {
             <strong>${escapeHtml(String(payload.rows.length))}</strong>
         </article>
     `;
+    if (elements.statementEditStatementDateInput) {
+        elements.statementEditStatementDateInput.value = getStatementPayloadDateInput(payload, "statementDateInput");
+    }
+    if (elements.statementEditSignatureDateInput) {
+        elements.statementEditSignatureDateInput.value = getStatementPayloadDateInput(payload, "signatureDateInput");
+    }
     elements.statementEditRows.innerHTML = payload.rows.map(buildStatementEditRowMarkup).join("");
     elements.statementEditDeductions.innerHTML = payload.deductions.map(buildStatementEditDeductionMarkup).join("");
     elements.statementEditNoteInput.value = payload.statementNote || "";
+    renderStatementVersionHistory(statement);
     syncStatementEditTotalsUi();
 }
 
@@ -6007,12 +6133,65 @@ async function propagateStatementDeductionPayments(payload, statementRef) {
     renderPaymentHistoryPanel();
 }
 
+async function handleStatementVersionHistoryClick(event) {
+    const restoreButton = event.target.closest("[data-statement-version-restore]");
+    if (!restoreButton) {
+        return;
+    }
+
+    const statement = getEditingStatementExport();
+    if (!statement) {
+        return;
+    }
+
+    const version = normalizeStatementVersionHistory(statement.versionHistory || [])
+        .find(entry => entry.id === restoreButton.dataset.statementVersionRestore);
+    if (!version) {
+        return;
+    }
+
+    if (!window.confirm(`Restore statement ${statement.referenceNumber || ""} to the version from ${formatPrintedDate(version.createdAt)}?`)) {
+        return;
+    }
+
+    const currentPayload = collectStatementEditPayload() || window.StatementOfAccount.normalizeStatementPayload(statement.payload);
+    const restoreReason = `Restored version from ${formatPrintedDate(version.createdAt)}`;
+    const restoredStatement = {
+        ...statement,
+        vendorName: version.payload.vendorName || statement.vendorName || BRAND.name,
+        referenceNumber: version.payload.referenceNumber || statement.referenceNumber,
+        clientName: version.payload.clientName || statement.clientName,
+        rowCount: version.payload.rows.length,
+        totalSelectedFormatted: version.payload.totalSelectedFormatted,
+        totalOutstandingFormatted: version.payload.grandTotalFormatted,
+        versionHistory: normalizeStatementVersionHistory([
+            createStatementVersionSnapshot({ ...statement, payload: currentPayload }, restoreReason),
+            ...(statement.versionHistory || [])
+        ]).slice(0, 20),
+        payload: version.payload
+    };
+
+    await saveStatementExportsState(state.statementExports.map(entry => (
+        entry.id === statement.id ? restoredStatement : entry
+    )));
+    state.editingStatementExportId = statement.id;
+    renderStatementEditModal();
+    setImportStatus("Statement version restored.");
+}
+
 async function saveStatementEdit(options = {}) {
     const statement = getEditingStatementExport();
     const payload = collectStatementEditPayload();
     if (!statement || !payload) {
         return;
     }
+    const dateChangeReason = getStatementDateChangeReason(statement.payload || {}, payload);
+    const versionHistory = dateChangeReason
+        ? normalizeStatementVersionHistory([
+            createStatementVersionSnapshot(statement, dateChangeReason),
+            ...(statement.versionHistory || [])
+        ]).slice(0, 20)
+        : normalizeStatementVersionHistory(statement.versionHistory || []);
     const updatedStatement = {
         ...statement,
         vendorName: payload.vendorName || statement.vendorName || BRAND.name,
@@ -6021,6 +6200,7 @@ async function saveStatementEdit(options = {}) {
         rowCount: payload.rows.length,
         totalSelectedFormatted: payload.totalSelectedFormatted,
         totalOutstandingFormatted: payload.grandTotalFormatted,
+        versionHistory,
         payload
     };
     await saveStatementExportsState(state.statementExports.map(entry => (
@@ -10366,6 +10546,8 @@ function getStatementPayload() {
         locale: getCurrentLocale(),
         title: window.StatementOfAccount.createStatementFileName(referenceNumber, selection.clientName || "client", generatedAt),
         generatedIsoDate: generatedAt.toISOString(),
+        statementDateInput: generatedAt.toISOString().slice(0, 10),
+        signatureDateInput: generatedAt.toISOString().slice(0, 10),
         sourceInvoiceIds: selection.selectedInvoices.map(doc => String(doc.id)),
         sourceInvoices: selection.selectedInvoices.map(cloneDocumentForStatementExport).filter(Boolean),
         company: {
@@ -10378,6 +10560,7 @@ function getStatementPayload() {
         vendorName: profile.companyName || BRAND.name,
         clientName: selection.clientName || t("unknown_client"),
         generatedDate: formatPrintedDate(generatedAt),
+        signatureDateFormatted: formatSignatureDateInput(generatedAt.toISOString().slice(0, 10)),
         referenceNumber,
         currency: "USD",
         rows,

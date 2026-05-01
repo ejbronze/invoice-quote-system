@@ -1569,6 +1569,24 @@
             <div class="modal-body settings-modal-body">
                 <p class="settings-copy" id="statementEditCopy">Adjust statement rows, notes, and deductions without changing the original invoice selection.</p>
                 <div class="statement-edit-summary" id="statementEditSummary"></div>
+                <section class="statement-edit-card statement-edit-dates-card">
+                    <div class="statement-edit-card-head">
+                        <div>
+                            <strong>Statement Dates</strong>
+                            <span>Changing either date saves a restorable version before the update.</span>
+                        </div>
+                    </div>
+                    <div class="statement-edit-dates-grid">
+                        <label class="form-group statement-edit-field">
+                            <span>Statement Date</span>
+                            <input type="date" id="statementEditStatementDateInput">
+                        </label>
+                        <label class="form-group statement-edit-field">
+                            <span>Signature Date</span>
+                            <input type="date" id="statementEditSignatureDateInput">
+                        </label>
+                    </div>
+                </section>
                 <div class="statement-edit-layout">
                     <section class="statement-edit-card">
                         <div class="statement-edit-card-head">
@@ -1602,6 +1620,7 @@
                             </div>
                         </div>
                         <div class="statement-edit-totals" id="statementEditTotals"></div>
+                        <div class="statement-edit-version-history" id="statementEditVersionHistory"></div>
                     </aside>
                 </div>
                 <div class="settings-actions statement-edit-actions">
