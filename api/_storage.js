@@ -483,6 +483,25 @@ function normalizeStatementExports(items) {
         : [];
 }
 
+function normalizeImageLibraryEntry(entry) {
+    return {
+        id: String(entry.id || `libimg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+        originalFilename: String(entry.originalFilename || "image.jpg"),
+        storedFilename: String(entry.storedFilename || "image.jpg"),
+        imageUrl: String(entry.imageUrl || ""),
+        sourceType: String(entry.sourceType || "upload"),
+        status: entry.status === "Assigned" ? "Assigned" : "Uploaded",
+        assignedItemId: entry.assignedItemId || null,
+        assignedItemName: entry.assignedItemName || null,
+        uploadedAt: entry.uploadedAt || new Date().toISOString(),
+        updatedAt: entry.updatedAt || new Date().toISOString()
+    };
+}
+
+function normalizeImageLibraryEntries(entries) {
+    return Array.isArray(entries) ? entries.map(normalizeImageLibraryEntry) : [];
+}
+
 function normalizeWorkspaceState(payload) {
     return {
         userAccounts: normalizeUserAccounts(payload?.userAccounts || []),
@@ -491,7 +510,8 @@ function normalizeWorkspaceState(payload) {
         catalogItems: normalizeCatalogItems(payload?.catalogItems || []),
         statementExports: normalizeStatementExports(payload?.statementExports || []),
         sessionLogs: normalizeSessionLogs(payload?.sessionLogs || []),
-        activityLogs: normalizeActivityLogs(payload?.activityLogs || [])
+        activityLogs: normalizeActivityLogs(payload?.activityLogs || []),
+        imageLibraryEntries: normalizeImageLibraryEntries(payload?.imageLibraryEntries || [])
     };
 }
 

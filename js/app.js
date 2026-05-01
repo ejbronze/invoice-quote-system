@@ -3653,6 +3653,10 @@ function applyWorkspaceState(payload) {
     state.statementExports = normalizeStatementExports(payload?.statementExports || []);
     state.sessionLogs = normalizeSessionLogs(payload?.sessionLogs || []);
     state.activityLogs = normalizeActivityLogs(payload?.activityLogs || []);
+    if (Array.isArray(payload?.imageLibraryEntries) && payload.imageLibraryEntries.length) {
+        state.imageLibraryEntries = payload.imageLibraryEntries.map(normalizeImageLibraryEntry);
+        try { writeLocalDataset(IMAGE_LIBRARY_STORAGE_KEY, state.imageLibraryEntries); } catch (_) {}
+    }
     migrateLegacySignature();
     try { cacheWorkspaceStateLocally(); } catch (_) { /* localStorage quota — state is valid, continue */ }
     updateRuntimeModeBadge();
@@ -3718,7 +3722,9 @@ async function persistSharedWorkspaceData() {
                 catalogItems: state.catalogItems,
                 statementExports: state.statementExports,
                 sessionLogs: state.sessionLogs,
-                activityLogs: state.activityLogs
+                activityLogs: state.activityLogs,
+                // Only persist real (non-virtual) entries — assigned images live in catalogItems
+                imageLibraryEntries: state.imageLibraryEntries.filter(e => !e._virtual)
             })
         });
 
@@ -7632,6 +7638,8 @@ function getProcurementRowMarkup(row = {}) {
     const price = Number(data.unitPrice || 0);
     const qty = data.quantityTbd ? 0 : (Number.parseFloat(data.quantity) || 0);
     const lineTotal = qty > 0 && price > 0 ? (qty * price).toFixed(2) : null;
+    // Resolve image from catalog if linked — ensures catalog updates propagate here automatically
+    const effectiveImageUrl = resolveItemImage(data);
     return `
         <tr class="procurement-row${tbdClass}" data-procurement-row-id="${escapeHtml(data.id)}" data-library-item-id="${escapeHtml(data.libraryItemId)}" data-library-reference-id="${escapeHtml(data.libraryReferenceId)}" data-item-image-data-url="${escapeHtml(data.itemImageDataUrl)}">
             <td class="proc-select-col"><input type="checkbox" class="procurement-row-select" aria-label="Select row"></td>
@@ -7640,7 +7648,7 @@ function getProcurementRowMarkup(row = {}) {
                 <div class="item-desc-inner">
                     <div class="item-img-cell">
                         <input type="file" class="item-image-input" accept="image/jpeg,image/png,image/webp" hidden>
-                        <button type="button" class="item-img-btn${data.itemImageDataUrl ? " has-img" : ""}" aria-label="${data.itemImageDataUrl ? "View item image" : "Add item image"}" data-tooltip="${data.itemImageDataUrl ? "Click to view or replace image" : "Add item image"}">
+                        <button type="button" class="item-img-btn${effectiveImageUrl ? " has-img" : ""}" aria-label="${effectiveImageUrl ? "View item image" : "Add item image"}" data-tooltip="${effectiveImageUrl ? "Click to view or replace image" : "Add item image"}">
                             <span class="item-img-placeholder" aria-hidden="true">
                                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
                                     <rect x="1" y="3.5" width="14" height="9" rx="1.5"/>
@@ -7648,9 +7656,9 @@ function getProcurementRowMarkup(row = {}) {
                                     <path d="M5.5 3.5l.8-2h3.4l.8 2"/>
                                 </svg>
                             </span>
-                            <img class="item-img-thumb"${data.itemImageDataUrl ? ` src="${escapeHtml(data.itemImageDataUrl)}"` : ""} ${data.itemImageDataUrl ? "" : "hidden"} alt="Item image">
+                            <img class="item-img-thumb"${effectiveImageUrl ? ` src="${escapeHtml(effectiveImageUrl)}"` : ""} ${effectiveImageUrl ? "" : "hidden"} alt="Item image">
                             <div class="item-img-hover-preview" aria-hidden="true">
-                                <img class="item-img-hover-preview-img"${data.itemImageDataUrl ? ` src="${escapeHtml(data.itemImageDataUrl)}"` : ""} alt="">
+                                <img class="item-img-hover-preview-img"${effectiveImageUrl ? ` src="${escapeHtml(effectiveImageUrl)}"` : ""} alt="">
                             </div>
                         </button>
                     </div>
@@ -7753,7 +7761,7 @@ function handleProcurementRowsClick(event) {
     if (imgBtn) {
         const rowEl = imgBtn.closest(".procurement-row");
         if (rowEl) {
-            if (rowEl.dataset.itemImageDataUrl) {
+            if (resolveItemImage(rowEl)) {
                 openItemImagePreviewModal(rowEl);
             } else {
                 const fileInput = rowEl.querySelector(".item-image-input");
@@ -15148,7 +15156,7 @@ async function handleItemContainerClick(event) {
     if (imgBtn) {
         const itemRow = imgBtn.closest(".item-row");
         if (itemRow) {
-            if (itemRow.dataset.itemImageDataUrl) {
+            if (resolveItemImage(itemRow)) {
                 openItemImagePreviewModal(itemRow);
             } else {
                 const fileInput = itemRow.querySelector(".item-image-input");
@@ -15249,8 +15257,21 @@ async function handleItemImageInputChange(event) {
     }
 }
 
+// Resolves the effective image URL for a catalog-linked item or row.
+// Prefers the live catalog image (so updates propagate everywhere automatically),
+// falling back to any locally stored copy on the item/row.
+function resolveItemImage(itemOrRow) {
+    const libraryId = itemOrRow?.libraryItemId || itemOrRow?.dataset?.libraryItemId || "";
+    if (libraryId) {
+        const ci = state.catalogItems.find(c => c.id === libraryId && !c.archived);
+        if (ci) return ci.itemImageDataUrl || ci.imageDataUrl || "";
+    }
+    return itemOrRow?.itemImageDataUrl || itemOrRow?.imageDataUrl
+        || itemOrRow?.dataset?.itemImageDataUrl || "";
+}
+
 function syncItemImageUI(row) {
-    const imageDataUrl = row?.dataset?.itemImageDataUrl || "";
+    const imageDataUrl = resolveItemImage(row);
     const btn = row.querySelector(".item-img-btn");
     const thumb = row.querySelector(".item-img-thumb");
     const hoverPreviewImg = row.querySelector(".item-img-hover-preview-img");
@@ -15364,7 +15385,7 @@ function updateItemSummary(row) {
 }
 
 function documentHasItemImages(doc) {
-    return Array.isArray(doc?.items) && doc.items.some(item => Boolean(item?.itemImageDataUrl || item?.imageDataUrl));
+    return Array.isArray(doc?.items) && doc.items.some(item => Boolean(resolveItemImage(item)));
 }
 
 function buildDocumentItemsTable(doc) {
@@ -15377,7 +15398,7 @@ function buildDocumentItemsTable(doc) {
             : "0.00");
         const formattedUnitPrice = `$${formatAmount(unitPrice)}`;
         const formattedLineTotal = formatAmount(lineTotal);
-        const itemImageUrl = item.itemImageDataUrl || item.imageDataUrl || "";
+        const itemImageUrl = resolveItemImage(item);
 
         return `
             <tr>
@@ -15451,7 +15472,7 @@ let _itemImagePreviewRow = null;
 function openItemImagePreviewModal(row) {
     _itemImagePreviewRow = row;
     const img = elements.itemImagePreviewModalImg;
-    if (img) img.src = row.dataset.itemImageDataUrl || "";
+    if (img) img.src = resolveItemImage(row);
     if (elements.itemImagePreviewModal) elements.itemImagePreviewModal.hidden = false;
 }
 
