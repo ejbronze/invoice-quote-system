@@ -83,7 +83,8 @@ const state = {
     imageLibrarySearch: "",
     imageLibraryPendingAction: null,
     imageLibraryAssignImageId: null,
-    imageLibraryAssignSelectedItemId: null
+    imageLibraryAssignSelectedItemId: null,
+    dupExclusions: []
 };
 
 const DOP_PER_USD = 59;
@@ -118,6 +119,7 @@ const ISSUE_REPORTS_STORAGE_KEY = "todosIssueReports";
 const COMPANY_PROFILE_STORAGE_KEY = "santosyncCompanyProfile";
 const CATALOG_ITEMS_STORAGE_KEY = "santosyncCatalogItems";
 const IMAGE_LIBRARY_STORAGE_KEY = "santosyncImageLibrary";
+const DUP_EXCLUSIONS_STORAGE_KEY = "santosyncDupExclusions";
 const STATEMENT_EXPORTS_STORAGE_KEY = "santosyncStatementExports";
 const SESSION_LOGS_STORAGE_KEY = "santosyncSessionLogs";
 const ACTIVITY_LOGS_STORAGE_KEY = "santosyncActivityLogs";
@@ -3603,6 +3605,7 @@ function loadLocalWorkspaceState() {
     state.issueReports = loadIssueReports();
     state.companyProfile = loadCompanyProfile();
     state.catalogItems = loadCatalogItems();
+    state.dupExclusions = readLocalDataset(DUP_EXCLUSIONS_STORAGE_KEY, []);
     state.imageLibraryEntries = readLocalDataset(IMAGE_LIBRARY_STORAGE_KEY, []);
     state.statementExports = loadStatementExports();
     state.sessionLogs = loadSessionLogs();
@@ -6440,6 +6443,28 @@ async function archiveCatalogItemFromModal() {
 
 // ── Catalog duplicate finder ───────────────────────────────────
 
+// ── Dup-exclusion helpers ──────────────────────────────────────
+
+function _dupExclusionKey(idA, idB) {
+    return [idA, idB].sort().join("::");
+}
+
+function _isDupExcluded(idA, idB) {
+    return (state.dupExclusions || []).includes(_dupExclusionKey(idA, idB));
+}
+
+function _addDupExclusions(itemId, groupItemIds) {
+    const current = state.dupExclusions || [];
+    const next = [...current];
+    for (const otherId of groupItemIds) {
+        if (otherId === itemId) continue;
+        const key = _dupExclusionKey(itemId, otherId);
+        if (!next.includes(key)) next.push(key);
+    }
+    state.dupExclusions = next;
+    writeLocalDataset(DUP_EXCLUSIONS_STORAGE_KEY, next);
+}
+
 function findCatalogDuplicates() {
     const items = state.catalogItems.filter(i => !i.archived);
     const norm = s => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
@@ -6457,6 +6482,8 @@ function findCatalogDuplicates() {
         for (let j = i + 1; j < items.length; j++) {
             const b = items[j];
             if (assigned.has(b.id)) continue;
+            if (_isDupExcluded(a.id, b.id)) continue;
+
             const nameB = norm(b.name);
             const codeB = norm(b.clientItemCode);
 
@@ -6517,6 +6544,7 @@ function renderDuplicateReviewGroups(groups) {
     if (subtitle) subtitle.textContent = `${groups.length} possible duplicate group${groups.length === 1 ? "" : "s"} found.`;
 
     body.innerHTML = groups.map((group, groupIdx) => {
+        const allGroupIds = group.map(i => i.id).join(",");
         const itemCards = group.map((item, itemIdx) => {
             const radioName = `dup-master-${groupIdx}`;
             const metaRows = [
@@ -6529,7 +6557,7 @@ function renderDuplicateReviewGroups(groups) {
                 item.notes ? `<span class="dup-card-meta-row dup-card-notes"><strong>Notes</strong> ${escapeHtml(item.notes.length > 80 ? item.notes.slice(0, 80) + "…" : item.notes)}</span>` : ""
             ].filter(Boolean).join("");
             return `
-                <div class="dup-item-card">
+                <div class="dup-item-card" data-dup-item-id="${escapeHtml(item.id)}">
                     <label class="dup-item-card-inner">
                         <input type="radio" name="${escapeHtml(radioName)}" value="${escapeHtml(item.id)}" ${itemIdx === 0 ? "checked" : ""} class="dup-master-radio">
                         <div class="dup-item-card-body">
@@ -6540,25 +6568,35 @@ function renderDuplicateReviewGroups(groups) {
                             <div class="dup-item-meta">${metaRows || "<span class='dup-card-meta-row'>No additional data</span>"}</div>
                         </div>
                     </label>
-                    <button type="button" class="dup-view-btn" data-dup-view-item-id="${escapeHtml(item.id)}" data-tooltip="View full item details" aria-label="View details for ${escapeHtml(item.name)}">
-                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg>
-                        Details
-                    </button>
+                    <div class="dup-card-actions">
+                        <button type="button" class="dup-card-action-btn" data-dup-action="view" data-dup-item-id="${escapeHtml(item.id)}" data-tooltip="View full item details" aria-label="View details">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg>
+                            Details
+                        </button>
+                        <button type="button" class="dup-card-action-btn" data-dup-action="not-dup" data-dup-item-id="${escapeHtml(item.id)}" data-dup-group-ids="${escapeHtml(allGroupIds)}" data-tooltip="Keep in library but exclude from this duplicate group" aria-label="Not a duplicate">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>
+                            Not a Duplicate
+                        </button>
+                        <button type="button" class="dup-card-action-btn dup-card-action-btn--danger" data-dup-action="delete" data-dup-item-id="${escapeHtml(item.id)}" data-tooltip="Permanently remove and re-link its documents to the selected master" aria-label="Delete item">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4h11M6 4V2.5h4V4M4 4l.8 9.5h6.4L12 4"/><line x1="6.5" y1="7" x2="6.5" y2="11"/><line x1="9.5" y1="7" x2="9.5" y2="11"/></svg>
+                            Delete Item
+                        </button>
+                    </div>
                 </div>
             `;
         }).join("");
 
         return `
-            <div class="dup-group" data-group-idx="${groupIdx}">
+            <div class="dup-group" data-group-idx="${groupIdx}" data-group-ids="${escapeHtml(allGroupIds)}">
                 <div class="dup-group-head">
                     <span class="dup-group-label">Possible Duplicate Group ${groupIdx + 1}</span>
                     <span class="dup-group-count">${group.length} items</span>
                 </div>
-                <p class="dup-group-hint">Select the item to keep as the master. Others will be archived.</p>
+                <p class="dup-group-hint">Select the master to keep. Use <strong>Not a Duplicate</strong> to exclude an item from the group, or <strong>Delete Item</strong> to permanently remove it and re-link its documents to the selected master.</p>
                 <div class="dup-group-cards">${itemCards}</div>
                 <div class="dup-group-actions">
                     <button type="button" class="btn btn-secondary btn-sm dup-skip-btn" data-group-idx="${groupIdx}">Skip Group</button>
-                    <button type="button" class="btn btn-primary btn-sm dup-merge-btn" data-group-idx="${groupIdx}" data-item-ids="${escapeHtml(group.map(i => i.id).join(","))}">Merge — Archive Duplicates</button>
+                    <button type="button" class="btn btn-primary btn-sm dup-merge-btn" data-group-idx="${groupIdx}" data-item-ids="${escapeHtml(allGroupIds)}">Merge — Archive Duplicates</button>
                 </div>
             </div>
         `;
@@ -6569,21 +6607,58 @@ function renderDuplicateReviewGroups(groups) {
 }
 
 function handleDuplicateReviewClick(event) {
-    const viewBtn = event.target.closest(".dup-view-btn");
-    if (viewBtn) {
-        const itemId = viewBtn.dataset.dupViewItemId;
-        const item = itemId ? state.catalogItems.find(i => i.id === itemId) : null;
-        if (item) openCatalogDetailsModal(item);
+    const actionBtn = event.target.closest("[data-dup-action]");
+    if (actionBtn) {
+        const action = actionBtn.dataset.dupAction;
+        const itemId = actionBtn.dataset.dupItemId;
+        const groupEl = actionBtn.closest(".dup-group");
+
+        if (action === "view") {
+            const item = state.catalogItems.find(i => i.id === itemId);
+            if (item) openCatalogDetailsModal(item);
+            return;
+        }
+
+        if (action === "not-dup") {
+            const groupIds = (actionBtn.dataset.dupGroupIds || "").split(",").filter(Boolean);
+            _addDupExclusions(itemId, groupIds);
+            _dupRemoveCardFromGroup(groupEl, itemId);
+            return;
+        }
+
+        if (action === "delete") {
+            const masterRadio = groupEl?.querySelector(".dup-master-radio:checked");
+            const masterId = masterRadio?.value;
+
+            if (masterId === itemId) {
+                window.alert("This item is currently selected as the master.\nSelect a different item as master before deleting this one.");
+                return;
+            }
+
+            const item = state.catalogItems.find(i => i.id === itemId);
+            if (!item) return;
+
+            const master = masterId ? state.catalogItems.find(i => i.id === masterId) : null;
+            const refCount = state.documents.reduce((n, doc) =>
+                n + (doc.items || []).filter(r => r.libraryItemId === itemId).length, 0);
+
+            const refNote = refCount > 0
+                ? `\n\n${refCount} document line item${refCount !== 1 ? "s" : ""} referencing this item will be re-linked to "${master?.name || "the master"}" (pricing will not change).`
+                : "";
+
+            if (!window.confirm(`Permanently delete "${item.name}" from the catalog?${refNote}\n\nThis cannot be undone.`)) return;
+
+            void _deleteDupItem(itemId, masterId, groupEl);
+            return;
+        }
+
         return;
     }
 
     const skipBtn = event.target.closest(".dup-skip-btn");
     if (skipBtn) {
         skipBtn.closest(".dup-group")?.remove();
-        if (!elements.catalogDuplicateBody?.querySelector(".dup-group")) {
-            if (elements.catalogDuplicateSubtitle) elements.catalogDuplicateSubtitle.textContent = "All groups reviewed.";
-            elements.catalogDuplicateBody.innerHTML = `<div class="empty-state compact-empty-state"><p>All duplicate groups reviewed.</p></div>`;
-        }
+        _syncDupSubtitleIfEmpty();
         return;
     }
 
@@ -6607,12 +6682,94 @@ function handleDuplicateReviewClick(event) {
 
         mergeCatalogDuplicates(masterId, duplicateIds).then(() => {
             groupEl?.remove();
-            if (!elements.catalogDuplicateBody?.querySelector(".dup-group")) {
-                if (elements.catalogDuplicateSubtitle) elements.catalogDuplicateSubtitle.textContent = "All groups resolved.";
-                elements.catalogDuplicateBody.innerHTML = `<div class="empty-state compact-empty-state"><p>All duplicate groups resolved.</p></div>`;
-            }
+            _syncDupSubtitleIfEmpty();
         });
     }
+}
+
+function _syncDupSubtitleIfEmpty() {
+    if (!elements.catalogDuplicateBody?.querySelector(".dup-group")) {
+        if (elements.catalogDuplicateSubtitle) elements.catalogDuplicateSubtitle.textContent = "All groups resolved.";
+        if (elements.catalogDuplicateBody) elements.catalogDuplicateBody.innerHTML = `<div class="empty-state compact-empty-state"><p>All duplicate groups resolved.</p></div>`;
+    }
+}
+
+function _dupRemoveCardFromGroup(groupEl, itemId) {
+    if (!groupEl) return;
+    const card = groupEl.querySelector(`[data-dup-item-id="${CSS.escape(itemId)}"]`);
+    card?.remove();
+
+    const remaining = groupEl.querySelectorAll(".dup-item-card");
+    if (remaining.length < 2) {
+        groupEl.remove();
+        _syncDupSubtitleIfEmpty();
+        return;
+    }
+
+    // Update group item count label
+    const countEl = groupEl.querySelector(".dup-group-count");
+    if (countEl) countEl.textContent = `${remaining.length} items`;
+
+    // Update the merge button's data-item-ids to reflect remaining items
+    const mergeBtn = groupEl.querySelector(".dup-merge-btn");
+    if (mergeBtn) {
+        const newIds = Array.from(remaining).map(c => c.dataset.dupItemId).filter(Boolean);
+        mergeBtn.dataset.itemIds = newIds.join(",");
+    }
+
+    // If the deleted card held the checked radio, check the first remaining one
+    const anyChecked = groupEl.querySelector(".dup-master-radio:checked");
+    if (!anyChecked) {
+        const firstRadio = groupEl.querySelector(".dup-master-radio");
+        if (firstRadio) firstRadio.checked = true;
+    }
+}
+
+async function rereferenceDeletedItemInDocuments(deletedId, masterId) {
+    const master = state.catalogItems.find(i => i.id === masterId);
+    if (!master) return;
+
+    let anyChanged = false;
+    const nextDocuments = state.documents.map(doc => {
+        if (!doc.items || !doc.items.length) return doc;
+        let docChanged = false;
+        const nextItems = doc.items.map(item => {
+            if (item.libraryItemId !== deletedId) return item;
+            docChanged = true;
+            return {
+                ...item,
+                libraryItemId: masterId,
+                libraryReferenceId: master.referenceId || ""
+            };
+        });
+        if (!docChanged) return doc;
+        anyChanged = true;
+        return { ...doc, items: nextItems };
+    });
+
+    if (anyChanged) {
+        await saveDocumentsToServer(nextDocuments);
+    }
+}
+
+async function _deleteDupItem(itemId, masterId, groupEl) {
+    // Re-link documents first (before archiving, so we can still find the item)
+    if (masterId) {
+        await rereferenceDeletedItemInDocuments(itemId, masterId);
+    }
+
+    // Archive the catalog item
+    const next = state.catalogItems.map(item =>
+        item.id === itemId
+            ? { ...item, archived: true, dateUpdated: new Date().toISOString() }
+            : item
+    );
+    await saveCatalogItems(next);
+
+    const deletedItem = state.catalogItems.find(i => i.id === itemId);
+    setImportStatus(`"${deletedItem?.name || itemId}" deleted from catalog.`);
+
+    _dupRemoveCardFromGroup(groupEl, itemId);
 }
 
 async function mergeCatalogDuplicates(masterId, duplicateIds) {
