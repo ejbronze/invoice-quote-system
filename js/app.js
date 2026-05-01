@@ -3648,8 +3648,13 @@ function loadLocalWorkspaceState() {
 }
 
 function cacheWorkspaceStateLocally() {
-    // Strip images before caching — server is source of truth; localStorage is a lightweight perf cache
-    const catalogItemsForCache = state.catalogItems.map(item => ({ ...item, itemImageDataUrl: "" }));
+    // Strip inline data-URL images before caching — server/Blob is source of truth.
+    // Blob URLs (https://…) are kept since they're tiny and load fast.
+    const catalogItemsForCache = state.catalogItems.map(item => ({
+        ...item,
+        itemImageDataUrl: (item.itemImageDataUrl || "").startsWith("data:") ? "" : (item.itemImageDataUrl || ""),
+        itemImages: (Array.isArray(item.itemImages) ? item.itemImages : []).filter(u => u && !String(u).startsWith("data:"))
+    }));
 
     // Size guard: skip entirely if stripped payload would exceed ~4MB
     const sizeCheckPayload = JSON.stringify({
@@ -3683,7 +3688,24 @@ function applyWorkspaceState(payload) {
     state.userAccounts = normalizeUserAccounts(payload?.userAccounts || []);
     state.issueReports = normalizeIssueReports(payload?.issueReports || []);
     state.companyProfile = normalizeCompanyProfile(payload?.companyProfile || DEFAULT_COMPANY_PROFILE);
-    state.catalogItems = normalizeCatalogItems(payload?.catalogItems || []);
+
+    // Merge server catalog with current in-memory catalog: if the server item has no images
+    // but the in-memory item does (blob URL or data URL), keep the in-memory image.
+    // This protects against the round-trip stripping images for items just saved.
+    const incomingItems = normalizeCatalogItems(payload?.catalogItems || []);
+    const currentById = new Map(state.catalogItems.map(c => [c.id, c]));
+    state.catalogItems = incomingItems.map(incoming => {
+        const current = currentById.get(incoming.id);
+        if (!current) return incoming;
+        const incomingHasImages = (Array.isArray(incoming.itemImages) && incoming.itemImages.length) || incoming.itemImageDataUrl;
+        if (incomingHasImages) return incoming;
+        // Server has no images for this item — restore from the in-memory copy
+        return {
+            ...incoming,
+            itemImages: current.itemImages,
+            itemImageDataUrl: current.itemImageDataUrl
+        };
+    });
     state.statementExports = normalizeStatementExports(payload?.statementExports || []);
     state.sessionLogs = normalizeSessionLogs(payload?.sessionLogs || []);
     state.activityLogs = normalizeActivityLogs(payload?.activityLogs || []);
@@ -3747,13 +3769,21 @@ async function persistSharedWorkspaceData() {
     }
 
     try {
+        // Strip any remaining inline data-URL images before posting — blob URLs are kept.
+        // This guards against oversized request bodies in case old items haven't been re-saved yet.
+        const catalogItemsForServer = state.catalogItems.map(item => ({
+            ...item,
+            itemImageDataUrl: (item.itemImageDataUrl || "").startsWith("data:") ? "" : (item.itemImageDataUrl || ""),
+            itemImages: (Array.isArray(item.itemImages) ? item.itemImages : []).filter(u => u && !String(u).startsWith("data:"))
+        }));
+
         const payload = await requestJSON("/api/workspace", {
             method: "POST",
             body: JSON.stringify({
                 userAccounts: state.userAccounts,
                 issueReports: state.issueReports,
                 companyProfile: state.companyProfile,
-                catalogItems: state.catalogItems,
+                catalogItems: catalogItemsForServer,
                 statementExports: state.statementExports,
                 sessionLogs: state.sessionLogs,
                 activityLogs: state.activityLogs,
@@ -6418,6 +6448,10 @@ async function saveCatalogItemFromModal() {
         return;
     }
 
+    // Upload any data-URL images to Vercel Blob so the workspace JSON stays small.
+    const rawImages = Array.isArray(state.pendingCatalogItemImages) ? state.pendingCatalogItemImages : [];
+    const resolvedImages = await Promise.all(rawImages.map(img => uploadImageToBlob(img)));
+
     const item = {
         id: state.editingCatalogItemId || `catalog-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         referenceId: state.editingCatalogItemId
@@ -6445,10 +6479,9 @@ async function saveCatalogItemFromModal() {
         country: elements.catalogItemCountryInput.value.trim(),
         tags: parseTags(elements.catalogItemTagsInput.value),
         archived: false,
-        itemImages: Array.isArray(state.pendingCatalogItemImages) ? state.pendingCatalogItemImages : [],
+        itemImages: resolvedImages,
         itemImageDataUrl: (() => {
-            const imgs = Array.isArray(state.pendingCatalogItemImages) ? state.pendingCatalogItemImages : [];
-            if (imgs.length) return imgs[0];
+            if (resolvedImages.length) return resolvedImages[0];
             if (state.pendingCatalogItemImageDataUrl != null) return state.pendingCatalogItemImageDataUrl;
             if (state.editingCatalogItemId) {
                 const existing = state.catalogItems.find(e => e.id === state.editingCatalogItemId);
@@ -12750,6 +12783,22 @@ async function requestJSON(url, options = {}) {
     }
 
     return payload;
+}
+
+// Uploads a base64 data URL image to Vercel Blob and returns the public URL.
+// Falls back to the original data URL on any failure so callers never lose the image.
+async function uploadImageToBlob(dataUrl) {
+    if (!dataUrl || !dataUrl.startsWith("data:")) return dataUrl;
+    if (state.workspaceDataMode !== "server") return dataUrl;
+    try {
+        const result = await requestJSON("/api/upload-image", {
+            method: "POST",
+            body: JSON.stringify({ imageDataUrl: dataUrl, filename: "catalog-image.jpg" })
+        });
+        return (typeof result.url === "string" && result.url) ? result.url : dataUrl;
+    } catch (_) {
+        return dataUrl;
+    }
 }
 
 function normalizePaymentStatus(status) {

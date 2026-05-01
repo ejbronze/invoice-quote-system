@@ -762,6 +762,9 @@ function getDefaultClients() {
 
 module.exports = {
     DEFAULT_COMPANY_PROFILE,
+    getBlobToken,
+    getBlobAccessMode,
+    isLocalSandboxMode,
     getDefaultClients,
     normalizeClients,
     normalizeCompanyProfile,
