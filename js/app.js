@@ -2635,6 +2635,10 @@ function bindEvents() {
             renderCatalog();
         }
     });
+    document.getElementById("catalogDevBannerClose")?.addEventListener("click", () => {
+        const banner = document.getElementById("catalogDevBanner");
+        if (banner) banner.hidden = true;
+    });
     // Image Library
     elements.openImageLibraryBtn?.addEventListener("click", openImageLibrary);
     elements.closeImageLibraryBtn?.addEventListener("click", closeImageLibrary);
@@ -4865,6 +4869,8 @@ function setActivePage(page) {
         renderNotesPage();
     } else if (state.activePage === "catalog") {
         renderCatalog();
+        const devBanner = document.getElementById("catalogDevBanner");
+        if (devBanner) devBanner.hidden = false;
     }
     syncPageNavigation();
     closeTopbarMenu();
@@ -4891,6 +4897,8 @@ function applyPageState() {
 function openCatalogPage() {
     setActivePage("catalog");
     renderCatalog();
+    const banner = document.getElementById("catalogDevBanner");
+    if (banner) banner.hidden = false;
 }
 
 function openStatementsPage() {
@@ -6514,22 +6522,29 @@ function renderDuplicateReviewGroups(groups) {
             const metaRows = [
                 item.itemNumber ? `<span class="dup-card-meta-row"><strong>Item #</strong> ${escapeHtml(item.itemNumber)}</span>` : "",
                 item.clientItemCode ? `<span class="dup-card-meta-row"><strong>Client Code</strong> ${escapeHtml(item.clientItemCode)}</span>` : "",
+                item.brand ? `<span class="dup-card-meta-row"><strong>Brand</strong> ${escapeHtml(item.brand)}</span>` : "",
                 item.supplier ? `<span class="dup-card-meta-row"><strong>Supplier</strong> ${escapeHtml(item.supplier)}</span>` : "",
                 item.unit ? `<span class="dup-card-meta-row"><strong>Unit</strong> ${escapeHtml(item.unit)}</span>` : "",
                 (item.sellPrice || item.price) ? `<span class="dup-card-meta-row"><strong>Price</strong> ${escapeHtml(formatCurrency(item.sellPrice || item.price || 0))}</span>` : "",
                 item.notes ? `<span class="dup-card-meta-row dup-card-notes"><strong>Notes</strong> ${escapeHtml(item.notes.length > 80 ? item.notes.slice(0, 80) + "…" : item.notes)}</span>` : ""
             ].filter(Boolean).join("");
             return `
-                <label class="dup-item-card">
-                    <input type="radio" name="${escapeHtml(radioName)}" value="${escapeHtml(item.id)}" ${itemIdx === 0 ? "checked" : ""} class="dup-master-radio">
-                    <div class="dup-item-card-body">
-                        <div class="dup-item-card-head">
-                            <strong class="dup-item-name">${escapeHtml(item.name)}</strong>
-                            <span class="dup-item-ref">${escapeHtml(item.referenceId || "")}</span>
+                <div class="dup-item-card">
+                    <label class="dup-item-card-inner">
+                        <input type="radio" name="${escapeHtml(radioName)}" value="${escapeHtml(item.id)}" ${itemIdx === 0 ? "checked" : ""} class="dup-master-radio">
+                        <div class="dup-item-card-body">
+                            <div class="dup-item-card-head">
+                                <strong class="dup-item-name">${escapeHtml(item.name)}</strong>
+                                <span class="dup-item-ref">${escapeHtml(item.referenceId || "")}</span>
+                            </div>
+                            <div class="dup-item-meta">${metaRows || "<span class='dup-card-meta-row'>No additional data</span>"}</div>
                         </div>
-                        <div class="dup-item-meta">${metaRows || "<span class='dup-card-meta-row'>No additional data</span>"}</div>
-                    </div>
-                </label>
+                    </label>
+                    <button type="button" class="dup-view-btn" data-dup-view-item-id="${escapeHtml(item.id)}" data-tooltip="View full item details" aria-label="View details for ${escapeHtml(item.name)}">
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg>
+                        Details
+                    </button>
+                </div>
             `;
         }).join("");
 
@@ -6549,11 +6564,19 @@ function renderDuplicateReviewGroups(groups) {
         `;
     }).join("");
 
-    body.addEventListener("click", handleDuplicateReviewClick, { once: true });
+    body.removeEventListener("click", handleDuplicateReviewClick);
     body.addEventListener("click", handleDuplicateReviewClick);
 }
 
 function handleDuplicateReviewClick(event) {
+    const viewBtn = event.target.closest(".dup-view-btn");
+    if (viewBtn) {
+        const itemId = viewBtn.dataset.dupViewItemId;
+        const item = itemId ? state.catalogItems.find(i => i.id === itemId) : null;
+        if (item) openCatalogDetailsModal(item);
+        return;
+    }
+
     const skipBtn = event.target.closest(".dup-skip-btn");
     if (skipBtn) {
         skipBtn.closest(".dup-group")?.remove();
@@ -6567,8 +6590,7 @@ function handleDuplicateReviewClick(event) {
     const mergeBtn = event.target.closest(".dup-merge-btn");
     if (mergeBtn) {
         const groupEl = mergeBtn.closest(".dup-group");
-        const groupIdx = mergeBtn.dataset.groupIdx;
-        const masterRadio = groupEl?.querySelector(`.dup-master-radio:checked`);
+        const masterRadio = groupEl?.querySelector(".dup-master-radio:checked");
         const masterId = masterRadio?.value;
         const allIds = (mergeBtn.dataset.itemIds || "").split(",").filter(Boolean);
         const duplicateIds = allIds.filter(id => id !== masterId);
@@ -8120,10 +8142,82 @@ function finishProcurementImport(rows, skipped, sourceLabel) {
         window.alert(`No items found in the ${sourceLabel}. Make sure the file has an 'Item Description' column.`);
         return;
     }
-    rows.forEach(row => addProcurementRow(row));
-    const parts = [`Imported ${rows.length} row${rows.length === 1 ? "" : "s"} from ${sourceLabel}`];
-    if (skipped > 0) parts.push(`skipped ${skipped} empty row${skipped === 1 ? "" : "s"}`);
-    setImportStatus(parts.join(", ") + ".");
+
+    const existingRows = Array.from(
+        elements.procurementRowsContainer?.querySelectorAll(".procurement-row") || []
+    );
+
+    let added = 0;
+    let updated = 0;
+
+    for (const importedRow of rows) {
+        const matchEl = _findMatchingProcurementRowEl(existingRows, importedRow);
+        if (matchEl) {
+            _fillEmptyProcurementRowFields(matchEl, importedRow);
+            updated++;
+        } else {
+            addProcurementRow(importedRow);
+            added++;
+        }
+    }
+
+    refreshProcurementRowTotals();
+
+    const parts = [];
+    if (updated > 0) parts.push(`updated ${updated} existing row${updated !== 1 ? "s" : ""}`);
+    if (added > 0) parts.push(`added ${added} new row${added !== 1 ? "s" : ""}`);
+    if (skipped > 0) parts.push(`skipped ${skipped} empty row${skipped !== 1 ? "s" : ""}`);
+    setImportStatus(`${sourceLabel} import: ${parts.join(", ")}.`);
+}
+
+function _findMatchingProcurementRowEl(existingRowEls, importedRow) {
+    const norm = s => String(s || "").toLowerCase().trim().replace(/\s+/g, " ");
+    const iDesc = norm(importedRow.description);
+    const iItemNo = norm(importedRow.itemNumber);
+    const iCode = norm(importedRow.clientItemCode);
+
+    for (const rowEl of existingRowEls) {
+        const rowDesc = norm(rowEl.querySelector('[data-procurement-field="description"]')?.value);
+        const rowItemNo = norm(rowEl.querySelector('[data-procurement-field="itemNumber"]')?.value);
+        const rowCode = norm(rowEl.querySelector('[data-procurement-field="clientItemCode"]')?.value);
+
+        if (iCode && rowCode && iCode === rowCode) return rowEl;
+        if (iItemNo && rowItemNo && iItemNo === rowItemNo) return rowEl;
+        if (iDesc && rowDesc && iDesc === rowDesc) return rowEl;
+    }
+    return null;
+}
+
+function _fillEmptyProcurementRowFields(rowEl, importedRow) {
+    const fillIfEmpty = (selector, value) => {
+        if (!value && value !== 0) return;
+        const el = rowEl.querySelector(selector);
+        if (!el) return;
+        const current = String(el.value || "").trim();
+        if (!current) el.value = value;
+    };
+
+    fillIfEmpty('[data-procurement-field="brand"]', importedRow.brand);
+    fillIfEmpty('[data-procurement-field="packSize"]', importedRow.packSize);
+    fillIfEmpty('[data-procurement-field="unit"]', importedRow.unit);
+    fillIfEmpty('[data-procurement-field="leadTime"]', importedRow.leadTime);
+    fillIfEmpty('[data-procurement-field="supplier"]', importedRow.supplier);
+    fillIfEmpty('[data-procurement-field="currency"]', importedRow.currency);
+    fillIfEmpty('[data-procurement-field="notes"]', importedRow.notes);
+
+    const qtyEl = rowEl.querySelector('[data-procurement-field="quantity"]');
+    if (qtyEl && !qtyEl.disabled) {
+        const current = String(qtyEl.value || "").trim();
+        const incoming = String(importedRow.quantity || "").trim();
+        if (!current && incoming) qtyEl.value = incoming;
+    }
+
+    const priceEl = rowEl.querySelector('[data-procurement-field="unitPrice"]');
+    if (priceEl) {
+        const current = Number.parseFloat(priceEl.value) || 0;
+        const incoming = Number.parseFloat(importedRow.unitPrice) || 0;
+        if (!current && incoming) priceEl.value = incoming.toFixed(2);
+    }
 }
 
 function handleProcurementCsvImport(event) {

@@ -14932,24 +14932,52 @@ body #procurementSheetModal:not([hidden]) {
     gap: 0.55rem;
 }
 .dup-item-card {
-    display: flex;
-    gap: 0.55rem;
-    padding: 0.7rem 0.8rem;
     border: 2px solid rgba(112, 135, 176, 0.14);
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.92);
-    cursor: pointer;
     transition: border-color 0.15s, box-shadow 0.15s;
-    align-items: flex-start;
+    overflow: hidden;
 }
 .dup-item-card:has(.dup-master-radio:checked) {
     border-color: var(--accent, #2563eb);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
+.dup-item-card-inner {
+    display: flex;
+    gap: 0.55rem;
+    padding: 0.7rem 0.8rem 0.5rem;
+    cursor: pointer;
+    align-items: flex-start;
+}
 .dup-master-radio {
     margin-top: 0.15rem;
     flex-shrink: 0;
     accent-color: var(--accent, #2563eb);
+}
+.dup-view-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    width: 100%;
+    padding: 0.38rem 0.8rem;
+    border: none;
+    border-top: 1px solid rgba(112, 135, 176, 0.12);
+    background: rgba(246, 248, 255, 0.7);
+    color: var(--blue);
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+    text-align: left;
+}
+.dup-view-btn:hover {
+    background: rgba(20, 89, 217, 0.07);
+}
+.dup-view-btn svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
 }
 .dup-item-card-body {
     display: grid;
@@ -16850,6 +16878,63 @@ body #procurementSheetModal:not([hidden]) {
 
 .overview-card .page-section-heading p {
     display: none;
+}
+
+/* ── Pricing Catalog under-development banner ───────────────────────────── */
+
+.catalog-dev-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 1rem;
+    background: rgba(234, 149, 40, 0.09);
+    border: 1px solid rgba(234, 149, 40, 0.32);
+    border-radius: 10px;
+    margin-bottom: 1.25rem;
+    font-size: 0.82rem;
+    color: #7a4b00;
+    line-height: 1.4;
+}
+
+.catalog-dev-banner[hidden] {
+    display: none;
+}
+
+.catalog-dev-banner svg:first-child {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: #c47a00;
+}
+
+.catalog-dev-banner span {
+    flex: 1;
+}
+
+.catalog-dev-banner-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: none;
+    color: #a06000;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 0;
+    flex-shrink: 0;
+    opacity: 0.7;
+    transition: opacity 0.15s;
+}
+
+.catalog-dev-banner-close:hover {
+    opacity: 1;
+}
+
+.catalog-dev-banner-close svg {
+    width: 12px;
+    height: 12px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
