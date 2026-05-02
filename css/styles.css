@@ -2223,7 +2223,7 @@ body::after {
     border: 0;
     background: transparent;
     display: grid;
-    grid-template-columns: 44px minmax(0, 1.4fr) minmax(120px, 0.7fr) minmax(96px, auto);
+    grid-template-columns: 44px minmax(0, 1.4fr) minmax(0, 0.7fr) minmax(96px, auto);
     gap: 0.75rem;
     align-items: center;
     padding: 0.62rem 0.75rem;
@@ -10218,11 +10218,6 @@ body.print-window .print-preview-sheet {
         align-items: stretch;
     }
 
-    .client-row {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
     .user-row-actions {
         justify-content: stretch;
     }
@@ -10240,6 +10235,7 @@ body.print-window .print-preview-sheet {
     }
 
     .statement-export-row {
+        display: flex;
         flex-direction: row;
         align-items: center;
         gap: 0.5rem;
@@ -13634,7 +13630,7 @@ body {
     overflow-x: auto;
 }
 
-@media (max-width: 1360px) {
+@media (max-width: 640px) {
     .statement-export-row {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
@@ -13676,6 +13672,10 @@ body {
     .pricing-library-toolbar {
         gap: 0.5rem;
     }
+
+    .client-stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
 
 @media (max-width: 520px) {
@@ -13687,6 +13687,26 @@ body {
         max-width: 7rem;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+}
+
+@media (max-width: 480px) {
+    .catalog-row-trigger {
+        grid-template-columns: 38px minmax(0, 1fr) auto;
+    }
+
+    .catalog-row-meta {
+        display: none;
+    }
+
+    .overview-card,
+    .documents-page,
+    .reports-page,
+    .clients-page,
+    .settings-page,
+    .catalog-page,
+    .account-admin-page {
+        padding: 0.85rem;
     }
 }
 
