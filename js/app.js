@@ -17097,7 +17097,7 @@ function renderDashboardCatalogStrip() {
     const items = getCatalogEntries()
         .slice()
         .sort((left, right) => getCatalogUpdatedTime(right) - getCatalogUpdatedTime(left))
-        .slice(0, 10);
+        .slice(0, 5);
 
     panel.hidden = items.length === 0;
     if (!items.length) {

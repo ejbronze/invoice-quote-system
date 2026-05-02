@@ -15979,18 +15979,18 @@ body #procurementSheetModal:not([hidden]) {
 .dash-mix-card {
     display: flex;
     flex-direction: column;
-    gap: 0.8rem;
+    gap: 0.65rem;
     padding: 1rem 1.1rem !important;
 }
 
 .dash-mix-section,
 .dash-panel-section {
     display: grid;
-    gap: 0.58rem;
+    gap: 0.48rem;
 }
 
 .dash-panel-section {
-    padding-top: 0.72rem;
+    padding-top: 0.58rem;
     border-top: 1px solid rgba(100, 116, 139, 0.1);
 }
 
@@ -16018,14 +16018,14 @@ body #procurementSheetModal:not([hidden]) {
 .dash-mix-body {
     display: flex;
     align-items: center;
-    gap: 0.95rem;
-    padding: 0.05rem 0 0.12rem;
+    gap: 0.55rem;
+    padding: 0 0 0.04rem;
 }
 
 .dash-donut-svg {
     display: block;
-    width: clamp(120px, 31%, 132px);
-    height: clamp(120px, 31%, 132px);
+    width: clamp(108px, 28%, 118px);
+    height: clamp(108px, 28%, 118px);
     flex-shrink: 0;
 }
 
@@ -16071,7 +16071,7 @@ body #procurementSheetModal:not([hidden]) {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.28rem;
     min-width: 0;
 }
 
@@ -16220,10 +16220,13 @@ body #procurementSheetModal:not([hidden]) {
 .dash-catalog-strip {
     display: flex;
     align-items: center;
-    gap: 0.44rem;
+    gap: 0.5rem;
     overflow-x: auto;
     flex-wrap: nowrap;
     scrollbar-width: none;
+    padding-bottom: 2px;
+    mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
 }
 
 .dash-catalog-strip::-webkit-scrollbar {
