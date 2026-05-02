@@ -2693,8 +2693,14 @@ function bindEvents() {
             const row = state.rowImagePickerRow;
             closeRowImagePicker();
             if (item && row) {
-                const src = (Array.isArray(item.itemImages) && item.itemImages[0]) || item.itemImageDataUrl || item.imageDataUrl || "";
-                if (src) { row.dataset.itemImageDataUrl = src; syncItemImageUI(row); }
+                const src = getPrimaryCatalogImage(item);
+                if (src) {
+                    row.dataset.libraryItemId = item.id;
+                    row.dataset.libraryReferenceId = item.referenceId || "";
+                    row.dataset.itemImageDataUrl = src;
+                    syncItemImageUI(row);
+                    queueDraftAutosave();
+                }
             }
             return;
         }
@@ -2926,10 +2932,9 @@ function bindEvents() {
         const row = _itemImagePreviewRow;
         closeItemImagePreviewModal();
         if (row) {
-            row.dataset.itemImageDataUrl = "";
+            void clearRowCatalogImage(row);
             const fileInput = row.querySelector(".item-image-input");
             if (fileInput) fileInput.value = "";
-            syncItemImageUI(row);
             queueDraftAutosave();
         }
     });
@@ -3317,6 +3322,7 @@ async function init() {
     // Critical path — data load for authenticated session
     try { setSessionLoader(true); } catch (_) {}
     await bootstrapAppData();
+    void migrateWorkspaceImagesToBlob();
 
     // Non-critical post-load UI — failures here must not hide loaded data
     try {
@@ -3661,6 +3667,13 @@ function cacheWorkspaceStateLocally() {
         itemImageDataUrl: (item.itemImageDataUrl || "").startsWith("data:") ? "" : (item.itemImageDataUrl || ""),
         itemImages: (Array.isArray(item.itemImages) ? item.itemImages : []).filter(u => u && !String(u).startsWith("data:"))
     }));
+    const imageLibraryEntriesForCache = state.imageLibraryEntries
+        .filter(e => !e._virtual)
+        .map(entry => ({
+            ...entry,
+            imageUrl: (entry.imageUrl || "").startsWith("data:") ? "" : (entry.imageUrl || "")
+        }))
+        .filter(entry => entry.imageUrl);
 
     // Size guard: skip entirely if stripped payload would exceed ~4MB
     const sizeCheckPayload = JSON.stringify({
@@ -3668,6 +3681,7 @@ function cacheWorkspaceStateLocally() {
         issueReports: state.issueReports,
         companyProfile: state.companyProfile,
         catalogItems: catalogItemsForCache,
+        imageLibraryEntries: imageLibraryEntriesForCache,
         statementExports: state.statementExports,
         sessionLogs: state.sessionLogs,
         activityLogs: state.activityLogs
@@ -3682,6 +3696,7 @@ function cacheWorkspaceStateLocally() {
         writeLocalDataset(ISSUE_REPORTS_STORAGE_KEY, state.issueReports);
         writeLocalDataset(COMPANY_PROFILE_STORAGE_KEY, state.companyProfile);
         writeLocalDataset(CATALOG_ITEMS_STORAGE_KEY, catalogItemsForCache);
+        writeLocalDataset(IMAGE_LIBRARY_STORAGE_KEY, imageLibraryEntriesForCache);
         writeLocalDataset(STATEMENT_EXPORTS_STORAGE_KEY, state.statementExports);
         writeLocalDataset(SESSION_LOGS_STORAGE_KEY, state.sessionLogs);
         writeLocalDataset(ACTIVITY_LOGS_STORAGE_KEY, state.activityLogs);
@@ -3782,6 +3797,13 @@ async function persistSharedWorkspaceData() {
             itemImageDataUrl: (item.itemImageDataUrl || "").startsWith("data:") ? "" : (item.itemImageDataUrl || ""),
             itemImages: (Array.isArray(item.itemImages) ? item.itemImages : []).filter(u => u && !String(u).startsWith("data:"))
         }));
+        const imageLibraryEntriesForServer = state.imageLibraryEntries
+            .filter(e => !e._virtual)
+            .map(entry => ({
+                ...entry,
+                imageUrl: (entry.imageUrl || "").startsWith("data:") ? "" : (entry.imageUrl || "")
+            }))
+            .filter(entry => entry.imageUrl);
 
         const payload = await requestJSON("/api/workspace", {
             method: "POST",
@@ -3794,7 +3816,7 @@ async function persistSharedWorkspaceData() {
                 sessionLogs: state.sessionLogs,
                 activityLogs: state.activityLogs,
                 // Only persist real (non-virtual) entries — assigned images live in catalogItems
-                imageLibraryEntries: state.imageLibraryEntries.filter(e => !e._virtual)
+                imageLibraryEntries: imageLibraryEntriesForServer
             })
         });
 
@@ -4259,34 +4281,56 @@ async function saveCatalogItems(items) {
     await persistSharedWorkspaceData();
 }
 
-// On login, find catalog items that still have inline data-URL images and upload
-// them to Vercel Blob so they persist across the session timeout / re-login cycle.
-async function migrateCatalogImagesToBlob() {
+function hasInlineImageDataUrl(value) {
+    return typeof value === "string" && value.startsWith("data:");
+}
+
+// On login, find records that still have inline data-URL images and upload them
+// to Vercel Blob so shared workspace JSON only stores lightweight URLs.
+async function migrateWorkspaceImagesToBlob() {
     if (state.workspaceDataMode !== "server") return;
-    const itemsNeedingMigration = state.catalogItems.filter(item =>
-        (Array.isArray(item.itemImages) && item.itemImages.some(u => String(u).startsWith("data:")))
-        || (item.itemImageDataUrl && item.itemImageDataUrl.startsWith("data:"))
-    );
-    if (!itemsNeedingMigration.length) return;
+    try {
+        const hasCatalogImagesToMigrate = state.catalogItems.some(item =>
+            (Array.isArray(item.itemImages) && item.itemImages.some(hasInlineImageDataUrl))
+            || hasInlineImageDataUrl(item.itemImageDataUrl)
+            || hasInlineImageDataUrl(item.imageDataUrl)
+        );
+        const hasLibraryImagesToMigrate = state.imageLibraryEntries.some(entry =>
+            hasInlineImageDataUrl(entry.imageUrl)
+        );
+        if (!hasCatalogImagesToMigrate && !hasLibraryImagesToMigrate) return;
 
-    const migrated = await Promise.all(
-        state.catalogItems.map(async item => {
-            const hasDataUrls =
-                (Array.isArray(item.itemImages) && item.itemImages.some(u => String(u).startsWith("data:")))
-                || (item.itemImageDataUrl && item.itemImageDataUrl.startsWith("data:"));
-            if (!hasDataUrls) return item;
-            const resolvedImages = await Promise.all(
-                (Array.isArray(item.itemImages) ? item.itemImages : []).map(u => uploadImageToBlob(u))
-            );
-            const resolvedPrimary = resolvedImages[0]
-                || (item.itemImageDataUrl?.startsWith("data:") ? await uploadImageToBlob(item.itemImageDataUrl) : item.itemImageDataUrl)
-                || "";
-            return { ...item, itemImages: resolvedImages, itemImageDataUrl: resolvedPrimary };
-        })
-    );
+        const migrated = await Promise.all(
+            state.catalogItems.map(async item => {
+                const hasDataUrls =
+                    (Array.isArray(item.itemImages) && item.itemImages.some(hasInlineImageDataUrl))
+                    || hasInlineImageDataUrl(item.itemImageDataUrl)
+                    || hasInlineImageDataUrl(item.imageDataUrl);
+                if (!hasDataUrls) return item;
+                const resolvedImages = await Promise.all(
+                    (Array.isArray(item.itemImages) ? item.itemImages : []).map(u => uploadImageToBlob(u))
+                );
+                const resolvedPrimary = resolvedImages[0]
+                    || (hasInlineImageDataUrl(item.itemImageDataUrl) ? await uploadImageToBlob(item.itemImageDataUrl) : item.itemImageDataUrl)
+                    || (hasInlineImageDataUrl(item.imageDataUrl) ? await uploadImageToBlob(item.imageDataUrl) : item.imageDataUrl)
+                    || "";
+                return { ...item, imageDataUrl: "", itemImages: resolvedImages.filter(Boolean), itemImageDataUrl: resolvedPrimary };
+            })
+        );
+        const migratedImageLibraryEntries = await Promise.all(
+            state.imageLibraryEntries.map(async entry => {
+                if (!hasInlineImageDataUrl(entry.imageUrl)) return entry;
+                const imageUrl = await uploadImageToBlob(entry.imageUrl, entry.storedFilename || entry.originalFilename || "image.jpg");
+                return { ...entry, imageUrl, updatedAt: new Date().toISOString() };
+            })
+        );
 
-    state.catalogItems = normalizeCatalogItems(migrated);
-    await persistSharedWorkspaceData();
+        state.catalogItems = normalizeCatalogItems(migrated);
+        state.imageLibraryEntries = migratedImageLibraryEntries.map(normalizeImageLibraryEntry).filter(entry => entry.imageUrl);
+        await persistSharedWorkspaceData();
+    } catch (error) {
+        console.warn("[image-migration] Unable to migrate inline images:", error);
+    }
 }
 
 // Auto-syncs items from documents/procurement into the library.
@@ -4848,7 +4892,7 @@ async function unlockAccess(user) {
     setActivePage("overview");
     applyRoleAccess();
     // Background: migrate any remaining data-URL images to Vercel Blob
-    void migrateCatalogImagesToBlob();
+    void migrateWorkspaceImagesToBlob();
     applyAccessState(true);
 }
 
@@ -6534,9 +6578,25 @@ async function saveCatalogItemFromModal() {
         return;
     }
 
-    // Upload any data-URL images to Vercel Blob so the workspace JSON stays small.
+    // Upload any data-URL images so the workspace JSON stores URLs, not base64.
     const rawImages = Array.isArray(state.pendingCatalogItemImages) ? state.pendingCatalogItemImages : [];
-    const resolvedImages = await Promise.all(rawImages.map(img => uploadImageToBlob(img)));
+    const existingItem = state.editingCatalogItemId
+        ? state.catalogItems.find(e => e.id === state.editingCatalogItemId)
+        : null;
+    const existingImages = [
+        ...(Array.isArray(existingItem?.itemImages) ? existingItem.itemImages : []),
+        existingItem?.itemImageDataUrl || existingItem?.imageDataUrl || ""
+    ].filter(url => url && !hasInlineImageDataUrl(url));
+    let resolvedImages = [];
+    try {
+        resolvedImages = (await Promise.all(
+            rawImages.map((img, index) => uploadImageToBlob(img, `catalog-${Date.now()}-${index + 1}.jpg`))
+        )).filter(Boolean);
+    } catch (error) {
+        window.alert(`Image upload failed.\n\n${error.message || "Please try again."}`);
+        setCatalogItemImageStatus("Image upload failed. Try again.");
+        return;
+    }
 
     const item = {
         id: state.editingCatalogItemId || `catalog-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -6568,10 +6628,10 @@ async function saveCatalogItemFromModal() {
         itemImages: resolvedImages,
         itemImageDataUrl: (() => {
             if (resolvedImages.length) return resolvedImages[0];
-            if (state.pendingCatalogItemImageDataUrl != null) return state.pendingCatalogItemImageDataUrl;
             if (state.editingCatalogItemId) {
                 const existing = state.catalogItems.find(e => e.id === state.editingCatalogItemId);
-                return existing?.itemImageDataUrl || existing?.imageDataUrl || "";
+                const existingUrl = existing?.itemImageDataUrl || existing?.imageDataUrl || "";
+                return hasInlineImageDataUrl(existingUrl) ? "" : existingUrl;
             }
             return "";
         })()
@@ -6582,6 +6642,10 @@ async function saveCatalogItemFromModal() {
         : [item, ...state.catalogItems];
 
     await saveCatalogItems(nextItems);
+    const retainedImages = new Set(resolvedImages);
+    existingImages
+        .filter(url => !retainedImages.has(url))
+        .forEach(url => { void deleteHostedImage(url); });
     syncProcurementLibrarySelect();
     syncDocumentLibrarySelect();
     const hadImage = Boolean(item.itemImageDataUrl);
@@ -7210,7 +7274,7 @@ function skipCatalogItemCrop() {
     }
     closeCatalogItemCropModal();
     if (state.imageLibraryPendingAction) {
-        _onImageLibraryCropComplete();
+        void _onImageLibraryCropComplete();
     } else {
         if (state.pendingCatalogItemImageDataUrl && Array.isArray(state.pendingCatalogItemImages)) {
             state.pendingCatalogItemImages = [...state.pendingCatalogItemImages, state.pendingCatalogItemImageDataUrl];
@@ -7250,7 +7314,7 @@ function applyCatalogItemCrop() {
         state.pendingCatalogItemImageDataUrl = out.toDataURL("image/jpeg", 0.85);
         closeCatalogItemCropModal();
         if (state.imageLibraryPendingAction) {
-            _onImageLibraryCropComplete();
+            void _onImageLibraryCropComplete();
         } else {
             if (state.pendingCatalogItemImageDataUrl && Array.isArray(state.pendingCatalogItemImages)) {
                 state.pendingCatalogItemImages = [...state.pendingCatalogItemImages, state.pendingCatalogItemImageDataUrl];
@@ -7817,7 +7881,7 @@ function createProcurementSnapshotFromLibraryItem(item) {
         leadTime: item.leadTime,
         supplier: item.supplier || item.vendor,
         notes: item.notes,
-        itemImageDataUrl: item.itemImageDataUrl || item.imageDataUrl || "",
+        itemImageDataUrl: getPrimaryCatalogImage(item),
         itemNumber: item.itemNumber || "",
         clientItemCode: item.clientItemCode || ""
     });
@@ -8023,7 +8087,7 @@ function collectProcurementRows() {
             quantity: getValue("quantity"),
             quantityTbd,
             notes: getValue("notes"),
-            itemImageDataUrl: row.dataset.itemImageDataUrl || ""
+            itemImageDataUrl: resolveItemImage(row)
         });
     }).filter(row => row.description || row.brand || row.supplier || row.unitPrice > 0);
 }
@@ -8153,7 +8217,7 @@ function insertLibraryItemIntoDocument(item) {
     row.dataset.libraryItemId = item.id;
     row.dataset.libraryReferenceId = item.referenceId || "";
     row.dataset.priceDriver = "unit";
-    row.dataset.itemImageDataUrl = item.itemImageDataUrl || item.imageDataUrl || "";
+    row.dataset.itemImageDataUrl = getPrimaryCatalogImage(item);
     row.querySelector(".item-description").value = descriptionParts.join("\n");
     row.querySelector(".item-quantity").value = "1";
     row.querySelector(".item-unit-price").value = unitPrice.toFixed(2);
@@ -12871,19 +12935,26 @@ async function requestJSON(url, options = {}) {
     return payload;
 }
 
-// Uploads a base64 data URL image to Vercel Blob and returns the public URL.
-// Falls back to the original data URL on any failure so callers never lose the image.
-async function uploadImageToBlob(dataUrl) {
-    if (!dataUrl || !dataUrl.startsWith("data:")) return dataUrl;
-    if (state.workspaceDataMode !== "server") return dataUrl;
+// Uploads a base64 data URL image through the app upload endpoint and returns
+// the stored URL. Existing URLs pass through unchanged.
+async function uploadImageToBlob(dataUrl, filename = "catalog-image.jpg") {
+    if (!dataUrl || !dataUrl.startsWith("data:")) return dataUrl || "";
+    const result = await requestJSON("/api/upload-image", {
+        method: "POST",
+        body: JSON.stringify({ imageDataUrl: dataUrl, filename })
+    });
+    return (typeof result.url === "string" && result.url) ? result.url : "";
+}
+
+async function deleteHostedImage(url) {
+    if (!url || hasInlineImageDataUrl(url)) return;
     try {
-        const result = await requestJSON("/api/upload-image", {
+        await requestJSON("/api/delete-image", {
             method: "POST",
-            body: JSON.stringify({ imageDataUrl: dataUrl, filename: "catalog-image.jpg" })
+            body: JSON.stringify({ url })
         });
-        return (typeof result.url === "string" && result.url) ? result.url : dataUrl;
-    } catch (_) {
-        return dataUrl;
+    } catch (error) {
+        console.warn("[image-delete] cleanup failed:", error);
     }
 }
 
@@ -13893,6 +13964,22 @@ function stripDocumentImagesForCache(docs) {
     }));
 }
 
+function stripInlineDocumentImagesForServer(docs) {
+    return (Array.isArray(docs) ? docs : []).map(doc => ({
+        ...doc,
+        items: (doc.items || []).map(item => ({
+            ...item,
+            itemImageDataUrl: hasInlineImageDataUrl(item.itemImageDataUrl) ? "" : (item.itemImageDataUrl || ""),
+            imageDataUrl: hasInlineImageDataUrl(item.imageDataUrl) ? "" : (item.imageDataUrl || "")
+        })),
+        procurementItems: (doc.procurementItems || []).map(item => ({
+            ...item,
+            itemImageDataUrl: hasInlineImageDataUrl(item.itemImageDataUrl) ? "" : (item.itemImageDataUrl || ""),
+            imageDataUrl: hasInlineImageDataUrl(item.imageDataUrl) ? "" : (item.imageDataUrl || "")
+        }))
+    }));
+}
+
 async function saveDocumentsToServer(documents) {
     if (state.dataMode === "local") {
         state.documents = normalizeDocuments(documents);
@@ -13904,7 +13991,7 @@ async function saveDocumentsToServer(documents) {
     try {
         const payload = await requestJSON("/api/documents", {
             method: "POST",
-            body: JSON.stringify({ documents })
+            body: JSON.stringify({ documents: stripInlineDocumentImagesForServer(documents) })
         });
 
         state.dataMode = "server";
@@ -15442,8 +15529,7 @@ async function handleItemImageInputChange(event) {
 
     const file = imageInput.files?.[0] || null;
     if (!file) {
-        itemRow.dataset.itemImageDataUrl = "";
-        syncItemImageUI(itemRow);
+        void clearRowCatalogImage(itemRow);
         return;
     }
 
@@ -15451,9 +15537,13 @@ async function handleItemImageInputChange(event) {
     if (statusCopy) statusCopy.textContent = "Optimizing…";
 
     try {
-        itemRow.dataset.itemImageDataUrl = await readImageFileAsDataUrl(file, { maxDimension: 600, quality: 0.85 });
-        syncItemImageUI(itemRow);
-        if (statusCopy) statusCopy.textContent = "Image ready";
+        const dataUrl = await readImageFileAsDataUrl(file, { maxDimension: 600, quality: 0.85 });
+        if (statusCopy) statusCopy.textContent = "Uploading…";
+        const imageUrl = await syncRowImageToCatalog(itemRow, dataUrl);
+        if (!imageUrl) {
+            throw new Error("Image could not be saved to the catalog.");
+        }
+        if (statusCopy) statusCopy.textContent = "Synced to catalog";
         queueDraftAutosave();
     } catch (error) {
         itemRow.dataset.itemImageDataUrl = "";
@@ -15959,7 +16049,7 @@ function buildDocumentData() {
             upchargePercent: internalCost > 0 ? (((totalPrice - internalCost) / internalCost) * 100).toFixed(2) : "0.00",
             usesDopTotal: false,
             manualUnitPrice: row.dataset.priceDriver === "unit",
-            itemImageDataUrl: row.dataset.itemImageDataUrl || "",
+            itemImageDataUrl: resolveItemImage(row),
             libraryItemId: row.dataset.libraryItemId || "",
             libraryReferenceId: row.dataset.libraryReferenceId || ""
         });
@@ -16555,7 +16645,7 @@ async function persistDocument(options = {}) {
             upchargePercent: internalCost > 0 ? (((totalPrice - internalCost) / internalCost) * 100) : 0,
             usesDopTotal: false,
             manualUnitPrice: row.dataset.priceDriver === "unit",
-            itemImageDataUrl: row.dataset.itemImageDataUrl || "",
+            itemImageDataUrl: resolveItemImage(row),
             libraryItemId: row.dataset.libraryItemId || "",
             libraryReferenceId: row.dataset.libraryReferenceId || ""
         });
@@ -18897,9 +18987,9 @@ function populateFormFromDocument(doc) {
         lastItem.querySelector(".item-unit-price").value = item.unitPrice ?? item.price ?? 0;
         lastItem.dataset.priceDriver = item.manualUnitPrice ? "unit" : "total";
         lastItem.querySelector(".item-internal-cost").value = item.internalCost ?? 0;
-        lastItem.dataset.itemImageDataUrl = item.itemImageDataUrl || item.imageDataUrl || "";
         lastItem.dataset.libraryItemId = item.libraryItemId || "";
         lastItem.dataset.libraryReferenceId = item.libraryReferenceId || "";
+        lastItem.dataset.itemImageDataUrl = resolveItemImage(item);
         updateItemPricing(lastItem);
         syncItemImageUI(lastItem);
         updateItemSummary(lastItem);
@@ -18988,8 +19078,11 @@ function convertQuoteToInvoice(id) {
 // ── Storage helpers ────────────────────────────────────────────
 
 function writeImageLibraryToStorage(entries) {
-    state.imageLibraryEntries = entries;
-    writeLocalDataset(IMAGE_LIBRARY_STORAGE_KEY, entries);
+    state.imageLibraryEntries = entries
+        .map(normalizeImageLibraryEntry)
+        .filter(entry => entry.imageUrl && !hasInlineImageDataUrl(entry.imageUrl));
+    writeLocalDataset(IMAGE_LIBRARY_STORAGE_KEY, state.imageLibraryEntries);
+    void persistSharedWorkspaceData();
 }
 
 function normalizeImageLibraryEntry(entry) {
@@ -19231,17 +19324,23 @@ async function handleImageLibraryUpload(files) {
             try {
                 const dataUrl = await convertFileForImageLibrary(file);
                 const safeBase = file.name.replace(/[^a-z0-9._-]/gi, "_");
+                setImageLibraryUploadStatus(`Uploading ${processed + 1} of ${fileArray.length}…`);
+                const imageUrl = await uploadImageToBlob(dataUrl, `libimg-${Date.now()}-${safeBase}`);
+                if (!imageUrl || hasInlineImageDataUrl(imageUrl)) {
+                    throw new Error("Image storage did not return a hosted URL.");
+                }
                 newEntries.push(normalizeImageLibraryEntry({
                     id: `libimg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
                     originalFilename: file.name,
                     storedFilename: `libimg-${Date.now()}-${safeBase}`,
-                    imageUrl: dataUrl,
+                    imageUrl,
                     sourceType: "upload",
                     status: "Uploaded",
                     uploadedAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
                 }));
-            } catch (_) {
+            } catch (err) {
+                console.warn("[image-library] upload failed:", err);
                 // skip files that fail to convert
             }
             processed++;
@@ -19355,7 +19454,7 @@ function loadDynamicScript(src) {
 
 // ── Crop integration ───────────────────────────────────────────
 
-function _onImageLibraryCropComplete() {
+async function _onImageLibraryCropComplete() {
     const action = state.imageLibraryPendingAction;
     if (!action) return;
     state.imageLibraryPendingAction = null;
@@ -19364,11 +19463,22 @@ function _onImageLibraryCropComplete() {
 
     if (action.type === "new-upload") {
         const safeBase = (action.originalFilename || "image.jpg").replace(/[^a-z0-9._-]/gi, "_");
+        let imageUrl = "";
+        try {
+            setImageLibraryUploadStatus("Uploading image…");
+            imageUrl = await uploadImageToBlob(imageDataUrl, `libimg-${Date.now()}-${safeBase}`);
+            if (!imageUrl || hasInlineImageDataUrl(imageUrl)) {
+                throw new Error("Image storage did not return a hosted URL.");
+            }
+        } catch (error) {
+            setImageLibraryUploadStatus(`Upload failed: ${error.message || "Could not store image."}`);
+            return;
+        }
         const entry = normalizeImageLibraryEntry({
             id: `libimg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
             originalFilename: action.originalFilename || "image.jpg",
             storedFilename: `libimg-${Date.now()}-${safeBase}`,
-            imageUrl: imageDataUrl,
+            imageUrl,
             sourceType: "upload",
             status: "Uploaded",
             uploadedAt: new Date().toISOString(),
@@ -19379,23 +19489,185 @@ function _onImageLibraryCropComplete() {
         setTimeout(() => setImageLibraryUploadStatus(""), 2500);
         renderImageLibrary();
     } else if (action.type === "replace") {
+        let imageUrl = "";
+        try {
+            setImageLibraryUploadStatus("Uploading replacement…");
+            imageUrl = await uploadImageToBlob(imageDataUrl, `libimg-${Date.now()}-replacement.jpg`);
+            if (!imageUrl || hasInlineImageDataUrl(imageUrl)) {
+                throw new Error("Image storage did not return a hosted URL.");
+            }
+        } catch (error) {
+            setImageLibraryUploadStatus(`Replace failed: ${error.message || "Could not store image."}`);
+            return;
+        }
+        const catalogUpdates = [];
+        const replacedUrls = [];
         const updated = state.imageLibraryEntries.map(e => {
             if (e.id !== action.id) return e;
-            const next = { ...e, imageUrl: imageDataUrl, updatedAt: new Date().toISOString() };
-            if (e.assignedItemId) _updateCatalogItemImage(e.assignedItemId, imageDataUrl);
+            if (e.imageUrl && e.imageUrl !== imageUrl) replacedUrls.push(e.imageUrl);
+            const next = { ...e, imageUrl, updatedAt: new Date().toISOString() };
+            if (e.assignedItemId) catalogUpdates.push(_updateCatalogItemImage(e.assignedItemId, imageUrl));
             return next;
         });
+        await Promise.all(catalogUpdates);
         writeImageLibraryToStorage(updated);
+        replacedUrls.forEach(url => { void deleteHostedImage(url); });
+        setImageLibraryUploadStatus("Image replaced.");
+        setTimeout(() => setImageLibraryUploadStatus(""), 2500);
         renderImageLibrary();
     }
 }
 
-function _updateCatalogItemImage(itemId, imageDataUrl) {
+async function _updateCatalogItemImage(itemId, imageDataUrl) {
+    const imageUrl = hasInlineImageDataUrl(imageDataUrl)
+        ? await uploadImageToBlob(imageDataUrl, `catalog-${Date.now()}.jpg`)
+        : imageDataUrl;
+    if (!imageUrl) return "";
+    if (hasInlineImageDataUrl(imageUrl) && state.workspaceDataMode === "server") return "";
+    const replacedUrls = [];
     const next = state.catalogItems.map(item => {
         if (item.id !== itemId) return item;
-        return { ...item, itemImageDataUrl: imageDataUrl, dateUpdated: new Date().toISOString() };
+        const itemImages = Array.isArray(item.itemImages) ? [...item.itemImages] : [];
+        [itemImages[0], item.itemImageDataUrl, item.imageDataUrl]
+            .filter(url => url && url !== imageUrl && !hasInlineImageDataUrl(url))
+            .forEach(url => replacedUrls.push(url));
+        const nextImages = itemImages.length ? [imageUrl, ...itemImages.slice(1)] : [imageUrl];
+        return { ...item, imageDataUrl: "", itemImages: nextImages, itemImageDataUrl: imageUrl, dateUpdated: new Date().toISOString() };
     });
-    void saveCatalogItems(next);
+    await saveCatalogItems(next);
+    [...new Set(replacedUrls)].forEach(url => { void deleteHostedImage(url); });
+    return imageUrl;
+}
+
+function getPrimaryCatalogImage(item) {
+    return (Array.isArray(item?.itemImages) && item.itemImages[0])
+        || item?.itemImageDataUrl
+        || item?.imageDataUrl
+        || "";
+}
+
+function getItemRowCatalogSnapshot(row) {
+    if (!row) return null;
+
+    if (row.classList.contains("procurement-row")) {
+        const getValue = field => row.querySelector(`[data-procurement-field="${field}"]`)?.value || "";
+        return {
+            name: getValue("description"),
+            brand: getValue("brand"),
+            packSize: getValue("packSize"),
+            unit: getValue("unit"),
+            unitPrice: Number.parseFloat(getValue("unitPrice")) || 0,
+            currency: getValue("currency") || "USD",
+            leadTime: getValue("leadTime"),
+            supplier: getValue("supplier"),
+            itemNumber: getValue("itemNumber"),
+            clientItemCode: getValue("clientItemCode"),
+            notes: getValue("notes")
+        };
+    }
+
+    const description = row.querySelector(".item-description")?.value || "";
+    return {
+        name: description.split("\n").map(part => part.trim()).find(Boolean) || description.trim(),
+        unitPrice: parseDecimalInput(row.querySelector(".item-unit-price")?.value || "0") || 0,
+        currency: elements.currency?.value || "USD"
+    };
+}
+
+function buildCatalogItemFromRow(row, imageUrl = "") {
+    const snapshot = getItemRowCatalogSnapshot(row);
+    const name = String(snapshot?.name || "Catalog item").trim() || "Catalog item";
+    const id = `catalog-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const referenceId = `PLI-${String(state.catalogItems.length + 1).padStart(4, "0")}`;
+    return {
+        id,
+        referenceId,
+        name,
+        details: String(snapshot?.notes || "").trim(),
+        notes: "",
+        costPrice: 0,
+        price: Number.parseFloat(snapshot?.unitPrice) || 0,
+        sellPrice: Number.parseFloat(snapshot?.unitPrice) || 0,
+        currency: snapshot?.currency || "USD",
+        taxIncluded: false,
+        dateUpdated: new Date().toISOString(),
+        category: "",
+        brand: String(snapshot?.brand || "").trim(),
+        unitSize: String(snapshot?.packSize || "").trim(),
+        packSize: String(snapshot?.packSize || "").trim(),
+        unit: String(snapshot?.unit || "").trim(),
+        vendor: String(snapshot?.supplier || "").trim(),
+        supplier: String(snapshot?.supplier || "").trim(),
+        leadTime: String(snapshot?.leadTime || "").trim(),
+        itemNumber: String(snapshot?.itemNumber || "").trim(),
+        clientItemCode: String(snapshot?.clientItemCode || "").trim(),
+        itemImages: imageUrl ? [imageUrl] : [],
+        itemImageDataUrl: imageUrl,
+        imageDataUrl: "",
+        country: "",
+        tags: [],
+        archived: false,
+        documentRefs: []
+    };
+}
+
+async function ensureCatalogItemForRowImage(row, imageUrl = "") {
+    if (!row) return null;
+    const linkedId = String(row.dataset.libraryItemId || "").trim();
+    const linkedItem = linkedId ? state.catalogItems.find(item => String(item.id) === linkedId) : null;
+    if (linkedItem) {
+        return linkedItem;
+    }
+
+    const item = buildCatalogItemFromRow(row, imageUrl);
+    await saveCatalogItems([item, ...state.catalogItems]);
+    row.dataset.libraryItemId = item.id;
+    row.dataset.libraryReferenceId = item.referenceId || "";
+    return item;
+}
+
+async function syncRowImageToCatalog(row, imageDataUrl) {
+    if (!row || !imageDataUrl) return "";
+    const catalogItem = await ensureCatalogItemForRowImage(row);
+    if (!catalogItem) return "";
+    const imageUrl = await _updateCatalogItemImage(catalogItem.id, imageDataUrl);
+    if (!imageUrl) return "";
+    row.dataset.libraryItemId = catalogItem.id;
+    row.dataset.libraryReferenceId = catalogItem.referenceId || row.dataset.libraryReferenceId || "";
+    row.dataset.itemImageDataUrl = imageUrl;
+    syncItemImageUI(row);
+    syncProcurementLibrarySelect();
+    syncDocumentLibrarySelect();
+    return imageUrl;
+}
+
+async function clearRowCatalogImage(row) {
+    if (!row) return;
+    const linkedId = String(row.dataset.libraryItemId || "").trim();
+    if (!linkedId) {
+        row.dataset.itemImageDataUrl = "";
+        syncItemImageUI(row);
+        return;
+    }
+
+    const removedUrls = [];
+    const next = state.catalogItems.map(item => {
+        if (String(item.id) !== linkedId) return item;
+        [getPrimaryCatalogImage(item), ...(Array.isArray(item.itemImages) ? item.itemImages : [])]
+            .filter(url => url && !hasInlineImageDataUrl(url))
+            .forEach(url => removedUrls.push(url));
+        return {
+            ...item,
+            imageDataUrl: "",
+            itemImageDataUrl: "",
+            itemImages: [],
+            dateUpdated: new Date().toISOString()
+        };
+    });
+    await saveCatalogItems(next);
+    [...new Set(removedUrls)].forEach(url => { void deleteHostedImage(url); });
+    row.dataset.itemImageDataUrl = "";
+    syncItemImageUI(row);
 }
 
 // ── Smart match ────────────────────────────────────────────────
@@ -19515,7 +19787,12 @@ async function confirmImageLibraryAssign() {
         if (!window.confirm(`"${item.name}" already has an image. Replace it with this image?`)) return;
     }
 
-    _updateCatalogItemImage(itemId, entry.imageUrl);
+    try {
+        await _updateCatalogItemImage(itemId, entry.imageUrl);
+    } catch (error) {
+        setImageLibraryUploadStatus(`Assign failed: ${error.message || "Could not save image."}`);
+        return;
+    }
 
     const updated = state.imageLibraryEntries.map(e => {
         if (e.id === imageId) {
@@ -19589,6 +19866,7 @@ async function removeImageLibraryEntry(imageId) {
     }
 
     writeImageLibraryToStorage(state.imageLibraryEntries.filter(e => e.id !== imageId));
+    void deleteHostedImage(entry.imageUrl);
     renderImageLibrary();
     setImportStatus("Image removed from library.");
 }

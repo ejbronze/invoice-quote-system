@@ -65,6 +65,11 @@ function isLocalSandboxMode() {
     return String(process.env.DATA_STORAGE_MODE || "").trim().toLowerCase() === LOCAL_STORAGE_MODE;
 }
 
+function stripInlineDataUrl(value) {
+    const text = typeof value === "string" ? value.trim() : "";
+    return text.startsWith("data:") ? "" : text;
+}
+
 function shouldSeedLocalDataFromBlob() {
     return ["1", "true", "yes", "on"].includes(String(process.env.LOCAL_SEED_FROM_BLOB || "").trim().toLowerCase());
 }
@@ -95,7 +100,28 @@ function ensureBlobToken() {
 }
 
 function normalizeDocuments(documents) {
-    return Array.isArray(documents) ? documents : [];
+    return Array.isArray(documents)
+        ? documents.map(doc => {
+            if (!doc || typeof doc !== "object") return doc;
+            return {
+                ...doc,
+                items: Array.isArray(doc.items)
+                    ? doc.items.map(item => ({
+                        ...item,
+                        itemImageDataUrl: stripInlineDataUrl(item?.itemImageDataUrl),
+                        imageDataUrl: stripInlineDataUrl(item?.imageDataUrl)
+                    }))
+                    : doc.items,
+                procurementItems: Array.isArray(doc.procurementItems)
+                    ? doc.procurementItems.map(item => ({
+                        ...item,
+                        itemImageDataUrl: stripInlineDataUrl(item?.itemImageDataUrl),
+                        imageDataUrl: stripInlineDataUrl(item?.imageDataUrl)
+                    }))
+                    : doc.procurementItems
+            };
+        })
+        : [];
 }
 
 function normalizeClients(clients) {
@@ -318,18 +344,21 @@ function normalizeCatalogItems(items) {
                 documentRefs: Array.isArray(item.documentRefs)
                     ? item.documentRefs.filter(r => r && r.docId)
                     : [],
-                itemImageDataUrl: typeof item.itemImageDataUrl === "string"
-                    ? item.itemImageDataUrl
-                    : typeof item.imageDataUrl === "string"
-                        ? item.imageDataUrl
-                        : "",
+                itemImageDataUrl: stripInlineDataUrl(
+                    typeof item.itemImageDataUrl === "string"
+                        ? item.itemImageDataUrl
+                        : typeof item.imageDataUrl === "string"
+                            ? item.imageDataUrl
+                            : ""
+                ),
                 itemImages: (() => {
                     if (Array.isArray(item.itemImages) && item.itemImages.some(u => typeof u === "string" && u.trim())) {
-                        return item.itemImages.filter(u => typeof u === "string" && u.trim());
+                        return item.itemImages.map(stripInlineDataUrl).filter(Boolean);
                     }
                     const fallback = typeof item.itemImageDataUrl === "string" ? item.itemImageDataUrl
                         : typeof item.imageDataUrl === "string" ? item.imageDataUrl : "";
-                    return fallback ? [fallback] : [];
+                    const storedFallback = stripInlineDataUrl(fallback);
+                    return storedFallback ? [storedFallback] : [];
                 })()
             }))
             .filter(item => item.name)
@@ -496,7 +525,7 @@ function normalizeImageLibraryEntry(entry) {
         id: String(entry.id || `libimg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
         originalFilename: String(entry.originalFilename || "image.jpg"),
         storedFilename: String(entry.storedFilename || "image.jpg"),
-        imageUrl: String(entry.imageUrl || ""),
+        imageUrl: stripInlineDataUrl(entry.imageUrl),
         sourceType: String(entry.sourceType || "upload"),
         status: entry.status === "Assigned" ? "Assigned" : "Uploaded",
         assignedItemId: entry.assignedItemId || null,
@@ -507,7 +536,9 @@ function normalizeImageLibraryEntry(entry) {
 }
 
 function normalizeImageLibraryEntries(entries) {
-    return Array.isArray(entries) ? entries.map(normalizeImageLibraryEntry) : [];
+    return Array.isArray(entries)
+        ? entries.map(normalizeImageLibraryEntry).filter(entry => entry.imageUrl)
+        : [];
 }
 
 function normalizeWorkspaceState(payload) {
