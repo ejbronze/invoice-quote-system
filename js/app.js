@@ -17097,7 +17097,7 @@ function renderDashboardCatalogStrip() {
     const items = getCatalogEntries()
         .slice()
         .sort((left, right) => getCatalogUpdatedTime(right) - getCatalogUpdatedTime(left))
-        .slice(0, 5);
+        .slice(0, 4);
 
     panel.hidden = items.length === 0;
     if (!items.length) {
@@ -17114,8 +17114,15 @@ function renderDashboardCatalogStrip() {
         ].filter(Boolean).join(" · ");
         const tooltip = meta ? `${item.name} · ${meta}` : item.name;
         const fallbackIcon = ICONS.library || `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h5"/></svg>`;
-        return `<button class="dash-catalog-thumb" type="button" data-dash-catalog-id="${escapeHtml(String(item.id))}" data-tooltip="${escapeHtml(tooltip)}" aria-label="${escapeHtml(`Open ${item.name}`)}">
-            ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="">` : fallbackIcon}
+        const title = String(item.name || "Catalog item").trim() || "Catalog item";
+        return `<button class="dash-catalog-item" type="button" data-dash-catalog-id="${escapeHtml(String(item.id))}" data-tooltip="${escapeHtml(tooltip)}" aria-label="${escapeHtml(`Open ${title}`)}">
+            <span class="dash-catalog-thumb" aria-hidden="true">
+                ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="">` : fallbackIcon}
+            </span>
+            <span class="dash-catalog-copy">
+                <span class="dash-catalog-name">${escapeHtml(title)}</span>
+                <span class="dash-catalog-meta">${escapeHtml(meta || "Updated recently")}</span>
+            </span>
         </button>`;
     }).join("");
 }
