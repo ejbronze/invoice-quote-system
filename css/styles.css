@@ -17715,3 +17715,746 @@ body #procurementSheetModal:not([hidden]) {
     width: 100%;
     margin-top: 0.3rem;
 }
+
+/* ── Mobile UI repair pass ───────────────────────────────────── */
+@media (max-width: 1023px) {
+    html,
+    body {
+        max-width: 100%;
+        overflow-x: clip;
+        background: var(--bg);
+    }
+
+    body {
+        color: var(--text);
+    }
+
+    .app-shell {
+        width: 100%;
+        max-width: 100%;
+        padding: 0.9rem;
+        overflow-x: clip;
+    }
+
+    .app-layout,
+    .app-content,
+    .app-page,
+    .workspace-hero,
+    .workspace-actions,
+    .overview-secondary-grid,
+    .page-header,
+    .filter-bar,
+    .notes-page-shell,
+    .documents-grid,
+    .clients-page-shell,
+    .catalog-grid,
+    .settings-page > .settings-grid,
+    .reports-layout,
+    .client-management-list,
+    #statementExportsList {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    .mobile-topbar {
+        min-height: 56px;
+        padding: 0.6rem 0.7rem;
+        margin: 0 0 0.8rem;
+        border-radius: 12px;
+        border-color: rgba(100, 116, 139, 0.14);
+        background: rgba(255, 255, 255, 0.97);
+        color: var(--text);
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 10px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    .menu-trigger,
+    .app-drawer-trigger {
+        width: 2.5rem;
+        height: 2.5rem;
+        min-width: 2.5rem;
+        border-radius: 10px;
+        border: 1px solid rgba(100, 116, 139, 0.16);
+        background: #fff;
+        color: var(--text);
+        box-shadow: none;
+    }
+
+    .mobile-topbar-title {
+        font-size: 0.98rem;
+        font-weight: 800;
+        color: var(--text);
+        line-height: 1.15;
+    }
+
+    .mobile-drawer {
+        background: #0F172A;
+        border-right-color: rgba(255, 255, 255, 0.08);
+        color: #E2E8F0;
+    }
+
+    .mobile-drawer-head strong {
+        color: #F8FAFC;
+    }
+
+    .mobile-drawer .sidebar-nav-link {
+        color: #94A3B8;
+    }
+
+    .mobile-drawer .sidebar-nav-link.active,
+    .mobile-drawer .sidebar-nav-link:hover,
+    .mobile-drawer .sidebar-nav-link:focus-visible {
+        border-color: rgba(99, 132, 255, 0.3);
+        background: rgba(99, 132, 255, 0.16);
+        color: #C7D2FE;
+    }
+
+    .mobile-drawer .sidebar-utility-link,
+    .mobile-drawer .sidebar-signout-btn,
+    .mobile-drawer .sidebar-language-picker select {
+        border-color: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.07);
+        color: #CBD5E1;
+    }
+}
+
+@media (max-width: 768px) {
+    .overview-card,
+    .documents-page,
+    .reports-page,
+    .clients-page,
+    .settings-page,
+    .catalog-page,
+    .account-admin-page {
+        padding: 0.75rem;
+        border-radius: 16px;
+        background: var(--surface);
+        border-color: var(--line);
+        box-shadow: var(--shadow-sm);
+        overflow: clip;
+    }
+
+    .workspace-hero {
+        padding: 0.85rem;
+        border-radius: 16px;
+        background: var(--surface);
+        border-color: var(--line);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .page-header,
+    .page-section-heading {
+        gap: 0.55rem;
+    }
+
+    .page-header h2,
+    .page-section-heading h2 {
+        font-size: clamp(1.45rem, 8vw, 2rem);
+        line-height: 1.05;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
+
+    .dashboard-subtitle,
+    .hero-copy p,
+    .page-section-heading p {
+        max-width: 100%;
+        font-size: 0.86rem;
+        line-height: 1.35;
+        color: var(--text-soft);
+        overflow-wrap: anywhere;
+    }
+
+    .page-header-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.45rem;
+        min-width: 0;
+    }
+
+    .filter-bar,
+    .notes-page-toolbar,
+    .pricing-library-toolbar {
+        gap: 0.55rem;
+    }
+
+    .filter-row,
+    .document-folder-tabs,
+    .notes-drawer-tabs,
+    .image-library-filter-tabs {
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .filter-row::-webkit-scrollbar,
+    .document-folder-tabs::-webkit-scrollbar,
+    .notes-drawer-tabs::-webkit-scrollbar,
+    .image-library-filter-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .filter-chip,
+    .pricing-view-btn,
+    .notes-drawer-tab {
+        flex: 0 0 auto;
+        min-height: 40px;
+        padding-block: 0.42rem;
+    }
+
+    input,
+    select,
+    textarea,
+    .form-group,
+    .search-field,
+    .sort-field,
+    .pricing-library-toolbar .search-field,
+    .pricing-library-toolbar .sort-field {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    .modal {
+        padding: 0.75rem;
+        align-items: center;
+        overflow: hidden;
+    }
+
+    .modal-content,
+    .settings-modal-content,
+    .client-modal-content,
+    .catalog-details-modal-content,
+    .catalog-item-image-modal-content,
+    .catalog-item-crop-modal-content,
+    .statement-export-modal-content,
+    .statement-edit-modal-content,
+    .export-modal-content,
+    .invoice-reports-modal-content,
+    .notes-record-modal-content,
+    .image-library-modal-content,
+    .image-library-assign-content,
+    .dup-modal-content {
+        width: min(100%, calc(100vw - 24px));
+        max-width: calc(100vw - 24px);
+        max-height: calc(100dvh - 24px);
+        overflow: hidden;
+    }
+
+    .modal-body,
+    .settings-modal-body,
+    .catalog-details-body,
+    .statement-export-wizard,
+    .statement-edit-layout,
+    .notes-record-modal-body,
+    .image-library-body {
+        min-width: 0;
+        max-width: 100%;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .close-btn {
+        flex: 0 0 auto;
+        min-width: 40px;
+        min-height: 40px;
+    }
+}
+
+@media (max-width: 640px) {
+    .app-shell {
+        padding: 0.65rem;
+    }
+
+    .documents-toolbar,
+    .notes-page-toolbar,
+    .pricing-library-toolbar,
+    .final-preview-options-card,
+    .catalog-selection-toolbar,
+    .statement-selection-toolbar {
+        padding: 0.65rem;
+        border-radius: 12px;
+    }
+
+    .notes-page-toolbar {
+        grid-template-columns: 1fr;
+        background: var(--surface);
+    }
+
+    .notes-page-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.45rem;
+    }
+
+    .notes-summary-card,
+    .summary-card,
+    .stat-card {
+        min-height: 0;
+        padding: 0.58rem 0.65rem;
+        border-radius: 10px;
+    }
+
+    .notes-feed-item {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        padding: 0.58rem 0.62rem;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .notes-feed,
+    .notes-feed-item-main,
+    .notes-feed-item-head,
+    .notes-feed-item-meta,
+    .notes-feed-notes,
+    .notes-feed-note-line {
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    .notes-feed-item-head,
+    .notes-feed-item-meta {
+        gap: 0.25rem 0.4rem;
+    }
+
+    .notes-feed-note-line p {
+        font-size: 0.84rem;
+        line-height: 1.35;
+    }
+
+    .notes-feed-item-client {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .catalog-dev-banner {
+        margin: 0 0 0.75rem;
+        padding: 0.7rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.86rem;
+    }
+
+    .catalog-page .page-header-actions {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.45rem;
+        overflow: hidden;
+    }
+
+    .catalog-page .page-header-actions .catalog-action-btn {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        min-height: 42px;
+        padding: 0.5rem;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .catalog-page .page-header-actions .catalog-action-btn span:not(.img-lib-toolbar-badge) {
+        display: none;
+    }
+
+    .catalog-page .page-header-actions .catalog-action-btn .img-lib-toolbar-badge {
+        position: absolute;
+        top: -0.35rem;
+        right: -0.25rem;
+    }
+
+    .pricing-library-toolbar {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: end;
+    }
+
+    .pricing-library-toolbar .search-field {
+        grid-column: 1 / -1;
+    }
+
+    .pricing-library-toolbar .pricing-view-toggle {
+        grid-column: 1 / -1;
+        justify-self: start;
+        max-width: 100%;
+    }
+
+    .catalog-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+
+    .catalog-card {
+        padding: 0.5rem;
+        border-radius: 12px;
+        gap: 0.3rem;
+    }
+
+    .catalog-card-trigger {
+        gap: 0.32rem;
+    }
+
+    .catalog-card-bubble {
+        width: 46px;
+        height: 46px;
+        max-width: 46px;
+        max-height: 46px;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .catalog-card-bubble img {
+        padding: 3px;
+    }
+
+    .catalog-card-copy strong {
+        font-size: 0.74rem;
+        line-height: 1.22;
+        min-height: 0;
+    }
+
+    .catalog-card-copy span,
+    .catalog-card-copy small,
+    .catalog-card-used-in {
+        font-size: 0.62rem;
+        line-height: 1.25;
+    }
+
+    .catalog-card-quick-add {
+        opacity: 1;
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
+        top: 0.35rem;
+        right: 0.35rem;
+        overflow: hidden;
+    }
+
+    .catalog-grid.catalog-grid--rows {
+        grid-template-columns: 1fr;
+    }
+
+    .catalog-row-trigger {
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+        gap: 0.5rem;
+        padding: 0.5rem 0.58rem;
+    }
+
+    .catalog-row-thumb {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+    }
+
+    .catalog-row-main strong {
+        font-size: 0.78rem;
+    }
+
+    .catalog-row-price {
+        font-size: 0.72rem;
+        max-width: 6.8rem;
+    }
+
+    .client-row {
+        max-width: 100%;
+        border-radius: 12px;
+    }
+
+    .client-row-header {
+        display: grid;
+        grid-template-columns: 2.15rem minmax(0, 1fr) auto;
+        gap: 0.55rem;
+        align-items: start;
+        padding: 0.58rem 0.62rem;
+    }
+
+    .client-card-avatar {
+        width: 2.15rem;
+        height: 2.15rem;
+        border-radius: 9px;
+    }
+
+    .client-row-name {
+        white-space: normal;
+        overflow-wrap: anywhere;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        font-size: 0.84rem;
+        line-height: 1.22;
+    }
+
+    .client-row-badges {
+        gap: 0.18rem 0.38rem;
+    }
+
+    .client-row-badge {
+        max-width: min(100%, 24ch);
+        font-size: 0.66rem;
+    }
+
+    .client-row-stats {
+        gap: 0.16rem 0.45rem;
+        min-width: 0;
+    }
+
+    .client-row-stat {
+        min-width: 0;
+        max-width: 100%;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        font-size: 0.66rem;
+        line-height: 1.25;
+    }
+
+    .client-row-right {
+        gap: 0.12rem;
+        align-self: start;
+    }
+
+    .client-row-actions {
+        gap: 0.18rem;
+    }
+
+    .client-action-btn {
+        width: 2rem;
+        height: 2rem;
+        min-width: 2rem;
+    }
+
+    .client-row-body {
+        padding: 0.65rem;
+        gap: 0.6rem;
+    }
+
+    .client-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.4rem;
+    }
+
+    .client-stat-cell {
+        padding: 0.5rem;
+    }
+
+    .client-stat-value {
+        font-size: 0.82rem;
+        overflow-wrap: anywhere;
+    }
+
+    .statement-export-row {
+        padding: 0.62rem;
+        gap: 0.55rem;
+        overflow: clip;
+    }
+
+    .statement-export-card-head {
+        gap: 0.35rem;
+        flex-wrap: wrap;
+    }
+
+    .statement-export-ref,
+    .statement-export-date {
+        min-height: 1.45rem;
+        padding: 0.22rem 0.48rem;
+        font-size: 0.66rem;
+    }
+
+    .statement-export-copy strong {
+        font-size: 0.86rem;
+        overflow-wrap: anywhere;
+    }
+
+    .statement-export-client {
+        font-size: 0.62rem !important;
+    }
+
+    .statement-export-metrics {
+        gap: 0.35rem;
+    }
+
+    .statement-export-metric {
+        padding: 0.42rem 0.44rem;
+        border-radius: 9px;
+        min-width: 0;
+    }
+
+    .statement-export-metric span {
+        font-size: 0.56rem;
+    }
+
+    .statement-export-metric strong {
+        font-size: clamp(0.68rem, 3.3vw, 0.82rem);
+        overflow-wrap: anywhere;
+    }
+
+    .statement-export-actions-bar {
+        width: 100%;
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        gap: 0.32rem;
+        overflow-x: auto;
+        padding-top: 0.05rem;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .statement-export-actions-bar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .statement-export-actions-bar .statement-action-btn {
+        width: 40px;
+        min-width: 40px;
+        min-height: 40px;
+        height: 40px;
+        border-radius: 10px;
+    }
+
+    .statement-action-btn::before,
+    .statement-action-btn::after {
+        display: none;
+    }
+
+    .document-card {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 0.45rem;
+        padding: 0.62rem;
+    }
+
+    .document-card-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        justify-content: flex-start;
+        gap: 0.32rem;
+        scrollbar-width: none;
+    }
+
+    .document-card-actions::-webkit-scrollbar {
+        display: none;
+    }
+
+    .document-card-actions .statement-action-btn {
+        width: 40px;
+        min-width: 40px;
+        min-height: 40px;
+    }
+
+    .image-library-modal-header,
+    .image-library-toolbar-bar {
+        padding-inline: 0.85rem;
+    }
+
+    .image-library-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 430px) {
+    .app-shell {
+        padding: 0.55rem;
+    }
+
+    .overview-card,
+    .documents-page,
+    .reports-page,
+    .clients-page,
+    .settings-page,
+    .catalog-page,
+    .account-admin-page {
+        padding: 0.65rem;
+    }
+
+    .page-header h2,
+    .page-section-heading h2 {
+        font-size: clamp(1.35rem, 8.5vw, 1.85rem);
+    }
+
+    .catalog-page .page-header-actions {
+        grid-template-columns: repeat(4, minmax(40px, 1fr));
+    }
+
+    .pricing-library-toolbar {
+        grid-template-columns: 1fr;
+    }
+
+    .catalog-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .catalog-card-copy span:not(.catalog-card-codes) {
+        display: none;
+    }
+
+    .catalog-card-copy small {
+        white-space: normal;
+    }
+
+    .client-row-header {
+        grid-template-columns: 2rem minmax(0, 1fr);
+    }
+
+    .client-row-right {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+        width: 100%;
+    }
+
+    .statement-export-metrics {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 390px) {
+    .catalog-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .catalog-card {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .catalog-card-trigger {
+        grid-template-columns: 46px minmax(0, 1fr);
+        justify-items: start;
+        text-align: left;
+    }
+
+    .catalog-card-copy span:not(.catalog-card-codes) {
+        display: block;
+    }
+
+    .notes-page-summary,
+    .client-stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .statement-export-metric {
+        padding-inline: 0.35rem;
+    }
+}
+
+@media (hover: none), (pointer: coarse) {
+    .catalog-card-quick-add {
+        opacity: 1;
+    }
+
+    .app-tooltip {
+        max-width: calc(100vw - 24px);
+        pointer-events: none;
+    }
+
+    .item-img-hover-preview {
+        display: none !important;
+    }
+}
