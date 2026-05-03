@@ -5299,20 +5299,19 @@ function renderCatalogDetailsStats(item) {
         return;
     }
 
+    const currency = item.currency || "USD";
+    const money = value => `${currency} ${formatAmount(Number(value) || 0)}`;
     const sellPrice = item.sellPrice ?? item.price;
     const costPrice = item.costPrice;
     const hasSell = isMeaningfulCatalogValue(sellPrice);
     const hasCost = isMeaningfulCatalogValue(costPrice);
 
-    const priceHtml = (hasSell || hasCost) ? `
-        <div class="catalog-details-price-row">
-            ${hasSell ? `<div class="cdp-item"><span class="cdp-label">Sell Price</span><strong class="cdp-value">${escapeHtml(formatCurrency(Number(sellPrice) || 0))}</strong></div>` : ""}
-            ${hasSell && hasCost ? `<div class="cdp-sep"></div>` : ""}
-            ${hasCost ? `<div class="cdp-item"><span class="cdp-label">Cost Price</span><strong class="cdp-value">${escapeHtml(formatCurrency(Number(costPrice) || 0))}</strong></div>` : ""}
-        </div>
-    ` : "";
+    const pricingStats = [
+        { label: "Sell Price", value: hasSell ? money(sellPrice) : "" },
+        { label: "Cost Price", value: hasCost ? money(costPrice) : "" }
+    ].filter(stat => isMeaningfulCatalogValue(stat.value));
 
-    const chips = [
+    const detailStats = [
         { label: "Category", value: item.category },
         { label: "Brand", value: item.brand },
         { label: "Pack Size", value: item.packSize || item.unitSize },
@@ -5323,16 +5322,33 @@ function renderCatalogDetailsStats(item) {
         { label: "Tax", value: item.taxIncluded ? "Included" : "" }
     ].filter(stat => isMeaningfulCatalogValue(stat.value));
 
-    const chipsHtml = chips.length
-        ? `<div class="catalog-details-chips">${chips.map(stat => `
-            <div class="catalog-details-stat">
-                <span>${escapeHtml(stat.label)}</span>
-                <strong>${escapeHtml(String(stat.value))}</strong>
-            </div>`).join("")}</div>`
-        : "";
+    const codeStats = [
+        { label: "Reference ID", value: item.referenceId },
+        { label: "Item Number", value: item.itemNumber },
+        { label: "Client Item Code", value: item.clientItemCode },
+        { label: "SKU / Code", value: item.sku || item.code }
+    ].filter(stat => isMeaningfulCatalogValue(stat.value));
 
-    elements.catalogDetailsStats.hidden = !priceHtml && !chipsHtml;
-    elements.catalogDetailsStats.innerHTML = priceHtml + chipsHtml;
+    const renderGroup = (title, stats, mod = "") => stats.length ? `
+        <section class="catalog-details-stat-group${mod ? ` ${mod}` : ""}">
+            <span class="catalog-details-group-title">${escapeHtml(title)}</span>
+            <div class="catalog-details-chips">${stats.map(stat => `
+                <div class="catalog-details-stat">
+                    <span>${escapeHtml(stat.label)}</span>
+                    <strong>${escapeHtml(String(stat.value))}</strong>
+                </div>
+            `).join("")}</div>
+        </section>
+    ` : "";
+
+    const groupsHtml = [
+        renderGroup("Pricing", pricingStats, "catalog-details-stat-group-pricing"),
+        renderGroup("Item Details", detailStats),
+        renderGroup("Codes", codeStats)
+    ].join("");
+
+    elements.catalogDetailsStats.hidden = !groupsHtml;
+    elements.catalogDetailsStats.innerHTML = groupsHtml;
 }
 
 function renderCatalogDetailsLongFields(item) {
@@ -5418,7 +5434,7 @@ function openCatalogDetailsModal(item) {
         }).join("");
     }
 
-    const detailsImageUrl = item.imageDataUrl || item.itemImageDataUrl || "";
+    const detailsImageUrl = getPrimaryCatalogImage(item);
     if (detailsImageUrl) {
         elements.catalogDetailsImage.src = detailsImageUrl;
         elements.catalogDetailsImage.hidden = false;
@@ -5734,9 +5750,11 @@ function renderCatalogRefs(item) {
 
 function renderCatalogCard(item) {
     const isSelected = state.selectedCatalogItemIds.includes(item.id);
-    const imageUrl = item.imageDataUrl || item.itemImageDataUrl || "";
+    const imageUrl = getPrimaryCatalogImage(item);
     const fullName = String(item.name || "Catalog item").trim() || "Catalog item";
-    const metaText = [item.brand, item.supplier || item.vendor, item.packSize || item.unitSize].filter(Boolean).join(" · ") || item.referenceId || "Catalog item";
+    const metaText = [item.brand, item.supplier || item.vendor, item.packSize || item.unitSize, item.unit].filter(Boolean).join(" · ") || item.referenceId || "Catalog item";
+    const codeText = [item.itemNumber ? `Item #${item.itemNumber}` : "", item.clientItemCode ? `Code: ${item.clientItemCode}` : ""].filter(Boolean).join(" · ");
+    const priceText = `${item.currency || "USD"} ${formatAmount(item.sellPrice ?? item.price ?? 0)}`;
     const selectorHtml = state.catalogSelectionMode
         ? `<label class="catalog-card-selector" aria-label="Select ${escapeHtml(item.name)}">
                 <input type="checkbox" data-catalog-select="${escapeHtml(item.id)}"${isSelected ? " checked" : ""}>
@@ -5746,7 +5764,7 @@ function renderCatalogCard(item) {
     return `
         <article class="catalog-card${isSelected ? " is-selected" : ""}">
             ${selectorHtml}
-            <button class="catalog-card-quick-add" type="button" data-catalog-action="quick-add" data-catalog-id="${escapeHtml(item.id)}" data-tooltip="Add to document" aria-label="Add to document">+</button>
+            <button class="catalog-card-quick-add" type="button" data-catalog-action="quick-add" data-catalog-id="${escapeHtml(item.id)}" data-tooltip="Add to document" aria-label="Add to document">${ICONS.plus}</button>
             <button class="catalog-card-trigger" type="button" data-catalog-action="open" data-catalog-id="${escapeHtml(item.id)}" aria-label="${escapeHtml(fullName)}">
                 <div class="catalog-card-bubble${imageUrl ? " is-expandable" : ""}" ${imageUrl ? `data-catalog-action="expand-image" data-catalog-id="${escapeHtml(item.id)}" data-catalog-img-src="${escapeHtml(imageUrl)}" data-catalog-img-alt="${escapeHtml(item.name)}"` : ""} aria-hidden="true">
                     ${imageUrl
@@ -5756,8 +5774,11 @@ function renderCatalogCard(item) {
                 <div class="catalog-card-copy">
                     <strong data-tooltip="${escapeHtml(fullName)}">${escapeHtml(fullName)}</strong>
                     <span>${escapeHtml(metaText)}</span>
-                    ${(item.itemNumber || item.clientItemCode) ? `<span class="catalog-card-codes">${escapeHtml([item.itemNumber ? `Item #${item.itemNumber}` : "", item.clientItemCode ? `Code: ${item.clientItemCode}` : ""].filter(Boolean).join(" · "))}</span>` : ""}
-                    <small>${escapeHtml(`${item.currency || "USD"} ${formatAmount(item.sellPrice ?? item.price ?? 0)}${item.leadTime ? ` · ${item.leadTime}` : ""}`)}</small>
+                    ${codeText ? `<span class="catalog-card-codes">${escapeHtml(codeText)}</span>` : ""}
+                    <div class="catalog-card-footer">
+                        <small class="catalog-card-price">${escapeHtml(priceText)}</small>
+                        ${item.leadTime ? `<small class="catalog-card-lead">${escapeHtml(item.leadTime)}</small>` : ""}
+                    </div>
                 </div>
             </button>
         </article>
@@ -5766,7 +5787,7 @@ function renderCatalogCard(item) {
 
 function renderCatalogRow(item) {
     const isSelected = state.selectedCatalogItemIds.includes(item.id);
-    const imageUrl = item.imageDataUrl || item.itemImageDataUrl || "";
+    const imageUrl = getPrimaryCatalogImage(item);
     const selectorHtml = state.catalogSelectionMode
         ? `<label class="catalog-card-selector catalog-row-selector" aria-label="Select ${escapeHtml(item.name)}">
                 <input type="checkbox" data-catalog-select="${escapeHtml(item.id)}"${isSelected ? " checked" : ""}>
