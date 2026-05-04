@@ -143,7 +143,7 @@ const LANGUAGE_LOCALES = {
     es: "es-DO",
     fr: "fr-FR"
 };
-const APP_LAST_UPDATED = "2026-04-30T02:00:00";
+const APP_LAST_UPDATED = "2026-05-04T12:00:00";
 
 const ICONS = {
     plus:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`,
