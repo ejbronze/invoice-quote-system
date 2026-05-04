@@ -613,6 +613,16 @@ const TRANSLATIONS = {
         help_a_export_pdf: "Click the <strong>download icon</strong> on any saved document card to download the PDF immediately. If you want to review the layout first, you can still use <strong>Step 6 \u2013 Final Preview</strong> inside the editor.",
         help_vl_pdf_preview: "Download PDF",
         help_vc_preview_pdf: "Download PDF",
+        help_q_mobile_editor: "How does the document editor work on mobile?",
+        help_a_mobile_editor: "On mobile, the quote and invoice editor uses a sticky header, a sticky horizontal stepper, one main scroll area, and a compact bottom action bar. In <strong>Step 6 \u2013 Review</strong>, the editor shows a mobile-safe review card and PDF preview launcher instead of embedding the full desktop document inline, so swiping anywhere in the modal scrolls normally. Save, Export Excel, and Export PDF remain labeled and easy to tap at the bottom.",
+        mobile_review_kicker: "Final review",
+        mobile_review_title: "Preview the print-ready document",
+        mobile_review_copy_ready: "Open a dedicated PDF preview so the document can use its correct print layout without trapping this editor scroll.",
+        mobile_review_copy_save_first: "Save this document first to unlock the print-ready PDF preview and export actions.",
+        mobile_review_preview_pdf: "Preview PDF",
+        mobile_review_save_first: "Save first",
+        mobile_review_item_singular: "item",
+        mobile_review_item_plural: "items",
         help_q_reuse_items: "Can I save line items to reuse later?",
         help_a_reuse_items: "Yes. Reusable items live in the <strong>Pricing Catalog</strong>. Click an item to review its details, then use <strong>Edit Item</strong> inside the detail modal when you need to update pricing, supplier, packaging, image, or notes. The quote and invoice line-item table stays focused on direct entry.",
         help_q_payment_terms: "How do I set payment terms on an invoice?",
@@ -1054,6 +1064,16 @@ const TRANSLATIONS = {
         help_a_export_pdf: "Haz clic en el <strong>\u00edcono de descarga</strong> en cualquier tarjeta guardada para descargar el PDF de inmediato. Si quieres revisar el dise\u00f1o primero, todav\u00eda puedes usar el <strong>Paso 6 \u2013 Vista Final</strong> dentro del editor.",
         help_vl_pdf_preview: "Descargar PDF",
         help_vc_preview_pdf: "Descargar PDF",
+        help_q_mobile_editor: "\u00bfC\u00f3mo funciona el editor de documentos en m\u00f3vil?",
+        help_a_mobile_editor: "En m\u00f3vil, el editor de cotizaciones y facturas usa un encabezado fijo, un selector de pasos horizontal fijo, una sola zona principal de desplazamiento y una barra inferior compacta de acciones. En el <strong>Paso 6 \u2013 Revisi\u00f3n</strong>, el editor muestra una tarjeta de revisi\u00f3n segura para m\u00f3vil y un acceso para previsualizar el PDF, en lugar de incrustar el documento completo de escritorio. As\u00ed puedes deslizar en cualquier parte del modal para desplazarte normalmente. Guardar, Exportar Excel y Exportar PDF permanecen con etiquetas y f\u00e1ciles de tocar abajo.",
+        mobile_review_kicker: "Revisi\u00f3n final",
+        mobile_review_title: "Previsualiza el documento listo para imprimir",
+        mobile_review_copy_ready: "Abre una previsualizaci\u00f3n PDF dedicada para que el documento use su dise\u00f1o de impresi\u00f3n correcto sin atrapar el desplazamiento del editor.",
+        mobile_review_copy_save_first: "Guarda este documento primero para activar la previsualizaci\u00f3n PDF lista para imprimir y las acciones de exportaci\u00f3n.",
+        mobile_review_preview_pdf: "Previsualizar PDF",
+        mobile_review_save_first: "Guardar primero",
+        mobile_review_item_singular: "art\u00edculo",
+        mobile_review_item_plural: "art\u00edculos",
         help_q_reuse_items: "\u00bfPuedo guardar l\u00edneas de art\u00edculos para reutilizarlas?",
         help_a_reuse_items: "S\u00ed. Los art\u00edculos reutilizables viven en la <strong>Biblioteca de Precios</strong>. Haz clic en un art\u00edculo para revisar sus detalles y usa <strong>Editar Art\u00edculo</strong> dentro del modal de detalle para actualizar precios, proveedor, empaque, imagen o notas. La tabla de l\u00edneas de cotizaciones y facturas se mantiene enfocada en entrada directa.",
         help_q_payment_terms: "\u00bfC\u00f3mo configuro los t\u00e9rminos de pago en una factura?",
@@ -1493,6 +1513,16 @@ const TRANSLATIONS = {
         help_a_export_pdf: "Cliquez sur l\u2019<strong>ic\u00f4ne de t\u00e9l\u00e9chargement</strong> d\u2019un document enregistr\u00e9 pour r\u00e9cup\u00e9rer le PDF imm\u00e9diatement. Si vous voulez v\u00e9rifier la mise en page d\u2019abord, vous pouvez toujours utiliser l\u2019<strong>\u00e9tape\u00a06 \u2013 Aper\u00e7u final</strong> dans l\u2019\u00e9diteur.",
         help_vl_pdf_preview: "T\u00e9l\u00e9charger le PDF",
         help_vc_preview_pdf: "T\u00e9l\u00e9charger le PDF",
+        help_q_mobile_editor: "Comment fonctionne l\u2019\u00e9diteur de documents sur mobile\u00a0?",
+        help_a_mobile_editor: "Sur mobile, l\u2019\u00e9diteur de devis et factures utilise un en-t\u00eate fixe, un s\u00e9lecteur d\u2019\u00e9tapes horizontal fixe, une seule zone principale de d\u00e9filement et une barre d\u2019actions inf\u00e9rieure compacte. \u00c0 l\u2019<strong>\u00e9tape\u00a06 \u2013 Revue</strong>, l\u2019\u00e9diteur affiche une carte de revue adapt\u00e9e au mobile et un bouton de pr\u00e9visualisation PDF au lieu d\u2019int\u00e9grer le document complet de bureau. Vous pouvez donc faire d\u00e9filer le modal depuis n\u2019importe quelle zone. Enregistrer, Exporter Excel et Exporter PDF restent libell\u00e9s et faciles \u00e0 toucher en bas.",
+        mobile_review_kicker: "Revue finale",
+        mobile_review_title: "Pr\u00e9visualiser le document pr\u00eat \u00e0 imprimer",
+        mobile_review_copy_ready: "Ouvrez un aper\u00e7u PDF d\u00e9di\u00e9 pour que le document utilise sa mise en page d\u2019impression correcte sans bloquer le d\u00e9filement de l\u2019\u00e9diteur.",
+        mobile_review_copy_save_first: "Enregistrez d\u2019abord ce document pour activer l\u2019aper\u00e7u PDF pr\u00eat \u00e0 imprimer et les actions d\u2019export.",
+        mobile_review_preview_pdf: "Pr\u00e9visualiser PDF",
+        mobile_review_save_first: "Enregistrer d\u2019abord",
+        mobile_review_item_singular: "article",
+        mobile_review_item_plural: "articles",
         help_q_reuse_items: "Puis-je enregistrer des lignes d\u2019articles pour les r\u00e9utiliser\u00a0?",
         help_a_reuse_items: "Oui. Les articles r\u00e9utilisables se g\u00e8rent dans la <strong>Biblioth\u00e8que de prix</strong>. Cliquez sur un article pour consulter ses d\u00e9tails, puis utilisez <strong>Modifier l'article</strong> dans la modale de d\u00e9tail pour mettre \u00e0 jour les prix, fournisseur, emballage, image ou notes. Le tableau des lignes reste concentr\u00e9 sur la saisie directe.",
         help_q_payment_terms: "Comment configurer les conditions de paiement sur une facture\u00a0?",
@@ -3301,6 +3331,14 @@ function bindEvents() {
     window.addEventListener("focus", handleSessionActivity);
     window.addEventListener("scroll", handleSessionActivity, { passive: true });
     window.addEventListener("resize", () => {
+        if (elements.documentModal?.classList.contains("active")) {
+            const totalSteps = getTotalSteps();
+            elements.documentModal.classList.toggle("review-mode", state.currentStep === totalSteps);
+            elements.documentModal.classList.toggle("final-preview-mode", state.currentStep === totalSteps && !isMobileViewport());
+            if (state.currentStep >= totalSteps - 1) {
+                generatePreviews();
+            }
+        }
         window.requestAnimationFrame(syncActivePreviewScale);
         window.requestAnimationFrame(syncMobileOverviewState);
     });
@@ -5152,7 +5190,9 @@ function openAccountAdminPage() {
 }
 
 function syncModalOpenState() {
-    document.body.classList.toggle("modal-open", Boolean(document.querySelector(".modal.active")));
+    const hasOpenModal = Boolean(document.querySelector(".modal.active"));
+    document.documentElement.classList.toggle("modal-open", hasOpenModal);
+    document.body.classList.toggle("modal-open", hasOpenModal);
 }
 
 function isMobileViewport() {
@@ -15290,18 +15330,18 @@ function updateModalTitle() {
     }
 
     const saveButtonLabel = state.editingDocumentId !== null ? t("save_changes") : t("save_document");
-    elements.saveBtn.innerHTML = getActionButtonMarkup(
+    elements.saveBtn.innerHTML = `${getActionButtonMarkup(
         '<img src="/assets/icons/icon-save.png" alt="" class="btn-custom-icon">',
         null
-    );
+    )}<span class="mobile-action-label">Save</span>`;
     elements.saveBtn.setAttribute("aria-label", saveButtonLabel);
     elements.saveBtn.setAttribute("data-tooltip", saveButtonLabel);
     elements.saveBtn.classList.add("btn-icon-only");
     const pdfLabel = t("save_preview_pdf");
-    elements.exportPdfBtn.innerHTML = getActionButtonMarkup(
+    elements.exportPdfBtn.innerHTML = `${getActionButtonMarkup(
         '<img src="/assets/icons/icon-pdf.png" alt="" class="btn-custom-icon">',
         null
-    );
+    )}<span class="mobile-action-label">Export PDF</span>`;
     elements.exportPdfBtn.setAttribute("aria-label", pdfLabel);
     elements.exportPdfBtn.setAttribute("data-tooltip", pdfLabel);
     syncPaymentLedgerVisibility();
@@ -16353,6 +16393,42 @@ function buildInvoicePaymentSummaryMarkup(doc) {
     `;
 }
 
+function buildMobileFinalReviewMarkup(doc) {
+    const docLabel = doc.type === "invoice" ? t("invoice_singular") : t("quote_singular");
+    const itemCountLabel = `${doc.items.length} ${t(doc.items.length === 1 ? "mobile_review_item_singular" : "mobile_review_item_plural")}`;
+    const canPreview = canCurrentEditorViewPrint();
+    const previewAction = canPreview
+        ? `<button class="btn btn-primary" type="button" data-open-preview-window aria-label="${escapeHtml(t("mobile_review_preview_pdf"))}">${escapeHtml(t("mobile_review_preview_pdf"))}</button>`
+        : `<button class="btn btn-secondary" type="button" disabled aria-label="${escapeHtml(t("mobile_review_save_first"))}">${escapeHtml(t("mobile_review_save_first"))}</button>`;
+
+    return `
+        <section class="mobile-final-review-summary" aria-label="Review summary">
+            <div>
+                <span>${escapeHtml(docLabel)}</span>
+                <strong>${escapeHtml(doc.refNumber || t("ref_pending"))}</strong>
+            </div>
+            <div>
+                <span>${escapeHtml(t("client"))}</span>
+                <strong>${escapeHtml(doc.clientName || t("unknown_client"))}</strong>
+            </div>
+            <div>
+                <span>${escapeHtml(t("total"))}</span>
+                <strong>${escapeHtml(formatCurrency(doc.total || 0))}</strong>
+            </div>
+        </section>
+        <section class="mobile-preview-launcher-card" aria-label="PDF preview">
+            <span class="mobile-preview-launcher-kicker">${escapeHtml(t("mobile_review_kicker"))}</span>
+            <h6>${escapeHtml(t("mobile_review_title"))}</h6>
+            <p>${escapeHtml(canPreview ? t("mobile_review_copy_ready") : t("mobile_review_copy_save_first"))}</p>
+            <div class="mobile-preview-launcher-meta">
+                <span>${escapeHtml(itemCountLabel)}</span>
+                <span>${escapeHtml(formatCurrency(doc.total || 0))}</span>
+            </div>
+            ${previewAction}
+        </section>
+    `;
+}
+
 function buildDocumentMarkup(doc, stampStyle, options = {}) {
     const { printPreview = false } = options;
     const documentTitle = doc.type === "quote" ? "Quote" : "Invoice";
@@ -16499,7 +16575,9 @@ function generatePreviews() {
     if (elements.lineItemsPreviewContainer) {
         elements.lineItemsPreviewContainer.innerHTML = buildLineItemsPreviewMarkup(doc);
     }
-    elements.previewContainer.innerHTML = buildDocumentMarkup(doc, stampStyle, { printPreview: true });
+    elements.previewContainer.innerHTML = isMobileViewport() && state.currentStep === getTotalSteps()
+        ? buildMobileFinalReviewMarkup(doc)
+        : buildDocumentMarkup(doc, stampStyle, { printPreview: true });
 }
 
 function getPrintStylesMarkup() {

@@ -2,7 +2,19 @@
 
 SantoSync is a focused document and operations workspace built for trade teams, freelancers, and logistics operators who need to generate, track, and deliver professional quotes and invoices without the overhead of enterprise billing software.
 
-Version: `1.17.0` — Last updated: May 4, 2026
+Version: `1.18.0` — Last updated: May 4, 2026
+
+## Version 1.18.0 Summary
+
+This release fixes the mobile quote/invoice editor modal so the review and export flow behaves like a compact mobile workspace instead of a desktop preview squeezed into a phone viewport.
+
+**Sticky mobile editor shell:** On mobile, the document editor now uses a full-height modal with a sticky header, compact header actions, one primary scrollable body, and a sticky bottom action bar. The header, Help, Calculator, Close, Save, Export Excel, and Export PDF controls stay reachable while editing.
+
+**Compact clickable stepper:** The step navigation becomes a horizontal pill stepper on mobile with short labels, clear current-step styling, and completed-step states. The stepper remains visible under the header while the modal content scrolls.
+
+**Mobile-safe Step 6 review:** Step 6 now shows a compact review summary, a mobile-safe PDF preview launcher, stacked PDF options, and labeled export actions. The full desktop document preview opens in the dedicated preview/print flow instead of rendering inline on mobile, which prevents preview scroll traps, horizontal overflow, and overlapping print-layout text.
+
+**Preserved desktop workflow:** Desktop editor layout, client details, line items, keywords, signatures, stamps, signer selection, saving, PDF export, Excel export, help, calculator, and existing document persistence remain unchanged.
 
 ## Version 1.17.0 Summary
 
@@ -655,6 +667,9 @@ Open any quote, invoice, or procurement sheet from the documents list. In the ed
 
 **How does the Notes activity feed work?**
 Open the Notes page from the sidebar to scan note activity across documents. The page now uses a timeline-style activity feed grouped by date, with rows collapsed by default so you can review more records at once. Chips summarize common changes like payment status, tags, totals, and procurement row edits. Expand a row to view the full original note history and raw change log details. Document type colors are Invoice = green, Quote = blue, Offer = amber, and Statement = gray.
+
+**How does the document editor work on mobile?**
+On mobile, quote and invoice editing opens in a full-height modal with a sticky header, sticky horizontal step navigation, one main scroll area, and a compact bottom action bar. In Step 6 Review, the editor shows a summary card, PDF preview launcher, stacked PDF options, and labeled Save, Export Excel, and Export PDF actions. The print-ready document opens in the dedicated preview flow instead of being forced inline, so swiping on the review area scrolls the modal normally and avoids mobile preview overflow.
 
 **How do I use the Procurement Sheet translation feature?**
 Open any Procurement Sheet. Click the globe icon in the modal header. Select a target language (Spanish or French), then click Preview to see how the row descriptions and notes would read in translation. From there you can either Duplicate as Translated (creates a new sheet with translated content) or Translate In Place (replaces the current form values with the translated text). Translation uses the MyMemory free API and requires an internet connection.

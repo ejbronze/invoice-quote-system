@@ -1062,6 +1062,10 @@
                         </div>
                     </details>
                     <details class="help-item">
+                        <summary data-i18n="help_q_mobile_editor">How does the document editor work on mobile?</summary>
+                        <p data-i18n-html="help_a_mobile_editor">On mobile, the quote and invoice editor uses a sticky header, a sticky horizontal stepper, one main scroll area, and a compact bottom action bar. In <strong>Step 6 – Review</strong>, the editor shows a mobile-safe review card and PDF preview launcher instead of embedding the full desktop document inline, so swiping anywhere in the modal scrolls normally. Save, Export Excel, and Export PDF remain labeled and easy to tap at the bottom.</p>
+                    </details>
+                    <details class="help-item">
                         <summary>How do I add line items to a quote or invoice?</summary>
                         <p>Step 3 shows a spreadsheet-style table where each row is one line item. Click <strong>+ Add Item</strong> to add a new row, then fill in the Description, Quantity, Unit Price, and Total inline. All fields are visible at once — no expanding or collapsing needed. Use <strong>Tab</strong> to move between columns; pressing Tab on the last field of the last row automatically adds a new row. Press <strong>Enter</strong> on any numeric field to advance to the next column, or use <strong>Cmd/Ctrl+Enter</strong> from anywhere to add a new row immediately.</p>
                     </details>
@@ -1706,27 +1710,27 @@
                         <div class="step-indicator">
                             <div class="step active" data-step="1">
                                 <div class="step-number">1</div>
-                                <div class="step-label">Type & Info</div>
+                                <div class="step-label" data-mobile-label="Info">Type & Info</div>
                             </div>
                             <div class="step" data-step="2">
                                 <div class="step-number">2</div>
-                                <div class="step-label">Client Details</div>
+                                <div class="step-label" data-mobile-label="Client">Client Details</div>
                             </div>
                             <div class="step" data-step="3">
                                 <div class="step-number">3</div>
-                                <div class="step-label">Line Items</div>
+                                <div class="step-label" data-mobile-label="Items">Line Items</div>
                             </div>
                             <div class="step" data-step="4">
                                 <div class="step-number">4</div>
-                                <div class="step-label">Keywords</div>
+                                <div class="step-label" data-mobile-label="Keywords">Keywords</div>
                             </div>
                             <div class="step" data-step="5">
                                 <div class="step-number">5</div>
-                                <div class="step-label">Items Preview</div>
+                                <div class="step-label" data-mobile-label="Preview">Items Preview</div>
                             </div>
                             <div class="step" data-step="6">
                                 <div class="step-number">6</div>
-                                <div class="step-label">Review</div>
+                                <div class="step-label" data-mobile-label="Review">Review</div>
                             </div>
                         </div>
 
@@ -2011,7 +2015,7 @@
                     <button class="btn btn-secondary" id="saveBtn" type="button" style="display: none;">Save</button>
                     <button class="btn btn-secondary" id="exportExcelBtn" type="button" style="display: none;" aria-label="Export as Excel" data-tooltip="Export as Excel">
                         <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style="margin-right:4px;vertical-align:-3px"><path d="M6 3h8l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M14 3v4h4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="m9 10 4 4M13 10l-4 4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        Excel
+                        <span class="desktop-action-label">Excel</span><span class="mobile-action-label">Export Excel</span>
                     </button>
                     <button class="btn btn-success" id="exportPdfBtn" type="button" style="display: none;">View / Print</button>
                 </div>
