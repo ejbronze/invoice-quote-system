@@ -587,6 +587,7 @@ const TRANSLATIONS = {
         workspace_activity: "Workspace Activity",
         workspace_activity_copy: "Review recent account edits, exports, branding changes, and other logged actions.",
         help_title: "Help & FAQ",
+        help_guide: "Help",
         help_search_placeholder: "Search help topics\u2026",
         help_no_results: "No results found. Try a different keyword.",
         help_idx_getting_started: "Getting Started",
@@ -1038,6 +1039,7 @@ const TRANSLATIONS = {
         workspace_activity: "Actividad del Espacio",
         workspace_activity_copy: "Revisa cambios de cuentas, exportaciones, branding y otras acciones registradas.",
         help_title: "Ayuda y Preguntas",
+        help_guide: "Ayuda",
         help_search_placeholder: "Buscar temas de ayuda\u2026",
         help_no_results: "No se encontraron resultados. Prueba con otra palabra clave.",
         help_idx_getting_started: "Primeros Pasos",
@@ -1487,6 +1489,7 @@ const TRANSLATIONS = {
         workspace_activity: "Activité de l’Espace",
         workspace_activity_copy: "Consultez les modifications de comptes, exports, branding et autres actions enregistrées.",
         help_title: "Aide et FAQ",
+        help_guide: "Aide",
         help_search_placeholder: "Rechercher des sujets d\u2019aide\u2026",
         help_no_results: "Aucun r\u00e9sultat trouv\u00e9. Essayez un autre mot-cl\u00e9.",
         help_idx_getting_started: "Premiers pas",
@@ -1692,6 +1695,7 @@ function applyTranslations() {
     document.querySelectorAll('[data-page-nav="clients"]').forEach(button => { button.textContent = t("clients_heading"); });
     document.querySelectorAll('[data-page-nav="catalog"]').forEach(button => { button.textContent = t("catalog"); });
     document.querySelectorAll('[data-page-nav="reports"]').forEach(button => { button.textContent = t("statements"); });
+    document.querySelectorAll('[data-page-nav="help"]').forEach(button => { button.textContent = t("help_guide"); });
     document.querySelectorAll('[data-page-nav="settings"]').forEach(button => { button.textContent = t("settings"); });
     if (elements.sidebarCalculatorBtn) {
         elements.sidebarCalculatorBtn.innerHTML = getCalculatorButtonMarkup();
@@ -2006,11 +2010,13 @@ function cacheElements() {
     elements.notesPage = document.getElementById("notesPage");
     elements.clientsPage = document.getElementById("clientsPage");
     elements.reportsPage = document.getElementById("reportsPage");
+    elements.helpGuidePage = document.getElementById("helpGuidePage");
     elements.sidebarNav = document.getElementById("sidebarNav");
     elements.sidebarBrandLogo = document.getElementById("sidebarBrandLogo");
     elements.pageNavButtons = Array.from(document.querySelectorAll("[data-page-nav]"));
     elements.settingsNavBtn = document.getElementById("settingsNavBtn");
     elements.settingsDrawerBtn = document.getElementById("settingsDrawerBtn");
+    elements.openHelpGuideSettingsBtn = document.getElementById("openHelpGuideSettingsBtn");
     elements.sidebarCalculatorBtn = document.getElementById("sidebarCalculatorBtn");
     elements.mobileDrawerCalculatorBtn = document.getElementById("mobileDrawerCalculatorBtn");
     elements.mobileDrawer = document.getElementById("mobileDrawer");
@@ -2545,6 +2551,7 @@ function bindEvents() {
     elements.languageSelect.addEventListener("change", handleLanguageChange);
     elements.mobileDrawerLanguageSelect?.addEventListener("change", handleLanguageChange);
     elements.settingsIssueInboxBtn.addEventListener("click", openIssueInboxFromSettings);
+    elements.openHelpGuideSettingsBtn?.addEventListener("click", () => setActivePage("help"));
     elements.navMenuBtn.addEventListener("click", toggleMobileDrawer);
     elements.newMenuBtn?.addEventListener("click", toggleNewMenu);
     elements.closeMobileDrawerBtn?.addEventListener("click", closeMobileDrawer);
@@ -5127,7 +5134,7 @@ function closeMobileDrawer() {
 }
 
 function setActivePage(page) {
-    const validPages = ["overview", "documents", "notes", "clients", "catalog", "reports", "settings"];
+    const validPages = ["overview", "documents", "notes", "clients", "catalog", "reports", "help", "settings"];
     state.activePage = validPages.includes(page) ? page : "overview";
     applyPageState();
     if (state.activePage === "reports") {
@@ -5155,6 +5162,7 @@ function applyPageState() {
     if (elements.clientsPage) elements.clientsPage.hidden = state.activePage !== "clients";
     if (elements.catalogPage) elements.catalogPage.hidden = state.activePage !== "catalog";
     if (elements.reportsPage) elements.reportsPage.hidden = state.activePage !== "reports";
+    if (elements.helpGuidePage) elements.helpGuidePage.hidden = state.activePage !== "help";
     if (elements.settingsModal) elements.settingsModal.hidden = state.activePage !== "settings";
     if (elements.accountAdminPage) {
         elements.accountAdminPage.hidden = !(state.activePage === "settings" && isOwnerSession());

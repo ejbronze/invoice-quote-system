@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SantoSync</title>
-    <link rel="stylesheet" href="css/styles.css?v=44">
+    <link rel="stylesheet" href="css/styles.css?v=45">
 </head>
 <body>
     <div class="brand-splash" id="brandSplash" aria-hidden="true" hidden>
@@ -94,6 +94,7 @@
                     <button class="sidebar-nav-link" type="button" data-page-nav="clients">Clients</button>
                     <button class="sidebar-nav-link" type="button" data-page-nav="catalog">Pricing Catalog</button>
                     <button class="sidebar-nav-link" type="button" data-page-nav="reports">Statements</button>
+                    <button class="sidebar-nav-link" type="button" data-page-nav="help">Help</button>
                     <button class="sidebar-nav-link" id="settingsNavBtn" type="button" data-page-nav="settings">Settings</button>
                 </nav>
                 <div class="sidebar-calc-slot">
@@ -132,6 +133,7 @@
                     <button class="sidebar-nav-link" type="button" data-page-nav="clients">Clients</button>
                     <button class="sidebar-nav-link" type="button" data-page-nav="catalog">Pricing Catalog</button>
                     <button class="sidebar-nav-link" type="button" data-page-nav="reports">Statements</button>
+                    <button class="sidebar-nav-link" type="button" data-page-nav="help">Help</button>
                     <button class="sidebar-nav-link" id="settingsDrawerBtn" type="button" data-page-nav="settings">Settings</button>
                 </div>
                 <div class="sidebar-calc-slot">
@@ -663,6 +665,16 @@
                         </div>
                         <input type="checkbox" id="showInternalPricingToggle" hidden aria-hidden="true">
 
+                        <div class="settings-panel" id="helpGuideSettingsPanel">
+                            <div class="settings-panel-header">
+                                <h4>User Guide</h4>
+                                <p>Open the screenshot guide for dashboard, document, client, catalog, reporting, and settings workflows.</p>
+                            </div>
+                            <div class="settings-actions">
+                                <button class="btn btn-secondary" id="openHelpGuideSettingsBtn" type="button">Open User Guide</button>
+                            </div>
+                        </div>
+
                         <div class="settings-panel" id="signaturesSettingsPanel">
                             <div class="settings-panel-header">
                                 <h4>Signatures</h4>
@@ -707,6 +719,230 @@
                                 <button class="btn btn-secondary" id="addSignatureBtn" type="button">+ Add Signature</button>
                             </div>
                         </div>
+                    </div>
+                </section>
+
+                <section class="app-page help-guide-page" id="helpGuidePage" hidden>
+                    <div class="page-header help-guide-header">
+                        <div>
+                            <span class="page-eyebrow">Help</span>
+                            <h2>User Guide</h2>
+                            <p class="dashboard-subtitle">Simple walkthroughs for the main SantoSync workspace pages and document workflows.</p>
+                        </div>
+                    </div>
+                    <div class="help-guide-shell">
+                        <div class="help-guide-intro">
+                            <div>
+                                <span class="overview-kicker">Demo screenshots</span>
+                                <h3>Follow the same steps in your live workspace</h3>
+                                <p>The screenshots use fictional demo clients and sample totals. Your production data will appear in the same places after sign-in.</p>
+                            </div>
+                        </div>
+
+                        <article class="help-guide-section" id="guide-dashboard">
+                            <div class="help-guide-copy">
+                                <span class="help-guide-step">Dashboard</span>
+                                <h3>Read the workspace snapshot</h3>
+                                <p>Use the dashboard to check pipeline value, invoiced amount, income received, outstanding balances, recent documents, and items that need attention.</p>
+                                <ul>
+                                    <li>Click <strong>+ New</strong> to start a quote, invoice, offer, or statement.</li>
+                                    <li>Use Recent Documents to reopen work quickly.</li>
+                                    <li>Review overdue and coming-due invoice alerts before leaving the page.</li>
+                                </ul>
+                            </div>
+                            <div class="help-guide-media-pair">
+                                <figure class="help-guide-figure">
+                                    <img src="/help-screenshots/dashboard-desktop.png" alt="Dashboard showing KPI tiles, recent documents, document mix, catalog activity, and invoice attention panels" loading="lazy">
+                                    <figcaption>Desktop dashboard with KPI tiles and attention panels.</figcaption>
+                                </figure>
+                                <figure class="help-guide-figure help-guide-mobile-figure">
+                                    <img src="/help-screenshots/dashboard-mobile.png" alt="Mobile dashboard showing the compact SantoSync overview layout" loading="lazy">
+                                    <figcaption>Mobile dashboard layout.</figcaption>
+                                </figure>
+                            </div>
+                        </article>
+
+                        <article class="help-guide-section" id="guide-documents">
+                            <div class="help-guide-copy">
+                                <span class="help-guide-step">Documents list</span>
+                                <h3>Find and manage saved documents</h3>
+                                <p>The Documents page is the home for quotes, invoices, and offers.</p>
+                                <ul>
+                                    <li>Search by client, reference number, date, or keyword.</li>
+                                    <li>Use the tabs to show All, Quotes, Invoices, or Offers.</li>
+                                    <li>Use each card's PDF, Excel, Edit, Notes, and more actions as needed.</li>
+                                </ul>
+                            </div>
+                            <div class="help-guide-media-pair">
+                                <figure class="help-guide-figure">
+                                    <img src="/help-screenshots/documents-list-desktop.png" alt="Documents page with search, sort, filters, and saved quote and invoice cards" loading="lazy">
+                                    <figcaption>Desktop document list with filters and card actions.</figcaption>
+                                </figure>
+                                <figure class="help-guide-figure help-guide-mobile-figure">
+                                    <img src="/help-screenshots/documents-list-mobile.png" alt="Mobile documents page with stacked search controls and document cards" loading="lazy">
+                                    <figcaption>Mobile document list.</figcaption>
+                                </figure>
+                            </div>
+                        </article>
+
+                        <article class="help-guide-section" id="guide-create-quote">
+                            <div class="help-guide-copy">
+                                <span class="help-guide-step">Creating a quote</span>
+                                <h3>Start a new quote</h3>
+                                <p>Quotes are estimates you can send before billing a client.</p>
+                                <ul>
+                                    <li>Open <strong>Documents</strong>, click <strong>+ New</strong>, then choose <strong>New Quote</strong>.</li>
+                                    <li>Confirm the document type, reference number, date, and optional PO number.</li>
+                                    <li>Continue through client details, line items, keywords, preview, and review.</li>
+                                </ul>
+                            </div>
+                            <figure class="help-guide-figure">
+                                <img src="/help-screenshots/create-quote-desktop.png" alt="New Quote editor on Step 1 with document type, reference number, date, and purchase order fields" loading="lazy">
+                                <figcaption>New Quote editor, Step 1.</figcaption>
+                            </figure>
+                        </article>
+
+                        <article class="help-guide-section" id="guide-create-invoice">
+                            <div class="help-guide-copy">
+                                <span class="help-guide-step">Creating an invoice</span>
+                                <h3>Start a new invoice</h3>
+                                <p>Invoices are formal payment requests for completed work or delivered goods.</p>
+                                <ul>
+                                    <li>Open <strong>Documents</strong>, click <strong>+ New</strong>, then choose <strong>New Invoice</strong>.</li>
+                                    <li>Set invoice details in Step 1 and add client details in Step 2.</li>
+                                    <li>Add line items and payment terms before the final review.</li>
+                                </ul>
+                            </div>
+                            <figure class="help-guide-figure">
+                                <img src="/help-screenshots/create-invoice-desktop.png" alt="New Invoice editor on Step 1 with invoice selected as the document type" loading="lazy">
+                                <figcaption>New Invoice editor, Step 1.</figcaption>
+                            </figure>
+                        </article>
+
+                        <article class="help-guide-section" id="guide-edit-document">
+                            <div class="help-guide-copy">
+                                <span class="help-guide-step">Editing a document</span>
+                                <h3>Reopen saved work</h3>
+                                <p>Editing keeps the existing client, line items, totals, notes, and payment details intact.</p>
+                                <ul>
+                                    <li>Open <strong>Documents</strong> and click the pencil action on a saved document.</li>
+                                    <li>Existing documents open directly into review mode for a quick check.</li>
+                                    <li>Use the stepper to jump back to details, client info, line items, or keywords.</li>
+                                </ul>
+                            </div>
+                            <figure class="help-guide-figure">
+                                <img src="/help-screenshots/edit-document-desktop.png" alt="Edit Invoice modal opened from the document card with saved invoice data loaded" loading="lazy">
+                                <figcaption>Saved invoice opened for editing.</figcaption>
+                            </figure>
+                        </article>
+
+                        <article class="help-guide-section" id="guide-review-export">
+                            <div class="help-guide-copy">
+                                <span class="help-guide-step">Step 6 Review and export</span>
+                                <h3>Check the final output</h3>
+                                <p>Step 6 is the last stop before sharing a document.</p>
+                                <ul>
+                                    <li>Review totals, item rows, signature, stamp, and final formatting.</li>
+                                    <li>Use <strong>Save Changes</strong> before exporting if you edited anything.</li>
+                                    <li>Use <strong>Export as Excel</strong> or <strong>View / Print</strong> for final files.</li>
+                                </ul>
+                            </div>
+                            <div class="help-guide-media-pair">
+                                <figure class="help-guide-figure">
+                                    <img src="/help-screenshots/step-6-review-export-desktop.png" alt="Step 6 Review screen with final preview, signature options, totals, and export actions" loading="lazy">
+                                    <figcaption>Desktop Step 6 review and export actions.</figcaption>
+                                </figure>
+                                <figure class="help-guide-figure help-guide-mobile-figure">
+                                    <img src="/help-screenshots/step-6-review-export-mobile.png" alt="Mobile Step 6 Review screen with compact review controls and export actions" loading="lazy">
+                                    <figcaption>Mobile Step 6 review layout.</figcaption>
+                                </figure>
+                            </div>
+                        </article>
+
+                        <article class="help-guide-section" id="guide-notes">
+                            <div class="help-guide-copy">
+                                <span class="help-guide-step">Notes activity feed</span>
+                                <h3>Review document activity</h3>
+                                <p>The Notes page collects internal notes and activity across quotes, invoices, offers, and statements.</p>
+                                <ul>
+                                    <li>Search note text, client names, or reference numbers.</li>
+                                    <li>Filter by record type when you only want invoices, quotes, offers, or statements.</li>
+                                    <li>Open linked records from the feed to continue work.</li>
+                                </ul>
+                            </div>
+                            <figure class="help-guide-figure">
+                                <img src="/help-screenshots/notes-activity-feed-desktop.png" alt="Notes activity feed with search, client filter, type filters, and timeline entries" loading="lazy">
+                                <figcaption>Notes page activity feed.</figcaption>
+                            </figure>
+                        </article>
+
+                        <article class="help-guide-section" id="guide-clients">
+                            <div class="help-guide-copy">
+                                <span class="help-guide-step">Client directory</span>
+                                <h3>Keep client details reusable</h3>
+                                <p>The client directory stores billing addresses, consignee details, contacts, and client activity stats.</p>
+                                <ul>
+                                    <li>Click <strong>Add Client</strong> to create a reusable client record.</li>
+                                    <li>Open a client card to review related quotes, invoices, and outstanding balances.</li>
+                                    <li>Use saved clients in Step 2 of new documents to avoid retyping details.</li>
+                                </ul>
+                            </div>
+                            <figure class="help-guide-figure">
+                                <img src="/help-screenshots/client-directory-desktop.png" alt="Client directory page with saved client cards, activity totals, and add client action" loading="lazy">
+                                <figcaption>Client directory with saved demo clients.</figcaption>
+                            </figure>
+                        </article>
+
+                        <article class="help-guide-section" id="guide-catalog">
+                            <div class="help-guide-copy">
+                                <span class="help-guide-step">Pricing catalog</span>
+                                <h3>Manage reusable items</h3>
+                                <p>The Pricing Catalog stores items you can reuse in offers, quotes, and invoices.</p>
+                                <ul>
+                                    <li>Search by item name, brand, supplier, or tags.</li>
+                                    <li>Use filters for category, supplier, image status, and sort order.</li>
+                                    <li>Click <strong>New Item</strong> to add a reusable catalog item.</li>
+                                </ul>
+                            </div>
+                            <figure class="help-guide-figure">
+                                <img src="/help-screenshots/pricing-catalog-desktop.png" alt="Pricing Catalog page with toolbar filters, view toggle, and reusable item cards" loading="lazy">
+                                <figcaption>Pricing Catalog with filters and item cards.</figcaption>
+                            </figure>
+                        </article>
+
+                        <article class="help-guide-section" id="guide-reports">
+                            <div class="help-guide-copy">
+                                <span class="help-guide-step">Statements and invoice reporting</span>
+                                <h3>Track payments and aging</h3>
+                                <p>The Statements page combines statement exports, payment history, and client aging.</p>
+                                <ul>
+                                    <li>Use <strong>Invoice Reports</strong> to select invoices for a statement.</li>
+                                    <li>Use <strong>Log Payment</strong> to record payments against invoices.</li>
+                                    <li>Review Client Aging to see outstanding balances by age bucket.</li>
+                                </ul>
+                            </div>
+                            <figure class="help-guide-figure">
+                                <img src="/help-screenshots/statements-reporting-desktop.png" alt="Statements page with statement exports, payment history, and client aging panels" loading="lazy">
+                                <figcaption>Statements, payment history, and aging reports.</figcaption>
+                            </figure>
+                        </article>
+
+                        <article class="help-guide-section" id="guide-settings">
+                            <div class="help-guide-copy">
+                                <span class="help-guide-step">Settings</span>
+                                <h3>Manage workspace tools</h3>
+                                <p>Settings is where admins manage support tickets, backups, snapshots, testing tools, signatures, and this guide.</p>
+                                <ul>
+                                    <li>Use Data Tools to back up or restore workspace data.</li>
+                                    <li>Use Snapshots when you need a recent recovery point.</li>
+                                    <li>Use Signatures to manage signer images for quotes and invoices.</li>
+                                </ul>
+                            </div>
+                            <figure class="help-guide-figure">
+                                <img src="/help-screenshots/settings-desktop.png" alt="Settings page showing admin panels for tech tickets, data tools, snapshots, local testing, user guide, and signatures" loading="lazy">
+                                <figcaption>Settings page with admin workspace tools.</figcaption>
+                            </figure>
+                        </article>
                     </div>
                 </section>
 

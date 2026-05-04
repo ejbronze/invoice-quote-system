@@ -12250,6 +12250,153 @@ body {
     margin-inline: auto;
 }
 
+.help-guide-header,
+.help-guide-shell {
+    width: min(100%, 1180px);
+    margin-inline: auto;
+}
+
+.help-guide-shell {
+    display: grid;
+    gap: 1.35rem;
+}
+
+.help-guide-intro {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 0 0.25rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.help-guide-intro h3,
+.help-guide-copy h3 {
+    font-family: var(--brand-display-font, "Sora"), "Manrope", "Helvetica Neue", Arial, sans-serif;
+    letter-spacing: 0;
+}
+
+.help-guide-intro h3 {
+    margin-top: 0.25rem;
+    font-size: clamp(1.25rem, 2vw, 1.75rem);
+}
+
+.help-guide-intro p,
+.help-guide-copy p,
+.help-guide-copy li,
+.help-guide-figure figcaption {
+    color: var(--text-muted);
+}
+
+.help-guide-section {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.28fr);
+    gap: 1.2rem;
+    align-items: start;
+    padding: 1.35rem 0;
+    border-bottom: 1px solid var(--line);
+}
+
+.help-guide-copy {
+    display: grid;
+    gap: 0.7rem;
+    position: sticky;
+    top: 1rem;
+}
+
+.help-guide-step {
+    width: fit-content;
+    padding: 0.28rem 0.55rem;
+    border: 1px solid rgba(20, 89, 217, 0.16);
+    border-radius: 999px;
+    background: rgba(20, 89, 217, 0.08);
+    color: var(--brand-primary);
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.help-guide-copy h3 {
+    font-size: clamp(1.12rem, 1.6vw, 1.45rem);
+}
+
+.help-guide-copy ul {
+    display: grid;
+    gap: 0.45rem;
+    margin: 0;
+    padding-left: 1.15rem;
+}
+
+.help-guide-copy li {
+    line-height: 1.5;
+}
+
+.help-guide-media-pair {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 0.36fr);
+    gap: 0.85rem;
+    align-items: start;
+}
+
+.help-guide-figure {
+    display: grid;
+    gap: 0.55rem;
+    margin: 0;
+}
+
+.help-guide-figure img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: var(--shadow-sm);
+}
+
+.help-guide-mobile-figure img {
+    max-width: 230px;
+    margin-inline: auto;
+}
+
+.help-guide-figure figcaption {
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+    .help-guide-section,
+    .help-guide-media-pair {
+        grid-template-columns: 1fr;
+    }
+
+    .help-guide-copy {
+        position: static;
+    }
+
+    .help-guide-mobile-figure img {
+        max-width: min(100%, 360px);
+    }
+}
+
+@media (max-width: 640px) {
+    .help-guide-intro {
+        padding-top: 0.25rem;
+    }
+
+    .help-guide-section {
+        gap: 0.9rem;
+        padding: 1rem 0;
+    }
+
+    .help-guide-copy ul {
+        padding-left: 1rem;
+    }
+
+    .help-guide-figure figcaption {
+        font-size: 0.78rem;
+    }
+}
+
 .page-header,
 .page-section-heading {
     display: flex;

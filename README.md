@@ -2,7 +2,17 @@
 
 SantoSync is a focused document and operations workspace built for trade teams, freelancers, and logistics operators who need to generate, track, and deliver professional quotes and invoices without the overhead of enterprise billing software.
 
-Version: `1.18.0` — Last updated: May 4, 2026
+Version: `1.19.0` — Last updated: May 4, 2026
+
+## Version 1.19.0 Summary
+
+This release adds a full in-app Help/User Guide page with production-safe screenshots for the main SantoSync workflows.
+
+**Screenshot-backed user guide:** A new Help page in the sidebar walks users through the dashboard, document list, quote creation, invoice creation, editing, Step 6 review/export, notes, client directory, pricing catalog, statements/reporting, and settings.
+
+**Responsive guide layout:** The guide uses practical instructions, captions, alt text, desktop screenshots, and mobile screenshots where layout differences matter most.
+
+**Easy access:** Help is available from the sidebar, mobile drawer, and Settings page. The existing Help & FAQ modal remains available from the footer.
 
 ## Version 1.18.0 Summary
 
