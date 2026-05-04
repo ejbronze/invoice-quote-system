@@ -2,7 +2,19 @@
 
 SantoSync is a focused document and operations workspace built for trade teams, freelancers, and logistics operators who need to generate, track, and deliver professional quotes and invoices without the overhead of enterprise billing software.
 
-Version: `1.16.0` — Last updated: May 4, 2026
+Version: `1.17.0` — Last updated: May 4, 2026
+
+## Version 1.17.0 Summary
+
+This release improves the mobile layout for the Statements and invoice reporting page so saved statement cards are shorter, clearer, and easier to tap.
+
+**Compact mobile statement cards:** On mobile, each saved statement now uses a tighter card structure: statement reference and date on the top-left, Paid/Pending status on the top-right, the client name as the primary two-line row, compact metric pills for invoice count, total, and outstanding balance, and a horizontal action bar at the bottom.
+
+**Mobile action bar:** Statement actions no longer stack vertically in the center of the card on mobile. View remains the primary action, with Excel export, Notes, Edit, Delete, and settle/paid controls kept as equal tap targets in one bottom row.
+
+**Status and balance color:** Paid statements use green status styling. Pending statements use amber, while larger outstanding balances use a red-tinted metric pill. The color is limited to badges, pills, and subtle borders rather than full-card backgrounds.
+
+**Preserved reporting behavior:** Pending/Paid/All filters, PDF viewing, Excel export, notes, editing, deletion, statement persistence, and the existing statement data structure are unchanged.
 
 ## Version 1.16.0 Summary
 
@@ -661,6 +673,9 @@ Go to Clients in the sidebar. Click Add Client or edit an existing client. Insid
 
 **How do I record a payment against an invoice?**
 There are three ways: (1) Open the invoice in the editor, go to Step 5 (Payments), and add a payment entry there. (2) On the Statements page, click "+ Log Payment" in the Payment History panel and select the invoice from the picker. (3) Create a Statement of Account, add a deduction, and check "Mark as payment" — saving the statement writes the payment back to the matched invoice automatically.
+
+**How do mobile statement cards work?**
+On mobile, saved statements are compact cards with the statement reference/date and Paid or Pending status at the top, the client name as the main two-line label, metric pills for invoice count, total, and outstanding balance, and a horizontal bottom action bar. View is the primary action; Excel export, Notes, Edit, Delete, and settle/paid controls remain available as equal tap targets without stacking vertically.
 
 **How are client outstanding balances calculated?**
 Client balances come from invoices for that client. Paid invoices contribute $0 outstanding. Pending Payment and Unpaid invoices contribute the remaining invoice total after logged payments. Changing an invoice from Pending to Paid lowers the balance immediately; changing it from Paid back to Pending or Unpaid adds the unpaid amount back immediately across the Client Directory, Statements, Payment History, and reporting views.

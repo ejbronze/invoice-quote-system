@@ -633,7 +633,7 @@ const TRANSLATIONS = {
         help_q_statement: "What is a Statement of Account?",
         help_a_statement: "A Statement of Account is a branded PDF summary of selected invoices for a specific client \u2014 useful for reconciliation and payment follow-up. Access it from the <strong>Invoice Reports</strong> section. Generated statements are saved and appear under the <strong>Statements</strong> tab on the home screen.",
         help_q_statement_icons: "What do the action icons on statement rows do?",
-        help_a_statement_icons: "Each saved statement has three action buttons. The <strong>eye icon</strong> reopens the PDF export. The <strong>pencil icon</strong> opens the statement editor so you can adjust it. The <strong>trash icon</strong> permanently deletes the saved statement.",
+        help_a_statement_icons: "Each saved statement has a compact action bar. <strong>View</strong> is the primary action for reopening the statement PDF, <strong>Excel</strong> exports the report workbook, <strong>Notes</strong> opens the notes drawer, <strong>Edit</strong> adjusts the saved statement, and <strong>Delete</strong> removes it after confirmation. On mobile, these actions stay in one horizontal bottom bar for easier tapping.",
         help_vl_statement_actions: "Statement action buttons",
         help_vc_open: "Open",
         help_vc_delete: "Delete",
@@ -1074,7 +1074,7 @@ const TRANSLATIONS = {
         help_q_statement: "\u00bfQu\u00e9 es un Estado de Cuenta?",
         help_a_statement: "Un Estado de Cuenta es un resumen PDF con marca de facturas seleccionadas para un cliente \u2014 \u00fatil para conciliaci\u00f3n y seguimiento de pagos. Acc\u00e9delo desde la secci\u00f3n <strong>Reportes de Facturas</strong>. Los estados generados se guardan y aparecen en la pesta\u00f1a <strong>Estados de Cuenta</strong>.",
         help_q_statement_icons: "\u00bfQu\u00e9 hacen los \u00edconos de acci\u00f3n en las filas de estados?",
-        help_a_statement_icons: "Cada estado guardado tiene tres botones. El <strong>\u00edcono de ojo</strong> reabre la exportaci\u00f3n PDF. El <strong>\u00edcono de l\u00e1piz</strong> abre el editor de estados para ajustarlo. El <strong>\u00edcono de papelera</strong> elimina el estado guardado de forma permanente.",
+        help_a_statement_icons: "Cada estado guardado tiene una barra compacta de acciones. <strong>Abrir</strong> es la acci\u00f3n principal para reabrir el PDF del estado, <strong>Excel</strong> exporta el reporte, <strong>Notas</strong> abre el panel de notas, <strong>Editar</strong> ajusta el estado guardado y <strong>Eliminar</strong> lo borra tras confirmar. En m\u00f3vil, estas acciones permanecen en una barra inferior horizontal para tocar con m\u00e1s facilidad.",
         help_vl_statement_actions: "Botones de acci\u00f3n del estado",
         help_vc_open: "Abrir",
         help_vc_delete: "Eliminar",
@@ -1513,7 +1513,7 @@ const TRANSLATIONS = {
         help_q_statement: "Qu\u2019est-ce qu\u2019un relev\u00e9 de compte\u00a0?",
         help_a_statement: "Un relev\u00e9 de compte est un r\u00e9sum\u00e9 PDF de factures s\u00e9lectionn\u00e9es pour un client sp\u00e9cifique \u2014 utile pour la r\u00e9conciliation et le suivi des paiements. Acc\u00e9dez-y depuis la section <strong>Rapports de factures</strong>. Les relev\u00e9s g\u00e9n\u00e9r\u00e9s sont enregistr\u00e9s et apparaissent sous l\u2019onglet <strong>Relev\u00e9s</strong>.",
         help_q_statement_icons: "Que font les ic\u00f4nes d\u2019action sur les lignes de relev\u00e9s\u00a0?",
-        help_a_statement_icons: "Chaque relev\u00e9 enregistr\u00e9 poss\u00e8de trois boutons. L\u2019<strong>ic\u00f4ne en forme d\u2019\u0153il</strong> rouvre l\u2019exportation PDF. L\u2019<strong>ic\u00f4ne de crayon</strong> ouvre l\u2019\u00e9diteur de relev\u00e9 pour l\u2019ajuster. L\u2019<strong>ic\u00f4ne de corbeille</strong> supprime d\u00e9finitivement le relev\u00e9 enregistr\u00e9.",
+        help_a_statement_icons: "Chaque relev\u00e9 enregistr\u00e9 dispose d\u2019une barre d\u2019actions compacte. <strong>Ouvrir</strong> est l\u2019action principale pour rouvrir le PDF du relev\u00e9, <strong>Excel</strong> exporte le classeur, <strong>Notes</strong> ouvre le panneau de notes, <strong>Modifier</strong> ajuste le relev\u00e9 enregistr\u00e9 et <strong>Supprimer</strong> le retire apr\u00e8s confirmation. Sur mobile, ces actions restent dans une barre inf\u00e9rieure horizontale plus facile \u00e0 toucher.",
         help_vl_statement_actions: "Boutons d\u2019action du relev\u00e9",
         help_vc_open: "Ouvrir",
         help_vc_delete: "Supprimer",
@@ -5947,13 +5947,19 @@ function renderStatementsPage() {
         const liveOutstanding = getStatementLiveOutstanding(statement);
         const liveOutstandingFormatted = formatCurrency(liveOutstanding);
         const isPaid = liveOutstanding <= 0;
+        const outstandingClass = isPaid ? " is-paid" : liveOutstanding >= 1000 ? " is-critical" : " is-pending";
+        const statusLabel = isPaid ? "Paid" : "Pending";
+        const statusClass = isPaid ? "is-paid" : "is-pending";
 
         return `
         <article class="client-row statement-export-row ${accentClass}">
             <div class="client-row-copy statement-export-copy">
                 <div class="statement-export-card-head">
-                    <span class="statement-export-ref">${escapeHtml(statement.referenceNumber || "TL-S-01")}</span>
-                    <span class="statement-export-date">${escapeHtml(formatPrintedDate(statement.generatedAt))}</span>
+                    <span class="statement-export-head-main">
+                        <span class="statement-export-ref">${escapeHtml(statement.referenceNumber || "TL-S-01")}</span>
+                        <span class="statement-export-date">${escapeHtml(formatPrintedDate(statement.generatedAt))}</span>
+                    </span>
+                    <span class="statement-export-status-badge ${statusClass}">${escapeHtml(statusLabel)}</span>
                 </div>
                 <span class="statement-export-client">Client</span>
                 <strong>${escapeHtml(statement.clientName)}</strong>
@@ -5967,7 +5973,7 @@ function renderStatementsPage() {
                         <span>${escapeHtml(t("statement_metric_total"))}</span>
                         <strong>${escapeHtml(statement.totalSelectedFormatted)}</strong>
                     </div>
-                    <div class="statement-export-metric is-grand${isPaid ? " is-paid" : ""}">
+                    <div class="statement-export-metric is-grand${outstandingClass}">
                         <span>${escapeHtml(t("statement_metric_outstanding"))}</span>
                         <strong>${escapeHtml(liveOutstandingFormatted)}</strong>
                     </div>
@@ -5976,28 +5982,28 @@ function renderStatementsPage() {
             <div class="client-row-actions statement-export-actions-bar">
                 <button class="statement-action-btn is-markpaid${isPaid ? " is-settled" : ""}" type="button" ${isPaid ? "disabled" : `data-statement-action="mark-paid" data-statement-id="${escapeHtml(statement.id)}"`} aria-label="${isPaid ? "Fully Paid" : escapeHtml(t("statement_mark_paid_all"))}" title="${isPaid ? "Fully Paid" : escapeHtml(t("statement_mark_paid_all"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span class="visually-hidden">${isPaid ? "Fully Paid" : escapeHtml(t("statement_mark_paid_all"))}</span>
+                    <span class="statement-action-label">${isPaid ? "Paid" : "Settle"}</span>
                 </button>
                 <button class="statement-action-btn is-open" type="button" data-statement-action="open" data-statement-id="${escapeHtml(statement.id)}" aria-label="${escapeHtml(t("open_statement"))}" title="${escapeHtml(t("open_statement"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>
-                    <span class="visually-hidden">${escapeHtml(t("open_statement"))}</span>
+                    <span class="statement-action-label">View</span>
                 </button>
                 <button class="statement-action-btn is-open" type="button" data-statement-action="excel" data-statement-id="${escapeHtml(statement.id)}" aria-label="${escapeHtml(t("statement_generate_excel"))}" title="${escapeHtml(t("statement_generate_excel"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M14 3v4h4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="m9 10 4 4M13 10l-4 4M9 18h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span class="visually-hidden">${escapeHtml(t("statement_generate_excel"))}</span>
+                    <span class="statement-action-label">Excel</span>
                 </button>
                 <button class="statement-action-btn is-notes${noteCount > 0 ? " has-notes" : ""}" type="button" data-statement-action="notes" data-statement-id="${escapeHtml(statement.id)}" aria-label="Notes" title="Notes">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     ${noteBadge}
-                    <span class="visually-hidden">Notes</span>
+                    <span class="statement-action-label">Notes</span>
                 </button>
                 <button class="statement-action-btn is-edit" type="button" data-statement-action="edit" data-statement-id="${escapeHtml(statement.id)}" aria-label="${escapeHtml(t("edit"))}" title="${escapeHtml(t("edit"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.2-1 9.1-9.1a1.9 1.9 0 0 0 0-2.7l-.5-.5a1.9 1.9 0 0 0-2.7 0L5 15.8 4 20Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="m13.5 7.5 3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
-                    <span class="visually-hidden">${escapeHtml(t("edit"))}</span>
+                    <span class="statement-action-label">${escapeHtml(t("edit"))}</span>
                 </button>
                 <button class="statement-action-btn is-delete" type="button" data-statement-action="delete" data-statement-id="${escapeHtml(statement.id)}" aria-label="${escapeHtml(t("delete"))}" title="${escapeHtml(t("delete"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M9 4h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M7 7l1 12h8l1-12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v5M14 11v5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
-                    <span class="visually-hidden">${escapeHtml(t("delete"))}</span>
+                    <span class="statement-action-label">${escapeHtml(t("delete"))}</span>
                 </button>
             </div>
         </article>
