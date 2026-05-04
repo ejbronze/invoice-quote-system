@@ -2,7 +2,21 @@
 
 SantoSync is a focused document and operations workspace built for trade teams, freelancers, and logistics operators who need to generate, track, and deliver professional quotes and invoices without the overhead of enterprise billing software.
 
-Version: `1.15.0` — Last updated: April 29, 2026
+Version: `1.16.0` — Last updated: May 4, 2026
+
+## Version 1.16.0 Summary
+
+This release refactors the Notes page into a compact timeline-style activity feed for faster scanning across invoices, quotes, offers, and statements.
+
+**Timeline activity feed:** The Notes page now groups records by date with compact activity rows instead of bulky note cards. Each row shows a type badge, document reference, note count, smart summary, metadata, and a right-side open action that jumps to the linked document.
+
+**Collapsed details by default:** Rows stay collapsed for faster review. Use the inline details control to expand the row and view the full original note history, complete bullet lists, and raw system change log details.
+
+**Smart summaries and chips:** Common system notes are summarized into readable activity labels such as "Procurement updated," "Payment status changed," "Tags updated," and "Document note added." Repetitive change lines are condensed into chips like "+13 rows," "64 updated," "Total changed," "Paid," or "Tags updated," while the original text remains available in expanded details.
+
+**Document type colors:** The feed uses minimal type color accents: Invoice = green, Quote = blue, Offer = amber, and Statement = gray. Offers now render amber on the Notes page instead of purple.
+
+**Preserved filters and counts:** Search, client filtering, document type filters, visible record counts, note counts, and existing note data all continue to use the current document and storage structure.
 
 ## Version 1.15.0 Summary
 
@@ -626,6 +640,9 @@ Click "Select Items" in the Pricing Library page header. Checkboxes appear on ev
 
 **How do I see what changed in a document?**
 Open any quote, invoice, or procurement sheet from the documents list. In the editor, click the Notes icon in the toolbar to open the notes drawer, then switch to the History tab. Each entry shows who saved the document, when, and a summary of what changed — including item additions, removals, price and quantity changes, client name, date, total, and payment status changes. Autosaves do not create history entries.
+
+**How does the Notes activity feed work?**
+Open the Notes page from the sidebar to scan note activity across documents. The page now uses a timeline-style activity feed grouped by date, with rows collapsed by default so you can review more records at once. Chips summarize common changes like payment status, tags, totals, and procurement row edits. Expand a row to view the full original note history and raw change log details. Document type colors are Invoice = green, Quote = blue, Offer = amber, and Statement = gray.
 
 **How do I use the Procurement Sheet translation feature?**
 Open any Procurement Sheet. Click the globe icon in the modal header. Select a target language (Spanish or French), then click Preview to see how the row descriptions and notes would read in translation. From there you can either Duplicate as Translated (creates a new sheet with translated content) or Translate In Place (replaces the current form values with the translated text). Translation uses the MyMemory free API and requires an internet connection.

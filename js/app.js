@@ -3075,6 +3075,17 @@ function bindEvents() {
         });
     });
     elements.notesFeed?.addEventListener("click", event => {
+        if (event.target.closest("[data-notes-row-action]")) {
+            return;
+        }
+        const linkedTrigger = event.target.closest("[data-open-linked-note-target]");
+        if (linkedTrigger) {
+            openNoteLinkedRecord({
+                targetId: linkedTrigger.dataset.openLinkedNoteTarget,
+                targetType: linkedTrigger.dataset.openLinkedNoteTargetType
+            });
+            return;
+        }
         const trigger = event.target.closest("[data-open-note-target]");
         if (!trigger) {
             return;
@@ -3086,6 +3097,9 @@ function bindEvents() {
     });
     elements.notesFeed?.addEventListener("keydown", event => {
         if (event.key !== "Enter" && event.key !== " ") {
+            return;
+        }
+        if (event.target.closest("[data-notes-row-action]") || event.target.closest("[data-open-linked-note-target]")) {
             return;
         }
         const trigger = event.target.closest("[data-open-note-target]");
@@ -9860,6 +9874,156 @@ function getNotesRecordTypeLabel(documentType) {
     return "Quote";
 }
 
+function getNotesActivityDateLabel(dateValue) {
+    const date = new Date(dateValue || "");
+    if (Number.isNaN(date.getTime())) {
+        return "Undated";
+    }
+
+    const toDateKey = value => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+    const dateKey = toDateKey(date);
+
+    if (dateKey === toDateKey(today)) return "Today";
+    if (dateKey === toDateKey(yesterday)) return "Yesterday";
+
+    return date.toLocaleDateString(getCurrentLocale(), {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+    });
+}
+
+function cleanNoteChangeLine(line) {
+    return String(line || "")
+        .replace(/^[\s•*-]+/, "")
+        .replace(/\s[\u2013-]\s[A-Z][a-z]{2}\s+\d{1,2},\s+\d{4}.*$/, "")
+        .trim();
+}
+
+function getNoteChangeLines(note) {
+    const text = String(note?.text || "");
+    const lines = text.split(/\n+/)
+        .map(cleanNoteChangeLine)
+        .filter(Boolean)
+        .filter(line => !/^\d+\s+changes\s+[\u2013-]/i.test(line));
+
+    return lines.length ? lines : [cleanNoteChangeLine(text)].filter(Boolean);
+}
+
+function truncateNoteActivityText(value, maxLength = 92) {
+    const text = String(value || "").replace(/\s+/g, " ").trim();
+    if (text.length <= maxLength) {
+        return text;
+    }
+    const clipped = text.slice(0, maxLength - 1);
+    const lastSpace = clipped.lastIndexOf(" ");
+    return `${(lastSpace > 48 ? clipped.slice(0, lastSpace) : clipped).trim()}...`;
+}
+
+function getNotesActivitySummary(record) {
+    const notes = normalizeNoteLog(record?.target?.noteLog);
+    const latestNote = notes[notes.length - 1] || record?.latestNote || null;
+    const latestLines = getNoteChangeLines(latestNote);
+    const text = latestLines.join(" ").toLowerCase();
+
+    if (/payment status changed/.test(text)) return "Payment status changed";
+    if (/updated tags|tags updated/.test(text)) return "Tags updated";
+    if (/removed \d+ procurement rows?|deleted procurement|procurement removed/.test(text)) return "Procurement removed";
+    if (/procurement rows?|updated \d+ rows?|added \d+ rows?/.test(text) && record?.documentType === "procurement") return "Procurement updated";
+    if (/total changed/.test(text)) return "Total changed";
+    if (/converted from|converted to/.test(text)) return "Document converted";
+    if (/added item|removed item|updated price|updated quantity/.test(text)) return "Line items updated";
+    if (/updated internal notes|updated document notes/.test(text)) return "Document notes updated";
+    if (latestNote && latestNote.isSystem !== true) return "Document note added";
+
+    return truncateNoteActivityText(latestLines[0] || "Document note added");
+}
+
+function getNotesActivityChipLabel(changeLine) {
+    const line = cleanNoteChangeLine(changeLine);
+    const lower = line.toLowerCase();
+    let match = line.match(/Added\s+(\d+)\s+procurement rows?/i);
+    if (match) return `+${match[1]} rows`;
+    match = line.match(/Removed\s+(\d+)\s+procurement rows?/i);
+    if (match) return `-${match[1]} rows`;
+    match = line.match(/Updated\s+(\d+)\s+rows?/i);
+    if (match) return `${match[1]} updated`;
+    match = line.match(/Added\s+(\d+)\s+items?/i);
+    if (match) return `+${match[1]} items`;
+    match = line.match(/Removed\s+(\d+)\s+items?/i);
+    if (match) return `-${match[1]} items`;
+    match = line.match(/Updated price on\s+(\d+)\s+items?/i);
+    if (match) return `${match[1]} prices`;
+    match = line.match(/Updated quantity on\s+(\d+)\s+items?/i);
+    if (match) return `${match[1]} qty`;
+    match = line.match(/Payment status changed to\s+"?([^"]+)"?/i);
+    if (match) {
+        const status = match[1].replace(/[. ]+$/, "").trim();
+        return status ? `${status.charAt(0).toUpperCase()}${status.slice(1).toLowerCase()}` : "Status changed";
+    }
+    if (lower.includes("total changed")) return "Total changed";
+    if (lower.includes("updated tags")) return "Tags updated";
+    if (lower.includes("updated internal notes")) return "Internal notes";
+    if (lower.includes("updated document notes")) return "Notes updated";
+    if (lower.includes("changed client")) return "Client changed";
+    if (lower.includes("changed date")) return "Date changed";
+    if (lower.includes("set po number") || lower.includes("removed po number")) return "PO updated";
+    if (lower.includes("converted from")) return "Converted";
+    if (lower.includes("added item:")) return "+1 item";
+    if (lower.includes("removed item:")) return "-1 item";
+    return "";
+}
+
+function getNotesActivityChips(record) {
+    const notes = normalizeNoteLog(record?.target?.noteLog);
+    const changes = notes.slice().reverse().flatMap(getNoteChangeLines);
+    const chips = [];
+
+    for (const change of changes) {
+        const label = getNotesActivityChipLabel(change);
+        if (label && !chips.includes(label)) {
+            chips.push(label);
+        }
+        if (chips.length >= 5) {
+            break;
+        }
+    }
+
+    if (!chips.length) {
+        chips.push((record?.latestNote?.isSystem === true) ? "System note" : "Manual note");
+    }
+
+    return chips;
+}
+
+function renderNotesActivityDetails(record) {
+    const notes = normalizeNoteLog(record?.target?.noteLog).slice().reverse();
+    if (!notes.length) {
+        return `<p class="notes-feed-detail-empty">No note details available.</p>`;
+    }
+
+    return notes.map(note => {
+        const isSystem = note.isSystem === true;
+        const timeLabel = note.editedAt
+            ? `${formatNoteTimestamp(note.createdAt)} · edited`
+            : formatNoteTimestamp(note.createdAt);
+        const noteText = escapeHtml(note.text).replace(/\n/g, "<br>");
+        return `
+            <div class="notes-feed-detail-note${isSystem ? " is-system" : ""}">
+                <div class="notes-feed-detail-head">
+                    ${isSystem ? `<span class="notes-feed-detail-badge">System</span>` : ""}
+                    <strong>${escapeHtml(note.author || "Unknown")}</strong>
+                    <span>${escapeHtml(timeLabel)}</span>
+                </div>
+                <div class="notes-feed-detail-text">${noteText}</div>
+            </div>
+        `;
+    }).join("");
+}
+
 function getNoteRecordByTarget(targetId, targetType = "document") {
     return getAllNoteRecords().find(record =>
         record.targetType === targetType && String(record.targetId) === String(targetId)
@@ -10080,40 +10244,67 @@ function renderNotesPage() {
         return;
     }
 
-    elements.notesFeed.innerHTML = records.map(record => {
+    const groupedRecordsHtml = [];
+    let activeDateGroup = "";
+
+    records.forEach(record => {
+        const dateGroup = getNotesActivityDateLabel(record.sortDate);
+        if (dateGroup !== activeDateGroup) {
+            activeDateGroup = dateGroup;
+            groupedRecordsHtml.push(`<div class="notes-feed-date-heading">${escapeHtml(dateGroup)}</div>`);
+        }
+
         const typeLabel = getNotesRecordTypeLabel(record.documentType);
-        const recentNotes = Array.isArray(record.recentNotes) && record.recentNotes.length ? record.recentNotes : [record.latestNote].filter(Boolean);
-        const notePreviewHtml = recentNotes.map(note => {
-            const previewSource = String(note?.text || "");
-            const preview = previewSource.length > 150 ? `${previewSource.slice(0, 150)}…` : previewSource;
-            const timeLabel = note?.editedAt ? `${formatNoteTimestamp(note.createdAt)} · edited` : formatNoteTimestamp(note?.createdAt || record.sortDate);
-            return `
-                <div class="notes-feed-note-line">
-                    <p>${escapeHtml(preview)}</p>
-                    <span>${escapeHtml(note?.author || "Unknown")} · ${escapeHtml(timeLabel)}</span>
-                </div>`;
-        }).join("");
-        return `
-            <article class="notes-feed-item notes-feed-item-${escapeHtml(record.documentType)}" data-open-note-target="${escapeHtml(record.targetId)}" data-open-note-target-type="${escapeHtml(record.targetType)}" tabindex="0" role="button" aria-label="${escapeHtml(`Open ${typeLabel} summary for ${record.documentReference}`)}">
+        const summary = getNotesActivitySummary(record);
+        const chips = getNotesActivityChips(record);
+        const latestNote = record.latestNote || {};
+        const timeLabel = latestNote.editedAt
+            ? `${formatNoteTimestamp(latestNote.createdAt)} · edited`
+            : formatNoteTimestamp(latestNote.createdAt || record.sortDate);
+        const authorLabel = latestNote.author || "Unknown";
+        const detailCountLabel = `${record.noteCount} change${record.noteCount === 1 ? "" : "s"}`;
+        const chipsHtml = chips.map(chip => `<span class="notes-feed-chip">${escapeHtml(chip)}</span>`).join("");
+
+        groupedRecordsHtml.push(`
+            <article class="notes-feed-item notes-feed-item-${escapeHtml(record.documentType)}">
+                <span class="notes-feed-dot" aria-hidden="true"></span>
                 <div class="notes-feed-item-main">
                     <div class="notes-feed-item-head">
-                        <div class="notes-feed-item-meta">
+                        <div class="notes-feed-item-title">
                             <span class="notes-feed-item-type is-${escapeHtml(record.documentType)}">${escapeHtml(typeLabel)}</span>
                             <strong>${escapeHtml(record.documentReference)}</strong>
                             <span class="notes-feed-item-count">${escapeHtml(String(record.noteCount))} note${record.noteCount === 1 ? "" : "s"}</span>
                         </div>
-                        <span class="notes-feed-item-client">${escapeHtml(record.clientName || t("unknown_client"))}</span>
                     </div>
-                    <div class="notes-feed-notes">${notePreviewHtml}</div>
+                    <p class="notes-feed-summary">${escapeHtml(summary)}</p>
+                    <div class="notes-feed-chips" aria-label="Common changes">${chipsHtml}</div>
+                    <div class="notes-feed-meta-line">
+                        <span>${escapeHtml(record.clientName || t("unknown_client"))}</span>
+                        <span>${escapeHtml(authorLabel)}</span>
+                        <span>${escapeHtml(timeLabel)}</span>
+                    </div>
+                    <details class="notes-feed-details" data-notes-row-action>
+                        <summary>
+                            <span>${escapeHtml(detailCountLabel)}</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="m6 9 6 6 6-6"/>
+                            </svg>
+                        </summary>
+                        <div class="notes-feed-detail-panel">
+                            ${renderNotesActivityDetails(record)}
+                        </div>
+                    </details>
                 </div>
-                <span class="notes-feed-open-btn" aria-hidden="true" title="Open summary">
+                <button class="notes-feed-open-btn" type="button" data-open-linked-note-target="${escapeHtml(record.targetId)}" data-open-linked-note-target-type="${escapeHtml(record.targetType)}" aria-label="${escapeHtml(`Open ${typeLabel} ${record.documentReference}`)}" title="Open document">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M9 18l6-6-6-6"/>
                     </svg>
-                </span>
+                </button>
             </article>
-        `;
-    }).join("");
+        `);
+    });
+
+    elements.notesFeed.innerHTML = groupedRecordsHtml.join("");
 }
 
 function openLogPaymentModal() {
