@@ -1695,7 +1695,6 @@ function applyTranslations() {
     document.querySelectorAll('[data-page-nav="clients"]').forEach(button => { button.textContent = t("clients_heading"); });
     document.querySelectorAll('[data-page-nav="catalog"]').forEach(button => { button.textContent = t("catalog"); });
     document.querySelectorAll('[data-page-nav="reports"]').forEach(button => { button.textContent = t("statements"); });
-    document.querySelectorAll('[data-page-nav="help"]').forEach(button => { button.textContent = t("help_guide"); });
     document.querySelectorAll('[data-page-nav="settings"]').forEach(button => { button.textContent = t("settings"); });
     if (elements.sidebarCalculatorBtn) {
         elements.sidebarCalculatorBtn.innerHTML = getCalculatorButtonMarkup();
@@ -2010,7 +2009,6 @@ function cacheElements() {
     elements.notesPage = document.getElementById("notesPage");
     elements.clientsPage = document.getElementById("clientsPage");
     elements.reportsPage = document.getElementById("reportsPage");
-    elements.helpGuidePage = document.getElementById("helpGuidePage");
     elements.sidebarNav = document.getElementById("sidebarNav");
     elements.sidebarBrandLogo = document.getElementById("sidebarBrandLogo");
     elements.pageNavButtons = Array.from(document.querySelectorAll("[data-page-nav]"));
@@ -2551,7 +2549,7 @@ function bindEvents() {
     elements.languageSelect.addEventListener("change", handleLanguageChange);
     elements.mobileDrawerLanguageSelect?.addEventListener("change", handleLanguageChange);
     elements.settingsIssueInboxBtn.addEventListener("click", openIssueInboxFromSettings);
-    elements.openHelpGuideSettingsBtn?.addEventListener("click", () => setActivePage("help"));
+    elements.openHelpGuideSettingsBtn?.addEventListener("click", () => openHelpModal());
     elements.navMenuBtn.addEventListener("click", toggleMobileDrawer);
     elements.newMenuBtn?.addEventListener("click", toggleNewMenu);
     elements.closeMobileDrawerBtn?.addEventListener("click", closeMobileDrawer);
@@ -5134,7 +5132,7 @@ function closeMobileDrawer() {
 }
 
 function setActivePage(page) {
-    const validPages = ["overview", "documents", "notes", "clients", "catalog", "reports", "help", "settings"];
+    const validPages = ["overview", "documents", "notes", "clients", "catalog", "reports", "settings"];
     state.activePage = validPages.includes(page) ? page : "overview";
     applyPageState();
     if (state.activePage === "reports") {
@@ -5162,7 +5160,6 @@ function applyPageState() {
     if (elements.clientsPage) elements.clientsPage.hidden = state.activePage !== "clients";
     if (elements.catalogPage) elements.catalogPage.hidden = state.activePage !== "catalog";
     if (elements.reportsPage) elements.reportsPage.hidden = state.activePage !== "reports";
-    if (elements.helpGuidePage) elements.helpGuidePage.hidden = state.activePage !== "help";
     if (elements.settingsModal) elements.settingsModal.hidden = state.activePage !== "settings";
     if (elements.accountAdminPage) {
         elements.accountAdminPage.hidden = !(state.activePage === "settings" && isOwnerSession());
