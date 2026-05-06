@@ -9376,7 +9376,10 @@ body.print-window .print-preview-sheet {
 }
 
 .document-items td.document-item-col-description {
-    word-break: break-word;
+    white-space: pre-wrap;
+    word-break: normal;
+    overflow-wrap: break-word;
+    line-height: 1.25;
 }
 
 .document-item-thumb {

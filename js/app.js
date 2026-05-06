@@ -15817,17 +15817,32 @@ async function handleItemImageInputChange(event) {
 }
 
 // Resolves the effective image URL for a catalog-linked item or row.
-// Prefers the live catalog image (so updates propagate everywhere automatically),
-// falling back to any locally stored copy on the item/row.
+// Priority: libraryItemId link → stored image → name-based catalog match.
 function resolveItemImage(itemOrRow) {
+    const getCatalogImage = ci => (Array.isArray(ci.itemImages) && ci.itemImages[0]) || ci.itemImageDataUrl || ci.imageDataUrl || "";
+
     const libraryId = itemOrRow?.libraryItemId || itemOrRow?.dataset?.libraryItemId || "";
     if (libraryId) {
         const ci = state.catalogItems.find(c => c.id === libraryId && !c.archived);
-        if (ci) return (Array.isArray(ci.itemImages) && ci.itemImages[0]) || ci.itemImageDataUrl || ci.imageDataUrl || "";
+        if (ci) return getCatalogImage(ci);
     }
-    return (Array.isArray(itemOrRow?.itemImages) && itemOrRow.itemImages[0])
+
+    const stored = (Array.isArray(itemOrRow?.itemImages) && itemOrRow.itemImages[0])
         || itemOrRow?.itemImageDataUrl || itemOrRow?.imageDataUrl
         || itemOrRow?.dataset?.itemImageDataUrl || "";
+    if (stored) return stored;
+
+    // Fallback: match catalog item by name using the first line of the description.
+    const description = itemOrRow?.description
+        || (typeof itemOrRow?.querySelector === "function" && itemOrRow.querySelector(".item-description")?.value)
+        || "";
+    const firstLine = description.split("\n")[0].trim();
+    if (firstLine) {
+        const ci = state.catalogItems.find(c => !c.archived && c.name && c.name.trim() === firstLine);
+        if (ci) return getCatalogImage(ci);
+    }
+
+    return "";
 }
 
 function syncItemImageUI(row) {
