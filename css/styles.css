@@ -2562,6 +2562,40 @@ body::after {
     gap: 1rem;
 }
 
+.catalog-edit-pane {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.catalog-edit-pane-actions {
+    position: sticky;
+    bottom: 0;
+    background: rgba(248, 250, 253, 0.97);
+    backdrop-filter: blur(6px);
+    border-top: 1px solid rgba(178, 196, 220, 0.5);
+    padding: 0.75rem 1rem;
+    margin: 0 -1.25rem -1.25rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    z-index: 1;
+}
+
+.catalog-edit-pane-actions .btn {
+    min-height: 2.35rem;
+    border-radius: 9px;
+}
+
+@media (max-width: 480px) {
+    .catalog-edit-pane-actions {
+        flex-wrap: wrap;
+    }
+    .catalog-edit-pane-actions .btn {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+}
+
 .catalog-details-hero {
     display: grid;
     grid-template-columns: 168px minmax(0, 1fr);
@@ -18454,6 +18488,7 @@ body #procurementSheetModal:not([hidden]) {
     .modal-body,
     .settings-modal-body,
     .catalog-details-body,
+    .catalog-edit-pane,
     .statement-export-wizard,
     .statement-edit-layout,
     .notes-record-modal-body,

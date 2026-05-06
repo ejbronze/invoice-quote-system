@@ -2605,7 +2605,14 @@ function bindEvents() {
     elements.catalogDuplicateModal?.addEventListener("click", event => {
         if (event.target === elements.catalogDuplicateModal) setModalState(elements.catalogDuplicateModal, false);
     });
-    elements.closeCatalogDetailsModalBtn.addEventListener("click", closeCatalogDetailsModal);
+    elements.closeCatalogDetailsModalBtn.addEventListener("click", () => {
+        const editPane = document.getElementById("catalogDetailsEditPane");
+        if (editPane && !editPane.hidden) {
+            closeCatalogItemModal();
+        } else {
+            closeCatalogDetailsModal();
+        }
+    });
     elements.closeCatalogItemImageExpandModalBtn?.addEventListener("click", closeCatalogItemImageExpand);
     elements.catalogItemImageExpandModal?.addEventListener("click", event => {
         if (event.target === elements.catalogItemImageExpandModal) closeCatalogItemImageExpand();
@@ -2618,8 +2625,8 @@ function bindEvents() {
     elements.catalogDetailsEditItemBtn?.addEventListener("click", () => {
         if (!state.pendingCatalogInsertItem) return;
         openCatalogItemModal({ item: state.pendingCatalogInsertItem });
-        closeCatalogDetailsModal();
     });
+    document.getElementById("catalogItemEditCancelBtn")?.addEventListener("click", closeCatalogItemModal);
     elements.saveCatalogItemBtn.addEventListener("click", saveCatalogItemFromModal);
     elements.archiveCatalogItemBtn?.addEventListener("click", archiveCatalogItemFromModal);
     elements.catalogItemImageInput?.addEventListener("change", handleCatalogItemImageInputChange);
@@ -3269,6 +3276,15 @@ function bindEvents() {
         }
     });
     elements.catalogDetailsModal.addEventListener("click", event => {
+        const removeGalleryBtn = event.target.closest("[data-remove-gallery-index]");
+        if (removeGalleryBtn) {
+            const idx = Number(removeGalleryBtn.dataset.removeGalleryIndex);
+            if (Array.isArray(state.pendingCatalogItemImages)) {
+                state.pendingCatalogItemImages = state.pendingCatalogItemImages.filter((_, i) => i !== idx);
+                syncCatalogItemImageUI();
+            }
+            return;
+        }
         const refRow = event.target.closest(".catalog-ref-row[data-open-doc-id]");
         if (refRow) {
             const docId = refRow.dataset.openDocId;
@@ -3282,7 +3298,12 @@ function bindEvents() {
             return;
         }
         if (event.target === elements.catalogDetailsModal) {
-            closeCatalogDetailsModal();
+            const editPane = document.getElementById("catalogDetailsEditPane");
+            if (editPane && !editPane.hidden) {
+                closeCatalogItemModal();
+            } else {
+                closeCatalogDetailsModal();
+            }
         }
     });
     elements.catalogDetailsAddToDocBtn?.addEventListener("click", () => {
@@ -5330,17 +5351,45 @@ function openCatalogItemModal(options = {}) {
     }
 
     syncCatalogItemImageUI();
-    setModalState(elements.catalogItemModal, true);
+    setElementText("#catalogDetailsTitle", options.item ? (options.item.name || "Edit Item") : "Add Item");
+    showCatalogEditPane();
+    setModalState(elements.catalogDetailsModal, true);
     applyTranslations();
 }
 
 function closeCatalogItemModal() {
-    setModalState(elements.catalogItemModal, false);
+    const wasEditingId = state.editingCatalogItemId;
     state.editingCatalogItemId = null;
     state.pendingCatalogItemImageDataUrl = null;
     state.pendingCatalogItemImages = null;
     state.catalogModalReturnToProcurement = false;
     state.catalogModalReturnToDocument = false;
+    if (wasEditingId) {
+        const item = state.catalogItems.find(e => e.id === wasEditingId && !e.archived);
+        if (item) {
+            openCatalogDetailsModal(item);
+            showCatalogViewPane();
+            return;
+        }
+    }
+    setModalState(elements.catalogDetailsModal, false);
+}
+
+function showCatalogEditPane() {
+    const viewPane = document.getElementById("catalogDetailsViewPane");
+    const editPane = document.getElementById("catalogDetailsEditPane");
+    if (viewPane) viewPane.hidden = true;
+    if (editPane) {
+        editPane.hidden = false;
+        editPane.scrollTop = 0;
+    }
+}
+
+function showCatalogViewPane() {
+    const editPane = document.getElementById("catalogDetailsEditPane");
+    const viewPane = document.getElementById("catalogDetailsViewPane");
+    if (editPane) editPane.hidden = true;
+    if (viewPane) viewPane.hidden = false;
 }
 
 function isMeaningfulCatalogValue(value) {
@@ -6735,6 +6784,7 @@ async function saveCatalogItemFromModal() {
     syncProcurementLibrarySelect();
     syncDocumentLibrarySelect();
     const hadImage = Boolean(item.itemImageDataUrl);
+    const wasEditing = Boolean(state.editingCatalogItemId);
     const shouldReturnToProcurement = Boolean(state.catalogModalReturnToProcurement);
     const shouldReturnToDocument = Boolean(state.catalogModalReturnToDocument);
     closeCatalogItemModal();
@@ -6746,6 +6796,8 @@ async function saveCatalogItemFromModal() {
         elements.documentLibrarySelect.value = item.id;
         insertLibraryItemIntoDocument(item);
         if (hadImage) setImportStatus("Image saved to Pricing Library and added to document row.");
+    } else if (wasEditing) {
+        if (hadImage) setImportStatus("Library item saved with image.");
     } else {
         setActivePage("catalog");
         if (hadImage) setImportStatus("Library item saved with image.");
